@@ -170,8 +170,12 @@ a:hover {
 }
 
 /* Information Boxes */
-.warning,
 .note,
+.no-return,
+.danger,
+.requirement,
+.tip,
+.disclaimer,
 .boss-fight-phases,
 .notes {
     padding: var(--space-md);
@@ -181,25 +185,69 @@ a:hover {
     max-width: 100%;
 }
 
-.warning {
-    border: 1px solid var(--color-warning-border);
-    background: var(--color-warning-bg);
-    color: var(--color-warning-text);
-}
-
 .note {
     border: 1px solid var(--color-note-border);
     background: var(--color-note-bg);
     color: var(--color-note-text);
 }
 
-.warning::before {
-    content: "⚠️ ";
-    margin-right: var(--space-xs);
+.no-return {
+    border: 1px solid var(--color-no-return-border);
+    background: var(--color-no-return-bg);
+    color: var(--color-no-return-text);
+}
+
+.danger {
+    border: 1px solid var(--color-danger-border);
+    background: var(--color-danger-bg);
+    color: var(--color-danger-text);
+}
+
+.requirement {
+    border: 1px solid var(--color-requirement-border);
+    background: var(--color-requirement-bg);
+    color: var(--color-requirement-text);
+}
+
+.tip {
+    border: 1px solid var(--color-tip-border);
+    background: var(--color-tip-bg);
+    color: var(--color-tip-text);
+}
+
+.disclaimer {
+    border: 1px solid var(--color-disclaimer-border);
+    background: var(--color-disclaimer-bg);
+    color: var(--color-disclaimer-text);
 }
 
 .note::before {
     content: "📝 ";
+    margin-right: var(--space-xs);
+}
+
+.no-return::before {
+    content: "⛔ ";
+    margin-right: var(--space-xs);
+}
+
+.danger::before {
+    content: "💀 ";
+    margin-right: var(--space-xs);
+}
+
+.requirement::before {
+    content: "📋 ";
+    margin-right: var(--space-xs);
+}
+
+.tip::before {
+    content: "💡 ";
+    margin-right: var(--space-xs);
+}
+
+.disclaimer::before {
+    content: "❓ ";
     margin-right: var(--space-xs);
 }
 

@@ -28,12 +28,38 @@ Neutral dark theme with subtle warmth for character without being overbearing.
     --color-link-page: #c98f6a;  /* Warm copper - Internal page navigation */
 
     /* Functional Colors */
-    --color-warning-bg: rgb(217 91 67 / 12%);
-    --color-warning-border: #d95b43;
-    --color-warning-text: #f5a68f;
-    --color-note-border: #5a8ab5;
-    --color-note-bg: rgb(90 138 181 / 10%);
-    --color-note-text: #93bfe0;
+
+    /* note: warm grey/stone */
+    --color-note-border: #7a7060;
+    --color-note-bg: rgb(122 112 96 / 10%);
+    --color-note-text: #a89880;
+
+    /* no-return: deep red — boss fight / point of no return */
+    --color-no-return-border: #c53030;
+    --color-no-return-bg: rgb(197 48 48 / 12%);
+    --color-no-return-text: #feb2b2;
+
+    /* danger: amber-orange — permanent irreversible consequences */
+    --color-danger-border: #c07030;
+    --color-danger-bg: rgb(192 112 48 / 12%);
+    --color-danger-text: #f6ad55;
+
+    /* requirement: muted gold — ties to site hierarchy palette */
+    --color-requirement-border: #b8962a;
+    --color-requirement-bg: rgb(184 150 42 / 10%);
+    --color-requirement-text: #d4b574;
+
+    /* tip: sage green — harmonizes with external link color */
+    --color-tip-border: #6a9e5e;
+    --color-tip-bg: rgb(106 158 94 / 10%);
+    --color-tip-text: #8bc076;
+
+    /* disclaimer: soft violet — harmonizes with solver link color */
+    --color-disclaimer-border: #7c6eb8;
+    --color-disclaimer-bg: rgb(124 110 184 / 10%);
+    --color-disclaimer-text: #9a8be0;
+
+    /* Border Colours */
     --color-border-subtle: #333;
     --color-border-medium: #444;
 

@@ -260,7 +260,7 @@ function classifyLinks(content, outputPath) {
         let processable = content;
         const PLACEHOLDER = "\x00QL\x00";
 
-        const qlIdx = content.indexOf('class="quick-links-container"');
+        const qlIdx = content.indexOf("class=\"quick-links-container\"");
         if (qlIdx !== -1) {
             const divStart = content.lastIndexOf("<div", qlIdx);
             if (divStart !== -1) {
@@ -268,7 +268,8 @@ function classifyLinks(content, outputPath) {
                 while (pos < content.length) {
                     if (content[pos] === "<") {
                         if (content.startsWith("<div", pos) && /[\s>]/.test(content[pos + 4])) {
-                            depth++; pos += 4;
+                            depth++;
+                            pos += 4;
                         } else if (content.startsWith("</div>", pos)) {
                             if (--depth === 0) {
                                 qlSection = content.slice(divStart, pos + 6);
@@ -392,7 +393,7 @@ function addVersioning(content, outputPath) {
         modified = modified.replace(/<script([^>]*)src=["']([^"']+\.js)["']([^>]*)>/gi, (match, before, src, after) => {
             if (!src.includes("?v=")) {
                 // Also add defer if not present and not a module script
-                if (!match.includes("defer") && !match.includes('type="module"')) {
+                if (!match.includes("defer") && !match.includes("type=\"module\"")) {
                     return `<script${before}src="${src}?v=${buildVersion}"${after} defer>`;
                 }
                 return `<script${before}src="${src}?v=${buildVersion}"${after}>`;
@@ -482,6 +483,24 @@ function injectReactBundle(content, outputPath) {
     }
 }
 
+function preRenderRevealButtons(content, outputPath) {
+    if (!outputPath?.endsWith(".html"))
+        return content;
+
+    const dom = new JSDOM(content);
+    const elements = dom.window.document.querySelectorAll("[data-reveal-label]");
+    if (!elements.length) return content;
+
+    for (const el of elements) {
+        const label =
+            el.getAttribute("data-reveal-label");
+        const inner = el.innerHTML;
+        el.innerHTML = `<button type="button" class="btn-base in-line-button">${label}</button>
+<div class="button-activated-div" style="display: none;">${inner}</div>`;
+    }
+    return dom.serialize();
+}
+
 // ========================================
 // SMART IMAGE COPY
 // ========================================
@@ -553,8 +572,9 @@ async function smartCopyImages() {
 // ELEVENTY CONFIGURATION
 // ========================================
 
-module.exports = function (eleventyConfig) {
+module.exports = function(eleventyConfig) {
     // Add transforms for quick links generation, link classification, versioning, and React bundle injection
+    eleventyConfig.addTransform("preRenderRevealButtons", preRenderRevealButtons);
     eleventyConfig.addTransform("generateQuickLinks", generateQuickLinks);
     eleventyConfig.addTransform("classifyLinks", classifyLinks);
     eleventyConfig.addTransform("addVersioning", addVersioning);
@@ -590,7 +610,7 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addFilter("cleanUrl", (url) => url ? url.replace(/\.html$/, "") : url);
 
     // Add a filter to format dates
-    eleventyConfig.addFilter("dateFormat", function (date) {
+    eleventyConfig.addFilter("dateFormat", function(date) {
         return new Date(date).toLocaleDateString();
     });
 

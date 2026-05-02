@@ -20,14 +20,8 @@ function setupSolverButtons() {
     }
 }
 
-function disableIncompleteLinks() {
-    document
-        .querySelectorAll("a.incomplete-path")
-        .forEach((a) => a.addEventListener("click", (e) => e.preventDefault()))
-}
 
 // Make functions available globally
 window.LinkProcessor = {
-    disableIncompleteLinks,
     setupSolverButtons,
 };
