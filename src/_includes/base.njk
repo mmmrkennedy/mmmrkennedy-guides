@@ -47,6 +47,10 @@
         <link rel="stylesheet" type="text/css" href="/css/global_solver.css?v={{ site.buildVersion }}">
     {%- endif %}
 
+    <!-- AdSense -->
+    <meta name="google-adsense-account" content="ca-pub-2164582284838563">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2164582284838563" crossorigin="anonymous"></script>
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
     <link rel="dns-prefetch" href="//ko-fi.com">
@@ -164,7 +168,9 @@
 
     <div class="version-display">
         <div class="version-and-toggle">
-            v.<span>{{ site.buildVersionShort }}</span>
+            <span class="version-text">v.{{ site.buildVersionShort }}</span>
+            <button type="button" id="ad-toggle-btn" class="ad-toggle-btn" aria-pressed="true">Hide Ads</button>
+            <span id="ad-mode-indicator" class="ad-mode-indicator"></span>
         </div>
     </div>
 </div>
@@ -195,6 +201,7 @@
 <script src="/js/navigation/scroll-manager.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/tutorial-system.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/lightbox.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/ads.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/link-processor.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/quick-links.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/solver-button-processor.js?v={{ site.buildVersion }}" defer></script>

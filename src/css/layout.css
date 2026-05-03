@@ -26,7 +26,9 @@ Page structure and containers.
 
 /* Content Containers */
 .quick-links-container,
-.content-container {
+.content-container,
+.ad-inline,
+.ad-multiplex {
     text-align: left;
     padding: var(--space-md) var(--space-lg);
     position: relative;

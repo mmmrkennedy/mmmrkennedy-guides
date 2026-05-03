@@ -135,7 +135,7 @@ a:hover {
     border-radius: 6px;
     opacity: 0.85;
     transition: all 0.2s ease;
-    z-index: 2;
+    z-index: 100;
     inset: var(--btn-top, auto) var(--btn-right, auto) var(--btn-bottom, auto) var(--btn-left, auto);
 }
 
@@ -433,21 +433,95 @@ details.spacing {
     position: fixed;
     top: calc(var(--space-xs) * 8);
     right: var(--space-xs);
-    font-size: 0.625rem;
+    font-size: 0.8rem;
     font-family: monospace;
     color: var(--color-text-muted);
     pointer-events: none;
     z-index: 9999;
     user-select: none;
     opacity: 0.6;
+    white-space: nowrap;
 }
 
 .top-buttons-background-box .version-display {
     position: absolute;
-    bottom: 0;
+    top: var(--space-xs);
+    bottom: unset;
     right: var(--space-xs);
-    top: unset;
 }
+
+@media (width >= 48.0625em) {
+    /*.top-buttons-background-box .version-display {
+        top: unset;
+        bottom: 0;
+    }*/
+}
+
+.version-and-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-xs);
+}
+
+.ad-toggle-btn {
+    pointer-events: auto;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-tier-1);
+    border-radius: 3px;
+    padding: 3px 7px;
+    font-size: 0.625rem;
+    font-family: monospace;
+    color: var(--color-tier-1);
+    cursor: pointer;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.ad-toggle-btn:hover {
+    background: rgb(201 169 97 / 15%);
+}
+
+.ad-mode-indicator {
+    font-size: 0.5rem;
+    font-family: monospace;
+    color: var(--color-text-muted);
+    text-align: right;
+    line-height: 1;
+}
+
+/* Ads */
+.ad-inline {
+    width: 100%;
+    min-height: 250px;
+}
+
+.ad-multiplex,
+.ad-infeed {
+    min-height: 250px;
+}
+
+.ad-right-sidebar,
+.ad-left-sidebar {
+    display: none;
+    position: fixed;
+    top: calc(var(--header-height-desktop) + var(--space-lg));
+    height: calc(100dvh - var(--header-height-desktop) - var(--space-xl));
+    overflow: hidden;
+    z-index: 50;
+}
+
+/* Ad visibility modes — controlled by body class set from JS */
+body.ads-hidden .ad-inline,
+body.ads-hidden .ad-multiplex,
+body.ads-hidden .ad-infeed,
+body.ads-hidden .ad-right-sidebar,
+body.ads-hidden .ad-left-sidebar { display: none !important; }
+
+body.ads-minimal .ad-inline,
+body.ads-minimal .ad-multiplex,
+body.ads-minimal .ad-infeed { display: none !important; }
 
 /* Tutorial Confirm */
 .tutorial-confirm {

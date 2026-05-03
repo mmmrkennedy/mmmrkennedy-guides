@@ -223,6 +223,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { name: "Lightbox Init", fn: () => window.Lightbox?.initLightbox() },
             { name: "Reveal Button Build", fn: () => window.SolverButtonProcessor?.initRevealButtons() },
             { name: "Solver Components", fn: includeSolverComponent },
+            { name: "Ads", fn: () => window.Ads?.initAds() },
         ];
 
         // Execute initialization steps with error handling

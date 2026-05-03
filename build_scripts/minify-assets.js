@@ -15,6 +15,7 @@ const JS_BUNDLE_ORDER = [
     "navigation/scroll-manager.js",
     "ui/tutorial-system.js",
     "ui/lightbox.js",
+    "ui/ads.js",
     "content/link-processor.js",
     "content/quick-links.js",
     "content/solver-button-processor.js",

@@ -8,9 +8,17 @@ Desktop-specific upgrades. Base styles are mobile-first.
 #mobile-content { display: block; }
 #non-mobile-content { display: none; }
 
+
 @media (width >= 48.0625em) { /* --bp-md */
     #mobile-content { display: none; }
     #non-mobile-content { display: block; }
+
+    /*
+    .top-buttons-background-box .version-display {
+        top: unset;
+        bottom: 0;
+    }
+    */
 }
 
 /* Sidebar TOC - shown only when there's enough space beside centered content */
@@ -20,12 +28,21 @@ Desktop-specific upgrades. Base styles are mobile-first.
 
 @media (width >= 30em) { /* --bp-xs */
     .quick-links-container,
-    .content-container {
+    .content-container,
+    .ad-inline,
+    .ad-multiplex {
         max-width: 100%;
     }
 }
 
 @media (width >= 48.0625em) { /* --bp-md */
+    /*
+    .top-buttons-background-box .version-display {
+        top: unset;
+        bottom: 0;
+    }
+     */
+
     :root {
         --font-size-base: 1rem;
         --font-size-xl: 1.75rem;
@@ -33,7 +50,9 @@ Desktop-specific upgrades. Base styles are mobile-first.
     }
 
     .quick-links-container,
-    .content-container {
+    .content-container,
+    .ad-inline,
+    .ad-multiplex {
         padding: var(--space-sm) var(--space-lg);
         max-width: var(--content-max-width);
     }
@@ -97,6 +116,11 @@ Desktop-specific upgrades. Base styles are mobile-first.
 @media (width >= 90em) { /* --bp-xl */
     /* When non-mobile is detected, hide quick links for ToC */
     .quick-links-container { display: none; }
+
+    .ad-right-sidebar,
+    .ad-left-sidebar {
+        display: block;
+    }
 
     .version-display {
         top: var(--space-xs);
