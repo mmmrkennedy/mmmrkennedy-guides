@@ -15,7 +15,7 @@ function setupSolverButtons() {
 
         toggle_button.addEventListener("click", () => {
             toggle_button.classList.toggle("active");
-            nested_container.style.display = toggle_button.classList.contains("active") ? "block" : "none";
+            nested_container.style.display = toggle_button.classList.contains("active") ? "none" : "block";
         });
     }
 }

@@ -495,7 +495,7 @@ function preRenderRevealButtons(content, outputPath) {
         const label =
             el.getAttribute("data-reveal-label");
         const inner = el.innerHTML;
-        el.innerHTML = `<button type="button" class="btn-base in-line-button">${label}</button>
+        el.innerHTML = `<button type="button" class="btn-base btn--reveal">${label}</button>
 <div class="button-activated-div" style="display: none;">${inner}</div>`;
     }
     return dom.serialize();

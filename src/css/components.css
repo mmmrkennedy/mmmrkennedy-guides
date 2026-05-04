@@ -90,42 +90,42 @@ a:hover {
     padding: var(--space-sm) var(--space-md);
     font-size: var(--font-size-sm);
     cursor: pointer;
-    border: none;
-    background-color: var(--color-bg-tertiary);
-    color: var(--color-text-primary);
+    border: 1.5px solid var(--color-border-medium);
+    color: var(--color-text-secondary);
     border-radius: 4px;
-    transition: background-color 0.2s, opacity 0.2s;
+    background: transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .btn:not(:disabled):hover {
-    background-color: var(--color-border-medium);
+    color: var(--color-text-primary);
+    border-color: var(--color-text-muted);
 }
 
 .btn--accent {
-    background-color: var(--color-link-external);
-    color: var(--color-bg-primary);
-    font-weight: bold;
+    border-color: var(--color-link-external);
+    color: var(--color-link-external);
 }
 
 .btn--accent:not(:disabled):hover {
-    background-color: var(--color-link-external);
-    filter: brightness(0.85);
+    color: var(--color-link-external);
+    border-color: var(--color-text-primary);
 }
 
 .btn--danger {
-    background-color: var(--color-warning-border);
-    color: var(--color-bg-primary);
-    font-weight: bold;
+    border-color: var(--color-no-return-border);
+    color: var(--color-no-return-border);
 }
 
 .btn--danger:not(:disabled):hover {
-    background-color: var(--color-warning-border);
-    filter: brightness(0.85);
+    color: var(--color-no-return-border);
+    border-color: var(--color-text-primary);
 }
 
 .btn--fixed {
@@ -134,13 +134,11 @@ a:hover {
     font-size: var(--font-size-base);
     border-radius: 6px;
     opacity: 0.85;
-    transition: all 0.2s ease;
     z-index: 100;
     inset: var(--btn-top, auto) var(--btn-right, auto) var(--btn-bottom, auto) var(--btn-left, auto);
 }
 
 .btn--fixed:hover {
-    background-color: var(--color-bg-secondary);
     opacity: 1;
     transform: translateY(-1px);
 }

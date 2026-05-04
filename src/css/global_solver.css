@@ -212,35 +212,31 @@ BUTTONS - Unified style with main CSS
 .solver-button {
     margin: var(--space-sm);
     padding: var(--space-md) var(--space-lg);
-    background-color: var(--color-bg-tertiary);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border-medium);
+    border: 1px solid var(--color-solver-accent);
+    color: var(--color-solver-accent);
     border-radius: 6px;
     cursor: pointer;
     pointer-events: auto;
     font-weight: 600;
     font-size: 14px;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
+    background: transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-base:hover,
 .solver-button:hover {
-    background-color: var(--color-bg-secondary);
-    border-color: var(--color-border-medium);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    color: var(--color-solver-accent-bright);
+    border-color: var(--color-solver-accent-bright);
 }
 
 .btn-base:active,
 .solver-button:active {
     transform: translateY(0);
-    box-shadow: var(--shadow-sm);
 }
 
 .btn-base.active,
 .solver-button.active {
-    background-color: var(--color-solver-accent);
+    background: var(--color-solver-accent);
     color: var(--color-bg-primary);
     border-color: var(--color-solver-accent);
     font-weight: 700;
@@ -248,7 +244,7 @@ BUTTONS - Unified style with main CSS
 
 .btn-base.active:hover,
 .solver-button.active:hover {
-    background-color: var(--color-solver-accent-bright);
+    background: var(--color-solver-accent-bright);
     border-color: var(--color-solver-accent-bright);
 }
 
@@ -256,13 +252,12 @@ BUTTONS - Unified style with main CSS
 .solver-button.disabled {
     opacity: 0.4;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .btn-base.disabled:hover,
 .solver-button.disabled:hover {
     transform: none;
-    background-color: var(--color-bg-tertiary);
-    box-shadow: var(--shadow-sm);
 }
 
 /*
@@ -429,6 +424,38 @@ GRID LAYOUTS - Puzzle-specific layouts
 
 .in-line-button.active {
     color: var(--color-bg-primary) !important;
+}
+
+/* Inline content reveal toggle — for solver-with-button */
+.btn-base.btn--reveal {
+    display: block;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: transparent;
+    border-color: var(--color-link-page);
+    color: var(--color-link-page);
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-base.btn--reveal:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-text-primary);
+}
+
+.btn-base.btn--reveal.active {
+    background: var(--color-link-page);
+    color: var(--color-bg-primary);
+    border-color: var(--color-link-page);
+}
+
+.btn-base.btn--reveal.active:hover {
+    color: var(--color-bg-primary);
+    border-color: var(--color-text-primary);
 }
 
 /*
@@ -853,6 +880,76 @@ SOLVER-ONLY PAGE LAYOUT
     padding: 0;
     max-width: 100%;
 }
+
+/*
+===============================================================================
+REACTOR SOLVER (Totenreich Claw Machine)
+===============================================================================
+*/
+
+.reactor-grid-wrapper {
+    margin: var(--space-md) 0;
+    display: flex;
+    justify-content: left;
+}
+
+.reactor-grid {
+    --reactor-tile: min(70px, calc((100vw - 120px) / 4));
+
+    display: grid;
+    grid-template-columns: repeat(4, var(--reactor-tile));
+    grid-template-rows: repeat(4, var(--reactor-tile));
+    gap: 3px;
+    background-color: #111;
+    padding: 3px;
+    border: 3px solid #444;
+    border-radius: var(--radius-md);
+    width: fit-content;
+    height: fit-content;
+}
+
+.reactor-cell {
+    width: var(--reactor-tile);
+    height: var(--reactor-tile);
+    border-radius: 2px;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.cell-empty {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+}
+
+.cell-empty:hover {
+    background-color: #2a2a2a;
+    border-color: #555;
+}
+
+.cell-rod {
+    background-color: #4a4a52;
+    border: 1px solid #666;
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / 50%);
+}
+
+.cell-rod:hover {
+    background-color: #5a5a62;
+}
+
+.cell-uranium {
+    background-color: #00c853;
+    border: 1px solid #69f0ae;
+    box-shadow: 0 0 8px rgb(0 200 83 / 70%), inset 0 1px 3px rgb(255 255 255 / 20%);
+    cursor: default;
+}
+
+.cell-activated {
+    background-color: #c9a961;
+    border: 1px solid #d4b56f;
+    box-shadow: 0 0 6px rgb(201 169 97 / 50%);
+    cursor: default;
+}
+
 
 /*
 ===============================================================================

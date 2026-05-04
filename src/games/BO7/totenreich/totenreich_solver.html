@@ -1,0 +1,18 @@
+---
+layout: solver-only.njk
+mapName: 'Totenreich'
+solverTitle: 'Claw Machine Solver'
+guideUrl: '/games/BO7/totenreich/totenreich_guide.html'
+description: Interactive Solver for the Totenreich Claw Machine Puzzle in Black Ops 7 Zombies.
+---
+<div class="content-container" id="totenreich-solver-react"></div>
+
+<script>
+    window.addEventListener("load", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountTotenreichReactorSolver("totenreich-solver-react", { title: "Claw Machine Solver" });
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

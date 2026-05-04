@@ -17,6 +17,7 @@ import IWBeastFloppySolver from "./components/IWBeastFloppySolver";
 import IWBeastVenomXMazeSolver from "./components/IWBeastVenomXMazeSolver";
 import IWBeastVenomXBoxSolver from "./components/IWBeastVenomXBoxSolver";
 import BO1DialSolver from "./components/BO1DialSolver";
+import BO7TotenreichReactorSolver from "./components/BO7TotenreichReactorSolver";
 
 interface MountOptions {
     title?: string;
@@ -25,6 +26,7 @@ interface MountOptions {
 type MountFunction = (elementId: string, options?: MountOptions) => void;
 
 interface ZombiesSolvers {
+    mountTotenreichReactorSolver: MountFunction;
     mountHangmanSolver: MountFunction;
     mountStatueSolver: MountFunction;
     mountHammerSolver: MountFunction;
@@ -61,6 +63,7 @@ function mount(elementId: string, label: string, node: preact.VNode /*, options?
 
 // Global namespace for all solvers
 window.ZombiesSolvers = {
+    mountTotenreichReactorSolver: (id, opts) => mount(id, "TotenreichReactorSolver", <BO7TotenreichReactorSolver title={opts?.title} />),
     mountDialSolver: (id, opts) => mount(id, "DialSolver", <BO1DialSolver title={opts?.title} />),
     mountHangmanSolver: (id, opts) => mount(id, "HangmanSolver", <WW2HangmanSolver title={opts?.title} />),
     mountStatueSolver: (id, opts) => mount(id, "StatueSolver", <WW2StatueSolver title={opts?.title} />),
@@ -85,6 +88,7 @@ const devRoot = document.getElementById("root");
 if (devRoot) {
     render(
         <div>
+            <BO7TotenreichReactorSolver title="Totenreich Reactor Solver" />
             <BO1DialSolver title="COTD Dials Solver" />
             <IWBeastVenomXMazeSolver title="Beast Venom X Maze Solver" />
             <IWBeastVenomXBoxSolver title="Beast Venom X Box Solver" />
