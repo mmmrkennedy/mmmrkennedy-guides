@@ -14,7 +14,7 @@ description: Interactive Solvers for the Shadowed Throne Statue Puzzle and Hangm
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountStatueSolver("statue-solver-react", { title: "Rotating Statues Solver" });
             window.ZombiesSolvers.mountHangmanSolver("hangman-solver-react", { title: "Hangman Solver" });

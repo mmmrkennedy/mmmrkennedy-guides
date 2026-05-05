@@ -1135,7 +1135,7 @@ preloadImages:
 <script src="/js/timezone_conversion.js"></script>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountMahjongSolver("mahjong-solver-react");
             window.ZombiesSolvers.mountShaolinWordFilter("main-ee-word-filter-react");

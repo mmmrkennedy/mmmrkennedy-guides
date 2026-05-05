@@ -557,7 +557,7 @@ preloadImages:
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountBeamsmasherSolver("beamsmasher-react");
         } else {

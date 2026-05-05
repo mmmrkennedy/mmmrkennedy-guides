@@ -10,7 +10,7 @@ description: Interactive Solver for the Call of the Dead Easter Egg Dials in Bla
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountDialSolver("dial-solver-react", { title: "Lighthouse Dials Solver" });
         } else {

@@ -10,7 +10,7 @@ description: Interactive Solver for the Frozen Dawn Lightning Hammer Pillar Puzz
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountHammerSolver("hammer-solver-react", { title: "Lightning Hammer Solver" });
         } else {

@@ -20,7 +20,7 @@ preloadImages:
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountMahjongSolver("mahjong-solver-react", { title: "Mahjong Solver" });
             window.ZombiesSolvers.mountShaolinWordFilter("main-ee-word-filter-react", { title: "Main Quest Word Filter" });

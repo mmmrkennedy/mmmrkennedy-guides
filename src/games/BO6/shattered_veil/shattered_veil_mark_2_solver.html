@@ -8,7 +8,7 @@ description: Interactive Solver for the Shattered Veil Ray Gun Mark 2 Letter Puz
 <div class="content-container" id="letterboard-solver-react"></div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountLetterboardSolver("letterboard-solver-react", { title: "Ray Gun Mark 2 Code Solver" });
         } else {

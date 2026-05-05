@@ -10,7 +10,7 @@ description: Interactive Solver for the Gorod Krovi Easter Egg Valves in Black O
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountValveSolver("valve-solver-react", { title: "Valve Solver" });
         } else {

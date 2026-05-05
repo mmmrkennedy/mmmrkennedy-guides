@@ -8,7 +8,7 @@ description: Interactive Solver for the Totenreich Claw Machine Puzzle in Black 
 <div class="content-container" id="totenreich-solver-react"></div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountTotenreichReactorSolver("totenreich-solver-react", { title: "Claw Machine Solver" });
         } else {

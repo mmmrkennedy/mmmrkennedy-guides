@@ -38,7 +38,7 @@ preloadImages:
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountBeastGnSEightQueensSolver("beast-eight-queens-react", { title: "Eight Queens Solver" });
             window.ZombiesSolvers.mountBeastFloppyDiskSolver("beast-floppy-solver-react", { title: "Floppy Disk Solver" });

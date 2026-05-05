@@ -1122,7 +1122,7 @@ preloadImages:
 </script>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountBeastGnSEightQueensSolver("beast-eight-queens-react");
             window.ZombiesSolvers.mountBeastFloppyDiskSolver("beast-floppy-solver-react");

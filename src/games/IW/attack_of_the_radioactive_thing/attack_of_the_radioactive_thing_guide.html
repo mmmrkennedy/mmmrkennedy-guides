@@ -1421,7 +1421,7 @@ preloadImages:
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountAttackGnSSkull4Solver("gns-skull4-solver-react");
             window.ZombiesSolvers.mountChemicalStepSolver("chemical-solver-react");

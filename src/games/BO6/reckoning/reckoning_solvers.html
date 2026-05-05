@@ -14,7 +14,7 @@ description: Interactive Solvers for Periodic Table Number and S.A.M. Files Orde
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountMaxisItemsSolver("maxis-solver-react", { title: "Maxis Items Solver" });
             window.ZombiesSolvers.mountPeriodicTableSolver("periodic-solver-react", { title: "Periodic Table Solver" });

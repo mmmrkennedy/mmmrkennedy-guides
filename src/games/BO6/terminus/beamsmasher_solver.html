@@ -15,7 +15,7 @@ preloadImages:
 <div class="content-container" id="beamsmasher-solver-react"></div>
 
 <script>
-    window.addEventListener("load", () => {
+    document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountBeamsmasherSolver("beamsmasher-solver-react", { title: "Beamsmasher Solver" });
         } else {
