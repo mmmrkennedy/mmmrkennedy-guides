@@ -57,7 +57,7 @@ function pushAd(container) {
     }
 }
 
-const AD_INTERVAL_PX = 1000;
+const AD_INTERVAL_PX = 2000;
 
 function insertInlineAd(afterContainer) {
     const wrapper = document.createElement("div");
@@ -220,9 +220,11 @@ function applyMode(mode) {
     }
 
     if (needInline && !injected.inline) {
-        injectInlineAds();
-        injectMultiplexAd();
-        if (isIndexPage()) injectInFeedAds();
+        if (!isIndexPage()) {
+            injectInlineAds();
+            injectMultiplexAd();
+        }
+        // if (isIndexPage()) injectInFeedAds();
         injected.inline = true;
     }
 
@@ -276,4 +278,18 @@ function initAds() {
     }
 }
 
-window.Ads = { initAds };
+function makeAdsRed() {
+    const styleId = "ads-red-override";
+    if (document.getElementById(styleId)) return;
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = `
+        .ad-inline, .ad-multiplex, .ad-infeed, .ad-right-sidebar, .ad-left-sidebar {
+            background-color: red !important;
+            border: 2px solid darkred !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+window.Ads = { initAds, makeAdsRed };
