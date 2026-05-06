@@ -36,3 +36,5 @@ nul
 !/src/tips_symbol.png
 /package-lock.json
 /html_sizes.txt
+/_img_backup/
+/src/games/_webp_replace_candidates.csv

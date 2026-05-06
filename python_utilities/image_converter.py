@@ -1,233 +1,361 @@
+"""
+Convert images to/from WebP using cwebp/dwebp.
+
+Originals are backed up to a sibling '_img_backup' folder next to 'src'
+before conversion, mirroring the path structure under 'src'.
+e.g. src/games/BO4/foo.png -> _img_backup/games/BO4/foo.png
+"""
+
 import os
-import subprocess
 import shutil
+import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+DEFAULT_DIR = Path(r"D:\programming_projects\mmmrkennedy-guides\src\games")
+SOURCE_EXTS = {".png", ".jpg", ".jpeg", ".bmp"}
+BACKUP_FOLDER_NAME = "_img_backup"
+SRC_SEGMENT = "src"
+PICTURES_FOLDER = "pictures"
 
 
-def png_to_webp(root_dir, image_quality, image_extensions):
-    num_images = count_image_files(root_dir, image_extensions)
-    images_converted = 0
-
-    if num_images == 0:
-        print("No images found!")
-    else:
-        with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(convert_to_webp, dirpath, filename, image_quality)
-                       for dirpath, dirnames, filenames in os.walk(root_dir)
-                       for filename in filenames if any(filename.lower().endswith(ext.lower()) for ext in image_extensions)]
-
-            for future in as_completed(futures):
-                result = future.result()
-                if result:
-                    images_converted += 1
-                    print(f"Converted {images_converted} of {num_images} images - {result}")
-                else:
-                    print(f"Conversion failed for {result}")
-
-        print(f"Conversion to WebP @ {image_quality} Quality Completed!")
+def find_images(root: Path, extensions: set[str]) -> list[Path]:
+    """One walk, returns the full list. Beats walking twice for a count."""
+    exts = {e.lower() for e in extensions}
+    return [
+        Path(dirpath) / name
+        for dirpath, _, filenames in os.walk(root)
+        for name in filenames
+        if Path(name).suffix.lower() in exts
+    ]
 
 
-def convert_to_webp(dirpath, filename, image_quality):
-    input_path = os.path.join(dirpath, filename)
-    output_path = os.path.join(dirpath, os.path.splitext(filename)[0] + '.webp')
+def _check_tool(name: str) -> None:
+    if shutil.which(name) is None:
+        sys.exit(f"Error: '{name}' not found on PATH. Install Google's libwebp.")
 
-    result = subprocess.run(['cwebp', '-q', str(image_quality), '-m', '6', '-pass', '10', '-mt', input_path, '-o', output_path],
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
 
-    if result.returncode == 0 and os.path.exists(output_path):
-        if input_path != output_path:
-            os.remove(input_path)
-        return filename
-    else:
+def resolve_backup_path(input_path: Path) -> Path | None:
+    """
+    Map src/games/foo/bar.png -> <parent of src>/_img_backup/games/foo/bar.png
+
+    Returns None if 'src' isn't in the path. Uses the *last* 'src' segment so
+    paths like C:/src/projects/src/games/... map under the inner one.
+    """
+    parts = input_path.resolve().parts
+    src_indices = [i for i, p in enumerate(parts) if p == SRC_SEGMENT]
+    if not src_indices:
         return None
+    src_idx = src_indices[-1]
+    backup_root = Path(*parts[:src_idx]) / BACKUP_FOLDER_NAME
+    relative_tail = Path(*parts[src_idx + 1:])
+    return backup_root / relative_tail
 
 
-def webp_to_png(root_dir):
-    num_images = count_image_files(root_dir, ['.webp'])
-    images_converted = 0
+def backup_original(input_path: Path) -> tuple[bool, str, Path | None]:
+    """
+    Copy original to backup location before conversion.
+    Returns (ok, message, backup_path). If backup exists, returns (False, ...)
+    so the caller can skip conversion.
+    """
+    backup_path = resolve_backup_path(input_path)
+    if backup_path is None:
+        return False, f"no '{SRC_SEGMENT}' segment in path, can't determine backup location", None
 
-    if num_images == 0:
-        print("No images found!")
-        return
-
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(convert_to_png, dirpath, filename)
-                   for dirpath, dirnames, filenames in os.walk(root_dir)
-                   for filename in filenames if filename.lower().endswith('.webp')]
-
-        for future in as_completed(futures):
-            result = future.result()
-            if result:
-                images_converted += 1
-                print(f"Converted {images_converted} of {num_images} images")
-            else:
-                print(f"Conversion failed for {result}")
-
-    print("Conversion to PNG Completed!")
-
-
-def convert_to_png(dirpath, filename):
-    input_path = os.path.join(dirpath, filename)
-    output_path = os.path.join(dirpath, os.path.splitext(filename)[0] + '.png')
+    if backup_path.exists():
+        return True, "backup already exists, proceeding", backup_path
 
     try:
-        result = subprocess.run(['dwebp', input_path, '-o', output_path], stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL, check=True)
+        backup_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(input_path, backup_path)
+    except OSError as e:
+        return False, f"backup failed: {e}", backup_path
 
-        if result.returncode == 0 and os.path.exists(output_path):
-            os.remove(input_path)
-            return filename
-        else:
-            return None
-    except subprocess.CalledProcessError:
-        return None
+    return True, "ok", backup_path
 
 
-def remove_empty_dirs(dir_path):
-    for dirpath, dirnames, filenames in os.walk(dir_path, topdown=False):
+def convert_to_webp(input_path: Path, quality: int) -> tuple[Path, bool, str]:
+    """Returns (path, success, message). Original is deleted only on success."""
+    backup_ok, backup_msg, _ = backup_original(input_path)
+    if not backup_ok:
+        return input_path, False, f"skipped: {backup_msg}"
+
+    output_path = input_path.with_suffix(".webp")
+    try:
+        subprocess.run(
+            ["cwebp", "-q", str(quality), "-m", "6", "-pass", "10", "-mt",
+             str(input_path), "-o", str(output_path)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        err = e.stderr.decode("utf-8", errors="replace").strip().splitlines()[-1:] or [""]
+        return input_path, False, f"cwebp failed: {err[0]}"
+    except FileNotFoundError:
+        return input_path, False, "cwebp not on PATH"
+
+    if not output_path.exists():
+        return input_path, False, "output not created"
+
+    # Only delete the source if input and output are different files.
+    # (They differ because suffix changed — but webp->webp re-encode would match.)
+    if input_path != output_path:
         try:
-            if not os.listdir(dirpath):
-                print(f"Removing empty directory: {dirpath}")
-                os.rmdir(dirpath)
-                parent_dir = os.path.dirname(dirpath)
-                if parent_dir != dir_path:
-                    remove_empty_dirs(parent_dir)
-        except FileNotFoundError:
+            input_path.unlink()
+        except OSError as e:
+            return input_path, True, f"converted but couldn't delete original: {e}"
+
+    return input_path, True, "ok"
+
+
+def convert_to_png(input_path: Path) -> tuple[Path, bool, str]:
+    backup_ok, backup_msg, _ = backup_original(input_path)
+    if not backup_ok:
+        return input_path, False, f"skipped: {backup_msg}"
+
+    output_path = input_path.with_suffix(".png")
+    try:
+        subprocess.run(
+            ["dwebp", str(input_path), "-o", str(output_path)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        err = e.stderr.decode("utf-8", errors="replace").strip().splitlines()[-1:] or [""]
+        return input_path, False, f"dwebp failed: {err[0]}"
+    except FileNotFoundError:
+        return input_path, False, "dwebp not on PATH"
+
+    if not output_path.exists():
+        return input_path, False, "output not created"
+
+    try:
+        input_path.unlink()
+    except OSError as e:
+        return input_path, True, f"converted but couldn't delete original: {e}"
+
+    return input_path, True, "ok"
+
+
+def run_batch(images: list[Path], worker, label: str) -> list[Path]:
+    """Generic parallel runner. Returns list of successfully-converted paths."""
+    if not images:
+        print("No images found.")
+        return []
+
+    total = len(images)
+    succeeded: list[Path] = []
+    skipped = 0
+    failed: list[tuple[Path, str]] = []
+
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(worker, p): p for p in images}
+        for i, future in enumerate(as_completed(futures), start=1):
+            path, ok, msg = future.result()
+            if ok:
+                succeeded.append(path)
+                print(f"[{i}/{total}] {path.name}")
+            elif msg.startswith("skipped:"):
+                skipped += 1
+                failed.append((path, msg))
+                print(f"[{i}/{total}] SKIP {path.name}: {msg}")
+            else:
+                failed.append((path, msg))
+                print(f"[{i}/{total}] FAILED {path.name}: {msg}")
+
+    print(f"\n{label}: {len(succeeded)}/{total} succeeded, "
+          f"{skipped} skipped, {len(failed) - skipped} failed.")
+    if failed:
+        print("Issues:")
+        for path, msg in failed[:20]:
+            print(f"  {path}: {msg}")
+        if len(failed) > 20:
+            print(f"  ... and {len(failed) - 20} more")
+
+    return succeeded
+
+
+def find_guide_folder(image_path: Path) -> Path | None:
+    """
+    Given an image path, walk up to find the guide folder (the dir containing
+    'pictures'). Returns None if no 'pictures' segment is found.
+
+    src/games/WW2/groesten_haus/pictures/foo/bar.png -> src/games/WW2/groesten_haus
+    """
+    parts = image_path.parts
+    try:
+        idx = parts.index(PICTURES_FOLDER)
+    except ValueError:
+        return None
+    return Path(*parts[:idx])
+
+
+def update_html_references(converted: list[Path]) -> None:
+    """
+    For every successfully-converted image, rewrite its references in the
+    HTML files of its guide folder. Each HTML is read/written exactly once
+    even if many of its images were converted.
+    """
+    if not converted:
+        return
+
+    # Group converted images by guide folder so each HTML is only touched once.
+    by_guide: dict[Path, list[Path]] = {}
+    orphans: list[Path] = []
+    for img in converted:
+        guide = find_guide_folder(img)
+        if guide is None:
+            orphans.append(img)
+        else:
+            by_guide.setdefault(guide, []).append(img)
+
+    if orphans:
+        print(f"\n{len(orphans)} converted image(s) had no '{PICTURES_FOLDER}' "
+              "ancestor — skipping HTML update for those.")
+
+    print(f"\nUpdating HTML references in {len(by_guide)} guide folder(s)...")
+
+    total_files_changed = 0
+    total_replacements = 0
+
+    for guide, images in by_guide.items():
+        html_files = list(guide.glob("*.html"))
+        if not html_files:
+            print(f"  {guide.name}: no .html files found")
             continue
 
+        # Build a list of (old_relative_path, new_relative_path) for this guide.
+        # Paths in HTML are relative to the guide folder, e.g. "pictures/foo/bar.png".
+        replacements = []
+        for img in images:
+            try:
+                rel = img.relative_to(guide)
+            except ValueError:
+                continue
+            old_rel = rel.as_posix()  # forward slashes for HTML
+            new_rel = rel.with_suffix(".webp").as_posix()
+            replacements.append((old_rel, new_rel))
 
-def incremental_backup(src_dir, dest_dir):
-    if not os.path.exists(src_dir):
-        raise ValueError(f"Source directory {src_dir} does not exist!")
+        for html_path in html_files:
+            try:
+                content = html_path.read_text(encoding="utf-8")
+            except OSError as e:
+                print(f"  could not read {html_path}: {e}")
+                continue
 
-    print(f"Backing up {src_dir} to {dest_dir}")
+            new_content = content
+            file_replacements = 0
+            for old_rel, new_rel in replacements:
+                count = new_content.count(old_rel)
+                if count:
+                    new_content = new_content.replace(old_rel, new_rel)
+                    file_replacements += count
 
-    image_extensions = {".jpg", ".jpeg", ".webp", ".png"}
+            if file_replacements:
+                try:
+                    html_path.write_text(new_content, encoding="utf-8")
+                except OSError as e:
+                    print(f"  could not write {html_path}: {e}")
+                    continue
+                total_files_changed += 1
+                total_replacements += file_replacements
+                print(f"  {html_path.relative_to(guide.parent)}: "
+                      f"{file_replacements} replacement(s)")
 
-    for dirpath, dirnames, filenames in os.walk(src_dir):
-        rel_path = os.path.relpath(dirpath, src_dir)
-        dest_path = os.path.join(dest_dir, rel_path)
-
-        if not os.path.exists(dest_path):
-            os.makedirs(dest_path)
-
-        for filename in filenames:
-            if os.path.splitext(filename)[1].lower() in image_extensions:
-                src_file = os.path.join(dirpath, filename)
-                dest_file = os.path.join(dest_path, filename)
-
-                if (not os.path.exists(dest_file)) or (os.path.getmtime(src_file) > os.path.getmtime(dest_file)):
-                    shutil.copy2(src_file, dest_file)
-                    print(f"Copied {src_file} to {dest_file}")
-                else:
-                    print(f"Skipped {src_file}, already up to date.")
-
-    remove_empty_dirs(dest_dir)
-
-
-def count_image_files(directory_path, image_extensions):
-    image_count = 0
-
-    for root, dirs, files in os.walk(directory_path):
-        for file in files:
-            for ext in image_extensions:
-                if file.lower().endswith(ext.lower()):
-                    image_count += 1
-                    break
-
-    return image_count
+    print(f"\nHTML update: {total_replacements} replacement(s) "
+          f"across {total_files_changed} file(s).")
 
 
-def valid_dir(image_dir):
-    if image_dir == "":
-        new_input = input("Enter the path to the image directory: ")
-        if new_input == "":
-            default_dir = r"D:\programming_projects\zombiesGuidesPublic\games"
-            print(f"Using default directory: {default_dir}")
-            return default_dir
+def warn_if_no_src(root: Path) -> bool:
+    """Pre-flight: warn if the input dir doesn't sit under a 'src' folder."""
+    if SRC_SEGMENT not in root.resolve().parts:
+        print(f"WARNING: '{root}' does not contain a '{SRC_SEGMENT}' folder.")
+        print("Backups can't be created without a 'src' anchor.")
+        return input("Continue anyway? (y/n): ").lower() == "y"
+    return True
+
+
+def convert_dir_to_webp(root: Path, quality: int, include_webp: bool) -> None:
+    _check_tool("cwebp")
+    if not warn_if_no_src(root):
+        return
+    exts = SOURCE_EXTS | {".webp"} if include_webp else SOURCE_EXTS
+    images = find_images(root, exts)
+    print(f"Found {len(images)} images in {root}")
+    converted = run_batch(images, lambda p: convert_to_webp(p, quality),
+                          f"Conversion to WebP @ q={quality}")
+    # Don't rewrite HTML for webp->webp re-encodes (suffix didn't change).
+    suffix_changed = [p for p in converted if p.suffix.lower() != ".webp"]
+    update_html_references(suffix_changed)
+
+
+def convert_dir_to_png(root: Path) -> None:
+    _check_tool("dwebp")
+    if not warn_if_no_src(root):
+        return
+    images = find_images(root, {".webp"})
+    print(f"Found {len(images)} webp files in {root}")
+    run_batch(images, convert_to_png, "Conversion to PNG")
+
+
+# ---------- prompts ----------
+
+def prompt_dir(previous: Path | None) -> Path:
+    if previous and input(f"Use previous directory ({previous})? (y/n): ").lower() != "n":
+        return previous
+    raw = input("Enter image directory (blank for default): ").strip().strip('\'"')
+    if not raw:
+        print(f"Using default: {DEFAULT_DIR}")
+        return DEFAULT_DIR
+    return Path(raw)
+
+
+def prompt_int(prompt: str, default: int, lo: int, hi: int) -> int:
+    raw = input(prompt).strip()
+    if not raw:
+        return default
+    try:
+        v = int(raw)
+        if lo <= v <= hi:
+            return v
+    except ValueError:
+        pass
+    print(f"Invalid value, using {default}")
+    return default
+
+
+def main() -> None:
+    image_dir: Path | None = None
+    while True:
+        choice = input("\n(1) PNG/JPG -> WebP   (2) WebP -> PNG   (3) Quit: ").strip()
+
+        if choice == "1":
+            if input("Default config? (y/n): ").lower() != "n":
+                convert_dir_to_webp(DEFAULT_DIR, 90, include_webp=False)
+                image_dir = DEFAULT_DIR
+            else:
+                image_dir = prompt_dir(image_dir)
+                if not image_dir.is_dir():
+                    print(f"Not a directory: {image_dir}")
+                    continue
+                quality = prompt_int("Quality 1-100 [90]: ", 90, 1, 100)
+                include = input("Include existing webp files? (y/n) [n]: ").lower() == "y"
+                convert_dir_to_webp(image_dir, quality, include)
+                break
+
+        elif choice == "2":
+            image_dir = prompt_dir(image_dir)
+            if not image_dir.is_dir():
+                print(f"Not a directory: {image_dir}")
+                continue
+            convert_dir_to_png(image_dir)
+            break
+
+        elif choice == "3":
+            break
+
         else:
-            return new_input
-    else:
-        use_previous_dir = input("Use previous directory? (y/n): ")
-        if use_previous_dir == "n":
-            return input("Enter the path to the image directory: ").strip('\'"')
-        else:
-            print("Using previous directory...")
-            return image_dir
+            print("Pick 1, 2, or 3.")
 
 
 if __name__ == "__main__":
-    import sys
-    import argparse
-
-    # Set up argument parser for non-interactive usage
-    parser = argparse.ArgumentParser(description='Convert images to WebP or PNG')
-    parser.add_argument('--mode', choices=['webp', 'png'], default='webp',
-                        help='Conversion mode: webp (default) or png')
-    parser.add_argument('--dir', type=str, default=None,
-                        help='Directory to process (default: src/games)')
-    parser.add_argument('--quality', type=int, default=90,
-                        help='WebP quality 1-100 (default: 90)')
-    parser.add_argument('--include-webp', action='store_true',
-                        help='Include existing webp files in conversion')
-    parser.add_argument('--interactive', action='store_true',
-                        help='Run in interactive mode')
-
-    args = parser.parse_args()
-
-    # Interactive mode (original behavior)
-    if args.interactive:
-        image_dir = ""
-        while True:
-            convert_option = input("Convert to WebP (1), convert to PNG (2), or Quit (3)? ")
-
-            if convert_option == "1":
-                if input("Default Config? (y/n): ") == "n":
-                    image_dir = valid_dir(image_dir)
-
-                    image_quality = input("Enter the image quality (1-100), 90 is Default: ")
-                    if image_quality == "":
-                        image_quality = "90"
-
-                    include_webp = input("Include webp files? (y/n), No is default: ")
-                    if include_webp == "" or include_webp.lower() == "n":
-                        image_extensions = ['.png', '.jpg', '.jpeg', '.bmp']
-                    else:
-                        image_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.webp']
-
-                    png_to_webp(image_dir, image_quality, image_extensions)
-                else:
-                    image_extensions = ['.png', '.jpg', '.jpeg', '.bmp']
-                    path = r"D:\programming_projects\zombiesGuidesPublic\games"
-                    png_to_webp(path, "90", image_extensions)
-
-            elif convert_option == "2":
-                image_dir = valid_dir(image_dir)
-                webp_to_png(image_dir)
-
-            elif convert_option == "3":
-                break
-    else:
-        # Non-interactive mode (for build scripts)
-        # Determine directory
-        if args.dir:
-            target_dir = args.dir
-        else:
-            # Get script directory and construct path to src/games
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            target_dir = os.path.join(script_dir, '..', 'src', 'games')
-            target_dir = os.path.normpath(target_dir)
-
-        if not os.path.exists(target_dir):
-            print(f"Error: Directory {target_dir} does not exist!")
-            sys.exit(1)
-
-        print(f"Processing directory: {target_dir}")
-
-        if args.mode == 'webp':
-            image_extensions = ['.png', '.jpg', '.jpeg', '.bmp']
-            if args.include_webp:
-                image_extensions.append('.webp')
-            png_to_webp(target_dir, args.quality, image_extensions)
-        elif args.mode == 'png':
-            webp_to_png(target_dir)
+    main()

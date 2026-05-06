@@ -1,9 +1,11 @@
 import { useState } from "preact/hooks";
+import type { JSX } from "preact";
 
 type CellType = "empty" | "rod";
 type Phase = "setup" | "results";
+type Confidence = "high" | "med" | "low";
 
-const defaultMessage = "Experimental! Scoring formula is still being reverse-engineered and may not work. Message \"Mark\" on the discord if you find an incorrect solution. Click cells to place control rods, then click Solve.";
+const defaultMessage = "Experimental! Scoring is still being reverse-engineered. Solutions are ranked by confidence (High > Med > Low). Try High first, but Med and Low may also work. Message \"Mark\" on the discord if you find an incorrect solution. Click cells to place control rods, then click Solve.";
 
 function makeGrid(): CellType[][] {
     return Array.from({ length: 4 }, () => Array(4).fill("empty") as CellType[]);
@@ -76,46 +78,37 @@ function baseScore(n: number): number {
 
 // Compute total net score using best-known formula.
 // Base: Σ f(nᵢ) over U-containing components.
-// Bonus: when all 3 U's share a single component, that component gets +f(n)/4.
-// (Multi-group bonus for split U distributions is not yet pinned down — this
-// solver flags those as "uncertain" rather than confidently winning.)
-function computeScore(components: Component[]): { net: number; certain: boolean } {
-    let net = 0;
-    let allThreeInOne = false;
-    let splitDistribution = false;
+// Bonus: when all 3 U's share a single component, that component would get +f(n)/4.
+// (The bonus is computed for debug visibility only — the game does not appear to
+// apply it. Net score returned excludes the bonus.)
+function computeScore(components: Component[]): {
+    net: number;
+    netNoBonus: number;
+    bonus: number;
+} {
+    let netNoBonus = 0;
+    let bonus = 0;
 
     for (const c of components) {
         if (c.uraniumCount === 0) continue;
-        net += baseScore(c.size);
+        netNoBonus += baseScore(c.size);
         if (c.uraniumCount === 3) {
-            allThreeInOne = true;
-            net += baseScore(c.size) / 4;
-        } else if (c.uraniumCount > 0 && c.uraniumCount < 3) {
-            splitDistribution = true;
+            // Bonus disabled — game does not appear to apply +f(n)/4 for all-3-clustered.
+            // Computed for debug visibility only.
+            bonus += baseScore(c.size) / 4;
         }
     }
 
-    // We're confident when all 3 U's cluster (f(n)/4 rule fits data).
-    // We're uncertain when U's split — bonus for that case isn't solved.
-    const certain = allThreeInOne || !splitDistribution;
-    return { net, certain };
+    return { net: netNoBonus, netNoBonus, bonus };
 }
 
-// Green zone is 513–595px raw, baseline 27px → 486–568 net.
-// Allow ±2px measurement variance.
-const GREEN_MIN = 486;
-const GREEN_MAX = 568;
+// Keep any solution whose score lands within the observed-or-plausible win range.
+// Discarded scores: confirmed fails at raw 395 and raw 538 set the outer bounds.
+const KEEP_NET_MIN = 383;
+const KEEP_NET_MAX = 503;
 
-type WinKind = "certain" | "likely" | "no";
-
-function classifyWin(components: Component[]): WinKind {
-    const { net, certain } = computeScore(components);
-    if (net < GREEN_MIN || net > GREEN_MAX) {
-        // Could still win via unknown bonus if uncertain — flag if close.
-        if (!certain && net >= GREEN_MIN - 120 && net <= GREEN_MAX) return "likely";
-        return "no";
-    }
-    return certain ? "certain" : "likely";
+function isKeepableScore(net: number): boolean {
+    return net >= KEEP_NET_MIN && net <= KEEP_NET_MAX;
 }
 
 function combinations<T>(arr: T[], k: number): T[][] {
@@ -129,8 +122,35 @@ type Solution = {
     placements: [number, number][];
     components: Component[];
     net: number;
-    kind: WinKind;
+    netNoBonus: number;
+    bonus: number;
+    confidence: Confidence;
 };
+
+// Confidence tiers calibrated against observed data.
+// Raw score = net + 27.
+//
+// Confirmed wins:    raw 410 (min visual), 432, 462 (max visual)
+// Confirmed fails:   raw 395 (big miss), raw 538 (wrong)
+// Visual oddity:     raw 512 lands at the same visual spot as 410 — possibly a
+//                    second valid window, but not confirmed as an actual win.
+//
+// High:  raw 410–462 (net 383–435) — full confirmed-win range, no buffer.
+// Med:   raw 463–475 (net 436–448) — narrow buffer above max confirmed win.
+// Low:   raw 476–530 (net 449–503) — covers the suspicious 512 visual match
+//                                    but stops before the confirmed 538 fail.
+const HIGH_NET_MIN = 383;
+const HIGH_NET_MAX = 435;
+const MED_NET_MIN = 436;
+const MED_NET_MAX = 448;
+const LOW_NET_MIN = 449;
+const LOW_NET_MAX = 503;
+
+function classifyConfidence(net: number): Confidence {
+    if (net >= HIGH_NET_MIN && net <= HIGH_NET_MAX) return "high";
+    if (net >= MED_NET_MIN && net <= MED_NET_MAX) return "med";
+    return "low";
+}
 
 function findSolutions(grid: CellType[][]): Solution[] {
     const emptyCells: [number, number][] = [];
@@ -142,15 +162,17 @@ function findSolutions(grid: CellType[][]): Solution[] {
     for (const combo of combinations(emptyCells, 3)) {
         const placements = combo as [number, number][];
         const components = poweredComponents(grid, placements);
-        const kind = classifyWin(components);
-        if (kind === "no") continue;
-        const { net } = computeScore(components);
-        results.push({ placements, components, net, kind });
+        const { net, netNoBonus, bonus } = computeScore(components);
+        if (!isKeepableScore(net)) continue;
+        const confidence = classifyConfidence(net);
+        results.push({ placements, components, net, netNoBonus, bonus, confidence });
     }
 
-    // Certain wins first, then likely, then by score descending within each.
+    // Sort by confidence first (high > med > low), then by score descending within each tier.
+    const confidenceRank: Record<Confidence, number> = { high: 0, med: 1, low: 2 };
     results.sort((a, b) => {
-        if (a.kind !== b.kind) return a.kind === "certain" ? -1 : 1;
+        const cDiff = confidenceRank[a.confidence] - confidenceRank[b.confidence];
+        if (cDiff !== 0) return cDiff;
         return b.net - a.net;
     });
     return results;
@@ -161,7 +183,8 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
     const [phase, setPhase] = useState<Phase>("setup");
     const [solutions, setSolutions] = useState<Solution[]>([]);
     const [solutionIndex, setSolutionIndex] = useState<number>(0);
-    const [message, setMessage] = useState<string>(
+    const [debug, setDebug] = useState<boolean>(false);
+    const [message, setMessage] = useState<string | JSX.Element>(
         defaultMessage,
     );
 
@@ -178,11 +201,27 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         });
     };
 
-    const formatMessage = (sols: Solution[], idx: number): string => {
+    const formatMessage = (sols: Solution[], idx: number): string | JSX.Element => {
         if (sols.length === 0) return "No solutions found. Check your rod placement matches the game.";
         const s = sols[idx];
-        const tag = s.kind === "certain" ? "confirmed" : "likely";
-        return `Solution ${idx + 1} of ${sols.length} — ${tag} (score ~${Math.round(s.net + 27)}px)`;
+        const colors: Record<Confidence, string> = {
+            high: "#2ecc40",
+            med: "#ff851b",
+            low: "#ff4136",
+        };
+        const labels: Record<Confidence, string> = {
+            high: "High",
+            med: "Med",
+            low: "Low",
+        };
+        const score = Math.round(s.netNoBonus);
+        return (
+            <>
+                Solution {idx + 1} of {sols.length} — Confidence:{" "} <span style={{ color: colors[s.confidence], fontWeight: "bold" }}>
+                    {labels[s.confidence]}
+                </span> {" "}— Score: {score}
+            </>
+        );
     };
 
     const handleSolve = () => {
@@ -237,10 +276,57 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         return cells;
     };
 
+    const renderDebugPanel = () => {
+        if (!debug) return null;
+        const sol = solutions[solutionIndex];
+        if (!sol) {
+            return (
+                <div className="solver-debug-panel" style={{
+                    marginTop: "1rem",
+                    padding: "0.75rem",
+                    border: "1px dashed #888",
+                    borderRadius: "4px",
+                    fontFamily: "monospace",
+                    fontSize: "0.85rem",
+                    whiteSpace: "pre-wrap",
+                }}>
+                    {phase === "setup"
+                        ? "Debug: place rods and click Solve to see score breakdown."
+                        : "Debug: no solutions to inspect."}
+                </div>
+            );
+        }
+        const raw = Math.round(sol.net + 27);
+        const rawNoBonus = Math.round(sol.netNoBonus + 27);
+        const componentsStr = sol.components
+            .map((c) => `n=${c.size} U=${c.uraniumCount} → ${baseScore(c.size).toFixed(1)}`)
+            .join("\n  ");
+        return (
+            <div className="solver-debug-panel" style={{
+                marginTop: "1rem",
+                padding: "0.75rem",
+                border: "1px dashed #888",
+                borderRadius: "4px",
+                fontFamily: "monospace",
+                fontSize: "0.85rem",
+                whiteSpace: "pre-wrap",
+                textAlign: "left",
+            }}>
+                {`Solution ${solutionIndex + 1}/${solutions.length}
+Confidence:    ${sol.confidence}
+Net (current): ${sol.net.toFixed(2)}    → raw ${raw}px
+Net (no bonus):${sol.netNoBonus.toFixed(2)}    → raw ${rawNoBonus}px
+Bonus applied: ${sol.bonus.toFixed(2)} ${sol.bonus > 0 ? "(all 3 U in one component)" : "(no bonus)"}
+Components:
+  ${componentsStr}`}
+            </div>
+        );
+    };
+
     return (
         <div className="solver-container">
-            {title && <h2 className="solver-title">{title}</h2>}
-            <p className="solver-instructions">{message}</p>
+            {title && <h2 className="solver-title">{title}</h2>}<p className="solver-instructions">{message}</p>
+            <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem" }}> <input type="checkbox" checked={debug} onChange={(e) => setDebug((e.target as HTMLInputElement).checked)} style={{ marginRight: "0.4rem" }} /> Debug mode </label>
             <div className="reactor-grid-wrapper">
                 <div className="reactor-grid">{renderGrid()}</div>
             </div>
@@ -269,7 +355,7 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
                         Reset
                     </button>
                 </div>
-            )}
+            )} {renderDebugPanel()}
         </div>
     );
 }
