@@ -1,217 +1,139 @@
-import { useState } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 
-type FileValue = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-
-type SamFile = {
+interface SamFile {
     file_number: number;
     name: string;
     date: string;
-    order: number;
-};
+    chronological_order: number;
+}
 
-type FileNumber = "file1" | "file2" | "file3" | "file4";
-
-const samFiles: SamFile[] = [
-    { file_number: 6, name: "BND Badge", date: "6/28/1985", order: 1 },
-    { file_number: 1, name: "Notso's Collar", date: "7/15/1985", order: 2 },
-    { file_number: 3, name: "Scarf", date: "8/21/1985", order: 3 },
-    { file_number: 4, name: "Wristwatch", date: "9/2/1985", order: 4 },
-    { file_number: 5, name: "Combat Goggles", date: "10/12/1985", order: 5 },
-    { file_number: 2, name: "Katana", date: "12/8/1985", order: 6 },
+const SAM_FILES: SamFile[] = [
+    { file_number: 6, name: "BND Badge", date: "6/28/1985", chronological_order: 1 },
+    { file_number: 1, name: "Notso's Collar", date: "7/15/1985", chronological_order: 2 },
+    { file_number: 3, name: "Scarf", date: "8/21/1985", chronological_order: 3 },
+    { file_number: 4, name: "Wristwatch", date: "9/2/1985", chronological_order: 4 },
+    { file_number: 5, name: "Combat Goggles", date: "10/12/1985", chronological_order: 5 },
+    { file_number: 2, name: "Katana", date: "12/8/1985", chronological_order: 6 },
 ];
 
-function sort_files(updatedFiles: FileValue[]) {
-    // Check if all files are selected (using updated values)
-    if (updatedFiles.every((file) => file !== 0)) {
-        // Get the selected files
-        const selectedFiles: SamFile[] = [];
+const fileByNumber = new Map(SAM_FILES.map((f) => [f.file_number, f]));
 
-        for (const num of updatedFiles) {
-            const file = samFiles.find((file) => file.file_number === num);
-            if (file) {
-                selectedFiles.push(file);
-            }
-        }
+type CalcResult =
+    | { kind: "ok"; code: string }
+    | { kind: "incomplete"; remaining: number };
 
-        // Sort by chronological order (order property)
-        selectedFiles.sort((a, b) => a.order - b.order);
+function calculateCode(picked: number[]): CalcResult {
+    if (picked.length < 4) return { kind: "incomplete", remaining: 4 - picked.length };
 
-        // Create the 4-digit number from chronologically sorted files
-        return "Code: " + selectedFiles.map((file) => file.file_number).join("");
-    } else {
-        return "Select 4 files...";
-    }
+    const files = picked
+        .map((n) => fileByNumber.get(n))
+        .filter((f): f is SamFile => f !== undefined)
+        .sort((a, b) => a.chronological_order - b.chronological_order);
+
+    return { kind: "ok", code: files.map((f) => f.file_number).join("") };
 }
 
 export default function BO6MaxisItemsSolver({ title }: { title?: string }) {
-    const [file1, setFile1] = useState<FileValue>(0);
-    const [file2, setFile2] = useState<FileValue>(0);
-    const [file3, setFile3] = useState<FileValue>(0);
-    const [file4, setFile4] = useState<FileValue>(0);
-    const [result, setResult] = useState<string>("Select 4 files...");
+    // picked[i] = file_number assigned to slot i (the i-th in-game appearance).
+    // Length grows from 0 to 4 as user clicks; clicking a slot removes that entry.
+    const [picked, setPicked] = useState<number[]>([]);
 
-    function handle_file_select_change(e: Event) {
-        const selected_file_value = Number((e.currentTarget as HTMLSelectElement).value) as FileValue;
-        const selected_file_number = (e.currentTarget as HTMLSelectElement).id as FileNumber;
+    const result = useMemo(() => calculateCode(picked), [picked]);
+    const recalcKey = picked.join(",");
 
-        let updatedFiles: FileValue[];
-
-        if (selected_file_number === "file1") {
-            setFile1(selected_file_value);
-            updatedFiles = [selected_file_value, file2, file3, file4];
-        } else if (selected_file_number === "file2") {
-            setFile2(selected_file_value);
-            updatedFiles = [file1, selected_file_value, file3, file4];
-        } else if (selected_file_number === "file3") {
-            setFile3(selected_file_value);
-            updatedFiles = [file1, file2, selected_file_value, file4];
-        } else if (selected_file_number === "file4") {
-            setFile4(selected_file_value);
-            updatedFiles = [file1, file2, file3, selected_file_value];
-        } else {
-            return; // Should never happen
+    const togglePick = (fileNumber: number) => {
+        const existingIndex = picked.indexOf(fileNumber);
+        if (existingIndex >= 0) {
+            // Already picked → remove from list
+            const next = [...picked];
+            next.splice(existingIndex, 1);
+            setPicked(next);
+            return;
         }
+        if (picked.length >= 4) return;
+        setPicked([...picked, fileNumber]);
+    };
 
-        setResult(sort_files(updatedFiles));
-    }
+    const clearSlot = (slotIndex: number) => {
+        if (slotIndex >= picked.length) return;
+        const next = [...picked];
+        next.splice(slotIndex, 1);
+        setPicked(next);
+    };
 
-    function reset_maxis_solver() {
-        setFile1(0);
-        setFile2(0);
-        setFile3(0);
-        setFile4(0);
-        setResult("Select 4 files...");
-    }
-
-    // Check if a value is already selected in another dropdown
-    function isValueDisabled(value: FileValue, currentFile: FileNumber): boolean {
-        // Value 0 ("Select file...") is never disabled
-        if (value === 0) return false;
-
-        // Check if the value is selected in any other dropdown
-        const selectedValues: FileValue[] = [];
-        if (currentFile !== "file1") selectedValues.push(file1);
-        if (currentFile !== "file2") selectedValues.push(file2);
-        if (currentFile !== "file3") selectedValues.push(file3);
-        if (currentFile !== "file4") selectedValues.push(file4);
-
-        return selectedValues.includes(value);
-    }
+    const handleReset = () => {
+        setPicked([]);
+    };
 
     return (
-        <div className="solver-container">
+        <div className="solver-container solver-container--maxis">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Select the 4 different S.A.M. Files found in-game from the dropdowns. The solver will automatically sort
-                them chronologically by date and display the correct code order.
+                Click the 4 S.A.M. files <strong>in the order they appeared in-game</strong>. The solver will sort them
+                chronologically by date and show the code. Click a filled slot to remove that pick.
             </p>
 
-            <div className="form-row">
-                <label htmlFor="file1">File 1:</label>{" "}
-                <select id="file1" className="solver" onChange={handle_file_select_change} value={file1}>
-                    <option value="0">Select file...</option>
-                    <option value="1" disabled={isValueDisabled(1, "file1")}>
-                        Notso's Collar (1)
-                    </option>
-                    <option value="2" disabled={isValueDisabled(2, "file1")}>
-                        Katana (2)
-                    </option>
-                    <option value="3" disabled={isValueDisabled(3, "file1")}>
-                        Scarf (3)
-                    </option>
-                    <option value="4" disabled={isValueDisabled(4, "file1")}>
-                        Wristwatch (4)
-                    </option>
-                    <option value="5" disabled={isValueDisabled(5, "file1")}>
-                        Combat Goggles (5)
-                    </option>
-                    <option value="6" disabled={isValueDisabled(6, "file1")}>
-                        BND Badge (6)
-                    </option>
-                </select>
+            <div className="solver-text-picker" role="group" aria-label="S.A.M. file picker">
+                {SAM_FILES.map((file) => {
+                    const isPicked = picked.includes(file.file_number);
+                    const atLimit = !isPicked && picked.length >= 4;
+                    return (
+                        <button
+                            key={file.file_number}
+                            type="button"
+                            className={isPicked ? "is-selected" : ""}
+                            disabled={atLimit}
+                            aria-pressed={isPicked}
+                            onClick={() => togglePick(file.file_number)}
+                        >
+                            {file.name}
+                        </button>
+                    );
+                })}
             </div>
 
-            <div className="form-row">
-                <label htmlFor="file2">File 2:</label>{" "}
-                <select id="file2" className="solver" onChange={handle_file_select_change} value={file2}>
-                    <option value="0">Select file...</option>
-                    <option value="1" disabled={isValueDisabled(1, "file2")}>
-                        Notso's Collar (1)
-                    </option>
-                    <option value="2" disabled={isValueDisabled(2, "file2")}>
-                        Katana (2)
-                    </option>
-                    <option value="3" disabled={isValueDisabled(3, "file2")}>
-                        Scarf (3)
-                    </option>
-                    <option value="4" disabled={isValueDisabled(4, "file2")}>
-                        Wristwatch (4)
-                    </option>
-                    <option value="5" disabled={isValueDisabled(5, "file2")}>
-                        Combat Goggles (5)
-                    </option>
-                    <option value="6" disabled={isValueDisabled(6, "file2")}>
-                        BND Badge (6)
-                    </option>
-                </select>
+            <div className="solver-slot-list" role="list" aria-label="In-game order">
+                {Array.from({ length: 4 }, (_, slotIndex) => {
+                    const fileNumber = picked[slotIndex];
+                    const file = fileNumber !== undefined ? fileByNumber.get(fileNumber) : undefined;
+                    const filled = file !== undefined;
+                    return (
+                        <div
+                            key={slotIndex}
+                            role="listitem"
+                            className={`solver-slot is-text${filled ? " is-filled" : ""}`}
+                            onClick={() => clearSlot(slotIndex)}
+                            aria-label={
+                                filled
+                                    ? `Position ${slotIndex + 1}: ${file.name}, click to remove`
+                                    : `Position ${slotIndex + 1}: empty`
+                            }
+                        >
+                            <span className="solver-slot__label">{slotIndex + 1}.</span>
+                            {filled ? (
+                                <span className="solver-slot__text">{file.name}</span>
+                            ) : (
+                                <span className="solver-slot__placeholder">empty</span>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
-            <div className="form-row">
-                <label htmlFor="file3">File 3:</label>{" "}
-                <select id="file3" className="solver" onChange={handle_file_select_change} value={file3}>
-                    <option value="0">Select file...</option>
-                    <option value="1" disabled={isValueDisabled(1, "file3")}>
-                        Notso's Collar (1)
-                    </option>
-                    <option value="2" disabled={isValueDisabled(2, "file3")}>
-                        Katana (2)
-                    </option>
-                    <option value="3" disabled={isValueDisabled(3, "file3")}>
-                        Scarf (3)
-                    </option>
-                    <option value="4" disabled={isValueDisabled(4, "file3")}>
-                        Wristwatch (4)
-                    </option>
-                    <option value="5" disabled={isValueDisabled(5, "file3")}>
-                        Combat Goggles (5)
-                    </option>
-                    <option value="6" disabled={isValueDisabled(6, "file3")}>
-                        BND Badge (6)
-                    </option>
-                </select>
+            <div className="solver-controls">
+                <button type="button" className="btn btn--solver" onClick={handleReset}>Reset</button>
             </div>
 
-            <div className="form-row">
-                <label htmlFor="file4">File 4:</label>{" "}
-                <select id="file4" className="solver" onChange={handle_file_select_change} value={file4}>
-                    <option value="0">Select file...</option>
-                    <option value="1" disabled={isValueDisabled(1, "file4")}>
-                        Notso's Collar (1)
-                    </option>
-                    <option value="2" disabled={isValueDisabled(2, "file4")}>
-                        Katana (2)
-                    </option>
-                    <option value="3" disabled={isValueDisabled(3, "file4")}>
-                        Scarf (3)
-                    </option>
-                    <option value="4" disabled={isValueDisabled(4, "file4")}>
-                        Wristwatch (4)
-                    </option>
-                    <option value="5" disabled={isValueDisabled(5, "file4")}>
-                        Combat Goggles (5)
-                    </option>
-                    <option value="6" disabled={isValueDisabled(6, "file4")}>
-                        BND Badge (6)
-                    </option>
-                </select>
-            </div>
-
-            <button type="reset" className="btn-base solver-button" id="maxis-reset" onClick={reset_maxis_solver}>
-                Clear
-            </button>
-
-            <div className="solver-output">
-                <div id="maxis-results-container">{result}</div>
+            <div className="solver-output is-recalc" key={recalcKey} aria-live="polite">
+                {result.kind === "ok" ? (
+                    <p>
+                        <strong>Code:</strong> {result.code}
+                    </p>
+                ) : (
+                    <p style={{ color: "var(--color-text-muted)" }}>
+                        Pick {result.remaining} more file{result.remaining !== 1 ? "s" : ""}.
+                    </p>
+                )}
             </div>
         </div>
     );

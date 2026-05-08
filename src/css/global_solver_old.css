@@ -60,16 +60,23 @@ SOLVER CONTAINER
 .solver-container {
     display: block;
     width: 100%;
-    min-width: 360px;
-    max-width: fit-content;
+    max-width: 100%;
     margin-left: 0 !important;
-    padding: var(--space-lg);
+    padding: var(--space-md);
     text-align: left;
     box-sizing: border-box;
     background-color: rgb(255 255 255 / 3%);
     border: 2px solid var(--color-border-medium);
     border-radius: 12px;
     box-shadow: var(--shadow-md);
+}
+
+@media (min-width: 769px) {
+    .solver-container {
+        width: fit-content;
+        min-width: 360px;
+        padding: var(--space-lg);
+    }
 }
 
 .solver-container.centered {
@@ -92,7 +99,7 @@ legend {
     padding: 0;
     margin-bottom: var(--space-xl);
     font-weight: 700;
-    font-size: 24px;
+    font-size: clamp(18px, 5vw, 24px);
     color: var(--color-text-primary);
     letter-spacing: -0.5px;
 }
@@ -640,20 +647,22 @@ MAHJONG-STYLE TILES
 
 .selected-tiles-row {
     display: grid;
-    grid-template-columns: repeat(7, 35px);
+    grid-template-columns: repeat(7, minmax(25px, 35px));
     gap: var(--space-sm);
     margin-top: var(--space-md);
 }
 
 .selected-tile {
-    width: 35px;
+    width: 100%;
+    max-width: 35px;
     height: var(--tile-size);
     object-fit: contain;
     border-radius: var(--radius-sm);
 }
 
 .selected-tile-empty {
-    width: 35px;
+    width: 100%;
+    max-width: 35px;
     height: var(--tile-size);
     border-radius: var(--radius-sm);
     border: 1px dashed var(--color-border-medium);
@@ -665,7 +674,8 @@ MAHJONG-STYLE TILES
 }
 
 .tile-display {
-    width: 35px;
+    width: 100%;
+    max-width: 35px;
     height: var(--tile-size);
     object-fit: contain;
     border-radius: var(--radius-sm);
@@ -752,7 +762,7 @@ FLOPPY DISK SOLVER
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-sm);
-    max-width: 500px;
+    max-width: min(500px, 100%);
 }
 
 .floppy-symbol {
@@ -775,6 +785,7 @@ SKULL SOLVER
 
 .skull-selected-symbols {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-md);
     justify-content: center;
 }
@@ -823,17 +834,16 @@ BEAMSMASHER SOLVER
 */
 
 .beamsmasher-img-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    margin-left: 7px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(35px, var(--tile-size)));
+    gap: var(--space-sm);
 }
 
 .beamsmasher-img-row img {
-    width: var(--tile-size);
-    height: var(--tile-size);
+    width: 100%;
     max-width: var(--tile-size);
-    max-height: 100px;
+    height: auto;
+    aspect-ratio: 1;
     display: block;
     border: 2px solid var(--color-border-medium);
     border-radius: 12px;
@@ -868,17 +878,35 @@ SOLVER-ONLY PAGE LAYOUT
 .solver-only-page {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: var(--space-xl) var(--space-lg);
-    gap: var(--space-xl);
+    align-items: stretch;
+    padding: var(--space-md);
+    gap: var(--space-md);
 }
 
 .solver-only-page .content-container {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     border-bottom: none;
     padding: 0;
     max-width: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+.solver-only-page .content-container > * {
+    max-width: 100%;
+}
+
+@media (min-width: 769px) {
+    .solver-only-page {
+        align-items: center;
+        padding: var(--space-xl) var(--space-lg);
+        gap: var(--space-xl);
+    }
+
+    .solver-only-page .content-container {
+        justify-content: center;
+    }
 }
 
 /*
@@ -890,30 +918,43 @@ REACTOR SOLVER (Totenreich Claw Machine)
 .reactor-grid-wrapper {
     margin: var(--space-md) 0;
     display: flex;
-    justify-content: left;
+    justify-content: flex-start;
+    width: 100%;
 }
 
 .reactor-grid {
-    --reactor-tile: min(70px, calc((100vw - 120px) / 4));
-
     display: grid;
-    grid-template-columns: repeat(4, var(--reactor-tile));
-    grid-template-rows: repeat(4, var(--reactor-tile));
+    grid-template-columns: repeat(4, 1fr);
     gap: 3px;
     background-color: #111;
     padding: 3px;
     border: 3px solid #444;
     border-radius: var(--radius-md);
-    width: fit-content;
-    height: fit-content;
+    width: 100%;
+    max-width: 280px;
 }
 
 .reactor-cell {
-    width: var(--reactor-tile);
-    height: var(--reactor-tile);
+    aspect-ratio: 1;
     border-radius: 2px;
     transition: background-color 0.15s ease, box-shadow 0.15s ease;
     cursor: pointer;
+}
+
+@media (min-width: 480px) {
+    .reactor-grid {
+        --reactor-tile: 70px;
+        grid-template-columns: repeat(4, var(--reactor-tile));
+        grid-template-rows: repeat(4, var(--reactor-tile));
+        width: fit-content;
+        max-width: none;
+    }
+
+    .reactor-cell {
+        width: var(--reactor-tile);
+        height: var(--reactor-tile);
+        aspect-ratio: auto;
+    }
 }
 
 .cell-empty {
@@ -958,18 +999,97 @@ MOBILE RESPONSIVE
 */
 
 @media (width <= 768px) {
-    .solver-container {
-        max-width: 90vw;
-        min-width: initial;
+    /* Scale down the tile token — all tile-sized elements inherit this */
+    :root {
+        --tile-size: 36px;
     }
 
+    /* Typography */
+    legend {
+        margin-bottom: var(--space-md);
+    }
+
+    /* Form rows — stack label above input */
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-row label {
+        padding-bottom: 0;
+    }
+
+    .form-row input,
+    .form-row select {
+        margin: var(--space-xs) var(--space-sm) var(--space-sm) !important;
+    }
+
+    /* Symbol select */
+    .solver-symbol-select {
+        padding: var(--space-sm);
+    }
+
+    /* Aligned buttons */
+    .aligned-button {
+        padding: var(--space-sm);
+    }
+
+    /* Draggable pieces */
+    .draggable-container {
+        flex-wrap: wrap;
+    }
+
+    .draggable-image {
+        width: var(--tile-size);
+        height: var(--tile-size);
+    }
+
+    /* Floppy symbols */
+    .floppy-symbol {
+        width: var(--tile-size);
+        height: var(--tile-size);
+    }
+
+    /* Output + action buttons */
+    .solver-output {
+        padding: var(--space-md);
+        margin-top: var(--space-md);
+    }
+
+    .solver-buttons {
+        margin-top: var(--space-md);
+    }
+
+    .btn-base,
+    .solver-button {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    /* Mahjong */
     .selected-tiles {
         margin: unset;
+        padding: 0 var(--space-md) var(--space-md);
         text-align: center;
     }
 
-
     .matching-words-grid {
         grid-template-columns: 1fr;
+        max-height: 200px;
+    }
+
+    /* Skull — slots already wrap via flex-wrap from Part 1 */
+    .skull-symbol-slot {
+        width: 50px;
+        height: 62px;
+    }
+
+    .skull-symbol-image {
+        width: 25px;
+        height: 25px;
+    }
+
+    /* Venom box label */
+    .venom-box-label {
+        min-width: 60px;
     }
 }

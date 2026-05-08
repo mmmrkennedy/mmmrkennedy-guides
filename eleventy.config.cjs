@@ -483,6 +483,29 @@ function injectReactBundle(content, outputPath) {
     }
 }
 
+function wrapTables(content, outputPath) {
+    if (!outputPath?.endsWith(".html")) return content;
+    try {
+        const dom = new JSDOM(content);
+        const document = dom.window.document;
+        const tables = document.querySelectorAll("table");
+        if (!tables.length) return content;
+        let modified = false;
+        for (const table of tables) {
+            if (table.parentElement?.classList.contains("table-scroll")) continue;
+            const wrapper = document.createElement("div");
+            wrapper.className = "table-scroll";
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+            modified = true;
+        }
+        return modified ? dom.serialize() : content;
+    } catch (e) {
+        console.error(`Error wrapping tables in ${outputPath}:`, e.message);
+        return content;
+    }
+}
+
 function preRenderRevealButtons(content, outputPath) {
     if (!outputPath?.endsWith(".html"))
         return content;
@@ -495,7 +518,7 @@ function preRenderRevealButtons(content, outputPath) {
         const label =
             el.getAttribute("data-reveal-label");
         const inner = el.innerHTML;
-        el.innerHTML = `<button type="button" class="btn-base btn--reveal">${label}</button>
+        el.innerHTML = `<button type="button" class="btn--reveal">${label}</button>
 <div class="button-activated-div" style="display: none;">${inner}</div>`;
     }
     return dom.serialize();
@@ -574,6 +597,7 @@ async function smartCopyImages() {
 
 module.exports = function(eleventyConfig) {
     // Add transforms for quick links generation, link classification, versioning, and React bundle injection
+    eleventyConfig.addTransform("wrapTables", wrapTables);
     eleventyConfig.addTransform("preRenderRevealButtons", preRenderRevealButtons);
     eleventyConfig.addTransform("generateQuickLinks", generateQuickLinks);
     eleventyConfig.addTransform("classifyLinks", classifyLinks);

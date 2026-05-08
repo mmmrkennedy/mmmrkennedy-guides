@@ -1,16 +1,12 @@
 import { useState } from "preact/hooks";
 
-type Tile = {
-    value: number;
-    src: string;
-};
-
 interface HandResult {
     isWinning: boolean;
     melds: number[][];
     pair: number[] | null;
-    errorMessage?: string;
 }
+
+const TILE_VALUES = [1, 2, 3, 4, 5] as const;
 
 const tileImages: Record<number, string> = {
     1: "/games/IW/shaolin_shuffle/mahjong_solver/dot_1.webp",
@@ -20,163 +16,159 @@ const tileImages: Record<number, string> = {
     5: "/games/IW/shaolin_shuffle/mahjong_solver/dot_5.webp",
 };
 
-function calculateHand(selectedTiles: Tile[]): HandResult {
+function calculateHand(selectedValues: number[]): HandResult {
     // Count occurrences of each tile value
-    const tileCounts = selectedTiles.reduce(
-        (acc, tile) => {
-            acc[tile.value] = (acc[tile.value] || 0) + 1;
-            return acc;
-        },
-        {} as Record<number, number>,
-    );
+    const tileCounts: Record<number, number> = {};
+    selectedValues.forEach((v) => {
+        tileCounts[v] = (tileCounts[v] || 0) + 1;
+    });
 
     const melds: number[][] = [];
     let pair: number[] | null = null;
 
-    // Find triplets and pairs first (prioritize triplets)
+    // Triplets first
     Object.entries(tileCounts).forEach(([value, count]) => {
         const numValue = Number(value);
         if (count >= 3) {
             melds.push([numValue, numValue, numValue]);
-            tileCounts[numValue] -= 3; // Remove used tiles from count
+            tileCounts[numValue] -= 3;
         }
-        if (count === 2 && !pair) {
-            // Only take first pair found
+        if (tileCounts[numValue] === 2 && !pair) {
             pair = [numValue, numValue];
-            tileCounts[numValue] -= 2; // Remove used tiles from count
+            tileCounts[numValue] -= 2;
         }
     });
 
-    // Find sequences (consecutive runs of 3)
-    const sortedValues = Object.keys(tileCounts)
-        .map(Number)
-        .sort((a, b) => a - b);
+    // Sequences
+    const sortedValues = Object.keys(tileCounts).map(Number).sort((a, b) => a - b);
 
     for (let i = 0; i < sortedValues.length - 2; i++) {
         const [a, b, c] = [sortedValues[i], sortedValues[i + 1], sortedValues[i + 2]];
-        // Check if we have consecutive values with remaining tiles
-        if (tileCounts[a] > 0 && tileCounts[b] > 0 && tileCounts[c] > 0) {
+        if (b - a === 1 && c - b === 1 && tileCounts[a] > 0 && tileCounts[b] > 0 && tileCounts[c] > 0) {
             melds.push([a, b, c]);
-            tileCounts[a]--; // Consume one of each tile in sequence
+            tileCounts[a]--;
             tileCounts[b]--;
             tileCounts[c]--;
         }
     }
 
-    // Winning hand needs 4 melds + 1 pair (14 tiles total)
     return {
         isWinning: melds.length >= 4 && pair !== null,
         melds,
         pair,
-        errorMessage: melds.length < 4 || !pair ? "Invalid hand" : undefined,
     };
 }
 
 export default function IWMahjongSolver({ title }: { title?: string }) {
-    const [selectedTiles, setSelectedTiles] = useState<Tile[]>([]);
-    const [handResult, setHandResult] = useState<HandResult | null>(null);
+    const [selectedValues, setSelectedValues] = useState<number[]>([]);
 
-    // Count how many times each tile value has been selected
-    const getTileCount = (value: number): number => {
-        return selectedTiles.filter((tile) => tile.value === value).length;
-    };
+    const getTileCount = (value: number): number => selectedValues.filter((v) => v === value).length;
 
     const handleTileClick = (value: number) => {
-        if (selectedTiles.length >= 14) return; // Max 14 tiles allowed
-        if (getTileCount(value) >= 4) return; // Max 4 of each tile type allowed
-
-        const newTiles = [...selectedTiles, { value, src: tileImages[value] }];
-        setSelectedTiles(newTiles);
-
-        // Auto-calculate when we reach 14 tiles
-        if (newTiles.length === 14) {
-            setHandResult(calculateHand(newTiles));
-        }
+        if (selectedValues.length >= 14) return;
+        if (getTileCount(value) >= 4) return;
+        setSelectedValues([...selectedValues, value]);
     };
 
-    const resetSelection = () => {
-        setSelectedTiles([]);
-        setHandResult(null); // Clear any previous result
+    const handleTileRemove = (index: number) => {
+        const next = [...selectedValues];
+        next.splice(index, 1);
+        setSelectedValues(next);
     };
+
+    const handleReset = () => {
+        setSelectedValues([]);
+    };
+
+    const handResult = selectedValues.length === 14 ? calculateHand(selectedValues) : null;
+    const isComplete = selectedValues.length === 14;
 
     return (
-        <div className="solver-container centered">
+        <div className="solver-container solver-container--mahjong">
             {title && <h2 className="solver-title">{title}</h2>}
-            <form onSubmit={(e) => e.preventDefault()}>
-                <p className="solver-instructions">
-                    Click on the tiles as they appear in-game. If a valid hand is found, it'll be shown
-                    automatically. A valid hand consists of 4 Melds and 1 Pair. A Meld is a group of three or four
-                    matching or consecutive tiles, e.g., 3-4-5 or 3-3-3.
-                </p>
-                <div className="solver-symbol-select img" role="group" aria-label="Mahjong tile selection">
-                    {[1, 2, 3, 4, 5].map((value) => {
-                        const isDisabled = getTileCount(value) >= 4;
-                        return (
-                            <button
-                                key={value}
-                                type="button"
-                                onClick={() => handleTileClick(value)}
-                                disabled={isDisabled || selectedTiles.length >= 14}
-                                aria-label={`${value} Dot tile${isDisabled ? " (maximum selected)" : ""}`}
-                                className={isDisabled ? "img-disabled" : ""}
-                            >
-                                <img className="shaolin" src={tileImages[value]} alt="" aria-hidden="true" />
-                            </button>
-                        );
-                    })}
-                </div>
+            <p className="solver-instructions">
+                Click tiles as they appear in-game. A valid hand is 4 melds + 1 pair (14 tiles total). A meld is three
+                of a kind or three consecutive (e.g. 3-3-3 or 3-4-5). Click a placed tile to remove it.
+            </p>
 
-                <button type="button" className="btn-base solver-button" onClick={resetSelection}>
-                    Reset
-                </button>
+            <div className="solver-symbol-select" role="group" aria-label="Mahjong tile picker">
+                {TILE_VALUES.map((value) => {
+                    const atLimit = getTileCount(value) >= 4;
+                    const handFull = selectedValues.length >= 14;
+                    return (
+                        <button
+                            key={value}
+                            type="button"
+                            onClick={() => handleTileClick(value)}
+                            disabled={atLimit || handFull}
+                            aria-label={`${value} Dot tile${atLimit ? " (max selected)" : ""}`}
+                        >
+                            <img src={tileImages[value]} alt="" />
+                        </button>
+                    );
+                })}
+            </div>
 
-                <div className="solver-output solver-output-centered" role="status" aria-live="polite">
-                    {/* Show selected tiles while building hand or if hand is invalid */}
-                    {(!handResult || !handResult.isWinning) && (
-                        <div className="selected-tiles">
-                            <h4>
-                                {/* Show "Invalid Hand" if we have 14 tiles but invalid, otherwise show count */}
-                                {handResult && selectedTiles.length === 14 && !handResult.isWinning
-                                    ? "Invalid Hand:"
-                                    : `Selected Tiles (${selectedTiles.length}/14):`}
-                            </h4>
-                            <div className="selected-tiles-row">
-                                {Array.from({ length: 14 }, (_, index) =>
-                                    selectedTiles[index] ? (
+            <div className="solver-controls">
+                <button type="button" className="btn btn--solver" onClick={handleReset}>Reset</button>
+            </div>
+
+            <div className="solver-output" aria-live="polite">
+                {handResult?.isWinning ? (
+                    <>
+                        <p><strong>Winning hand</strong> — arrange your tiles in this order:</p>
+                        <div className="mahjong-hand">
+                            {handResult.melds.map((meld, mi) => (
+                                <div key={`meld-${mi}`} className="mahjong-meld">
+                                    {meld.map((value, ti) => (
                                         <img
-                                            key={index}
-                                            className="selected-tile"
-                                            src={selectedTiles[index].src}
-                                            alt={`${selectedTiles[index].value} Dot`}
-                                        />
-                                    ) : (
-                                        <div key={index} className="selected-tile-empty" aria-hidden="true" />
-                                    ),
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Display winning hand as sorted row matching in-game layout */}
-                    {handResult?.isWinning && (
-                        <div className="winning-hand">
-                            <h3>Winning Hand!</h3>
-                            <div className="selected-tiles-row">
-                                {[...selectedTiles]
-                                    .sort((a, b) => a.value - b.value)
-                                    .map((tile, index) => (
-                                        <img
-                                            key={index}
-                                            className="selected-tile"
-                                            src={tile.src}
-                                            alt={`${tile.value} Dot`}
+                                            key={ti}
+                                            className="mahjong-tile"
+                                            src={tileImages[value]}
+                                            alt={`${value} Dot`}
                                         />
                                     ))}
-                            </div>
+                                </div>
+                            ))}
+                            {handResult.pair && (
+                                <div className="mahjong-meld is-pair">
+                                    {handResult.pair.map((value, ti) => (
+                                        <img
+                                            key={ti}
+                                            className="mahjong-tile"
+                                            src={tileImages[value]}
+                                            alt={`${value} Dot`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            </form>
+                    </>
+                ) : (
+                    <>
+                        <p>
+                            {isComplete && handResult && !handResult.isWinning
+                                ? <strong className="solver-error">Invalid hand — no valid arrangement of 4 melds + 1 pair.</strong>
+                                : <>Selected tiles ({selectedValues.length}/14):</>}
+                        </p>
+                        <div className="mahjong-progress-row">
+                            {Array.from({ length: 14 }, (_, index) =>
+                                selectedValues[index] !== undefined ? (
+                                    <img
+                                        key={index}
+                                        className="mahjong-tile"
+                                        src={tileImages[selectedValues[index]]}
+                                        alt={`${selectedValues[index]} Dot, click to remove`}
+                                        onClick={() => handleTileRemove(index)}
+                                    />
+                                ) : (
+                                    <div key={index} className="mahjong-tile-empty" aria-hidden="true" />
+                                ),
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     );
 }

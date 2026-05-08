@@ -1,4 +1,4 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useMemo } from "preact/hooks";
 
 const ALPHABET: string[] = "abcdefghijklmnopqrstuvwxyz".split("");
 
@@ -18,6 +18,8 @@ const VALID_WORDS: string[] = [
     "sublimation",
     "zwitterion",
 ];
+
+const SYMBOL_PATH = "/games/IW/wyler_language_symbols/";
 
 function letterToNumber(letter: string): number {
     return letter.charCodeAt(0) - "a".charCodeAt(0) + 1;
@@ -62,59 +64,41 @@ function calculateSequenceModulo(
 }
 
 function generateSequenceId(first: number, second: number, third: number, fourth: number): number {
-    if (fourth !== 0) {
-        return 1000 * first + 100 * second + 10 * third + fourth;
-    }
-    if (third !== 0) {
-        return 100 * first + 10 * second + third;
-    }
-    if (second !== 0) {
-        return 10 * first + second;
-    }
+    if (fourth !== 0) return 1000 * first + 100 * second + 10 * third + fourth;
+    if (third !== 0) return 100 * first + 10 * second + third;
+    if (second !== 0) return 10 * first + second;
     return first;
 }
 
-function hasDuplicates(array: string[]): boolean {
-    const seen = new Set();
-    for (const item of array) {
-        if (seen.has(item)) {
-            return true; // Duplicate found
-        }
-        seen.add(item);
+type SolveResult =
+    | { kind: "ok"; code: string }
+    | { kind: "incomplete"; reason: string }
+    | { kind: "error"; reason: string };
+
+function solveCipher(targetWord: string, swingsetLettersArr: string[]): SolveResult {
+    const filledCount = swingsetLettersArr.filter((s) => s !== "").length;
+
+    if (!targetWord) {
+        return { kind: "incomplete", reason: "Choose a word and 4 symbols to see the code." };
     }
-    return false; // No duplicates
-}
-
-function solveCipher(targetWord: string, swingsetLettersArr: string[]): string {
-    targetWord = targetWord.toLowerCase();
-    const swingsetLetters: string = swingsetLettersArr.join("").toLowerCase();
-
-    // Validate input
-    if (swingsetLetters.length !== 4) {
-        return "Error: Swingset letters must be exactly 4 characters.";
-    } else if (hasDuplicates(swingsetLettersArr)) {
-        return "Error: Swingset letters can't be the same.";
+    if (filledCount < 4) {
+        const remaining = 4 - filledCount;
+        return { kind: "incomplete", reason: `Select ${remaining} more symbol${remaining !== 1 ? "s" : ""}.` };
     }
-
-    if (targetWord.length === 0) {
-        return "Error: Enter a word.";
-    } else if (!VALID_WORDS.includes(targetWord)) {
-        return "Error: Invalid word entered.";
+    if (!VALID_WORDS.includes(targetWord.toLowerCase())) {
+        return { kind: "error", reason: "Invalid word." };
     }
 
     try {
-        const letterValues = [0].concat(swingsetLetters.split("").map(letterToNumber));
-        const targetWordValues = wordToNumbers(targetWord);
+        const letterValues = [0].concat(swingsetLettersArr.join("").toLowerCase().split("").map(letterToNumber));
+        const targetWordValues = wordToNumbers(targetWord.toLowerCase());
 
-        // Initialize shortest sequences with high values
         const shortestSequences = Array(targetWordValues.length).fill(Infinity);
 
-        // Process combinations
         for (const [first, second, third, fourth] of generateCombinations()) {
             const sequenceModulo = calculateSequenceModulo(first, second, third, fourth, letterValues);
             const sequenceId = generateSequenceId(first, second, third, fourth);
 
-            // Update the shortest sequence for each character in the word
             for (let index = 0; index < targetWordValues.length; index++) {
                 if (sequenceModulo === targetWordValues[index] && sequenceId < shortestSequences[index]) {
                     shortestSequences[index] = sequenceId;
@@ -122,157 +106,141 @@ function solveCipher(targetWord: string, swingsetLettersArr: string[]): string {
             }
         }
 
-        // Build the solution output
-        const solution = shortestSequences
+        const code = shortestSequences
             .filter((seq) => seq !== Infinity)
             .map((seq) => String(seq))
             .join(" - ");
-        return "Code: " + solution || "Error: No valid sequence found.";
+
+        if (!code) return { kind: "error", reason: "No valid sequence found." };
+        return { kind: "ok", code };
     } catch {
-        return "Error: Input contains invalid characters.";
+        return { kind: "error", reason: "Input contains invalid characters." };
     }
 }
 
 export default function IWGnSSkull4Solver({ title }: { title?: string }) {
-    const [word, setWord] = useState("");
-    const [selectedSymbols, setSelectedSymbols] = useState(["", "", "", ""]);
-    const [result, setResult] = useState("Enter the Word and select 4 symbols.");
+    const [word, setWord] = useState<string>("");
+    const [selectedSymbols, setSelectedSymbols] = useState<string[]>(["", "", "", ""]);
+
+    // Auto-derived from inputs — no useEffect / extra state.
+    // The freshness animation is keyed by these inputs so the result
+    // re-renders cleanly whenever the user changes something.
+    const result = useMemo(() => solveCipher(word, selectedSymbols), [word, selectedSymbols]);
+    const recalcKey = `${word}|${selectedSymbols.join(",")}`;
 
     const handleSymbolClick = (letter: string) => {
-        // Don't allow selecting already chosen letters
         if (selectedSymbols.includes(letter)) return;
-
-        // Find first empty slot
         const emptyIndex = selectedSymbols.findIndex((s) => s === "");
         if (emptyIndex !== -1) {
-            const newSymbols = [...selectedSymbols];
-            newSymbols[emptyIndex] = letter;
-            setSelectedSymbols(newSymbols);
+            const next = [...selectedSymbols];
+            next[emptyIndex] = letter;
+            setSelectedSymbols(next);
         }
     };
 
-    useEffect(() => {
-        const filled = selectedSymbols.filter((s) => s !== "");
-        if (filled.length === 4 && word) {
-            const solution = solveCipher(word, selectedSymbols);
-            if (!solution.startsWith("Error:")) setResult(solution);
-        }
-    }, [selectedSymbols, word]);
-
-    const handleSolve = () => {
-        if (!word.trim()) {
-            setResult("Error: Enter a word.");
-            return;
-        }
-
-        const filledSymbols = selectedSymbols.filter((s) => s !== "");
-        if (filledSymbols.length !== 4) {
-            setResult("Error: Must select exactly 4 symbols.");
-            return;
-        }
-
-        const solution = solveCipher(word.trim(), selectedSymbols);
-        setResult(solution);
+    const handleClearSlot = (index: number) => {
+        if (!selectedSymbols[index]) return;
+        const next = [...selectedSymbols];
+        next[index] = "";
+        setSelectedSymbols(next);
     };
 
     const handleReset = () => {
         setWord("");
         setSelectedSymbols(["", "", "", ""]);
-        setResult("Enter the Word and select 4 symbols.");
     };
 
-    const isLetterSelected = (letter: string): boolean => selectedSymbols.includes(letter);
-    const isSelectionFull = selectedSymbols.filter((s) => s !== "").length >= 4;
+    const filledCount = selectedSymbols.filter((s) => s !== "").length;
+    const isFull = filledCount >= 4;
 
     return (
-        <div className="solver-container">
+        <div className="solver-container solver-container--skull4">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Select the target word from the dropdown, then click the 4 letter symbols that match the in-game
-                swingset symbols. Click "Calculate" to get the code sequence.
+                Choose the target word, then click the 4 symbols matching the swingset symbols in your game. The code
+                updates automatically. Click a filled slot to clear it.
             </p>
-            <div className="form-row">
-                <label className="solver-symbol-select" htmlFor="word">
-                    Select Word:
-                </label>
-                <select id="word" className="solver" value={word} onChange={(e) => setWord((e.target as HTMLSelectElement).value)}>
-                    <option value="">Choose a word...</option>
-                    {VALID_WORDS.map((validWord) => (
-                        <option key={validWord} value={validWord}>
-                            {validWord}
-                        </option>
+
+            <div className="solver-form-row">
+                <label htmlFor="skull4-word">Target word:</label>
+                <select
+                    id="skull4-word"
+                    value={word}
+                    onChange={(e) => setWord((e.target as HTMLSelectElement).value)}
+                >
+                    <option value="">Choose a word…</option>
+                    {VALID_WORDS.map((w) => (
+                        <option key={w} value={w}>{w}</option>
                     ))}
                 </select>
             </div>
 
-            <div className="letter-symbols-container">
-                {ALPHABET.map((letter) => {
-                    const isSelected = isLetterSelected(letter);
-                    const isDisabled = isSelected || isSelectionFull;
-
+            <div className="solver-slot-list" role="list" aria-label="Selected symbols">
+                {selectedSymbols.map((symbol, index) => {
+                    const filled = symbol !== "";
                     return (
                         <div
-                            key={letter}
-                            className={`letter-symbol-box ${isSelected ? "selected" : ""} ${isDisabled ? "img-disabled" : ""}`}
-                            onClick={() => !isDisabled && handleSymbolClick(letter)}
+                            key={index}
+                            role="listitem"
+                            className={`solver-slot${filled ? " is-filled" : ""}`}
+                            onClick={() => handleClearSlot(index)}
+                            aria-label={filled ? `Slot ${index + 1}: ${symbol.toUpperCase()}, click to clear` : `Slot ${index + 1}: empty`}
                         >
-                            <div className="letter-text-side">{letter.toUpperCase()}</div>
-                            <div className="letter-image-side">
-                                <img
-                                    src={`/games/IW/wyler_language_symbols/${letter}.webp`}
-                                    alt={letter.toUpperCase()}
-                                    className="letter-symbol-image"
-                                />
-                            </div>
+                            {filled ? (
+                                <>
+                                    <span className="solver-slot__label">{symbol.toUpperCase()}</span>
+                                    <img
+                                        className="solver-slot__image"
+                                        src={`${SYMBOL_PATH}${symbol}.webp`}
+                                        alt=""
+                                    />
+                                </>
+                            ) : (
+                                <span className="solver-slot__placeholder">{index + 1}</span>
+                            )}
                         </div>
                     );
                 })}
             </div>
 
-            <div className="solver-symbol-select">
-                <p>Selected Symbols:</p>
-                <div className="skull-selected-symbols">
-                    {selectedSymbols.map((symbol, index) => (
-                        <div
-                            key={index}
-                            className={`skull-symbol-slot ${symbol ? "filled" : "empty"}`}
-                            onClick={() => {
-                                if (symbol) {
-                                    const newSymbols = [...selectedSymbols];
-                                    newSymbols[index] = "";
-                                    setSelectedSymbols(newSymbols);
-                                }
-                            }}
+            <div className="solver-letter-grid" role="group" aria-label="Symbol picker">
+                {ALPHABET.map((letter) => {
+                    const isSelected = selectedSymbols.includes(letter);
+                    const isDisabled = !isSelected && isFull;
+                    return (
+                        <button
+                            key={letter}
+                            type="button"
+                            className={`solver-letter-cell${isSelected ? " is-selected" : ""}`}
+                            disabled={isSelected || isDisabled}
+                            aria-pressed={isSelected}
+                            onClick={() => handleSymbolClick(letter)}
                         >
-                            {symbol ? (
-                                <>
-                                    <span className="skull-symbol-label">{symbol.toUpperCase()}</span>
-                                    <img
-                                        src={`/games/IW/wyler_language_symbols/${symbol}.webp`}
-                                        alt={symbol.toUpperCase()}
-                                        className="skull-symbol-image"
-                                    />
-                                </>
-                            ) : (
-                                <span className="skull-slot-number">{index + 1}</span>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                            <span className="solver-letter-cell__letter">{letter.toUpperCase()}</span>
+                            <img
+                                className="solver-letter-cell__image"
+                                src={`${SYMBOL_PATH}${letter}.webp`}
+                                alt=""
+                            />
+                        </button>
+                    );
+                })}
             </div>
 
-            <button className="solver-button btn-base" onClick={handleSolve}>
-                Calculate
-            </button>
+            <div className="solver-controls">
+                <button className="btn btn--solver" onClick={handleReset}>Reset</button>
+            </div>
 
-            <button className="solver-button btn-base" onClick={handleReset}>
-                Reset All
-            </button>
-
-            <div className="solver-output">
-                <p>
-                    <span id="result">{result}</span>
-                </p>
+            <div className="solver-output is-recalc" key={recalcKey} aria-live="polite">
+                {result.kind === "ok" ? (
+                    <p style={{ margin: 0 }}>
+                        <strong>Code:</strong> {result.code}
+                    </p>
+                ) : result.kind === "error" ? (
+                    <p className="solver-error" style={{ margin: 0 }}>{result.reason}</p>
+                ) : (
+                    <p style={{ margin: 0, color: "var(--color-text-muted)" }}>{result.reason}</p>
+                )}
             </div>
         </div>
     );

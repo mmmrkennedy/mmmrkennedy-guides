@@ -81,6 +81,7 @@ type ChemicalType = "chem_1" | "chem_2" | "chem_3" | "chem_4" | "chem_5" | "defa
 interface Formula {
     name: string;
     ingredients: string[];
+    number: number;
 }
 
 const isInsectKey = (num: number): num is InsectKey => num in INSECT_MAP;
@@ -115,21 +116,12 @@ function getColorOption(possibleTVNumbers: number[], possibleFinalNums: number[]
 }
 
 function getLetter(insectNum: number, racingNum: number): string {
-    if (insectNum === 0) {
-        return "Enter your Insect Number";
-    }
-
-    if (isInsectKey(insectNum)) {
-        return INSECT_MAP[insectNum];
-    }
-
+    if (insectNum === 0) return "Enter your Insect Number";
+    if (isInsectKey(insectNum)) return INSECT_MAP[insectNum];
     if (insectNum === 7 || insectNum === 15) {
-        if (isRacingKey(racingNum)) {
-            return RACING_MAP[racingNum];
-        }
+        if (isRacingKey(racingNum)) return RACING_MAP[racingNum];
         return "Invalid Racing Num";
     }
-
     return "Invalid Insect Num";
 }
 
@@ -140,104 +132,99 @@ function getTvOptionWithONum(oNum: number, mNum: number, lowerBound: number): st
     return options[possibleFinalNums.indexOf(realTvNumber)] || "Invalid";
 }
 
+interface MainLogicResult {
+    oNumStr: string;
+    colourOption: string | undefined;
+    letter: string;
+    possibleONums: number[];
+}
+
 function mainLogic(
     mNum: number,
     lowerBound: number,
     insectNum: number,
     racingNum: number,
-): string | [string, string | undefined, string, number[]] {
+): { kind: "ok"; data: MainLogicResult } | { kind: "error"; reason: string } {
     const possibleFinalNums = [lowerBound - 1, lowerBound + 1, lowerBound + 3];
     const [possibleTVNumbers, possibleONums] = getValidONums(mNum, possibleFinalNums);
 
     if (possibleTVNumbers.length === 0 || possibleONums.length === 0) {
-        return "Invalid M number or TV number, please try again.";
+        return { kind: "error", reason: "Invalid M number or TV number, please try again." };
     }
 
-    let oNumStr;
-    if (possibleONums.length === 1) {
-        oNumStr = possibleONums[0].toString();
-    } else {
-        oNumStr = possibleONums.join(" or ");
-    }
-
-    return [
-        oNumStr,
-        getColorOption(possibleTVNumbers, possibleFinalNums),
-        getLetter(insectNum, racingNum),
-        possibleONums,
-    ];
+    return {
+        kind: "ok",
+        data: {
+            oNumStr: possibleONums.length === 1 ? String(possibleONums[0]) : possibleONums.join(" or "),
+            colourOption: getColorOption(possibleTVNumbers, possibleFinalNums),
+            letter: getLetter(insectNum, racingNum),
+            possibleONums,
+        },
+    };
 }
 
-function calcChemNums(oNum: number, letter: string, chemical: ChemicalType): string {
-    const columns = "ABCDEFGHIJKL";
-    const index = columns.indexOf(letter.toUpperCase());
-
-    if (index === -1) return "Invalid letter";
-
-    let formulas: Formula[] = [];
-
+function getFormulasForChemical(chemical: ChemicalType): { name: string; ingredients: string[] }[] {
     switch (chemical) {
         case "chem_1":
-            formulas = [
+            return [
                 { name: "Formula 1", ingredients: ["Racing Fuel", "Quarters"] },
                 { name: "Formula 2", ingredients: ["Vodka", "Pennies"] },
                 { name: "Formula 3", ingredients: ["Detergent", "Acetaldehyde", "Formaldehyde"] },
                 { name: "Formula 4", ingredients: ["Nail Polish Remover", "Sludge"] },
             ];
-            break;
         case "chem_2":
-            formulas = [
+            return [
                 { name: "Formula 1", ingredients: ["Motor Oil", "Wheel Cleaner", "Insect Repellent"] },
                 { name: "Formula 2", ingredients: ["Phenol", "Drain Opener"] },
                 { name: "Formula 3", ingredients: ["Phenolsulfonic Acid", "Detergent"] },
             ];
-            break;
         case "chem_3":
-            formulas = [
+            return [
                 { name: "Formula 1", ingredients: ["Racing Fuel", "Quarters"] },
                 { name: "Formula 2", ingredients: ["Glass Cleaner", "Formaldehyde"] },
                 { name: "Formula 3", ingredients: ["Vinegar", "Plant Food", "Detergent", "Hexamine"] },
             ];
-            break;
         case "chem_4":
-            formulas = [
+            return [
                 { name: "Formula 1", ingredients: ["Paint", "Detergent", "Drain Opener"] },
                 { name: "Formula 2", ingredients: ["Baking Soda", "Vinegar", "Detergent", "Methylbenzene"] },
                 { name: "Formula 3", ingredients: ["Racing Fuel", "Dinitro"] },
             ];
-            break;
         case "chem_5":
-            formulas = [
+            return [
                 { name: "Formula 1", ingredients: ["Fat", "Vodka"] },
                 { name: "Formula 2", ingredients: ["Detergent", "Drain Opener"] },
                 { name: "Formula 3", ingredients: ["Ice", "Glycerol", "Mixed Acid Solution"] },
                 { name: "Formula 4", ingredients: ["Mixed Acid Solution", "Baking Soda"] },
             ];
-            break;
         default:
-            return `Invalid Chemical. Chem Value Debug: ${chemical}`;
+            return [];
     }
-
-    let resultStr = "";
-    formulas.forEach(({ name, ingredients }) => {
-        let formulaResult = 0;
-        const linkedIngredients = ingredients.map((ing) => {
-            formulaResult += ingredient_number_data[ing][index];
-            const link = ingredient_links[ing];
-            return link ? `<a href="${link}">${ing}</a>` : ing;
-        });
-        formulaResult -= oNum;
-        const ingredientList = linkedIngredients.join(" + ");
-        resultStr += `${name}: ${ingredientList} <b>---</b> Number: ${formulaResult}\n`;
-    });
-
-    return resultStr;
 }
 
-function formatResult(oNum: string | number, colourOption: string | undefined): string {
-    const oNumStr = `O Number: ${oNum}.`;
-    const colourStr = `Colour Option: ${colourOption || "Unknown"} on the TV.`;
-    return `${oNumStr}\n${colourStr}`;
+function calcFormulas(oNum: number, letter: string, chemical: ChemicalType): Formula[] | { error: string } {
+    const columns = "ABCDEFGHIJKL";
+    const index = columns.indexOf(letter.toUpperCase());
+    if (index === -1) return { error: "Invalid letter" };
+
+    const formulas = getFormulasForChemical(chemical);
+    if (formulas.length === 0) return { error: `Invalid Chemical: ${chemical}` };
+
+    return formulas.map(({ name, ingredients }) => {
+        let total = 0;
+        ingredients.forEach((ing) => {
+            total += ingredient_number_data[ing][index];
+        });
+        return { name, ingredients, number: total - oNum };
+    });
+}
+
+interface CalculationResult {
+    messages: string[];
+    oNumStr: string | number | null;
+    colourOption: string | undefined;
+    formulas: Formula[] | null;
+    error: string | null;
 }
 
 export default function IWChemicalStepSolver({ title }: { title?: string }) {
@@ -247,7 +234,7 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
     const [racingNum, setRacingNum] = useState<number>(0);
     const [oNum, setONum] = useState<number>(0);
     const [finalChem, setFinalChem] = useState<ChemicalType>("default");
-    const [result, setResult] = useState<string>("");
+    const [result, setResult] = useState<CalculationResult | null>(null);
 
     // Visibility states
     const [showStep2, setShowStep2] = useState<boolean>(false);
@@ -264,7 +251,7 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
         setRacingNum(0);
         setONum(0);
         setFinalChem("default");
-        setResult("");
+        setResult(null);
         setShowStep2(false);
         setShowStep3(false);
         setShowInsectContainer(false);
@@ -273,7 +260,7 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
         setShowFinalChemContainer(false);
     };
 
-    const noHandHolding = () => {
+    const showAllInputs = () => {
         setShowStep2(true);
         setShowStep3(true);
         setShowInsectContainer(true);
@@ -283,137 +270,145 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
     };
 
     const calculate = () => {
-        let resultText = "";
+        if (mNum === 0 || lowerBound === 0) return;
 
-        if (mNum === 0 || lowerBound === 0) {
+        const messages: string[] = [];
+        const calcResults = mainLogic(mNum, lowerBound, insectNum, racingNum);
+
+        if (calcResults.kind === "error") {
+            setResult({
+                messages: [calcResults.reason],
+                oNumStr: null,
+                colourOption: undefined,
+                formulas: null,
+                error: calcResults.reason,
+            });
             return;
         }
 
+        const { oNumStr, letter, possibleONums } = calcResults.data;
+        let { colourOption } = calcResults.data;
+        let finalONum: string | number = oNumStr;
         let validONum = true;
         let racingNumNeeded = false;
         let insectNumNeeded = false;
 
-        const calcResults = mainLogic(mNum, lowerBound, insectNum, racingNum);
-
-        if (typeof calcResults === "string") {
-            setResult(calcResults);
-            return;
-        }
-
-        // Double comments (oNumResult, , letter) is required to use const
-        const [oNumResult, , letter, oNumNumbers] = calcResults;
-        let colourOptionTv = calcResults[1];
-        let finalONum: string | number = oNumResult;
-
         if (oNum !== 0) {
-            if (oNumNumbers.includes(oNum)) {
+            if (possibleONums.includes(oNum)) {
                 finalONum = oNum;
-                colourOptionTv = getTvOptionWithONum(oNum, mNum, lowerBound);
+                colourOption = getTvOptionWithONum(oNum, mNum, lowerBound);
             } else {
-                resultText += `Enter one of the possible correct O Numbers: ${oNumResult}.\n`;
+                messages.push(`Enter one of the possible correct O Numbers: ${oNumStr}.`);
             }
         }
 
         setShowStep2(true);
 
         if (letter === "Invalid Insect Num") {
-            resultText += "Insect Number is Invalid, please enter a valid Insect Number\n";
+            messages.push("Insect Number is invalid — enter a valid Insect Number.");
             setShowInsectContainer(true);
             insectNumNeeded = true;
         } else if (letter === "Enter your Insect Number") {
-            resultText += letter + ".\n";
+            messages.push(`${letter}.`);
             setShowInsectContainer(true);
             insectNumNeeded = true;
         }
 
         if (String(finalONum).includes("or")) {
-            resultText +=
-                "Please enter the correct O Number (The correct one couldn't be determined due to there being multiple potential 'correct' options based on the given info). O Number options listed below.\n\n";
+            messages.push(
+                "Multiple possible O Numbers — enter the correct one to continue. Options listed below.",
+            );
             setShowONumContainer(true);
             setShowStep3(true);
             validONum = false;
         }
 
         if (letter === "Invalid Racing Num") {
-            resultText +=
-                "Unable to calculate result only using the Insect Repellent Number, please enter the Racing Fuel Number and try again.\n";
+            messages.push(
+                "Can't determine the result from the Insect Repellent Number alone — enter the Racing Fuel Number.",
+            );
             setShowRacingContainer(true);
             setShowStep3(true);
             racingNumNeeded = true;
         }
 
         if (finalChem === "default") {
-            resultText += "Enter the final chemical.\n\n";
+            messages.push("Enter the final chemical.");
             setShowFinalChemContainer(true);
-        } else if (showStep2) {
+        } else {
             setShowFinalChemContainer(true);
         }
 
-        resultText += formatResult(finalONum, colourOptionTv);
+        const incomplete = !validONum || finalChem === "default" || racingNumNeeded || insectNumNeeded;
 
-        if (!validONum || finalChem === "default" || racingNumNeeded || insectNumNeeded) {
-            setResult(resultText);
-            return;
+        let formulas: Formula[] | null = null;
+        let formulaError: string | null = null;
+
+        if (!incomplete) {
+            const oNumValue = typeof finalONum === "string" ? parseInt(finalONum) : finalONum;
+            if (!isNaN(oNumValue)) {
+                const calc = calcFormulas(oNumValue, letter, finalChem);
+                if ("error" in calc) {
+                    formulaError = calc.error;
+                } else {
+                    formulas = calc;
+                }
+            }
         }
 
-        const oNumValue = typeof finalONum === "string" ? parseInt(finalONum) : finalONum;
-        if (!isNaN(oNumValue)) {
-            resultText += "\n\n" + calcChemNums(oNumValue, letter, finalChem);
-        }
-
-        setResult(resultText);
+        setResult({
+            messages,
+            oNumStr: finalONum,
+            colourOption,
+            formulas,
+            error: formulaError,
+        });
     };
 
-    // M = 12, <## = 105, Insect = 6, Racing = 14
-
     return (
-        <div className="solver-container">
+        <div className="solver-container solver-container--chemical-step">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                This is a multi-step solver. Enter values as prompted and click "Calculate" to reveal the next steps.
-                Use "I know what I'm doing" to show all inputs at once. The solver will guide you through calculating
-                the O Number, color option, letter, and final chemical formula numbers.
+                Multi-step solver. Enter values as prompted and click Calculate to reveal the next step. Use "Show all
+                inputs" to skip the progressive disclosure.
             </p>
-            <p className="sub-sub-step">Step 1</p>
-            <div>
-                <label htmlFor="mNum">Enter the M Number: </label>
+
+            <p className="solver-step-label">Step 1</p>
+
+            <div className="solver-form-row">
+                <label htmlFor="mNum">M Number:</label>
                 <input
                     type="text"
                     pattern="[0-9]*"
                     inputMode="numeric"
                     id="mNum"
-                    className="solver"
                     value={mNum || ""}
                     onInput={(e) => setMNum(Number((e.target as HTMLInputElement).value))}
                 />
             </div>
 
-            <div>
-                <label htmlFor="lowerBound">Enter the Top Number on TV (&lt; ##): </label>
+            <div className="solver-form-row">
+                <label htmlFor="lowerBound">Top Number on TV (&lt; ##):</label>
                 <input
                     type="text"
                     pattern="[0-9]*"
                     inputMode="numeric"
                     id="lowerBound"
-                    className="solver"
                     value={lowerBound || ""}
                     onInput={(e) => setLowerBound(Number((e.target as HTMLInputElement).value))}
                 />
             </div>
 
-            {showStep2 && <p className="sub-sub-step">Step 2</p>}
+            {showStep2 && <p className="solver-step-label">Step 2</p>}
 
             {showInsectContainer && (
-                <div>
-                    <label htmlFor="insectNum">
-                        Enter Insect Repellent Number (Top Num + Left Num) in given colour mode:{" "}
-                    </label>
+                <div className="solver-form-row">
+                    <label htmlFor="insectNum">Insect Repellent Number (Top + Left, in given colour mode):</label>
                     <input
                         type="text"
                         pattern="[0-9]*"
                         inputMode="numeric"
                         id="insectNum"
-                        className="solver"
                         value={insectNum || ""}
                         onInput={(e) => setInsectNum(Number((e.target as HTMLInputElement).value))}
                     />
@@ -421,17 +416,14 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
             )}
 
             {showFinalChemContainer && (
-                <div>
-                    <label htmlFor="finalChem">Select Final Chemical: </label>
+                <div className="solver-form-row">
+                    <label htmlFor="finalChem">Final Chemical:</label>
                     <select
                         id="finalChem"
-                        className="spacing"
                         value={finalChem}
                         onChange={(e) => setFinalChem((e.target as HTMLSelectElement).value as ChemicalType)}
                     >
-                        <option value="default" disabled>
-                            Select Chemical
-                        </option>
+                        <option value="default" disabled>Select Chemical</option>
                         <option value="chem_1">3,4-di-nitroxy-methyl-propane</option>
                         <option value="chem_2">1,3,5 tera-nitro-phenol</option>
                         <option value="chem_3">Octa-hydro-2,5-nitro-3,4,7-para-zokine</option>
@@ -441,17 +433,16 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
                 </div>
             )}
 
-            {showStep3 && <p className="sub-sub-step">Step 3</p>}
+            {showStep3 && <p className="solver-step-label">Step 3</p>}
 
             {showRacingContainer && (
-                <div>
-                    <label htmlFor="racingNum">Enter Racing Fuel Number (Top Num + Left Num): </label>
+                <div className="solver-form-row">
+                    <label htmlFor="racingNum">Racing Fuel Number (Top + Left):</label>
                     <input
                         type="text"
                         pattern="[0-9]*"
                         inputMode="numeric"
                         id="racingNum"
-                        className="solver"
                         value={racingNum || ""}
                         onInput={(e) => setRacingNum(Number((e.target as HTMLInputElement).value))}
                     />
@@ -459,35 +450,67 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
             )}
 
             {showONumContainer && (
-                <div>
-                    <label htmlFor="oNum">Enter O Number: </label>
+                <div className="solver-form-row">
+                    <label htmlFor="oNum">O Number:</label>
                     <input
                         type="text"
                         pattern="[0-9]*"
                         inputMode="numeric"
                         id="oNum"
-                        className="solver"
                         value={oNum || ""}
                         onInput={(e) => setONum(Number((e.target as HTMLInputElement).value))}
                     />
                 </div>
             )}
 
-            <button className="btn-base solver-button" onClick={calculate}>
-                Calculate
-            </button>
-            <button className="btn-base solver-button" onClick={resetAll}>
-                Reset All
-            </button>
-            <button className="btn-base solver-button" onClick={noHandHolding}>
-                I know what I'm doing
-            </button>
-
-            <div className="solver-output">
-                <p>
-                    <span dangerouslySetInnerHTML={{ __html: result.replace(/\n/g, "<br>") }}></span>
-                </p>
+            <div className="solver-controls">
+                <button className="btn btn--solver" onClick={calculate}>Calculate</button>
+                <button className="btn btn--solver" onClick={resetAll}>Reset</button>
+                <button className="btn btn--solver" onClick={showAllInputs}>Show all inputs</button>
             </div>
+
+            {result && (
+                <div className="solver-output">
+                    {result.messages.map((msg, i) => (
+                        <p key={i}>{msg}</p>
+                    ))}
+
+                    {result.oNumStr !== null && (
+                        <p>
+                            <strong>O Number:</strong> {result.oNumStr}
+                            <br />
+                            <strong>Colour Option:</strong> {result.colourOption || "Unknown"} on the TV.
+                        </p>
+                    )}
+
+                    {result.error && (
+                        <p className="solver-error">{result.error}</p>
+                    )}
+
+                    {result.formulas && (
+                        <ul className="solver-formula-list">
+                            {result.formulas.map((f, i) => (
+                                <li key={i}>
+                                    <span className="solver-formula-list__name">{f.name}</span>
+                                    <span className="solver-formula-list__ingredients">
+                                        {f.ingredients.map((ing, j) => (
+                                            <span key={j}>
+                                                {j > 0 && " + "}
+                                                {ingredient_links[ing] ? (
+                                                    <a href={ingredient_links[ing]}>{ing}</a>
+                                                ) : (
+                                                    ing
+                                                )}
+                                            </span>
+                                        ))}
+                                    </span>
+                                    <span className="solver-formula-list__number">Number: {f.number}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

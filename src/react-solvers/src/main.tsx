@@ -1,5 +1,4 @@
 import { render } from "preact";
-import "../../css/styles.css";
 import WW2HangmanSolver from "./components/WW2HangmanSolver";
 import WW2StatueSolver from "./components/WW2StatueSolver";
 import WW2HammerPuzzleSolver from "./components/WW2HammerPuzzleSolver";

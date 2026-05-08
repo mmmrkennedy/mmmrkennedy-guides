@@ -1,284 +1,154 @@
-import { useState } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 
-const IMG_0 = "/games/BO6/terminus/pictures/beamsmasher/0.webp";
-const IMG_10 = "/games/BO6/terminus/pictures/beamsmasher/10.webp";
-const IMG_11 = "/games/BO6/terminus/pictures/beamsmasher/11.webp";
-const IMG_20 = "/games/BO6/terminus/pictures/beamsmasher/20.webp";
-const IMG_21 = "/games/BO6/terminus/pictures/beamsmasher/21.webp";
-const IMG_22 = "/games/BO6/terminus/pictures/beamsmasher/22.webp";
+const SYMBOL_VALUES = [0, 10, 11, 20, 21, 22] as const;
+type SymbolValue = (typeof SYMBOL_VALUES)[number];
+type SlotKey = "X" | "Y" | "Z";
 
-type SymbolKey = "X" | "Y" | "Z";
-type SelectedSymbolValue = 0 | 10 | 11 | 20 | 21 | 22 | null;
-type SelectedSymbols = {
-    X: number | null;
-    Y: number | null;
-    Z: number | null;
-};
+const IMAGE_PATH = "/games/BO6/terminus/pictures/beamsmasher/";
 
-const selectedSymbols: SelectedSymbols = { X: null, Y: null, Z: null };
+const imageFor = (value: SymbolValue): string => `${IMAGE_PATH}${value}.webp`;
 
-function check_enabled_images(
-    image_value: SelectedSymbolValue | undefined,
-    letter: SymbolKey,
-    img_value: SelectedSymbolValue,
-    selectedSymbols: SelectedSymbols,
-): string {
-    if (image_value === img_value) {
-        return "selected";
-    } else if (image_value !== null && image_value !== undefined) {
-        return "img-disabled";
-    } else {
-        // Check if this value is already selected by a different letter
-        const otherValues = Object.entries(selectedSymbols)
-            .filter(([k]) => k !== letter)
-            .map(([_, v]) => v);
-
-        if (otherValues.includes(img_value)) {
-            return "img-disabled";
-        }
-
-        return "";
-    }
+interface Slots {
+    X: SymbolValue | null;
+    Y: SymbolValue | null;
+    Z: SymbolValue | null;
 }
 
-function calculateFormulas(selectedSymbols: SelectedSymbols) {
-    const { X, Y, Z } = selectedSymbols;
+const SLOT_KEYS: SlotKey[] = ["X", "Y", "Z"];
 
-    if (X !== null && Y !== null && Z !== null) {
-        // Calculate each formula
-        let formula1: number | string = 2 * X + 11;
-        let formula2: number | string = 2 * Z + Y - 5;
-        let formula3: number | string = Math.abs(Y + Z - X);
+type CalcResult =
+    | { kind: "ok"; code: string }
+    | { kind: "incomplete"; remaining: number }
+    | { kind: "error"; reason: string };
 
-        if (formula1 < 0 || formula2 < 0 || formula3 < 0) {
-            return "Invalid Selection (a formula returned a negative number)";
-        }
-
-        if (formula1 < 10) {
-            formula1 = "0" + String(formula1);
-        }
-
-        if (formula2 < 10) {
-            formula2 = "0" + String(formula2);
-        }
-
-        if (formula3 < 10) {
-            formula3 = "0" + String(formula3);
-        }
-
-        // Display results
-        return "Code: " + formula1 + " - " + formula2 + " - " + formula3;
-    } else {
-        // Display "N/A" if not all symbols are selected
-        return "N/A";
+function calculate(slots: Slots): CalcResult {
+    const filled = SLOT_KEYS.filter((k) => slots[k] !== null).length;
+    if (filled < 3) {
+        return { kind: "incomplete", remaining: 3 - filled };
     }
+
+    const X = slots.X!;
+    const Y = slots.Y!;
+    const Z = slots.Z!;
+
+    const f1 = 2 * X + 11;
+    const f2 = 2 * Z + Y - 5;
+    const f3 = Math.abs(Y + Z - X);
+
+    if (f1 < 0 || f2 < 0 || f3 < 0) {
+        return { kind: "error", reason: "Invalid selection — a formula returned a negative number." };
+    }
+
+    const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
+    return { kind: "ok", code: `${pad(f1)} – ${pad(f2)} – ${pad(f3)}` };
 }
 
 export default function BO6BeamsmasherMathSolver({ title }: { title?: string }) {
-    const [selectedX, setSelectedX] = useState<SelectedSymbolValue>();
-    const [selectedY, setSelectedY] = useState<SelectedSymbolValue>();
-    const [selectedZ, setSelectedZ] = useState<SelectedSymbolValue>();
-    const [result, setResult] = useState<string>("N/A");
+    const [slots, setSlots] = useState<Slots>({ X: null, Y: null, Z: null });
 
-    function selectSymbol(selectedSymbols: SelectedSymbols, letter: SymbolKey, value: SelectedSymbolValue) {
-        letter = letter.toUpperCase() as SymbolKey;
+    const result = useMemo(() => calculate(slots), [slots]);
+    const recalcKey = `${slots.X}|${slots.Y}|${slots.Z}`;
 
-        // Toggle selection
-        if (selectedSymbols[letter] === value) {
-            // Unselect if the same symbol is clicked again
-            selectedSymbols[letter] = null;
-
-            if (letter === "X") {
-                setSelectedX(null);
-            }
-
-            if (letter === "Y") {
-                setSelectedY(null);
-            }
-
-            if (letter === "Z") {
-                setSelectedZ(null);
-            }
-        } else {
-            selectedSymbols[letter] = value;
-
-            const otherValues = Object.entries(selectedSymbols)
-                .filter(([k]) => k !== letter)
-                .map(([_, v]) => v);
-
-            if (otherValues.includes(value)) {
-                return;
-            }
-
-            if (letter === "X") {
-                setSelectedX(value);
-            }
-
-            if (letter === "Y") {
-                setSelectedY(value);
-            }
-
-            if (letter === "Z") {
-                setSelectedZ(value);
-            }
+    /** Find which slot (if any) currently holds the given symbol. */
+    const slotForValue = (value: SymbolValue): SlotKey | null => {
+        for (const key of SLOT_KEYS) {
+            if (slots[key] === value) return key;
         }
+        return null;
+    };
 
-        // Calculate formulas
-        setResult(calculateFormulas(selectedSymbols));
-    }
+    /** Click a symbol in the picker: assign to next empty slot, or
+     unassign if it's already assigned somewhere. */
+    const toggleSymbol = (value: SymbolValue) => {
+        const owner = slotForValue(value);
+        if (owner) {
+            setSlots({ ...slots, [owner]: null });
+            return;
+        }
+        const nextEmpty = SLOT_KEYS.find((k) => slots[k] === null);
+        if (!nextEmpty) return;
+        setSlots({ ...slots, [nextEmpty]: value });
+    };
 
-    function resetAll(selectedSymbols: SelectedSymbols) {
-        selectedSymbols["X"] = null;
-        selectedSymbols["Y"] = null;
-        selectedSymbols["Z"] = null;
+    const clearSlot = (key: SlotKey) => {
+        if (slots[key] === null) return;
+        setSlots({ ...slots, [key]: null });
+    };
 
-        setSelectedX(null);
-        setSelectedY(null);
-        setSelectedZ(null);
-
-        setResult("N/A");
-    }
+    const handleReset = () => {
+        setSlots({ X: null, Y: null, Z: null });
+    };
 
     return (
-        <div className="solver-container beamsmasher">
+        <div className="solver-container solver-container--beamsmasher">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click the symbol images that match the sticky notes on the in-game computer (one for X, one for Y, one
-                for Z). The solver will automatically calculate and display the three-part code.
+                Click each symbol matching the sticky notes on the in-game computer. Symbols fill the X / Y / Z slots in
+                order. Click a filled slot or its symbol again to clear it.
             </p>
 
-            <div className="solver-symbol-select form-row" id="xSymbols">
-                <p>X Symbol:</p>
-                <div className={"beamsmasher-img-row"}>
-                    <img
-                        className={check_enabled_images(selectedX, "X", 0, selectedSymbols)}
-                        src={IMG_0}
-                        alt="X0"
-                        onClick={() => selectSymbol(selectedSymbols, "X", 0)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedX, "X", 10, selectedSymbols)}
-                        src={IMG_10}
-                        alt="X10"
-                        onClick={() => selectSymbol(selectedSymbols, "X", 10)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedX, "X", 11, selectedSymbols)}
-                        src={IMG_11}
-                        alt="X11"
-                        onClick={() => selectSymbol(selectedSymbols, "X", 11)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedX, "X", 20, selectedSymbols)}
-                        src={IMG_20}
-                        alt="X20"
-                        onClick={() => selectSymbol(selectedSymbols, "X", 20)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedX, "X", 21, selectedSymbols)}
-                        src={IMG_21}
-                        alt="X21"
-                        onClick={() => selectSymbol(selectedSymbols, "X", 21)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedX, "X", 22, selectedSymbols)}
-                        src={IMG_22}
-                        alt="X22"
-                        onClick={() => selectSymbol(selectedSymbols, "X", 22)}
-                    />
-                </div>
+            <div className="solver-symbol-select is-grid" role="group" aria-label="Symbol picker">
+                {SYMBOL_VALUES.map((value) => {
+                    const owner = slotForValue(value);
+                    return (
+                        <button
+                            key={value}
+                            type="button"
+                            className={owner ? "is-selected" : ""}
+                            aria-pressed={owner !== null}
+                            aria-label={`Symbol ${value}${owner ? ` (assigned to ${owner})` : ""}`}
+                            onClick={() => toggleSymbol(value)}
+                        >
+                            <img src={imageFor(value)} alt="" />
+                        </button>
+                    );
+                })}
             </div>
 
-            <div className="solver-symbol-select form-row" id="ySymbols">
-                <p>Y Symbol:</p>
-                <div className={"beamsmasher-img-row"}>
-                    <img
-                        className={check_enabled_images(selectedY, "Y", 0, selectedSymbols)}
-                        src={IMG_0}
-                        alt="Y0"
-                        onClick={() => selectSymbol(selectedSymbols, "Y", 0)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedY, "Y", 10, selectedSymbols)}
-                        src={IMG_10}
-                        alt="Y10"
-                        onClick={() => selectSymbol(selectedSymbols, "Y", 10)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedY, "Y", 11, selectedSymbols)}
-                        src={IMG_11}
-                        alt="Y11"
-                        onClick={() => selectSymbol(selectedSymbols, "Y", 11)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedY, "Y", 20, selectedSymbols)}
-                        src={IMG_20}
-                        alt="Y20"
-                        onClick={() => selectSymbol(selectedSymbols, "Y", 20)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedY, "Y", 21, selectedSymbols)}
-                        src={IMG_21}
-                        alt="Y21"
-                        onClick={() => selectSymbol(selectedSymbols, "Y", 21)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedY, "Y", 22, selectedSymbols)}
-                        src={IMG_22}
-                        alt="Y22"
-                        onClick={() => selectSymbol(selectedSymbols, "Y", 22)}
-                    />
-                </div>
+            <div className="solver-slot-list" role="list" aria-label="X Y Z slots">
+                {SLOT_KEYS.map((key) => {
+                    const value = slots[key];
+                    const filled = value !== null;
+                    return (
+                        <div
+                            key={key}
+                            role="listitem"
+                            className={`solver-slot${filled ? " is-filled" : ""}`}
+                            onClick={() => clearSlot(key)}
+                            aria-label={
+                                filled
+                                    ? `${key}: symbol ${value}, click to clear`
+                                    : `${key}: empty`
+                            }
+                        >
+                            <span className="solver-slot__label">{key}</span>
+                            {filled ? (
+                                <img className="solver-slot__image" src={imageFor(value!)} alt="" />
+                            ) : (
+                                <span className="solver-slot__placeholder">?</span>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
-            <div className="solver-symbol-select form-row" id="zSymbols">
-                <p>Z Symbol:</p>
-                <div className={"beamsmasher-img-row"}>
-                    <img
-                        className={check_enabled_images(selectedZ, "Z", 0, selectedSymbols)}
-                        src={IMG_0}
-                        alt="Z0"
-                        onClick={() => selectSymbol(selectedSymbols, "Z", 0)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedZ, "Z", 10, selectedSymbols)}
-                        src={IMG_10}
-                        alt="Z10"
-                        onClick={() => selectSymbol(selectedSymbols, "Z", 10)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedZ, "Z", 11, selectedSymbols)}
-                        src={IMG_11}
-                        alt="Z11"
-                        onClick={() => selectSymbol(selectedSymbols, "Z", 11)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedZ, "Z", 20, selectedSymbols)}
-                        src={IMG_20}
-                        alt="Z20"
-                        onClick={() => selectSymbol(selectedSymbols, "Z", 20)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedZ, "Z", 21, selectedSymbols)}
-                        src={IMG_21}
-                        alt="Z21"
-                        onClick={() => selectSymbol(selectedSymbols, "Z", 21)}
-                    />
-                    <img
-                        className={check_enabled_images(selectedZ, "Z", 22, selectedSymbols)}
-                        src={IMG_22}
-                        alt="Z22"
-                        onClick={() => selectSymbol(selectedSymbols, "Z", 22)}
-                    />
-                </div>
+            <div className="solver-controls">
+                <button type="button" className="btn btn--solver" onClick={handleReset}>Reset</button>
             </div>
 
-            <div className="solver-output" id="codeOutput">
-                <p>{result}</p>
+            <div className="solver-output is-recalc" key={recalcKey} aria-live="polite">
+                {result.kind === "ok" ? (
+                    <p>
+                        <strong>Code:</strong> {result.code}
+                    </p>
+                ) : result.kind === "error" ? (
+                    <p className="solver-error">{result.reason}</p>
+                ) : (
+                    <p style={{ color: "var(--color-text-muted)" }}>
+                        Select {result.remaining} more symbol{result.remaining !== 1 ? "s" : ""}.
+                    </p>
+                )}
             </div>
-            <button type="reset" className="btn-base solver-button" onClick={() => resetAll(selectedSymbols)}>
-                Reset All
-            </button>
         </div>
     );
 }

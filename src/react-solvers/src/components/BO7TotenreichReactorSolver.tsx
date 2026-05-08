@@ -13,7 +13,6 @@ function makeGrid(): CellType[][] {
 
 const DIRS: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
-// Returns the activated rod set (union across all uranium) — used for display only.
 function getActivated(grid: CellType[][], uraniumCells: [number, number][]): Set<string> {
     const activated = new Set<string>();
     for (const [ur, uc] of uraniumCells) {
@@ -37,8 +36,6 @@ function getActivated(grid: CellType[][], uraniumCells: [number, number][]): Set
 
 type Component = { size: number; uraniumCount: number };
 
-// Connected components of (uranium cells ∪ activated rods), returns size + U count per component.
-// Two uranium touching the same rod cluster merge into one component.
 function poweredComponents(grid: CellType[][], uraniumCells: [number, number][]): Component[] {
     const activated = getActivated(grid, uraniumCells);
     const uraniumSet = new Set<string>(uraniumCells.map(([r, c]) => `${r},${c}`));
@@ -71,16 +68,10 @@ function poweredComponents(grid: CellType[][], uraniumCells: [number, number][])
     return components;
 }
 
-// Base score per component: f(n) = 6.4n² + 10.6n
 function baseScore(n: number): number {
     return 6.4 * n * n + 10.6 * n;
 }
 
-// Compute total net score using best-known formula.
-// Base: Σ f(nᵢ) over U-containing components.
-// Bonus: when all 3 U's share a single component, that component would get +f(n)/4.
-// (The bonus is computed for debug visibility only — the game does not appear to
-// apply it. Net score returned excludes the bonus.)
 function computeScore(components: Component[]): {
     net: number;
     netNoBonus: number;
@@ -93,8 +84,6 @@ function computeScore(components: Component[]): {
         if (c.uraniumCount === 0) continue;
         netNoBonus += baseScore(c.size);
         if (c.uraniumCount === 3) {
-            // Bonus disabled — game does not appear to apply +f(n)/4 for all-3-clustered.
-            // Computed for debug visibility only.
             bonus += baseScore(c.size) / 4;
         }
     }
@@ -102,8 +91,6 @@ function computeScore(components: Component[]): {
     return { net: netNoBonus, netNoBonus, bonus };
 }
 
-// Keep any solution whose score lands within the observed-or-plausible win range.
-// Discarded scores: confirmed fails at raw 395 and raw 538 set the outer bounds.
 const KEEP_NET_MIN = 383;
 const KEEP_NET_MAX = 503;
 
@@ -127,24 +114,10 @@ type Solution = {
     confidence: Confidence;
 };
 
-// Confidence tiers calibrated against observed data.
-// Raw score = net + 27.
-//
-// Confirmed wins:    raw 410 (min visual), 432, 462 (max visual)
-// Confirmed fails:   raw 395 (big miss), raw 538 (wrong)
-// Visual oddity:     raw 512 lands at the same visual spot as 410 — possibly a
-//                    second valid window, but not confirmed as an actual win.
-//
-// High:  raw 410–462 (net 383–435) — full confirmed-win range, no buffer.
-// Med:   raw 463–475 (net 436–448) — narrow buffer above max confirmed win.
-// Low:   raw 476–530 (net 449–503) — covers the suspicious 512 visual match
-//                                    but stops before the confirmed 538 fail.
 const HIGH_NET_MIN = 383;
 const HIGH_NET_MAX = 435;
 const MED_NET_MIN = 436;
 const MED_NET_MAX = 448;
-const LOW_NET_MIN = 449;
-const LOW_NET_MAX = 503;
 
 function classifyConfidence(net: number): Confidence {
     if (net >= HIGH_NET_MIN && net <= HIGH_NET_MAX) return "high";
@@ -168,7 +141,6 @@ function findSolutions(grid: CellType[][]): Solution[] {
         results.push({ placements, components, net, netNoBonus, bonus, confidence });
     }
 
-    // Sort by confidence first (high > med > low), then by score descending within each tier.
     const confidenceRank: Record<Confidence, number> = { high: 0, med: 1, low: 2 };
     results.sort((a, b) => {
         const cDiff = confidenceRank[a.confidence] - confidenceRank[b.confidence];
@@ -184,9 +156,7 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
     const [solutions, setSolutions] = useState<Solution[]>([]);
     const [solutionIndex, setSolutionIndex] = useState<number>(0);
     const [debug, setDebug] = useState<boolean>(false);
-    const [message, setMessage] = useState<string | JSX.Element>(
-        defaultMessage,
-    );
+    const [message, setMessage] = useState<string | JSX.Element>(defaultMessage);
 
     const toggleCell = (r: number, c: number) => {
         if (phase !== "setup") return;
@@ -202,12 +172,12 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
     };
 
     const formatMessage = (sols: Solution[], idx: number): string | JSX.Element => {
-        if (sols.length === 0) return "No solutions found. Check your rod placement matches the game.";
+        if (sols.length === 0) return "No solutions found. If the layout is correct, this configuration may be unwinnable.";
         const s = sols[idx];
         const colors: Record<Confidence, string> = {
-            high: "#2ecc40",
-            med: "#ff851b",
-            low: "#ff4136",
+            high: "var(--color-tip-text)",
+            med: "var(--color-danger-text)",
+            low: "var(--color-no-return-text)",
         };
         const labels: Record<Confidence, string> = {
             high: "High",
@@ -217,9 +187,11 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         const score = Math.round(s.netNoBonus);
         return (
             <>
-                Solution {idx + 1} of {sols.length} — Confidence:{" "} <span style={{ color: colors[s.confidence], fontWeight: "bold" }}>
+                Solution {idx + 1} of {sols.length} — Confidence:{" "}
+                <span style={{ color: colors[s.confidence], fontWeight: "bold" }}>
                     {labels[s.confidence]}
-                </span> {" "}— Score: {score}
+                </span>
+                {" "}— Score: {score}
             </>
         );
     };
@@ -255,13 +227,17 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
 
     const getCellClass = (r: number, c: number): string => {
         const key = `${r},${c}`;
+        const base = "solver-cell reactor-cell";
         if (phase === "results") {
-            if (uraniumSet.has(key)) return "reactor-cell cell-uranium";
-            if (grid[r][c] === "rod")
-                return activated.has(key) ? "reactor-cell cell-activated" : "reactor-cell cell-rod";
-            return "reactor-cell cell-empty";
+            if (uraniumSet.has(key)) return `${base} cell-uranium is-locked`;
+            if (grid[r][c] === "rod") {
+                return activated.has(key)
+                    ? `${base} cell-activated is-locked`
+                    : `${base} cell-rod is-locked`;
+            }
+            return `${base} is-locked`;
         }
-        return `reactor-cell ${grid[r][c] === "rod" ? "cell-rod" : "cell-empty"}`;
+        return grid[r][c] === "rod" ? `${base} cell-rod` : base;
     };
 
     const renderGrid = () => {
@@ -269,7 +245,11 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         for (let r = 0; r < 4; r++) {
             for (let c = 0; c < 4; c++) {
                 cells.push(
-                    <div key={`reactor-${r}-${c}`} className={getCellClass(r, c)} onClick={() => toggleCell(r, c)} />,
+                    <div
+                        key={`reactor-${r}-${c}`}
+                        className={getCellClass(r, c)}
+                        onClick={() => toggleCell(r, c)}
+                    />,
                 );
             }
         }
@@ -281,15 +261,7 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         const sol = solutions[solutionIndex];
         if (!sol) {
             return (
-                <div className="solver-debug-panel" style={{
-                    marginTop: "1rem",
-                    padding: "0.75rem",
-                    border: "1px dashed #888",
-                    borderRadius: "4px",
-                    fontFamily: "monospace",
-                    fontSize: "0.85rem",
-                    whiteSpace: "pre-wrap",
-                }}>
+                <div className="solver-debug-panel">
                     {phase === "setup"
                         ? "Debug: place rods and click Solve to see score breakdown."
                         : "Debug: no solutions to inspect."}
@@ -302,16 +274,7 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
             .map((c) => `n=${c.size} U=${c.uraniumCount} → ${baseScore(c.size).toFixed(1)}`)
             .join("\n  ");
         return (
-            <div className="solver-debug-panel" style={{
-                marginTop: "1rem",
-                padding: "0.75rem",
-                border: "1px dashed #888",
-                borderRadius: "4px",
-                fontFamily: "monospace",
-                fontSize: "0.85rem",
-                whiteSpace: "pre-wrap",
-                textAlign: "left",
-            }}>
+            <div className="solver-debug-panel">
                 {`Solution ${solutionIndex + 1}/${solutions.length}
 Confidence:    ${sol.confidence}
 Net (current): ${sol.net.toFixed(2)}    → raw ${raw}px
@@ -324,38 +287,44 @@ Components:
     };
 
     return (
-        <div className="solver-container">
-            {title && <h2 className="solver-title">{title}</h2>}<p className="solver-instructions">{message}</p>
-            <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem" }}> <input type="checkbox" checked={debug} onChange={(e) => setDebug((e.target as HTMLInputElement).checked)} style={{ marginRight: "0.4rem" }} /> Debug mode </label>
-            <div className="reactor-grid-wrapper">
-                <div className="reactor-grid">{renderGrid()}</div>
+        <div
+            className="solver-container solver-container--totenreich-reactor"
+            data-phase={phase}
+        >
+            {title && <h2 className="solver-title">{title}</h2>}
+            <p className="solver-instructions">{message}</p>
+
+            <label className="solver-toggle">
+                <input
+                    type="checkbox"
+                    checked={debug}
+                    onChange={(e) => setDebug((e.target as HTMLInputElement).checked)}
+                />
+                Debug mode
+            </label>
+
+            <div className="solver-grid-wrapper">
+                <div className="solver-grid is-framed">{renderGrid()}</div>
             </div>
+
             {phase === "setup" ? (
-                <div>
-                    <button className="btn-base solver-button" onClick={handleSolve}>
-                        Solve
-                    </button>
-                    <button className="btn-base solver-button" onClick={handleReset}>
-                        Reset
-                    </button>
+                <div className="solver-controls">
+                    <button className="btn btn--solver" onClick={handleSolve}>Solve</button>
+                    <button className="btn btn--solver" onClick={handleReset}>Reset</button>
                 </div>
             ) : (
-                <div>
+                <div className="solver-controls">
                     {solutions.length > 1 && (
                         <>
-                            <button className="btn-base solver-button" onClick={() => navigate(-1)}>
-                                Prev
-                            </button>
-                            <button className="btn-base solver-button" onClick={() => navigate(1)}>
-                                Next
-                            </button>
+                            <button className="btn btn--solver" onClick={() => navigate(-1)}>Prev</button>
+                            <button className="btn btn--solver" onClick={() => navigate(1)}>Next</button>
                         </>
                     )}
-                    <button className="btn-base solver-button" onClick={handleReset}>
-                        Reset
-                    </button>
+                    <button className="btn btn--solver" onClick={handleReset}>Reset</button>
                 </div>
-            )} {renderDebugPanel()}
+            )}
+
+            {renderDebugPanel()}
         </div>
     );
 }

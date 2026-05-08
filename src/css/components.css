@@ -128,6 +128,42 @@ a:hover {
     border-color: var(--color-text-primary);
 }
 
+/* Reveal variant — same look as .btn--solver in Solvers.css, available in the main bundle. */
+.btn--reveal {
+    padding: var(--space-sm) var(--space-lg);
+    border-color: #c9a961;
+    color: #c9a961;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    background: transparent;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn--reveal:not(:disabled):hover {
+    color: #d4b56f;
+    border-color: #d4b56f;
+    background: transparent;
+}
+
+.btn--reveal.is-active {
+    background: #c9a961;
+    border-color: #c9a961;
+    color: var(--color-bg-primary);
+    font-weight: 700;
+}
+
+.btn--reveal.is-active:not(:disabled):hover {
+    background: #d4b56f;
+    border-color: #d4b56f;
+    color: var(--color-bg-primary);
+}
+
+.btn--reveal:disabled,
+.btn--reveal.is-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .btn--fixed {
     position: fixed;
     padding: var(--space-sm) var(--space-lg);
@@ -153,7 +189,13 @@ a:hover {
     --btn-right: var(--space-md);
 }
 
-.btn--fixed.bottom-right {
+.bottom-left {
+    --btn-bottom: var(--space-md);
+    --btn-left: var(--space-md);
+}
+
+.btn--fixed.bottom-right,
+.btn--fixed.bottom-left {
     padding: var(--space-md);
     width: 48px;
     height: 48px;
@@ -261,14 +303,18 @@ a:hover {
 }
 
 /* Tables */
-table {
-    margin: var(--space-lg) calc(-1 * var(--space-md)) var(--space-lg) calc(-1 * var(--space-xl));
-    border-collapse: collapse;
-    width: auto;
-    max-width: none;
+.table-scroll {
+    margin: var(--space-lg) calc(-1 * var(--space-md)) var(--space-lg) calc(-1 * var(--space-md));
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     background-color: var(--color-bg-secondary);
     border-radius: 4px;
-    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    min-width: 100%;
+    max-width: none;
     padding-left: var(--space-sm);
     padding-right: var(--space-sm);
 }
@@ -492,12 +538,20 @@ details.spacing {
 /* Ads */
 .ad-inline {
     width: 100%;
-    min-height: 250px;
+    min-height: 100px;
 }
 
 .ad-multiplex,
 .ad-infeed {
-    min-height: 250px;
+    min-height: 100px;
+}
+
+@media (width >= 48.0625em) {
+    .ad-inline,
+    .ad-multiplex,
+    .ad-infeed {
+        min-height: 250px;
+    }
 }
 
 .ad-right-sidebar,
@@ -510,6 +564,11 @@ details.spacing {
     z-index: 50;
 }
 
+/* Leave clearance for the bottom-right Back-to-Top button (48px + space-md inset) */
+.ad-right-sidebar {
+    height: calc(100dvh - var(--header-height-desktop) - var(--space-xl) - 48px - var(--space-md));
+}
+
 /* Ad visibility modes — controlled by body class set from JS */
 body.ads-hidden .ad-inline,
 body.ads-hidden .ad-multiplex,
@@ -517,9 +576,10 @@ body.ads-hidden .ad-infeed,
 body.ads-hidden .ad-right-sidebar,
 body.ads-hidden .ad-left-sidebar { display: none !important; }
 
-body.ads-minimal .ad-inline,
-body.ads-minimal .ad-multiplex,
-body.ads-minimal .ad-infeed { display: none !important; }
+/* Hide left sidebar on solver-only pages when in minimal mode */
+body.ads-minimal:has(.solver-only-page) .ad-left-sidebar { display: none !important; }
+
+/* Minimal mode: JS toggles individual .ad-inline visibility via inline display style */
 
 /* Tutorial Confirm */
 .tutorial-confirm {

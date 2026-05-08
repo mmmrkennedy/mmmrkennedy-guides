@@ -15,11 +15,25 @@ interface ColorCounts {
 
 const COLORS: Color[] = ["red", "green", "blue", "black", "yellow", "white"];
 
-const COLOR_TEXT: Record<Color, string> = {
+// Used for the result text — needs to be readable on a dark panel,
+// so 'black' is mapped to a light gray.
+const COLOR_HEX: Record<Color, string> = {
     red:    "#e74c3c",
     green:  "#2ecc71",
     blue:   "#5dade2",
     black:  "#aaaaaa",
+    yellow: "#f1c40f",
+    white:  "#ecf0f1",
+};
+
+// Used for the swatch fills — closer to the actual in-game colors.
+// 'black' is dark but not pure black so it's distinguishable from
+// the panel and visible at low opacity when not selected.
+const COLOR_SWATCH: Record<Color, string> = {
+    red:    "#e74c3c",
+    green:  "#2ecc71",
+    blue:   "#5dade2",
+    black:  "#3a3a3a",
     yellow: "#f1c40f",
     white:  "#ecf0f1",
 };
@@ -84,76 +98,24 @@ function venomBoxCalc(buttonArr: Color[]): string {
     const { counts, S, W, X } = processArr(buttonArr);
 
     if (X === 3) {
-        // c1, (!bl) ? B3 : c2;
-        if (counts.black === 0) {
-            return "Button #3";
-        }
-
-        // c2, (BL = g) ? B1 : c3;
-        if (buttonArr[X - 1] === "green") {
-            return "Button #1";
-        }
-
-        // c3, (sum(r) > 1) ? BL(r) : c4;
-        if (counts.red > 1) {
-            return `Button #${BL(buttonArr, "red")}`;
-        }
-
-        // c4, B2
+        if (counts.black === 0) return "Button #3";
+        if (buttonArr[X - 1] === "green") return "Button #1";
+        if (counts.red > 1) return `Button #${BL(buttonArr, "red")}`;
         return "Button #2";
     } else if (X === 4) {
-        // c1, ((sum(y) > 1) && S >= 2 ? BL(y) : c2;
-        if (counts.yellow > 1 && S >= 2) {
-            return `Button #${BL(buttonArr, "yellow")}`;
-        }
-
-        // c2, ((BL(w) && sum(b) = 0) ? B1 : c3;
-        if (buttonArr[X - 1] === "white" && counts.blue === 0) {
-            return "Button #1";
-        }
-
-        // c3, (sum(bl) > 1) ? BL : c4;
-        if (counts.black > 1) {
-            return `Button #${X}`;
-        }
-
-        // c4, B3
+        if (counts.yellow > 1 && S >= 2) return `Button #${BL(buttonArr, "yellow")}`;
+        if (buttonArr[X - 1] === "white" && counts.blue === 0) return "Button #1";
+        if (counts.black > 1) return `Button #${X}`;
         return "Button #3";
     } else if (X === 5) {
-        // c1, (W <= 3) ? W1 : c2;
-        if (areAllLessThanEqual(W, 3)) {
-            return "Button #1";
-        }
-
-        // c2, (sum(w) = 1 && sum(b) > 1) ? W2 : c3;
-        if (counts.white === 1 && counts.blue > 1) {
-            return "Button #2";
-        }
-
-        // c3, (sum(r) = 0 && W % 2 = 0 && S < 4) ? WL : c4;
-        if (counts.red === 0 && isAnyEven(W) && S < 4) {
-            return "Button #5";
-        }
-
-        // c4, W1
+        if (areAllLessThanEqual(W, 3)) return "Button #1";
+        if (counts.white === 1 && counts.blue > 1) return "Button #2";
+        if (counts.red === 0 && isAnyEven(W) && S < 4) return "Button #5";
         return "Button #1";
     } else if (X === 6) {
-        // c1, (sum(y) != 0)
-        if (counts.yellow !== 0) {
-            return "Button #3";
-        }
-
-        // c2, (sum(bl) = 1 && sum(w) > 1) ? W4 : c3;
-        if (counts.black === 1 && counts.white > 1) {
-            return "Button #4";
-        }
-
-        // c3, (S >=1 && sum(r) > 1) ? W5 : c4;
-        if (S >= 1 && counts.red > 1) {
-            return "Button #5";
-        }
-
-        // c4, BL
+        if (counts.yellow !== 0) return "Button #3";
+        if (counts.black === 1 && counts.white > 1) return "Button #4";
+        if (S >= 1 && counts.red > 1) return "Button #5";
         return "Button #6";
     }
 
@@ -168,76 +130,77 @@ export default function IWBeastVenomXBoxSolver({ title }: { title?: string }) {
     const handleButtonCountChange = (e: Event) => {
         const newCount = parseInt((e.currentTarget as HTMLSelectElement).value) as ButtonCount;
         setButtonCount(newCount);
-        // Initialize colors array when button count changes
         const initialColors = Array(newCount).fill("red") as Color[];
         setSelectedColors(initialColors);
         calcKeyRef.current++;
     };
 
-    const handleColorChange = (index: number, color: Color) => {
+    const handleColorChange = (slotIndex: number, color: Color) => {
         const newColors = [...selectedColors];
-        newColors[index] = color;
+        newColors[slotIndex] = color;
         setSelectedColors(newColors);
         calcKeyRef.current++;
     };
 
-    // Calculate result directly from state
     const result = selectedColors.length === buttonCount ? venomBoxCalc(selectedColors) : "";
-
     const solutionButtonIndex = result ? (parseInt(result.match(/#(\d+)/)?.[1] ?? "0") - 1) : -1;
+    const resultColor = solutionButtonIndex >= 0 ? COLOR_HEX[selectedColors[solutionButtonIndex]] : undefined;
 
     return (
         <div className="solver-container">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Select the number of buttons, then set each buttons colour to the same order as the ones in-game (from
-                top to bottom). The Solution will automatically appear.
+                Select the number of buttons, then tap the color matching each button in-game (top to bottom). The
+                solution will appear below.
             </p>
-            <div className="form-row">
-                <label htmlFor="venom-x-box-button-selector">Select the number of buttons:</label>
+
+            <div className="solver-form-row">
+                <label htmlFor="venom-x-box-count">Number of buttons:</label>
                 <select
-                    id="venom-x-box-button-selector"
-                    name="venom-x-box"
+                    id="venom-x-box-count"
                     value={buttonCount}
                     onChange={handleButtonCountChange}
                 >
-                    <option value="3">3 Buttons</option>
-                    <option value="4">4 Buttons</option>
-                    <option value="5">5 Buttons</option>
-                    <option value="6">6 Buttons</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
                 </select>
             </div>
 
-            <div id="venom-x-box-buttons" className="venom-box-buttons">
+            <div className="solver-stack">
                 {Array.from({ length: buttonCount }, (_, i) => (
-                    <div key={i} className="form-row">
-                        <div className="venom-box-row">
-                            <label htmlFor={`venom-button-${i}`} className="venom-box-label">
-                                Button {i + 1}:
-                            </label>
-                            <select
-                                id={`venom-button-${i}`}
-                                name="venom-button"
-                                value={selectedColors[i]}
-                                onChange={(e) => handleColorChange(i, (e.target as HTMLSelectElement).value as Color)}
-                            >
-                                {COLORS.map((color) => (
-                                    <option key={color} value={color}>
-                                        {color}
-                                    </option>
-                                ))}
-                            </select>
+                    <div className="solver-slot-row" key={i}>
+                        <span className="solver-slot-row__label">Button {i + 1}</span>
+                        <div className="solver-swatch-row" role="radiogroup" aria-label={`Button ${i + 1} color`}>
+                            {COLORS.map((color) => {
+                                const isSelected = selectedColors[i] === color;
+                                return (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={isSelected}
+                                        aria-label={color}
+                                        className={`solver-color-swatch${isSelected ? " is-selected" : ""}`}
+                                        style={{ "--swatch-color": COLOR_SWATCH[color] } as preact.JSX.CSSProperties}
+                                        onClick={() => handleColorChange(i, color)}
+                                    />
+                                );
+                            })}
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="solver-output" id="venom-x-box-result">
+            <div className="solver-output">
                 <p
                     key={calcKeyRef.current}
-                    className="result-recalc"
-                    style={solutionButtonIndex >= 0 ? { color: COLOR_TEXT[selectedColors[solutionButtonIndex]] } : undefined}
-                >Press {result}</p>
+                    className="is-recalc"
+                    style={resultColor ? { color: resultColor, margin: 0 } : { margin: 0 }}
+                >
+                    Press {result}
+                </p>
             </div>
         </div>
     );

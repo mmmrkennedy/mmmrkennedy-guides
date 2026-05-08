@@ -27,8 +27,11 @@ export default function IWBeastFloppySolver({ title }: { title?: string }) {
     const maxSymbols = 4;
     const totalSymbols = 12;
 
-    const selectSymbol = (symbolId: number) => {
-        if (selectedSymbols.length < maxSymbols && !selectedSymbols.includes(symbolId)) {
+    const toggleSymbol = (symbolId: number) => {
+        if (selectedSymbols.includes(symbolId)) {
+            // Allow deselecting by clicking again
+            setSelectedSymbols(selectedSymbols.filter((id) => id !== symbolId));
+        } else if (selectedSymbols.length < maxSymbols) {
             setSelectedSymbols([...selectedSymbols, symbolId]);
         }
     };
@@ -37,73 +40,68 @@ export default function IWBeastFloppySolver({ title }: { title?: string }) {
         setSelectedSymbols([]);
     };
 
+    const isComplete = selectedSymbols.length === maxSymbols;
+    const hasDuplicates = isComplete && new Set(selectedSymbols).size !== selectedSymbols.length;
+    const resultImages = isComplete && !hasDuplicates ? processSymbols(selectedSymbols) : [];
+    const isValid = isComplete && !hasDuplicates && resultImages.length > 0;
+
     const getMessage = (): string => {
-        if (selectedSymbols.length === maxSymbols) {
-            const isDuplicate = new Set(selectedSymbols).size !== selectedSymbols.length;
-
-            if (isDuplicate) {
-                return "Invalid Sequence: Duplicate symbol selected!";
-            } else {
-                const processedResult = processSymbols(selectedSymbols);
-                if (processedResult.length > 0) {
-                    return "Valid Sequence:";
-                } else {
-                    return "Invalid Sequence: No matching result!";
-                }
-            }
-        } else {
-            return `Selected Symbols: ${selectedSymbols.join(", ")}`;
+        if (!isComplete) {
+            const remaining = maxSymbols - selectedSymbols.length;
+            return `Select ${remaining} more symbol${remaining !== 1 ? "s" : ""}.`;
         }
+        if (hasDuplicates) return "Invalid: duplicate symbol selected.";
+        if (!isValid) return "Invalid: no matching sequence found.";
+        // return "Valid sequence — press the symbols in this order:";
+        return "";
     };
-
-    const getResultImages = (): number[] => {
-        if (selectedSymbols.length === maxSymbols) {
-            const isDuplicate = new Set(selectedSymbols).size !== selectedSymbols.length;
-            if (!isDuplicate) {
-                return processSymbols(selectedSymbols);
-            }
-        }
-        return [];
-    };
-
-    const resultImages = getResultImages();
 
     return (
-        <div className="solver-container floppy">
+        <div className="solver-container solver-container--floppy">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click the 4 symbols that appear in your game. The solver will validate the sequence and show the correct
-                order if valid.
+                Click the 4 symbols that appear in your game in any order. The solver will validate the sequence and show
+                the correct order if valid. Click a selected symbol to deselect it.
             </p>
-            <p>Select 4 symbols in any order:</p>
-            <div id="floppy_solver_symbol_select" className="solver-symbol-select floppy-grid">
-                {Array.from({ length: totalSymbols }, (_, i) => (
-                    <img
-                        key={i}
-                        src={`${imagePath}picture_${i}.webp`}
-                        alt={`Symbol ${i}`}
-                        data-symbol-id={i}
-                        className={`floppy-symbol ${selectedSymbols.includes(i) ? "selected" : ""}`}
-                        onClick={() => selectSymbol(i)}
-                    />
-                ))}
+
+            <div className="solver-symbol-select is-grid" role="group" aria-label="Symbol picker">
+                {Array.from({ length: totalSymbols }, (_, i) => {
+                    const isSelected = selectedSymbols.includes(i);
+                    const atLimit = !isSelected && selectedSymbols.length >= maxSymbols;
+                    return (
+                        <button
+                            key={i}
+                            type="button"
+                            className={isSelected ? "is-selected" : ""}
+                            disabled={atLimit}
+                            aria-pressed={isSelected}
+                            aria-label={`Symbol ${i + 1}`}
+                            onClick={() => toggleSymbol(i)}
+                        >
+                            <img src={`${imagePath}picture_${i}.webp`} alt="" />
+                        </button>
+                    );
+                })}
             </div>
+
             <div className="solver-output">
-                <p id="floppy_solver_code">{getMessage()}</p>
-                <div id="floppy_result" className="floppy-result">
-                    {resultImages.map((id) => (
-                        <img
-                            key={id}
-                            src={`${imagePath}picture_${id}.webp`}
-                            alt={`Symbol ${id}`}
-                            className="floppy-symbol"
-                        />
-                    ))}
-                </div>
+                <p style={{ margin: 0 }}>{getMessage()}</p>
+                {resultImages.length > 0 && (
+                    <div className="solver-image-row" style={{ marginTop: "var(--space-sm)" }}>
+                        {resultImages.map((id, idx) => (
+                            <img
+                                key={`${id}-${idx}`}
+                                src={`${imagePath}picture_${id}.webp`}
+                                alt={`Symbol ${id + 1}, position ${idx + 1}`}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
-            <button className="btn-base solver-button" onClick={resetAll}>
-                Reset
-            </button>
+
+            <div className="solver-controls">
+                <button className="btn btn--solver" onClick={resetAll}>Reset</button>
+            </div>
         </div>
     );
 }

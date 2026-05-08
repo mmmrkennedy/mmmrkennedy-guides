@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 
 const words: string[] = [
     "ACTORS",
@@ -60,7 +60,6 @@ const words: string[] = [
     "SHUFFLE",
     "SLASHER",
     "SIXTYMILLION",
-    "SLASHER",
     "SLIDE",
     "SNAKE",
     "SPACELAND",
@@ -74,81 +73,80 @@ const words: string[] = [
     "ZAPPER",
 ];
 
-function filterWordsByPrefix(prefix: string): string[][] {
-    // Filter the words that start with the given prefix
-    const filtered_words: string[] = words.filter((word) => {
-        return word.toLowerCase().startsWith(prefix.toLowerCase());
-    });
+const SYMBOL_PATH = "/games/IW/wyler_language_symbols/";
 
-    let possible_letters: string[] = filtered_words
-        .map((word) => {
-            return word.slice(prefix.length);
-        })
-        .filter((remaining) => remaining.length > 0)
-        .map((remaining) => remaining.charAt(0));
+interface FilterResult {
+    matchingWords: string[];
+    nextLetters: string[];
+}
 
-    possible_letters = [...new Set(possible_letters)];
+function filterWordsByPrefix(prefix: string): FilterResult {
+    if (prefix === "") {
+        return { matchingWords: words, nextLetters: [] };
+    }
 
-    return [filtered_words, possible_letters];
+    const lowerPrefix = prefix.toLowerCase();
+    const matchingWords = words.filter((word) => word.toLowerCase().startsWith(lowerPrefix));
+
+    const nextLetters = Array.from(
+        new Set(
+            matchingWords
+                .map((word) => word.slice(prefix.length))
+                .filter((remaining) => remaining.length > 0)
+                .map((remaining) => remaining.charAt(0)),
+        ),
+    ).sort();
+
+    return { matchingWords, nextLetters };
 }
 
 export default function IWMainQuestWordFilter({ title }: { title?: string }) {
     const [inputString, setInputString] = useState<string>("");
-    const [filteredWords, setFilteredWords] = useState<string[]>(words);
-    const [possibleLetters, setPossibleLetters] = useState<string[]>([]);
 
-    function handleInputChange(e: Event) {
-        const input: string = (e.currentTarget as HTMLInputElement).value;
-        setInputString(input);
-
-        if (input === "") {
-            handleClearInput();
-        } else {
-            const [filtered_words, possible_letters] = filterWordsByPrefix(input);
-            setFilteredWords(filtered_words);
-            setPossibleLetters(possible_letters);
-        }
-    }
-
-    function handleClearInput() {
-        setInputString("");
-        setFilteredWords(words);
-        setPossibleLetters([]);
-    }
+    const { matchingWords, nextLetters } = useMemo(
+        () => filterWordsByPrefix(inputString),
+        [inputString],
+    );
 
     return (
-        <div className="solver-container">
+        <div className="solver-container solver-container--word-filter">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Enter letters to filter the word list. The solver shows matching words and possible next letters based
-                on your current input.
+                Type letters to filter the word list. The solver shows matching words and the possible next letters
+                based on your current input.
             </p>
-            <div className="form-row">
-                <label htmlFor="prefix-input">Enter letters: </label>
+
+            <div className="solver-form-row">
+                <label htmlFor="prefix-input">Letters:</label>
                 <input
                     id="prefix-input"
                     type="text"
-                    className="solver"
                     value={inputString}
-                    onInput={handleInputChange}
-                    placeholder="Type letters..."
+                    onInput={(e) => setInputString((e.currentTarget as HTMLInputElement).value)}
+                    placeholder="Type letters…"
+                    autocomplete="off"
+                    spellcheck={false}
                 />
             </div>
 
-            {possibleLetters.length > 0 && (
+            {nextLetters.length > 0 && (
                 <div className="solver-output">
-                    <h3>Next Possible Letters ({possibleLetters.length}):</h3>
-                    <div className="letter-symbols-container">
-                        {possibleLetters.sort().map((letter, index) => (
-                            <div key={index} className="letter-symbol-box">
-                                <div className="letter-text-side">{letter}</div>
-                                <div className="letter-image-side">
-                                    <img
-                                        src={`/games/IW/wyler_language_symbols/${letter.toLowerCase()}.webp`}
-                                        alt={letter}
-                                        className="letter-symbol-image"
-                                    />
-                                </div>
+                    <p>
+                        <strong>Next possible letters ({nextLetters.length}):</strong>
+                    </p>
+                    <div className="solver-letter-grid">
+                        {nextLetters.map((letter) => (
+                            <div
+                                key={letter}
+                                className="solver-letter-cell is-static"
+                                aria-label={letter}
+                            >
+                                <span className="solver-letter-cell__letter">{letter}</span>
+                                <img
+                                    className="solver-letter-cell__image"
+                                    src={`${SYMBOL_PATH}${letter.toLowerCase()}.webp`}
+                                    alt=""
+                                />
                             </div>
                         ))}
                     </div>
@@ -156,14 +154,18 @@ export default function IWMainQuestWordFilter({ title }: { title?: string }) {
             )}
 
             <div className="solver-output">
-                <h3>Matching Words ({filteredWords.length}):</h3>
-                <div className="matching-words-grid">
-                    {filteredWords.map((word, index) => (
-                        <div key={index} className="word-item">
-                            {word}
-                        </div>
-                    ))}
-                </div>
+                <p>
+                    <strong>Matching words ({matchingWords.length}):</strong>
+                </p>
+                {matchingWords.length > 0 ? (
+                    <ul className="solver-word-list">
+                        {matchingWords.map((word) => (
+                            <li key={word}>{word}</li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="solver-word-list--empty">No matches.</p>
+                )}
             </div>
         </div>
     );

@@ -62,13 +62,14 @@ Desktop-specific upgrades. Base styles are mobile-first.
         padding-inline-start: var(--space-xl);
     }
 
-    table {
+    .table-scroll {
         margin: var(--space-lg) 0;
+    }
+
+    table {
         padding-left: 0;
         padding-right: 0;
         width: 100%;
-        max-width: 100%;
-        overflow-x: hidden;
     }
 
     .solver-with-button {
@@ -90,6 +91,16 @@ Desktop-specific upgrades. Base styles are mobile-first.
     .btn--fixed.bottom-right {
         --btn-bottom: 1.25rem;
         --btn-right: 1.25rem;
+
+        padding: var(--space-sm) var(--space-lg);
+        width: auto;
+        height: auto;
+        opacity: 0.85;
+    }
+
+    .btn--fixed.bottom-left {
+        --btn-bottom: 1.25rem;
+        --btn-left: 1.25rem;
 
         padding: var(--space-sm) var(--space-lg);
         width: auto;

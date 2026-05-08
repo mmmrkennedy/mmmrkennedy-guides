@@ -1,20 +1,38 @@
-import { useState } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 
 type ValveLocation = "department_store" | "supply_depot" | "armory" | "infirmary" | "tank_factory" | "dragon_command";
 
 type ValveConfig = [
-    number | undefined,
-    number | undefined,
-    number | undefined,
-    number | undefined,
-    number | undefined,
-    number | undefined,
+        number | undefined,
+        number | undefined,
+        number | undefined,
+        number | undefined,
+        number | undefined,
+        number | undefined,
 ];
 
 type LocationToConfigMap = Partial<Record<ValveLocation, ValveConfig>>;
 type ValveLegend = Record<ValveLocation, LocationToConfigMap>;
 
-const valve_legend: ValveLegend = {
+const LOCATION_NAMES: Record<ValveLocation, string> = {
+    department_store: "Department Store",
+    supply_depot: "Supply Depot",
+    armory: "Armory",
+    infirmary: "Infirmary",
+    tank_factory: "Tank Factory",
+    dragon_command: "Dragon Command",
+};
+
+const LOCATION_ORDER: ValveLocation[] = [
+    "department_store",
+    "supply_depot",
+    "armory",
+    "infirmary",
+    "tank_factory",
+    "dragon_command",
+];
+
+const valveLegend: ValveLegend = {
     department_store: {
         supply_depot: [1, undefined, 2, 3, 1, 1],
         armory: [3, 2, undefined, 2, 2, 3],
@@ -59,124 +77,92 @@ const valve_legend: ValveLegend = {
     },
 };
 
-function get_valve_list(
-    valve_legend: ValveLegend,
-    greenValve: ValveLocation,
-    pinkValue: ValveLocation,
-): ValveConfig | undefined {
-    return valve_legend[greenValve][pinkValue];
+interface ValveAdjustment {
+    location: string;
+    value: number;
 }
 
-function format_list_as_str(list_of_correct_vals: ValveConfig | undefined): string {
-    let result = "";
-    let loc_name;
+type ValveResult =
+    | { kind: "ok"; adjustments: ValveAdjustment[] }
+    | { kind: "error"; reason: string };
 
-    if (list_of_correct_vals === undefined) {
-        return "List of correct values is undefined. Please try again.";
+function getAdjustments(green: ValveLocation, pink: ValveLocation): ValveResult {
+    if (green === pink) {
+        return { kind: "error", reason: "The Green and Pink Valves can't be at the same location." };
     }
 
-    for (let i = 0; i < list_of_correct_vals.length; i++) {
-        if (list_of_correct_vals[i] === undefined || list_of_correct_vals[i] === 0) {
-            continue;
-        }
-
-        if (i === 0) {
-            loc_name = "Department Store";
-        } else if (i === 1) {
-            loc_name = "Supply Depot";
-        } else if (i === 2) {
-            loc_name = "Armory";
-        } else if (i === 3) {
-            loc_name = "Infirmary";
-        } else if (i === 4) {
-            loc_name = "Tank Factory";
-        } else if (i === 5) {
-            loc_name = "Dragon Command";
-        }
-
-        const value = list_of_correct_vals[i];
-        if (value !== undefined && value > 3) {
-            console.error("Value for %s is greater than 3 (%s)", loc_name, value);
-        }
-
-        result += "Set " + loc_name + " to: " + list_of_correct_vals[i] + "\n";
+    const config = valveLegend[green]?.[pink];
+    if (!config) {
+        return { kind: "error", reason: "Unable to look up the valve configuration. Please try again." };
     }
 
-    return result.slice(0, -1);
+    const adjustments: ValveAdjustment[] = [];
+    for (let i = 0; i < config.length; i++) {
+        const value = config[i];
+        if (value === undefined || value === 0) continue;
+        adjustments.push({
+            location: LOCATION_NAMES[LOCATION_ORDER[i]],
+            value,
+        });
+    }
+    return { kind: "ok", adjustments };
 }
 
 export default function BO3ValveSolver({ title }: { title?: string }) {
     const [greenValve, setGreenValve] = useState<ValveLocation>("department_store");
-    const [pinkValve, setPinkValve] = useState<ValveLocation>("department_store");
-    const [result, setResult] = useState<string>("");
+    const [pinkValve, setPinkValve] = useState<ValveLocation>("supply_depot");
 
-    function handle_green_valve_change(e: Event) {
-        const newGreenValve = (e.currentTarget as HTMLSelectElement).value as ValveLocation;
-        setGreenValve(newGreenValve);
-
-        if (newGreenValve === pinkValve) {
-            setResult("The Green and Pink Valves can't be the same.");
-        } else {
-            const list_of_valves = get_valve_list(valve_legend, newGreenValve, pinkValve);
-            setResult(format_list_as_str(list_of_valves));
-        }
-    }
-
-    function handle_pink_valve_change(e: Event) {
-        const newPinkValve = (e.currentTarget as HTMLSelectElement).value as ValveLocation;
-        setPinkValve(newPinkValve);
-
-        if (newPinkValve === greenValve) {
-            setResult("The Green and Pink Valves can't be the same.");
-        } else {
-            const list_of_valves = get_valve_list(valve_legend, greenValve, newPinkValve);
-            setResult(format_list_as_str(list_of_valves));
-        }
-    }
+    const result = useMemo(() => getAdjustments(greenValve, pinkValve), [greenValve, pinkValve]);
 
     return (
         <div className="solver-container">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Select the location of the Green Light Valve and the Pink Cylinder Valve from the dropdowns. The solver
-                will automatically display which valves to adjust and their target settings.
+                Pick the locations of the <span className="solver-text--green">Green Light Valve</span> and the{" "}
+                <span className="solver-text--pink">Pink Cylinder Valve</span>. The solver will show which valves to
+                adjust and their target settings.
             </p>
-            <div className="form-row">
+
+            <div className="solver-form-row">
                 <label htmlFor="greenValve">
-                    <span className="text-green">Select Green Light Valve:</span>
+                    <span className="solver-text--green">Green Light Valve:</span>
                 </label>
-                <select id="greenValve" value={greenValve} onChange={handle_green_valve_change}>
-                    <option value="department_store">Department Store</option>
-                    <option value="supply_depot">Supply Depot</option>
-                    <option value="armory">Armory</option>
-                    <option value="infirmary">Infirmary</option>
-                    <option value="tank_factory">Tank Factory</option>
-                    <option value="dragon_command">Dragon Command</option>
+                <select
+                    id="greenValve"
+                    value={greenValve}
+                    onChange={(e) => setGreenValve((e.currentTarget as HTMLSelectElement).value as ValveLocation)}
+                >
+                    {LOCATION_ORDER.map((loc) => (
+                        <option key={loc} value={loc}>{LOCATION_NAMES[loc]}</option>
+                    ))}
                 </select>
             </div>
 
-            <div className="form-row">
+            <div className="solver-form-row">
                 <label htmlFor="pinkValve">
-                    <span className="text-pink">Select Pink Cylinder Valve:</span>
+                    <span className="solver-text--pink">Pink Cylinder Valve:</span>
                 </label>
-                <select id="pinkValve" value={pinkValve} onChange={handle_pink_valve_change}>
-                    <option value="department_store">Department Store</option>
-                    <option value="supply_depot">Supply Depot</option>
-                    <option value="armory">Armory</option>
-                    <option value="infirmary">Infirmary</option>
-                    <option value="tank_factory">Tank Factory</option>
-                    <option value="dragon_command">Dragon Command</option>
+                <select
+                    id="pinkValve"
+                    value={pinkValve}
+                    onChange={(e) => setPinkValve((e.currentTarget as HTMLSelectElement).value as ValveLocation)}
+                >
+                    {LOCATION_ORDER.map((loc) => (
+                        <option key={loc} value={loc}>{LOCATION_NAMES[loc]}</option>
+                    ))}
                 </select>
             </div>
-            <div>
-                <p className="solver-output" id="result">
-                    {result.split("\n").map((line, i) => (
-                        <span key={i}>
-                            {line}
-                            <br />
-                        </span>
-                    ))}
-                </p>
+
+            <div className="solver-output is-recalc" aria-live="polite">
+                {result.kind === "error" ? (
+                    <p className="solver-error">{result.reason}</p>
+                ) : (
+                    result.adjustments.map((adj, i) => (
+                        <p key={i}>
+                            Set <strong>{adj.location}</strong> to {adj.value}
+                        </p>
+                    ))
+                )}
             </div>
         </div>
     );

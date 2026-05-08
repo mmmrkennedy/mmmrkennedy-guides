@@ -24,247 +24,109 @@ const mazeSolutionCoordinates: MazeSolution[] = [
         start: [0, 5],
         end: [3, 4],
         path: [
-            [0, 5],
-            [0, 4],
-            [1, 4],
-            [1, 5],
-            [5, 5],
-            [5, 1],
-            [4, 1],
-            [4, 3],
-            [3, 3],
-            [3, 4],
+            [0, 5], [0, 4], [1, 4], [1, 5], [5, 5], [5, 1], [4, 1], [4, 3], [3, 3], [3, 4],
         ],
     },
     {
         start: [1, 2],
         end: [4, 4],
         path: [
-            [1, 2],
-            [2, 2],
-            [2, 1],
-            [1, 1],
-            [1, 0],
-            [0, 0],
-            [0, 4],
-            [1, 4],
-            [1, 5],
-            [4, 5],
-            [4, 4],
+            [1, 2], [2, 2], [2, 1], [1, 1], [1, 0], [0, 0], [0, 4], [1, 4], [1, 5], [4, 5], [4, 4],
         ],
     },
     {
         start: [3, 1],
         end: [0, 4],
         path: [
-            [3, 1],
-            [1, 1],
-            [1, 2],
-            [2, 2],
-            [2, 3],
-            [1, 3],
-            [1, 4],
-            [2, 4],
-            [2, 5],
-            [0, 5],
-            [0, 4],
+            [3, 1], [1, 1], [1, 2], [2, 2], [2, 3], [1, 3], [1, 4], [2, 4], [2, 5], [0, 5], [0, 4],
         ],
     },
     {
         start: [4, 4],
         end: [2, 2],
         path: [
-            [4, 4],
-            [4, 3],
-            [5, 3],
-            [5, 0],
-            [2, 0],
-            [2, 2],
+            [4, 4], [4, 3], [5, 3], [5, 0], [2, 0], [2, 2],
         ],
     },
     {
         start: [0, 4],
         end: [4, 2],
         path: [
-            [0, 4],
-            [0, 5],
-            [1, 5],
-            [1, 3],
-            [0, 3],
-            [0, 0],
-            [5, 0],
-            [5, 2],
-            [4, 2],
+            [0, 4], [0, 5], [1, 5], [1, 3], [0, 3], [0, 0], [5, 0], [5, 2], [4, 2],
         ],
     },
     {
         start: [1, 2],
         end: [5, 3],
         path: [
-            [1, 2],
-            [0, 2],
-            [0, 5],
-            [1, 5],
-            [1, 3],
-            [2, 3],
-            [2, 2],
-            [3, 2],
-            [3, 3],
-            [4, 3],
-            [4, 4],
-            [5, 4],
-            [5, 3],
+            [1, 2], [0, 2], [0, 5], [1, 5], [1, 3], [2, 3], [2, 2], [3, 2], [3, 3], [4, 3], [4, 4], [5, 4], [5, 3],
         ],
     },
     {
         start: [1, 1],
         end: [4, 3],
         path: [
-            [1, 1],
-            [2, 1],
-            [2, 2],
-            [3, 2],
-            [3, 1],
-            [4, 1],
-            [4, 2],
-            [5, 2],
-            [5, 5],
-            [4, 5],
-            [4, 3],
+            [1, 1], [2, 1], [2, 2], [3, 2], [3, 1], [4, 1], [4, 2], [5, 2], [5, 5], [4, 5], [4, 3],
         ],
     },
     {
         start: [3, 2],
         end: [4, 1],
         path: [
-            [3, 2],
-            [3, 3],
-            [2, 3],
-            [2, 1],
-            [1, 1],
-            [1, 2],
-            [0, 2],
-            [0, 0],
-            [4, 0],
-            [4, 1],
+            [3, 2], [3, 3], [2, 3], [2, 1], [1, 1], [1, 2], [0, 2], [0, 0], [4, 0], [4, 1],
         ],
     },
     {
         start: [0, 5],
         end: [4, 0],
         path: [
-            [0, 5],
-            [0, 4],
-            [1, 4],
-            [1, 2],
-            [0, 2],
-            [0, 1],
-            [2, 1],
-            [2, 3],
-            [4, 3],
-            [4, 0],
+            [0, 5], [0, 4], [1, 4], [1, 2], [0, 2], [0, 1], [2, 1], [2, 3], [4, 3], [4, 0],
         ],
     },
     {
         start: [2, 0],
         end: [2, 3],
         path: [
-            [2, 0],
-            [0, 0],
-            [0, 5],
-            [2, 5],
-            [2, 4],
-            [1, 4],
-            [1, 2],
-            [3, 2],
-            [3, 3],
-            [2, 3],
+            [2, 0], [0, 0], [0, 5], [2, 5], [2, 4], [1, 4], [1, 2], [3, 2], [3, 3], [2, 3],
         ],
     },
     {
         start: [4, 5],
         end: [3, 3],
         path: [
-            [4, 5],
-            [1, 5],
-            [1, 4],
-            [2, 4],
-            [2, 2],
-            [3, 2],
-            [3, 3],
+            [4, 5], [1, 5], [1, 4], [2, 4], [2, 2], [3, 2], [3, 3],
         ],
     },
     {
         start: [3, 4],
         end: [2, 1],
         path: [
-            [3, 4],
-            [3, 5],
-            [5, 5],
-            [5, 1],
-            [4, 1],
-            [4, 2],
-            [2, 2],
-            [2, 1],
+            [3, 4], [3, 5], [5, 5], [5, 1], [4, 1], [4, 2], [2, 2], [2, 1],
         ],
     },
     {
         start: [0, 1],
         end: [5, 3],
         path: [
-            [0, 1],
-            [0, 0],
-            [1, 0],
-            [1, 1],
-            [3, 1],
-            [3, 2],
-            [2, 2],
-            [2, 3],
-            [5, 3],
+            [0, 1], [0, 0], [1, 0], [1, 1], [3, 1], [3, 2], [2, 2], [2, 3], [5, 3],
         ],
     },
     {
         start: [1, 4],
         end: [5, 0],
         path: [
-            [1, 4],
-            [1, 3],
-            [2, 3],
-            [2, 5],
-            [3, 5],
-            [3, 3],
-            [4, 3],
-            [4, 4],
-            [5, 4],
-            [5, 0],
+            [1, 4], [1, 3], [2, 3], [2, 5], [3, 5], [3, 3], [4, 3], [4, 4], [5, 4], [5, 0],
         ],
     },
     {
         start: [3, 1],
         end: [1, 2],
         path: [
-            [3, 1],
-            [4, 1],
-            [4, 2],
-            [5, 2],
-            [5, 3],
-            [4, 3],
-            [4, 4],
-            [3, 4],
-            [3, 5],
-            [2, 5],
-            [2, 3],
-            [3, 3],
-            [3, 2],
-            [2, 2],
-            [2, 1],
-            [1, 1],
-            [1, 2],
+            [3, 1], [4, 1], [4, 2], [5, 2], [5, 3], [4, 3], [4, 4], [3, 4], [3, 5], [2, 5], [2, 3], [3, 3], [3, 2], [2, 2], [2, 1], [1, 1], [1, 2],
         ],
     },
 ];
 
-// Helper function to find solution path
 function findSolPath(startCoords: [number, number], endCoords: [number, number]): [number, number][] | null {
     const solution = mazeSolutionCoordinates.find(
         ({ start, end }) =>
@@ -286,7 +148,6 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const boardRef = useRef<HTMLDivElement>(null);
 
-    // Draw path on canvas
     const drawPath = (pathCoords: [number, number][], color = "blue", width = 10) => {
         const canvas = canvasRef.current;
         const board = boardRef.current;
@@ -316,33 +177,21 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
                 const deltaX = nextCoord[1] - coord[1];
                 const deltaY = nextCoord[0] - coord[0];
 
-                if (deltaX > 0) {
-                    ctx.moveTo(x + cellSize * padding, y);
-                } else if (deltaX < 0) {
-                    ctx.moveTo(x - cellSize * padding, y);
-                } else if (deltaY > 0) {
-                    ctx.moveTo(x, y + cellSize * padding);
-                } else if (deltaY < 0) {
-                    ctx.moveTo(x, y - cellSize * padding);
-                } else {
-                    ctx.moveTo(x, y);
-                }
+                if (deltaX > 0) ctx.moveTo(x + cellSize * padding, y);
+                else if (deltaX < 0) ctx.moveTo(x - cellSize * padding, y);
+                else if (deltaY > 0) ctx.moveTo(x, y + cellSize * padding);
+                else if (deltaY < 0) ctx.moveTo(x, y - cellSize * padding);
+                else ctx.moveTo(x, y);
             } else if (index === pathCoords.length - 1) {
                 const prevCoord = pathCoords[index - 1];
                 const deltaX = coord[1] - prevCoord[1];
                 const deltaY = coord[0] - prevCoord[0];
 
-                if (deltaX > 0) {
-                    ctx.lineTo(x - cellSize * padding, y);
-                } else if (deltaX < 0) {
-                    ctx.lineTo(x + cellSize * padding, y);
-                } else if (deltaY > 0) {
-                    ctx.lineTo(x, y - cellSize * padding);
-                } else if (deltaY < 0) {
-                    ctx.lineTo(x, y + cellSize * padding);
-                } else {
-                    ctx.lineTo(x, y);
-                }
+                if (deltaX > 0) ctx.lineTo(x - cellSize * padding, y);
+                else if (deltaX < 0) ctx.lineTo(x + cellSize * padding, y);
+                else if (deltaY > 0) ctx.lineTo(x, y - cellSize * padding);
+                else if (deltaY < 0) ctx.lineTo(x, y + cellSize * padding);
+                else ctx.lineTo(x, y);
             } else {
                 ctx.lineTo(x, y);
             }
@@ -351,23 +200,16 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
         ctx.stroke();
     };
 
-    // Redraw canvas on window resize
     useEffect(() => {
         const handleResize = () => {
-            if (solutionPath) {
-                drawPath(solutionPath);
-            }
+            if (solutionPath) drawPath(solutionPath);
         };
-
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, [solutionPath]);
 
-    // Draw solution path when it changes
     useEffect(() => {
-        if (solutionPath) {
-            drawPath(solutionPath);
-        }
+        if (solutionPath) drawPath(solutionPath);
     }, [solutionPath]);
 
     const clearCanvas = () => {
@@ -382,7 +224,6 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
         const piece = draggables.find((d) => d.type === type);
 
         if (piece?.position) {
-            // Pick it up from the board
             setDraggables((prev) => prev.map((d) => (d.type === type ? { ...d, position: null } : d)));
             setSelectedPiece(type);
             setSolutionPath(null);
@@ -404,11 +245,11 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
             const matchingSolutions =
                 placedPiece.type === "start"
                     ? mazeSolutionCoordinates.filter(
-                          ({ start }) => JSON.stringify(start) === JSON.stringify(placedPiece.position),
-                      )
+                        ({ start }) => JSON.stringify(start) === JSON.stringify(placedPiece.position),
+                    )
                     : mazeSolutionCoordinates.filter(
-                          ({ end }) => JSON.stringify(end) === JSON.stringify(placedPiece.position),
-                      );
+                        ({ end }) => JSON.stringify(end) === JSON.stringify(placedPiece.position),
+                    );
 
             const validCells = matchingSolutions.map((s) => (placedPiece.type === "start" ? s.end : s.start));
 
@@ -459,7 +300,6 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
         const pieceInCell = draggables.find((d) => d.position && d.position[0] === row && d.position[1] === col);
 
         if (pieceInCell) {
-            // Pick up the piece from the board
             setDraggables((prev) => prev.map((d) => (d.type === pieceInCell.type ? { ...d, position: null } : d)));
             setSelectedPiece(pieceInCell.type);
             setSolutionPath(null);
@@ -467,7 +307,6 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
             clearCanvas();
             setErrorMessage("");
         } else if (selectedPiece) {
-            // Place the selected piece and auto-solve with the updated state
             const newDraggables = draggables.map((d) =>
                 d.type === selectedPiece ? { ...d, position: [row, col] as [number, number] } : d,
             );
@@ -500,23 +339,24 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
                 const isValidPosition =
                     !draggable && validPositions.some((vp) => vp[0] === row && vp[1] === col);
 
+                const cellClass = isValidPosition ? "venom-cell is-target" : "venom-cell";
+
                 squares.push(
                     <div
                         key={`square-${row}-${col}`}
-                        className="green-square"
+                        className={cellClass}
                         onClick={() => handleCellClick(row, col)}
                     >
                         {draggable && (
                             <img
-                                className="placed-draggable"
+                                className="venom-piece"
                                 src={draggable.type === "start" ? IMG_YELLOW_SQUARE : IMG_BLUE_DIAMOND}
                                 alt={draggable.type === "start" ? "Yellow Square" : "Blue Diamond"}
                             />
                         )}
                         {isValidPosition && unplacedDraggable && (
                             <img
-                                className="placed-draggable"
-                                style={{ opacity: 0.6 }}
+                                className="venom-piece is-preview"
                                 src={unplacedDraggable.type === "start" ? IMG_YELLOW_SQUARE : IMG_BLUE_DIAMOND}
                                 alt=""
                             />
@@ -529,48 +369,55 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
         return squares;
     };
 
-    const renderDraggableContainer = () => {
+    const renderTray = () => {
         return (
-            <div className="draggable-container">
-                {draggables.map((d) => (
-                    <button
-                        key={d.type}
-                        className={`draggable-piece-btn${selectedPiece === d.type ? " draggable-piece-btn--selected" : ""}${d.position ? " draggable-piece-btn" : ""}`}
-                        onClick={() => handleTrayPieceClick(d.type)}
-                        aria-pressed={selectedPiece === d.type}
-                        aria-label={d.type === "start" ? "Yellow Square" : "Blue Diamond"}
-                    >
-                        <img
-                            className="draggable-image"
-                            src={d.type === "start" ? IMG_YELLOW_SQUARE : IMG_BLUE_DIAMOND}
-                            alt=""
-                        />
-                    </button>
-                ))}
+            <div className="solver-symbol-select">
+                {draggables.map((d) => {
+                    const isSelected = selectedPiece === d.type;
+                    const classes: string[] = [];
+                    if (isSelected) classes.push("is-selected");
+                    if (d.position) classes.push("is-placed");
+                    return (
+                        <button
+                            key={d.type}
+                            className={classes.join(" ")}
+                            onClick={() => handleTrayPieceClick(d.type)}
+                            aria-pressed={isSelected}
+                            aria-label={d.type === "start" ? "Yellow Square" : "Blue Diamond"}
+                        >
+                            <img
+                                src={d.type === "start" ? IMG_YELLOW_SQUARE : IMG_BLUE_DIAMOND}
+                                alt=""
+                            />
+                        </button>
+                    );
+                })}
             </div>
         );
     };
 
     return (
-        <div className="solver-container">
+        <div className="solver-container solver-container--venom-maze">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
                 Click the Yellow Square or Blue Diamond to select it, then click a grid cell to place it. Once placed,
                 valid positions for the other piece will be shown. If there is only one solution, it'll be drawn
                 automatically. Click a placed piece to pick it back up.
             </p>
-            {renderDraggableContainer()}
-            <div className="venom-board-wrapper">
-                <div ref={boardRef} className="venom-board">
+
+            {renderTray()}
+
+            <div className="solver-grid-wrapper is-fit">
+                <div ref={boardRef} className="solver-grid is-framed">
                     {renderBoard()}
-                    <canvas ref={canvasRef} className="venom-board-canvas" />
+                    <canvas ref={canvasRef} className="venom-canvas" />
                 </div>
             </div>
-            {errorMessage && <p className="error-message">{errorMessage}</p>}
-            <div className="solver-buttons">
-                <button className="btn-base solver-button" onClick={handleReset}>
-                    Reset
-                </button>
+
+            {errorMessage && <p className="solver-error">{errorMessage}</p>}
+
+            <div className="solver-controls">
+                <button className="btn btn--solver" onClick={handleReset}>Reset</button>
             </div>
         </div>
     );

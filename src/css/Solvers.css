@@ -1,0 +1,1356 @@
+/* ============================================================
+   SOLVERS — shared foundation + per-solver overrides
+   Token-driven, mobile-first. Visual language inherited from
+   the legacy global_solver.css; structure rebuilt clean.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Solver-scoped tokens
+   Defaults that any solver can override locally on its container.
+   The solver gold accent is distinct from the site's tier-1
+   gold — it's a softer amber tuned for interactive elements.
+   ------------------------------------------------------------ */
+.solver-container {
+    /* Solver accent — gold/amber, distinct from tier-1 */
+    --solver-accent: #c9a961;
+    --solver-accent-bright: #d4b56f;
+    --solver-accent-dim: #b89a5a;
+    --solver-accent-glow: rgb(201 169 97 / 40%);
+
+    /* Grid layout — solvers override these */
+    --solver-cols: 4;
+    --solver-rows: 4;
+
+    /* Cell size: fluid on small screens, capped on larger.
+       Roughly 36px at 320px viewport up to 70px on wider screens.
+       Solvers can override the cap for big boards. */
+    --solver-cell-size: clamp(2.25rem, 12vw, 4.375rem);
+    --solver-cell-gap: var(--space-xs);
+
+    /* Cell visuals */
+    --solver-cell-radius: 4px;
+    --solver-cell-bg: #1e1e1e;
+    --solver-cell-border: var(--color-border-subtle);
+    --solver-cell-border-width: 1px;
+}
+
+/* ------------------------------------------------------------
+   Container — the lifted panel
+   ------------------------------------------------------------ */
+.solver-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-md);
+    background: rgb(255 255 255 / 3%);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
+    color: var(--color-text-primary);
+    box-sizing: border-box;
+}
+
+.solver-container *,
+.solver-container *::before,
+.solver-container *::after {
+    box-sizing: border-box;
+}
+
+/* Flex children default to min-width: auto, which lets content force the
+   container wider than the viewport. Force them to be allowed to shrink. */
+.solver-container > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (width >= 48.0625em) {
+    .solver-container {
+        width: fit-content;
+        min-width: 22.5rem;
+        padding: var(--space-lg);
+    }
+}
+
+/* Centered variant for solver-only pages */
+.solver-container.is-centered {
+    align-items: center;
+    text-align: center;
+}
+
+/* ------------------------------------------------------------
+   Solver-only page — center the solver inside its content-container.
+   Don't touch the content-container's width/margins: sidebar ads
+   (ads.js positionSidebarAd) measure its right edge to find room
+   on screen, and forcing it full-width hides the sidebars.
+   In a guide (no .solver-only-page wrapper) the solver stays
+   left-aligned with surrounding content.
+   ------------------------------------------------------------ */
+.solver-only-page .content-container {
+    border-bottom: none;
+}
+
+.solver-only-page .solver-container {
+    margin-inline: auto;
+}
+
+/* ------------------------------------------------------------
+   Typography
+   ------------------------------------------------------------ */
+.solver-title {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    text-align: center;
+}
+
+.solver-instructions {
+    /* width:0 + min-width:100% removes this paragraph from the
+       container's intrinsic width calculation. The container
+       sizes itself based on its other children (the puzzle board,
+       buttons, etc.), then the instructions expand to fill
+       whatever width that produced. Without this trick, a long
+       single-line of instructions would push the container
+       wider than the puzzle needs. */
+    width: 0;
+    min-width: 100%;
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-loose);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.solver-container h3 {
+    margin: var(--space-md) 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.solver-container h4 {
+    margin: var(--space-md) 0 var(--space-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   Buttons — solver gold variant
+   Layered on top of the site-wide .btn from main bundle.
+   Use as: <button class="btn btn--solver">…</button>
+   ------------------------------------------------------------ */
+.btn--solver {
+    padding: var(--space-sm) var(--space-lg);
+    border-color: var(--solver-accent);
+    color: var(--solver-accent);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    background: transparent;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn--solver:not(:disabled):hover {
+    color: var(--solver-accent-bright);
+    border-color: var(--solver-accent-bright);
+    background: transparent;
+}
+
+.btn--solver.is-active {
+    background: var(--solver-accent);
+    border-color: var(--solver-accent);
+    color: var(--color-bg-primary);
+    font-weight: 700;
+}
+
+.btn--solver.is-active:not(:disabled):hover {
+    background: var(--solver-accent-bright);
+    border-color: var(--solver-accent-bright);
+    color: var(--color-bg-primary);
+}
+
+.btn--solver:disabled,
+.btn--solver.is-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------
+   Controls — button rows, checkboxes, toggles
+   ------------------------------------------------------------ */
+.solver-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: space-around;
+}
+
+.solver-controls.is-left {
+    justify-content: flex-start;
+}
+
+.solver-controls.is-centered {
+    justify-content: center;
+}
+
+/* Each button gets equal space on both sides — with N buttons,
+   the row divides into N equal segments and one button is
+   centered within each. This is the default; .is-left or
+   .is-centered to override. */
+.solver-controls.is-distributed {
+    justify-content: space-around;
+}
+
+.solver-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    user-select: none;
+}
+
+.solver-toggle input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--solver-accent);
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------
+   Form rows — labeled input/select pairs
+   Stack vertically on mobile, horizontal on desktop.
+   ------------------------------------------------------------ */
+.solver-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+}
+
+.solver-form-row label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+/* Small inline color dot for use inside labels.
+   Color is set via inline style or a CSS custom property. */
+.solver-color-dot {
+    display: inline-block;
+    width: 0.75em;
+    height: 0.75em;
+    border-radius: 50%;
+    margin-right: 0.4em;
+    vertical-align: middle;
+    background: var(--dot-color, currentColor);
+}
+
+/* Inline text color utilities — for labels and inline spans
+   that need to convey a specific color (e.g. "the green valve",
+   "the red wire"). Background-safe for the dark panel. */
+.solver-text--green { color: var(--color-tip-text); }
+.solver-text--pink { color: #e08bbf; }
+.solver-text--red { color: var(--color-no-return-text); }
+.solver-text--gold { color: var(--solver-accent); }
+
+.solver-container input[type="text"],
+.solver-container input[type="number"] {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 4px;
+    font-size: var(--font-size-base);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.solver-container select {
+    width: 100%;
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 4px;
+    font-size: var(--font-size-base);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.solver-container input:focus,
+.solver-container select:focus {
+    outline: none;
+    border-color: var(--solver-accent);
+    background-color: var(--color-bg-secondary);
+}
+
+@media (width >= 48.0625em) {
+    .solver-form-row {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .solver-form-row label {
+        flex: 0 0 auto;
+    }
+
+    .solver-form-row input,
+    .solver-form-row select {
+        flex: 1;
+    }
+}
+
+/* ------------------------------------------------------------
+   Generic grid + cell system
+   Driven by --solver-cols / --solver-rows / --solver-cell-size
+   set on the container.
+   ------------------------------------------------------------ */
+/* Grid wrapper allows horizontal scroll by default — needed for
+   solvers with boards larger than mobile width (e.g. 8-queens).
+   Solvers whose grids shrink to fit can opt out with .is-fit. */
+.solver-grid-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.solver-grid-wrapper.is-fit {
+    overflow-x: visible;
+}
+
+.solver-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--solver-cols), var(--solver-cell-size));
+    grid-template-rows: repeat(var(--solver-rows), var(--solver-cell-size));
+    gap: var(--solver-cell-gap);
+}
+
+/* Inset-frame variant: dark frame look (used by reactor).
+   Frame appearance is tokenized — solvers can override
+   --solver-frame-bg / --solver-frame-border for variants
+   like the gold venom board. */
+.solver-grid.is-framed {
+    --solver-frame-bg: #111;
+    --solver-frame-border: var(--color-border-medium);
+    --solver-frame-padding: var(--space-xs);
+    --solver-frame-border-width: 3px;
+
+    padding: var(--solver-frame-padding);
+    background: var(--solver-frame-bg);
+    border: var(--solver-frame-border-width) solid var(--solver-frame-border);
+    border-radius: 5px;
+}
+
+.solver-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--solver-cell-size);
+    height: var(--solver-cell-size);
+    background: var(--solver-cell-bg);
+    border: var(--solver-cell-border-width) solid var(--solver-cell-border);
+    border-radius: var(--solver-cell-radius);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.solver-cell:focus-visible {
+    outline: 2px solid var(--solver-accent);
+    outline-offset: 2px;
+}
+
+.solver-cell.is-locked,
+.solver-cell[aria-disabled="true"] {
+    cursor: default;
+}
+
+/* ------------------------------------------------------------
+   Symbol select — image-button grids
+   Used by beamsmasher, floppy, mahjong, letterboard.
+   Default layout: flex-wrap row.
+   .is-grid variant: auto-fit grid that expands columns based
+   on viewport width, with each cell sized via --symbol-size.
+   ------------------------------------------------------------ */
+.solver-symbol-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.solver-symbol-select.is-grid {
+    --symbol-size: clamp(3.5rem, 18vw, 5rem);
+    --symbol-cols: auto-fit;
+
+    display: grid;
+    grid-template-columns: repeat(var(--symbol-cols), minmax(0, var(--symbol-size)));
+    gap: var(--space-sm);
+    width: 100%;
+    max-width: 31.25rem;
+    margin: 0 auto;
+}
+
+.solver-symbol-select button {
+    padding: var(--space-xs);
+    background-color: var(--color-bg-tertiary);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.solver-symbol-select button:hover:not(:disabled) {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--solver-accent);
+}
+
+.solver-symbol-select button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--color-border-subtle);
+}
+
+.solver-symbol-select button.is-selected {
+    border-color: var(--solver-accent);
+    box-shadow: 0 0 8px var(--solver-accent-glow);
+}
+
+.solver-symbol-select button.is-placed {
+    opacity: 0.5;
+}
+
+.solver-symbol-select img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+}
+
+/* When NOT inside a grid, use the cell-size token for a fixed image size */
+.solver-symbol-select:not(.is-grid) img {
+    width: var(--solver-cell-size);
+    height: var(--solver-cell-size);
+}
+
+/* ------------------------------------------------------------
+   Letter cells — side-by-side letter + symbol image cell.
+   Used by alphabet-based pickers (Wyler symbols, etc).
+   Each half is a fixed square. The cell is taller and more
+   pronounced than a generic symbol picker — the letter is
+   the primary identifier, the symbol is secondary visual.
+   ------------------------------------------------------------ */
+.solver-letter-grid {
+    --letter-half-size: clamp(2.75rem, 12vw, 3.125rem);
+    --letter-cell-size: calc(var(--letter-half-size) * 2);
+
+    display: grid;
+    grid-template-columns: repeat(auto-fit, var(--letter-cell-size));
+    gap: var(--space-md);
+    justify-content: center;
+    width: 100%;
+    max-width: calc(var(--letter-cell-size) * 4 + var(--space-md) * 3);
+    margin-inline: auto;
+}
+
+.solver-letter-cell {
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    background: var(--color-bg-tertiary);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    overflow: hidden;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.solver-letter-cell:disabled,
+.solver-letter-cell.is-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.solver-letter-cell.is-selected {
+    border-color: var(--solver-accent);
+    box-shadow: 0 0 0 1px var(--solver-accent), 0 0 8px var(--solver-accent-glow);
+}
+
+.solver-letter-cell.is-static {
+    cursor: default;
+}
+
+.solver-letter-cell.is-static:hover {
+    border-color: var(--color-border-medium);
+}
+
+.solver-letter-cell__letter {
+    width: var(--letter-half-size);
+    height: var(--letter-half-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.solver-letter-cell__image {
+    display: block;
+    width: var(--letter-half-size);
+    height: var(--letter-half-size);
+    object-fit: contain;
+}
+
+/* ------------------------------------------------------------
+   Image row — non-interactive row of images for displaying
+   results, sequences, etc. Cousin to .solver-symbol-select but
+   without buttons or interactive states.
+   ------------------------------------------------------------ */
+.solver-image-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: center;
+}
+
+.solver-image-row img {
+    display: block;
+    width: var(--solver-cell-size);
+    height: var(--solver-cell-size);
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+/* ------------------------------------------------------------
+   Stack — a tight vertical list of items.
+   Used when a solver has multiple sub-rows (slot rows, form
+   rows, etc.) that should sit closer together than the
+   container's default gap.
+   ------------------------------------------------------------ */
+.solver-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+/* ------------------------------------------------------------
+   Color swatches — buttons that show a color.
+   Used for solvers where the user selects from a fixed palette.
+   Color comes from --swatch-color (set via inline style or class).
+   ------------------------------------------------------------ */
+.solver-swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.solver-color-swatch {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    background: var(--swatch-color, var(--color-bg-tertiary));
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.35;
+    transition: opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.solver-color-swatch:hover:not(:disabled) {
+    opacity: 0.7;
+    border-color: var(--color-text-muted);
+}
+
+.solver-color-swatch.is-selected {
+    opacity: 1;
+    border-color: var(--solver-accent);
+    box-shadow: 0 0 0 2px var(--solver-accent), 0 0 8px var(--solver-accent-glow);
+}
+
+.solver-color-swatch.is-selected:hover {
+    opacity: 1;
+}
+
+.solver-color-swatch:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--solver-accent);
+    outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   Slot row — a labeled row holding swatches/inputs/etc.
+   Lighter than .solver-form-row (no card background); just a
+   label paired with content. Stacks on mobile, inlines on desktop.
+   ------------------------------------------------------------ */
+.solver-slot-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.solver-slot-row__label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+@media (width >= 30em) {
+    .solver-slot-row {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .solver-slot-row__label {
+        flex: 0 0 auto;
+        min-width: 4.5rem;
+    }
+}
+
+/* ------------------------------------------------------------
+   Step labels — compact section dividers for multi-step solvers.
+   Used by chemical-step solver and any other progressive form.
+   ------------------------------------------------------------ */
+.solver-step-label {
+    margin: var(--space-sm) 0 0;
+    color: var(--solver-accent);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ------------------------------------------------------------
+   Text picker — a wrapping row of text buttons used as a
+   picker (one for each option). Like .solver-symbol-select but
+   for text items instead of images. Selected state shows the
+   gold ring; disabled items dim out.
+   ------------------------------------------------------------ */
+.solver-text-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-xs);
+}
+
+.solver-text-picker button {
+    padding: var(--space-xs) var(--space-md);
+    background-color: var(--color-bg-tertiary);
+    border: 1.5px solid var(--color-border-medium);
+    border-radius: 4px;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.solver-text-picker button:hover:not(:disabled) {
+    border-color: var(--solver-accent);
+}
+
+.solver-text-picker button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.solver-text-picker button.is-selected {
+    border-color: var(--solver-accent);
+    box-shadow: 0 0 0 1px var(--solver-accent), 0 0 6px var(--solver-accent-glow);
+}
+
+/* ------------------------------------------------------------
+   Output display — for solvers that show a separate result panel
+   (vs. inline in .solver-instructions).
+   width:0 + min-width:100% stops result-string changes from
+   driving the container's width as the user changes inputs.
+   ------------------------------------------------------------ */
+.solver-output {
+    width: 0;
+    min-width: 100%;
+    padding: var(--space-md);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 30%);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Stack of paragraphs/sections inside the output panel.
+   Tighter than the container's default gap. */
+.solver-output > * + * {
+    margin-top: var(--space-sm);
+}
+
+.solver-output p {
+    margin: 0;
+}
+
+/* Formula list — used by chemical-step solver to display each
+   formula's ingredients and resulting number. */
+.solver-formula-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.solver-formula-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.solver-formula-list__name {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.solver-formula-list__ingredients {
+    color: var(--color-text-primary);
+}
+
+.solver-formula-list__number {
+    color: var(--solver-accent);
+    font-weight: 600;
+}
+
+/* Word list — multi-column grid of word/term items.
+   Used by word filters and similar list-display solvers.
+   Scrollable when long; scrollbar hidden for cleanliness. */
+.solver-word-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+    gap: var(--space-xs);
+    max-height: 18.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.solver-word-list::-webkit-scrollbar {
+    display: none;
+}
+
+.solver-word-list li {
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-tertiary);
+    border-radius: 4px;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.solver-word-list--empty {
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+}
+
+/* ------------------------------------------------------------
+   Result list — stacked list of lookup results.
+   Each item has a bold "key" (symbol, abbreviation, etc.) and
+   a "descriptor" (full name, additional info). Optional "meta"
+   for tertiary info like a code or number.
+   ------------------------------------------------------------ */
+.solver-result-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.solver-result-list li {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-tertiary);
+    border-radius: 4px;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.solver-result-list__key {
+    font-weight: 700;
+    color: var(--solver-accent);
+    font-size: var(--font-size-base);
+}
+
+.solver-result-list__descriptor {
+    flex: 1;
+    color: var(--color-text-primary);
+}
+
+.solver-result-list__meta {
+    color: var(--color-text-primary);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: var(--font-size-base);
+}
+
+/* Section heading inside an output panel */
+.solver-result-section + .solver-result-section {
+    margin-top: var(--space-md);
+}
+
+.solver-result-section__heading {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.solver-output.is-centered {
+    display: flex;
+    justify-content: center;
+}
+
+.solver-error {
+    width: 0;
+    min-width: 100%;
+    color: var(--color-danger-text);
+    font-size: var(--font-size-sm);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+@keyframes solver-recalc {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
+}
+
+.solver-output.is-recalc {
+    animation: solver-recalc 0.15s ease-out;
+}
+
+/* ------------------------------------------------------------
+   Debug panel — for solvers that expose internal state
+   ------------------------------------------------------------ */
+.solver-debug-panel {
+    width: 0;
+    min-width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-secondary);
+    border: 1px dashed var(--color-border-medium);
+    border-radius: 4px;
+    color: var(--color-text-secondary);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    overflow-x: auto;
+}
+
+/* ============================================================
+   PER-SOLVER BLOCKS
+   Each block keeps overrides minimal — set local tokens, then
+   only add what the foundation can't express generically.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   BO7 Totenreich Reactor Solver
+   4×4 grid with framed dark backdrop.
+   States: empty / rod (placed) / uranium (answer) / activated.
+   ------------------------------------------------------------ */
+.solver-container--totenreich-reactor {
+    --solver-cols: 4;
+    --solver-rows: 4;
+    --solver-cell-size: clamp(2.25rem, 16vw, 4.375rem);
+    --solver-cell-gap: 3px;
+}
+
+/* State: rod placed by user */
+.reactor-cell.cell-rod {
+    background: #4a4a52;
+    border-color: #666;
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / 50%);
+}
+
+.reactor-cell.cell-rod:hover {
+    background: #5a5a62;
+    border-color: #666;
+}
+
+/* State: uranium placement (solver answer) */
+.reactor-cell.cell-uranium {
+    background: #00c853;
+    border-color: #69f0ae;
+    box-shadow: 0 0 8px rgb(0 200 83 / 70%), inset 0 1px 3px rgb(255 255 255 / 20%);
+    cursor: default;
+}
+
+/* State: rod activated by adjacent uranium chain */
+.reactor-cell.cell-activated {
+    background: var(--solver-accent);
+    border-color: var(--solver-accent-bright);
+    box-shadow: 0 0 6px var(--solver-accent-glow);
+    cursor: default;
+}
+
+/* ------------------------------------------------------------
+   IW Beast from Beyond — Venom-X Maze Solver
+   6×6 board with gold frame, green cells, canvas overlay
+   for drawing the solution path.
+   ------------------------------------------------------------ */
+.solver-container--venom-maze {
+    --solver-cols: 6;
+    --solver-rows: 6;
+    --solver-cell-size: clamp(2.25rem, 13vw, 3.75rem);
+    --solver-cell-gap: 2px;
+}
+
+.solver-container--venom-maze .solver-grid.is-framed {
+    --solver-frame-bg: #d4a961;
+    --solver-frame-border: var(--color-bg-primary);
+    --solver-frame-padding: var(--space-sm);
+    --solver-frame-border-width: 3px;
+
+    /* Position context for the canvas overlay */
+    position: relative;
+}
+
+/* Green maze cells */
+.venom-cell {
+    position: relative;
+    background: #4a9d4a;
+    border: 1px solid #2d5f2d;
+    cursor: pointer;
+}
+
+.venom-cell.is-target {
+    background: #5aba5a;
+}
+
+/* Path-drawing canvas sits on top of the cells */
+.venom-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Image placed inside a cell (start/end marker) */
+.venom-piece {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.venom-piece.is-preview {
+    opacity: 0.6;
+}
+
+/* ------------------------------------------------------------
+   IW Beast from Beyond — Floppy Disk Symbol Solver
+   12-symbol picker locked to a 4×3 grid at all widths.
+   Symbol images sized to match reactor-cell dimensions.
+   ------------------------------------------------------------ */
+.solver-container--floppy .solver-symbol-select.is-grid {
+    --symbol-cols: 4;
+    --symbol-size: clamp(2.25rem, 16vw, 4.375rem);
+}
+
+/* Tighten the button wrapper so the rendered tile matches reactor-cell size */
+.solver-container--floppy .solver-symbol-select.is-grid button {
+    padding: 0;
+    border-width: 1.5px;
+}
+
+/* Floppy result row: locked 4-column grid that shrinks images
+   to fit instead of wrapping. The grid driven by minmax(0, 1fr)
+   so columns can shrink below image intrinsic width. */
+.solver-container--floppy .solver-image-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-sm);
+    flex-wrap: nowrap;
+}
+
+.solver-container--floppy .solver-image-row img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    /* Cap so they don't grow huge on wide screens */
+    max-width: var(--solver-cell-size);
+    justify-self: center;
+}
+
+/* ------------------------------------------------------------
+   IW Shaolin Shuffle — Mahjong Solver
+   5 dot-tile types (1-5), max 4 of each, 14 tiles per hand.
+   Winning hand: 4 melds + 1 pair, displayed as a row where
+   gaps communicate structure (tight within meld, wider between
+   melds, widest before the pair).
+   ------------------------------------------------------------ */
+.solver-container--mahjong {
+    --mahjong-tile-size: clamp(2.25rem, 9vw, 3rem);
+    --mahjong-tile-gap: 2px;
+    --mahjong-meld-gap: var(--space-md);
+    --mahjong-pair-gap: var(--space-xl);
+}
+
+/* Tile picker — 5 buttons in a row, each shows one dot tile */
+.solver-container--mahjong .solver-symbol-select {
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.solver-container--mahjong .solver-symbol-select button {
+    padding: var(--space-xs);
+}
+
+.solver-container--mahjong .solver-symbol-select img {
+    width: var(--mahjong-tile-size);
+    height: var(--mahjong-tile-size);
+}
+
+/* In-progress hand: 14 slots, fills as user clicks */
+.mahjong-progress-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--mahjong-tile-gap);
+}
+
+.mahjong-tile {
+    width: var(--mahjong-tile-size);
+    height: var(--mahjong-tile-size);
+    object-fit: contain;
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    cursor: pointer;
+    transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mahjong-tile:hover {
+    box-shadow: 0 0 0 1px var(--solver-accent);
+}
+
+.mahjong-tile-empty {
+    width: var(--mahjong-tile-size);
+    height: var(--mahjong-tile-size);
+    border: 1.5px dashed var(--color-border-medium);
+    border-radius: 4px;
+}
+
+/* Winning hand — gaps communicate grouping.
+   Outer flex wraps between melds (never within) thanks to the
+   nested structure: meld groups are atomic flex children. */
+.mahjong-hand {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--mahjong-meld-gap);
+}
+
+.mahjong-meld {
+    display: flex;
+    gap: var(--mahjong-tile-gap);
+}
+
+/* The pair gets a structural pause before it — nudge with margin
+   so it visually separates from the melds without disrupting the
+   wrap behavior of the outer flex. */
+.mahjong-meld.is-pair {
+    margin-left: calc(var(--mahjong-pair-gap) - var(--mahjong-meld-gap));
+}
+
+.mahjong-meld .mahjong-tile {
+    cursor: default;
+}
+
+.mahjong-meld .mahjong-tile:hover {
+    box-shadow: none;
+}
+
+/* ------------------------------------------------------------
+   WW2 Shadowed Throne — Statue Solver
+   Wall picker + row of statue direction-buttons with labels.
+   3 statues for wall 1, 4 for walls 2-4.
+   ------------------------------------------------------------ */
+.solver-container--statue {
+    --statue-button-size: clamp(2.75rem, 12vw, 3.5rem);
+}
+
+/* Statue direction buttons + labels row */
+.statue-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: center;
+}
+
+.statue-row__buttons,
+.statue-row__labels {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.statue-row__buttons .btn--solver {
+    width: var(--statue-button-size);
+    height: var(--statue-button-size);
+    padding: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.statue-row__labels span {
+    width: var(--statue-button-size);
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+/* Subtle hint paragraph — sits between the wall picker and statues */
+.statue-hint {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-style: italic;
+    text-align: center;
+}
+
+/* ------------------------------------------------------------
+   WW2 Groesten Haus — Hammer Puzzle Solver
+   4 blocks (A-D) stacked vertically, each cycles through 4
+   directions. Reuses the .statue-hint and statue button sizing.
+   ------------------------------------------------------------ */
+.solver-container--hammer {
+    --statue-button-size: clamp(2.75rem, 12vw, 3.5rem);
+}
+
+.hammer-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.hammer-row__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.hammer-row__label {
+    width: 1.25rem;
+    text-align: right;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    font-size: var(--font-size-base);
+}
+
+.hammer-row__item .btn--solver {
+    width: var(--statue-button-size);
+    height: var(--statue-button-size);
+    padding: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* ------------------------------------------------------------
+   BO6 Terminus — Beamsmasher Math Solver
+   6-symbol picker (one row), 3 slots (X / Y / Z), result panel.
+   X, Y, Z must be distinct symbols.
+   ------------------------------------------------------------ */
+.solver-container--beamsmasher .solver-symbol-select.is-grid {
+    --symbol-cols: 6;
+    --symbol-size: clamp(2.25rem, 13vw, 3.5rem);
+}
+
+.solver-container--beamsmasher .solver-symbol-select.is-grid button {
+    padding: 0;
+    border-width: 1.5px;
+}
+
+/* ------------------------------------------------------------
+   Slots — small ordered placement display.
+   Same side-by-side layout as .solver-letter-cell (bold letter
+   + symbol image), at a smaller scale. Empty slots show a
+   placeholder character on the right side instead of an image.
+   Click a filled slot to clear it.
+
+   Used by: skull4 (numbered slots), beamsmasher (X/Y/Z slots).
+   ------------------------------------------------------------ */
+.solver-slot-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.solver-slot {
+    --slot-half-size: clamp(2rem, 8vw, 2.5rem);
+
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    background: var(--color-bg-tertiary);
+    border: 2px dashed var(--color-border-medium);
+    border-radius: 4px;
+    overflow: hidden;
+    color: var(--color-text-muted);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.solver-slot.is-filled {
+    border-style: solid;
+    border-color: var(--solver-accent);
+    color: var(--color-text-primary);
+    cursor: pointer;
+}
+
+.solver-slot.is-filled:hover {
+    border-color: var(--solver-accent-bright);
+}
+
+/* Left half — the label (X / Y / Z, slot number, etc.) */
+.solver-slot__label {
+    width: var(--slot-half-size);
+    height: var(--slot-half-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+/* Right half — image when filled, placeholder character when empty */
+.solver-slot__image {
+    display: block;
+    width: var(--slot-half-size);
+    height: var(--slot-half-size);
+    object-fit: contain;
+}
+
+.solver-slot__placeholder {
+    width: var(--slot-half-size);
+    height: var(--slot-half-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+/* Text-content slot variant: holds an ordinal label + a text
+   value (instead of an image). Used by maxis-items and similar
+   solvers where the slot content is a name, not a symbol. */
+.solver-slot.is-text {
+    align-items: center;
+    min-width: 12rem;
+    height: auto;
+    padding: var(--space-xs) var(--space-sm);
+    gap: var(--space-sm);
+}
+
+.solver-slot.is-text .solver-slot__label {
+    width: auto;
+    height: auto;
+    flex: 0 0 auto;
+}
+
+.solver-slot.is-text .solver-slot__text {
+    flex: 1;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.solver-slot.is-text .solver-slot__placeholder {
+    flex: 1;
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    font-style: italic;
+}
+
+/* ------------------------------------------------------------
+   IW Beast from Beyond — Eight Queens Solver
+   8×8 chessboard with iconic green/cream squares.
+   Queen rendered as a background image inside marked cells.
+   Cells are intentionally not themed by site tokens — chess
+   colors are iconic and shouldn't shift.
+   ------------------------------------------------------------ */
+.solver-container--queens {
+    --queens-cell-size: clamp(2rem, 10.5vw, 3rem);
+    --queens-light: #eeeed2;
+    --queens-dark: #769656;
+    --queens-frame: #1a1a1a;
+}
+
+.queens-board {
+    display: grid;
+    grid-template-columns: repeat(8, var(--queens-cell-size));
+    grid-template-rows: repeat(8, var(--queens-cell-size));
+    border: 4px solid var(--queens-frame);
+    margin: 0 auto;
+}
+
+.queens-cell {
+    width: var(--queens-cell-size);
+    height: var(--queens-cell-size);
+    cursor: pointer;
+    transition: filter 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.queens-cell--light {
+    background: var(--queens-light);
+}
+
+.queens-cell--dark {
+    background: var(--queens-dark);
+}
+
+.queens-cell.is-queen {
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Subtle hover during placement phase only */
+.solver-container--queens[data-phase="setup"] .queens-cell:hover {
+    filter: brightness(1.15);
+}
+
+.solver-container--queens[data-phase="solved"] .queens-cell {
+    cursor: default;
+}

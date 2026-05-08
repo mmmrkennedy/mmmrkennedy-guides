@@ -76,18 +76,11 @@ export default function BO1DialSolver({ title }: { title?: string }) {
             </p>
 
             {DIAL_NAMES.map((name, i) => (
-                <div className="form-row" key={name}>
+                <div className="solver-form-row" key={name}>
                     <label htmlFor={`dial-${name}`}>
                         <span
-                            style={{
-                                display: "inline-block",
-                                width: "0.75em",
-                                height: "0.75em",
-                                borderRadius: "50%",
-                                backgroundColor: DIAL_COLORS[name],
-                                marginRight: "0.4em",
-                                verticalAlign: "middle",
-                            }}
+                            className="solver-color-dot"
+                            style={{ "--dot-color": DIAL_COLORS[name] } as preact.JSX.CSSProperties}
                             aria-hidden="true"
                         />
                         {name} Dial (current value):
@@ -107,14 +100,9 @@ export default function BO1DialSolver({ title }: { title?: string }) {
             ))}
 
             <div className="solver-output" id="result" role="status" aria-live="polite">
-                <p>
-                    {result.split("\n").map((line, i) => (
-                        <span key={i}>
-                            {line}
-                            <br />
-                        </span>
-                    ))}
-                </p>
+                {result.split("\n").map((line, i) => (
+                    <div key={i}>{line}</div>
+                ))}
             </div>
         </div>
     );

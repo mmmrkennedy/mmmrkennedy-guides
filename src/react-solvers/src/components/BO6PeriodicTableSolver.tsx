@@ -1,11 +1,10 @@
-import { useState } from "preact/hooks";
-import type { ComponentChildren } from "preact";
+import { useMemo, useState } from "preact/hooks";
 
-type ElementObj = {
+interface ElementObj {
     symbol: string;
     name: string;
     number: number;
-};
+}
 
 const periodicElements: ElementObj[] = [
     { symbol: "H", name: "Hydrogen", number: 1 },
@@ -128,95 +127,104 @@ const periodicElements: ElementObj[] = [
     { symbol: "Og", name: "Oganesson", number: 118 },
 ];
 
-function format_element_number(element_number: number): string {
-    return "#" + element_number.toString().padStart(3, "0");
+function formatElementNumber(n: number): string {
+    return "#" + n.toString().padStart(3, "0");
 }
 
-export default function BO6PeriodicTableSolver({ title }: { title?: string }) {
-    const [elementInput, setElementInput] = useState<string>("");
-    const [result, setResult] = useState<ComponentChildren>(<div>Enter a symbol to find matching elements...</div>);
+interface FilterResult {
+    exact: ElementObj[];
+    possible: ElementObj[];
+}
 
-    function filter_elements(periodicElements: ElementObj[], element_input: string): ComponentChildren {
-        const inputLower = element_input.toLowerCase();
-        const inputReversed = element_input.split("").reverse().join("").toLowerCase();
+function filterElements(input: string): FilterResult {
+    if (input === "") return { exact: [], possible: [] };
 
-        const exactMatches = periodicElements.filter((e) => {
-            const symbolLower = e.symbol.toLowerCase();
-            return symbolLower === inputLower || symbolLower === inputReversed;
-        });
+    const lower = input.toLowerCase();
+    const reversed = lower.split("").reverse().join("");
 
-        const possibleMatches = periodicElements.filter((e) => {
-            const symbolLower = e.symbol.toLowerCase();
-            return symbolLower.includes(inputLower) && !(symbolLower === inputLower || symbolLower === inputReversed);
-        });
+    const exact: ElementObj[] = [];
+    const possible: ElementObj[] = [];
 
-        return (
-            <div>
-                {exactMatches.length > 0 && (
-                    <div>
-                        <strong>Exact Matches:</strong>
-                        <ul>
-                            {exactMatches.map((e) => (
-                                <li key={e.symbol}>
-                                    <strong>{e.symbol}</strong> – {e.name} ({format_element_number(e.number)})
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {possibleMatches.length > 0 && (
-                    <div>
-                        <strong>Possible Matches:</strong>
-                        <ul>
-                            {possibleMatches.map((e) => (
-                                <li key={e.symbol}>
-                                    <strong>{e.symbol}</strong> – {e.name} ({format_element_number(e.number)})
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {exactMatches.length === 0 && possibleMatches.length === 0 && <div>No matches found</div>}
-            </div>
-        );
-    }
-
-    function handleInputChange(e: Event) {
-        setElementInput((e.currentTarget as HTMLInputElement).value);
-
-        if ((e.currentTarget as HTMLInputElement).value !== "") {
-            setResult(filter_elements(periodicElements, (e.currentTarget as HTMLInputElement).value));
-        } else {
-            setResult(<div>Enter a symbol to find matching elements...</div>);
+    for (const el of periodicElements) {
+        const sym = el.symbol.toLowerCase();
+        if (sym === lower || sym === reversed) {
+            exact.push(el);
+        } else if (sym.includes(lower)) {
+            possible.push(el);
         }
     }
 
+    return { exact, possible };
+}
+
+function ElementList({ items }: { items: ElementObj[] }) {
     return (
-        <div className="solver-container">
+        <ul className="solver-result-list">
+            {items.map((el) => (
+                <li key={el.symbol}>
+                    <span className="solver-result-list__key">{el.symbol}</span>
+                    <span className="solver-result-list__descriptor">{el.name}</span>
+                    <span className="solver-result-list__meta">{formatElementNumber(el.number)}</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+export default function BO6PeriodicTableSolver({ title }: { title?: string }) {
+    const [input, setInput] = useState<string>("");
+    const result = useMemo(() => filterElements(input), [input]);
+
+    const hasResults = result.exact.length + result.possible.length > 0;
+
+    return (
+        <div className="solver-container solver-container--periodic">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Type 1-2 letters from the in-game monitors. The solver will automatically search forwards and backwards
-                for the element (e.g., "fc" matches Californium "Cf"). Exact matches are shown first, followed by
-                possible matches.
+                Type 1–2 letters from the in-game monitor. The solver searches forwards and backwards (e.g. "fc"
+                matches Californium "Cf"). Exact matches show first, followed by partial matches.
             </p>
-            <div className="form-row">
-                <label htmlFor="element-input">Element Letters (1-2 letters): </label>
+
+            <div className="solver-form-row">
+                <label htmlFor="element-input">Element letters:</label>
                 <input
                     type="text"
                     pattern="[^0-9]*"
                     id="element-input"
-                    className="solver"
-                    placeholder="e.g., H, He, Li..."
+                    placeholder="e.g. H, He, Cf"
                     maxLength={2}
-                    value={elementInput}
-                    onInput={handleInputChange}
+                    value={input}
+                    onInput={(e) => setInput((e.currentTarget as HTMLInputElement).value)}
+                    autocomplete="off"
+                    spellcheck={false}
                 />
             </div>
 
-            <div className="solver-output">
-                <div id="results-container">{result}</div>
+            <div className="solver-output" aria-live="polite">
+                {input === "" ? (
+                    <p style={{ color: "var(--color-text-muted)" }}>Enter letters to search.</p>
+                ) : !hasResults ? (
+                    <p className="solver-word-list--empty">No matches.</p>
+                ) : (
+                    <>
+                        {result.exact.length > 0 && (
+                            <div className="solver-result-section">
+                                <p className="solver-result-section__heading">
+                                    Exact matches ({result.exact.length})
+                                </p>
+                                <ElementList items={result.exact} />
+                            </div>
+                        )}
+                        {result.possible.length > 0 && (
+                            <div className="solver-result-section">
+                                <p className="solver-result-section__heading">
+                                    Possible matches ({result.possible.length})
+                                </p>
+                                <ElementList items={result.possible} />
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );

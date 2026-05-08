@@ -70,7 +70,7 @@ h4 {
 ul,
 ol {
     margin: var(--space-md) 0;
-    padding-inline-start: min(3vw, 16px);
+    padding-inline-start: var(--space-md);
 }
 
 li {

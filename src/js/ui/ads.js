@@ -7,7 +7,12 @@
  */
 
 const ADS_KEY = "ads-mode";
+const MOBILE_MAX_WIDTH = 768;
 const injected = { sidebars: false, inline: false };
+
+function isMobileViewport() {
+    return window.innerWidth <= MOBILE_MAX_WIDTH;
+}
 
 function getAdsMode() {
     const stored = localStorage.getItem(ADS_KEY);
@@ -57,17 +62,19 @@ function pushAd(container) {
     }
 }
 
-const AD_INTERVAL_PX = 2000;
+const AD_INTERVAL_PX_FULL = 2000;
+const AD_INTERVAL_PX_MINIMAL = 3600;
 
-function insertInlineAd(afterContainer) {
+function insertInlineAdSlot(afterContainer, contentPxBefore) {
     const wrapper = document.createElement("div");
     wrapper.className = "ad-inline";
+    wrapper.style.display = "none";
+    wrapper.dataset.contentPxBefore = String(contentPxBefore);
     wrapper.innerHTML = buildInlineAdHTML();
     afterContainer.after(wrapper);
-    pushAd(wrapper);
 }
 
-function injectInlineAds() {
+function injectInlineAdSlots() {
     if (isSolverOnlyPage()) return;
 
     const containers = Array.from(
@@ -78,12 +85,27 @@ function injectInlineAds() {
     // Exclude the last container — reserved for the multiplex ad
     const eligible = containers.slice(0, -1);
 
-    let accumulated = 0;
+    let cumulative = 0;
     eligible.forEach((container) => {
-        accumulated += container.offsetHeight;
-        if (accumulated >= AD_INTERVAL_PX) {
-            insertInlineAd(container);
-            accumulated = 0;
+        cumulative += container.offsetHeight;
+        insertInlineAdSlot(container, cumulative);
+    });
+}
+
+function applyInlineInterval(intervalPx) {
+    const slots = document.querySelectorAll(".content-window .ad-inline");
+    let lastShownPx = 0;
+    slots.forEach((slot) => {
+        const px = Number(slot.dataset.contentPxBefore || "0");
+        if (px - lastShownPx >= intervalPx) {
+            slot.style.display = "";
+            if (!slot.dataset.pushed) {
+                pushAd(slot);
+                slot.dataset.pushed = "1";
+            }
+            lastShownPx = px;
+        } else {
+            slot.style.display = "none";
         }
     });
 }
@@ -93,16 +115,15 @@ function isSolverOnlyPage() {
 }
 
 function injectMultiplexAd() {
-    if (isIndexPage() || isSolverOnlyPage()) return;
+    if (isSolverOnlyPage()) return;
 
     const els = document.querySelectorAll(".content-window .content-container, .content-window .ad-inline");
     if (els.length === 0) return;
 
-    const last = els[els.length - 1];
     const wrapper = document.createElement("div");
     wrapper.className = "ad-multiplex";
     wrapper.innerHTML = buildMultiplexAdHTML();
-    last.after(wrapper);
+    els[els.length - 1].after(wrapper);
     pushAd(wrapper);
 }
 
@@ -210,8 +231,8 @@ function applyMode(mode) {
     document.body.classList.remove("ads-full", "ads-minimal", "ads-hidden");
     document.body.classList.add(`ads-${mode}`);
 
-    const needSidebars = mode !== "hidden";
-    const needInline = mode === "full";
+    const needSidebars = mode !== "hidden" && !isMobileViewport();
+    const needInline = mode !== "hidden";
 
     if (needSidebars && !injected.sidebars) {
         injectSidebarAd();
@@ -221,11 +242,16 @@ function applyMode(mode) {
 
     if (needInline && !injected.inline) {
         if (!isIndexPage()) {
-            injectInlineAds();
-            injectMultiplexAd();
+            injectInlineAdSlots();
         }
+        injectMultiplexAd();
         // if (isIndexPage()) injectInFeedAds();
         injected.inline = true;
+    }
+
+    if (needInline && !isIndexPage() && !isSolverOnlyPage()) {
+        const intervalPx = mode === "minimal" ? AD_INTERVAL_PX_MINIMAL : AD_INTERVAL_PX_FULL;
+        applyInlineInterval(intervalPx);
     }
 
     // Re-sync sidebar positions after body class change lifts any display:none override
@@ -276,6 +302,18 @@ function initAds() {
     } else {
         window.addEventListener("load", start);
     }
+
+    // Re-apply if viewport crosses mobile→desktop so sidebars can load
+    let wasMobile = isMobileViewport();
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const nowMobile = isMobileViewport();
+            if (wasMobile && !nowMobile) applyMode(getAdsMode());
+            wasMobile = nowMobile;
+        }, 200);
+    });
 }
 
 function makeAdsRed() {
@@ -291,5 +329,9 @@ function makeAdsRed() {
     `;
     document.head.appendChild(style);
 }
+
+// document.addEventListener("DOMContentLoaded", () => {
+//     makeAdsRed()
+// })
 
 window.Ads = { initAds, makeAdsRed };
