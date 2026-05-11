@@ -1,0 +1,31 @@
+Measure: Top left point of top most px of arrow -> Left side of last red on left
+baseline: 27px
+one_u_no_c_zero_r: 44px
+one_u_one_c_one_r: 75px
+one_u_two_c_two_r: 118px
+two_u_three_c_two_r: 174px
+one_u_four_c_four_r: 242px
+
+two_u_no_c_zero_r: 62px
+one_u_three_c_three_r: 173px
+two_u_two_c_one_r: 118px
+two_u_one_c_one_r: 75px
+three_u_three_c_one_r: 204px
+
+one_u_seven_c_six_r: 415px
+two_u_six_c_six_r_two_groups: 372px
+one_u_six_c_six_r_one_group: 415px
+
+two_u_six_c_four_r: 321px
+
+three_u_eight_c_six_r_two_groups_win: 514px
+two_u_six_c_six_r_two_groups: 336px
+
+3U_7c_4R (win): 511px
+3U_4c_2R: 214px
+
+3U_7c_5R: 441px
+3U_6c_4R (win): 512px
+
+green left: 513px
+green right: 595px
