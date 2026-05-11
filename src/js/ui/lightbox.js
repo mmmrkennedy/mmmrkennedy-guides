@@ -60,6 +60,25 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
         img.onload = function () {
             // Set the source and display the image
             lightboxImg.setAttribute("src", mediaSrc);
+
+            // Upscale small images so they don't render tiny in the lightbox.
+            // Threshold: natural dims both under 600px. Scale to fit ~80vh / 90vw, capped at 3x.
+            lightboxImg.style.width = "";
+            lightboxImg.style.height = "";
+            const SMALL_THRESHOLD = 600;
+            const MAX_SCALE = 3;
+            if (img.naturalWidth < SMALL_THRESHOLD && img.naturalHeight < SMALL_THRESHOLD) {
+                const scale = Math.min(
+                    MAX_SCALE,
+                    (window.innerHeight * 0.8) / img.naturalHeight,
+                    (window.innerWidth * 0.9) / img.naturalWidth
+                );
+                if (scale > 1) {
+                    lightboxImg.style.width = img.naturalWidth * scale + "px";
+                    lightboxImg.style.height = img.naturalHeight * scale + "px";
+                }
+            }
+
             lightboxImg.style.display = "block";
             lightboxCaption.textContent = captionText;
 

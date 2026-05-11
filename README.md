@@ -27,6 +27,7 @@ Finished:
 - Terminus (BO6)
 - Ascension (BO1)
 - Nuketown (BO2)
+- Ashes Of The Damned (BO7)
 
 Planned:
 

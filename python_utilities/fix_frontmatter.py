@@ -55,6 +55,7 @@ def fix_file(path: Path) -> bool:
         return False
 
     frontmatter = match.group(1)
+    fm_start, fm_end = match.span(1)
     changed = False
 
     def replace_title(m):
@@ -70,7 +71,7 @@ def fix_file(path: Path) -> bool:
     if not changed:
         return False
 
-    new_content = original.replace(frontmatter, new_frontmatter, 1)
+    new_content = original[:fm_start] + new_frontmatter + original[fm_end:]
     path.write_text(new_content, encoding='utf-8')
     return True
 

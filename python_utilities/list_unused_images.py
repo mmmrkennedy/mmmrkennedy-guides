@@ -27,20 +27,12 @@ def find_html_and_pictures_folder(directory):
 
 
 def find_webp_image_names(path):
-    """
-    Returns a list of names of all .webp images in the given directory path and all its subdirectories.
-
-    :param path: The directory path to search for .webp image names.
-    :return: A list of .webp image names including their relative paths.
-    """
+    """Return all .webp file names found recursively under path."""
     webp_image_names = []
-    webp_image_names_w_paths = []
-    for root, dirs, files in os.walk(path):
+    for root, _, files in os.walk(path):
         for file in fnmatch.filter(files, '*.webp'):
             webp_image_names.append(file)
-            webp_image_names_w_paths.append(os.path.relpath(os.path.join(root, file), path))
-
-    return webp_image_names, webp_image_names_w_paths
+    return webp_image_names
 
 
 def find_webp_in_a_tags(html_path):
@@ -117,45 +109,31 @@ def list_direct_subfolders(folder_path):
     return subfolders
 
 
+def collect_unused(html_path, pictures_path):
+    if not html_path or not pictures_path:
+        return []
+    webp_images = find_webp_image_names(pictures_path)
+    a_tags = find_webp_in_a_tags(html_path)
+    unreferenced = compare(webp_images, a_tags)
+    return find_files_abs_paths(unreferenced, pictures_path)
+
+
 if __name__ == "__main__":
     paths = []
 
-    game_path = input("Game Path (games\\BO4\\) or Map Path (\games\BO4\\tag_der_toten) (g or m): ").lower()
+    mode = input(r"Game Path (games\BO4\) or Map Path (\games\BO4\tag_der_toten) (g or m): ").lower()
 
-    if game_path == "g":
-        game_path = input("Enter game path (Example: D:\zombiesGuidesPublic\games\BO4\\): ")
-
-        all_subfolder_paths = list_direct_subfolders(game_path)
-
-        for subfolder_path in all_subfolder_paths:
-            subfolder_path = os.path.join(game_path, subfolder_path)
-            html_path, pictures_path = find_html_and_pictures_folder(subfolder_path)
-
-            if not pictures_path:
-                continue
-
-            webp_images, webp_images_w_paths = find_webp_image_names(pictures_path)
-            a_tags = find_webp_in_a_tags(html_path)
-
-            unreferenced_images = compare(webp_images, a_tags)
-
-            unused_images = find_files_abs_paths(unreferenced_images, pictures_path)
-
-            if len(unused_images) != 0:
-                for path in unused_images:
-                    paths.append(path)
-
+    if mode == "g":
+        game_path = input(r"Enter game path (Example: D:\zombiesGuidesPublic\games\BO4\): ")
+        for sub in list_direct_subfolders(game_path):
+            html_path, pictures_path = find_html_and_pictures_folder(os.path.join(game_path, sub))
+            paths.extend(collect_unused(html_path, pictures_path))
     else:
-        html_path, pictures_path = find_html_and_pictures_folder(input("Enter directory path (Example: D:\zombiesGuidesPublic\games\BO4\\tag_der_toten): "))
+        directory = input(r"Enter directory path (Example: D:\zombiesGuidesPublic\games\BO4\tag_der_toten): ")
+        html_path, pictures_path = find_html_and_pictures_folder(directory)
+        paths = collect_unused(html_path, pictures_path)
 
-        webp_images, webp_images_w_paths = find_webp_image_names(pictures_path)
-        a_tags = find_webp_in_a_tags(html_path)
-
-        unreferenced_images = compare(webp_images, a_tags)
-
-        paths = find_files_abs_paths(unreferenced_images, pictures_path)
-
-    if len(paths) == 0:
+    if not paths:
         print("All images are being used")
     else:
         print("Unused images:")

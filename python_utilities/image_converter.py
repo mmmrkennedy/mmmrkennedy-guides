@@ -340,7 +340,7 @@ def main() -> None:
                 quality = prompt_int("Quality 1-100 [90]: ", 90, 1, 100)
                 include = input("Include existing webp files? (y/n) [n]: ").lower() == "y"
                 convert_dir_to_webp(image_dir, quality, include)
-                break
+            break
 
         elif choice == "2":
             image_dir = prompt_dir(image_dir)

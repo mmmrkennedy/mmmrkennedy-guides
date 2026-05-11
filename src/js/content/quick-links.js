@@ -206,7 +206,7 @@ function positionSidebarToc(sidebar) {
         const rect = firstContainer.getBoundingClientRect();
         const gap = 10;
         const minLeft = 8;
-        const maxWidth = 240;
+        const maxWidth = 340;
 
         const rightEdge = rect.left - gap;
         const width = Math.min(rightEdge - minLeft, maxWidth);
