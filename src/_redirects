@@ -1,3 +1,8 @@
+# Catch malformed nested URLs (e.g. /games/WW2/the_frozen_dawn/games/BO3/...)
+# These resolved to index.html with the wrong URL; redirect to root.
+/games/:a/:b/games/*   /   301
+/games/:a/games/*      /   301
+
 /games/BO7/   /#BO7   301
 /games/BO6/   /#BO6   301
 /games/VG/    /#VG    301
