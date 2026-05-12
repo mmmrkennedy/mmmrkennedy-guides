@@ -16,5 +16,3 @@
 /games/BO1/   /#BO1   301
 /games/WAW/   /#WAW   301
 
-# Catch-all: any unmatched path → root (real static files served first)
-/*            /       301

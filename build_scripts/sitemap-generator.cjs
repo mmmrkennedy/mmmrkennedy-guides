@@ -70,12 +70,19 @@ async function buildSitemap() {
     sitemap.write({ url: "/", lastmod: fs.statSync(INDEX_FILE).mtime });
 
     // then add all linked pages
+    let written = 0;
     for (const link of uniqueLinks) {
-        const filePath = path.resolve("./src", link);
-        if (fs.existsSync(filePath)) {
+        const candidates = [
+            path.resolve("./src", `${link}.html`),
+            path.resolve("./src", link, "index.html"),
+            path.resolve("./src", link),
+        ];
+        const filePath = candidates.find((p) => fs.existsSync(p) && fs.statSync(p).isFile());
+        if (filePath) {
             const relPath = path.relative(repoRoot, filePath).replace(/\\/g, "/");
             const lastmod = gitDates[relPath] || fs.statSync(filePath).mtime;
             sitemap.write({ url: `/${link}`, lastmod });
+            written++;
         }
     }
 
@@ -84,7 +91,7 @@ async function buildSitemap() {
     fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
     fs.writeFileSync(OUTPUT_FILE, data.toString());
 
-    console.log(`sitemap.xml generated with ${uniqueLinks.length} pages`);
+    console.log(`sitemap.xml generated with ${written + 1} pages (homepage + ${written} linked)`);
 }
 
 buildSitemap();
