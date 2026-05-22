@@ -314,6 +314,22 @@ function classifyLinks(content, outputPath) {
 
             if (isExternal) existing.add("external-link");
 
+            // For external links: ensure target="_blank" + rel="noopener noreferrer nofollow".
+            // Preserves any pre-existing target value and merges rel tokens.
+            let needsTarget = false;
+            let computedRel = null;
+            if (isExternal) {
+                needsTarget = !/\btarget=["'][^"']*["']/i.test(attrs);
+                const relMatch = /\brel=["']([^"']*)["']/i.exec(attrs);
+                const relTokens = new Set(relMatch ? relMatch[1].split(/\s+/).filter(Boolean) : []);
+                const required = ["noopener", "noreferrer", "nofollow"];
+                const missing = required.filter((r) => !relTokens.has(r));
+                if (missing.length > 0) {
+                    for (const r of required) relTokens.add(r);
+                    computedRel = [...relTokens].join(" ");
+                }
+            }
+
             if (!href.startsWith("#") && !href.startsWith("http")) {
                 if (href.endsWith("/")) {
                     existing.add("incomplete-path");
@@ -338,7 +354,13 @@ function classifyLinks(content, outputPath) {
                 dataMediaType = LIGHTBOX_VIDEO_EXTS.has(hrefExt) ? "video" : "image";
             }
 
-            if (existing.size === sizeBefore && overrideHref === null && dataMediaType === null) return match;
+            if (
+                existing.size === sizeBefore &&
+                overrideHref === null &&
+                dataMediaType === null &&
+                !needsTarget &&
+                computedRel === null
+            ) return match;
 
             modified = true;
             const classStr = [...existing].join(" ");
@@ -350,6 +372,16 @@ function classifyLinks(content, outputPath) {
             }
             if (dataMediaType !== null && !/data-media-type=/i.test(newAttrs)) {
                 newAttrs += ` data-media-type="${dataMediaType}"`;
+            }
+            if (needsTarget) {
+                newAttrs += ` target="_blank"`;
+            }
+            if (computedRel !== null) {
+                if (/\brel=["'][^"']*["']/i.test(newAttrs)) {
+                    newAttrs = newAttrs.replace(/\brel=["'][^"']*["']/i, `rel="${computedRel}"`);
+                } else {
+                    newAttrs += ` rel="${computedRel}"`;
+                }
             }
             return `<a${newAttrs}>`;
         });

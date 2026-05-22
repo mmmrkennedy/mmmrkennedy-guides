@@ -290,6 +290,8 @@ function initAdToggle() {
 }
 
 function initAds() {
+    return;
+
     initAdToggle();
 
     function start() {
