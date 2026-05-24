@@ -1,35 +1,30 @@
 #!/usr/bin/env node
+/**
+ * generate-sitemap.cjs
+ *
+ * Run on Cloudflare Pages CI as part of the normal build.
+ * Reads build_scripts/lastmod-cache.json (kept fresh by GitHub Actions).
+ * Does NOT require git history.
+ *
+ * Usage: node build_scripts/generate-sitemap.cjs
+ */
+
 const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
 const { SitemapStream, streamToPromise } = require("sitemap");
-const { execSync } = require("child_process");
 
-const SITE_URL = "https://mmmrkennedy.com"; // Change to your site
-const INDEX_FILE = path.resolve("./dist/index.html"); // Path to your index.html
+const SITE_URL = "https://mmmrkennedy.com";
+const INDEX_FILE = path.resolve("./dist/index.html");
+const INDEX_SOURCE = path.resolve("./src/index.html");
 const OUTPUT_FILE = path.resolve("./dist/sitemap.xml");
+const LASTMOD_CACHE = path.resolve(__dirname, "lastmod-cache.json");
 
-function getAllGitLastModified() {
+function readCache() {
     try {
-        const output = execSync(
-            "git log --format=%cI --name-only --diff-filter=ACMRT",
-            { encoding: "utf8", maxBuffer: 50 * 1024 * 1024 }
-        ).trim();
-
-        const map = {};
-        let currentDate = null;
-        for (const line of output.split("\n")) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
-            if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
-                currentDate = trimmed;
-            } else if (currentDate) {
-                const normalized = trimmed.replace(/\\/g, "/");
-                if (!(normalized in map)) map[normalized] = currentDate;
-            }
-        }
-        return map;
+        return JSON.parse(fs.readFileSync(LASTMOD_CACHE, "utf8"));
     } catch {
+        console.warn(`Could not read ${path.basename(LASTMOD_CACHE)} — lastmod dates will be omitted.`);
         return {};
     }
 }
@@ -49,7 +44,7 @@ async function buildSitemap() {
         .filter((a) => !a.classList.contains("disabled"))
         .map((a) => a.getAttribute("href"))
         .filter((href) => href && !href.startsWith("http") && !href.startsWith("#"))
-        .filter((href) => !IMAGE_EXTENSIONS.test(href)) // skip image links
+        .filter((href) => !IMAGE_EXTENSIONS.test(href))
         .map((href) => href.replace(/^\/?/, ""))
         .map((href) => href.replace(/\?.*$/, ""))
         .map((href) => href.replace(/\.html$/, ""));
@@ -62,15 +57,22 @@ async function buildSitemap() {
     }
 
     const repoRoot = path.resolve(".");
-    const gitDates = getAllGitLastModified();
+    const dates = readCache();
+
+    const lastmodFor = (filePath) => {
+        const rel = path.relative(repoRoot, filePath).replace(/\\/g, "/");
+        return dates[rel] || null;
+    };
 
     const sitemap = new SitemapStream({ hostname: SITE_URL });
 
-    // include the homepage first
-    sitemap.write({ url: "/", lastmod: fs.statSync(INDEX_FILE).mtime });
+    const homepageSource = fs.existsSync(INDEX_SOURCE) ? INDEX_SOURCE : INDEX_FILE;
+    const homepageDate = lastmodFor(homepageSource);
+    sitemap.write({ url: "/", ...(homepageDate && { lastmod: homepageDate }) });
 
-    // then add all linked pages
     let written = 0;
+    let missingCache = 0;
+
     for (const link of uniqueLinks) {
         const candidates = [
             path.resolve("./src", `${link}.html`),
@@ -79,9 +81,9 @@ async function buildSitemap() {
         ];
         const filePath = candidates.find((p) => fs.existsSync(p) && fs.statSync(p).isFile());
         if (filePath) {
-            const relPath = path.relative(repoRoot, filePath).replace(/\\/g, "/");
-            const lastmod = gitDates[relPath] || fs.statSync(filePath).mtime;
-            sitemap.write({ url: `/${link}`, lastmod });
+            const lastmod = lastmodFor(filePath);
+            if (!lastmod) missingCache++;
+            sitemap.write({ url: `/${link}`, ...(lastmod && { lastmod }) });
             written++;
         }
     }
@@ -91,7 +93,10 @@ async function buildSitemap() {
     fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
     fs.writeFileSync(OUTPUT_FILE, data.toString());
 
-    console.log(`sitemap.xml generated with ${written + 1} pages (homepage + ${written} linked)`);
+    console.log(`sitemap.xml generated with ${written + 1} pages (homepage + ${written} linked).`);
+    if (missingCache > 0) {
+        console.warn(`${missingCache} pages had no cache entry — lastmod omitted. Run refresh-lastmod-cache.cjs via GitHub Actions.`);
+    }
 }
 
 buildSitemap();

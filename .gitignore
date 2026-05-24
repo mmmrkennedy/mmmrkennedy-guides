@@ -16,6 +16,7 @@ dist/
 !.prettierrc.json
 !.prettierignore
 !.stylelintignore
+!.github
 
 # Images (except SEO image)
 *.png

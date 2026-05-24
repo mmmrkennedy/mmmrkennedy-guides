@@ -16,7 +16,7 @@
         "build:scripts": "tsc -p tsconfig.scripts.json",
         "build:react": "vite build",
         "build:eleventy": "eleventy --incremental",
-        "build:sitemap": "node build_scripts/sitemap-generator.cjs",
+        "build:sitemap": "node build_scripts/generate-sitemap.cjs",
         "minify": "node build_scripts/minify-assets.js",
         "clean": "rimraf dist",
         "// images": "Image conversion utilities",
