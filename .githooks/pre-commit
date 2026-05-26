@@ -1,0 +1,17 @@
+#!/bin/sh
+# Refresh lastmod-cache.json in this same commit, so the sitemap dates are
+# correct without waiting for the GitHub Action round-trip.
+#
+# Only runs when .html files are staged (added/changed/renamed/deleted), so
+# CSS/JS/image-only commits are untouched. The refresh script dates staged
+# files "now" since they aren't in `git log` yet.
+
+if git diff --cached --name-only --diff-filter=ACMRD -- "*.html" | grep -q .; then
+    echo "pre-commit: refreshing lastmod-cache.json…"
+    if ! node build_scripts/refresh-lastmod-cache.cjs; then
+        echo "pre-commit: refresh-lastmod-cache.cjs failed — aborting commit." >&2
+        echo "  (commit with --no-verify to skip this hook if needed)" >&2
+        exit 1
+    fi
+    git add build_scripts/lastmod-cache.json
+fi

@@ -17,6 +17,7 @@ dist/
 !.prettierignore
 !.stylelintignore
 !.github
+!.githooks
 
 # Images (except SEO image)
 *.png
