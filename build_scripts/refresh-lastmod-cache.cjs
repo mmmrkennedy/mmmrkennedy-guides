@@ -58,12 +58,43 @@ function getGitLastModified() {
     return map;
 }
 
-function readCache() {
+// Currently-tracked .html files. We only build sitemap entries for these, so
+// the cache shouldn't track anything else (no webp/css/js/png) and shouldn't
+// retain paths that have since been renamed or deleted.
+function getTrackedHtmlFiles() {
+    const output = git('-c core.quotepath=false ls-files -- "*.html"').trim();
+    if (!output) return [];
+    return output.split("\n").map((line) => line.trim().replace(/\\/g, "/"));
+}
+
+// .html files staged in the index (Added/Copied/Modified/Renamed). When run
+// from a pre-commit hook these aren't in `git log` yet, so we date them "now"
+// instead of leaving them a commit behind. Empty when run post-commit (e.g.
+// the GitHub Action), so that path stays a pure git-log rebuild.
+function getStagedHtmlFiles() {
     try {
-        return JSON.parse(fs.readFileSync(LASTMOD_CACHE, "utf8"));
+        const output = git(
+            '-c core.quotepath=false diff --cached --name-only --diff-filter=ACMR -- "*.html"'
+        ).trim();
+        if (!output) return [];
+        return output.split("\n").map((line) => line.trim().replace(/\\/g, "/"));
     } catch {
-        return {};
+        return [];
     }
+}
+
+// ISO-8601 with local offset, matching the `git log %cI` format already in use.
+function nowIso() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const offMin = -d.getTimezoneOffset();
+    const sign = offMin >= 0 ? "+" : "-";
+    const oh = pad(Math.floor(Math.abs(offMin) / 60));
+    const om = pad(Math.abs(offMin) % 60);
+    return (
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+        `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${sign}${oh}:${om}`
+    );
 }
 
 function writeCache(map) {
@@ -85,17 +116,40 @@ if (isShallow()) {
 }
 
 console.log("Reading full git history...");
-const freshMap = getGitLastModified();
+const dates = getGitLastModified();
 
-if (Object.keys(freshMap).length === 0) {
+if (Object.keys(dates).length === 0) {
     console.error("No file dates found in git log. Aborting.");
     process.exit(1);
 }
 
-const existing = readCache();
-const merged = { ...existing, ...freshMap };
-writeCache(merged);
+const htmlFiles = getTrackedHtmlFiles();
+
+if (htmlFiles.length === 0) {
+    console.error("No tracked .html files found. Aborting.");
+    process.exit(1);
+}
+
+// Rebuild from scratch (no merge) so renamed/deleted paths are pruned.
+const staged = new Set(getStagedHtmlFiles());
+const now = nowIso();
+const cache = {};
+let missing = 0;
+for (const file of htmlFiles) {
+    if (staged.has(file)) {
+        cache[file] = now; // about to be committed — not in git log yet
+    } else if (file in dates) {
+        cache[file] = dates[file];
+    } else {
+        missing++;
+    }
+}
+
+writeCache(cache);
 
 console.log(
-    `lastmod-cache.json updated with ${Object.keys(merged).length} entries (${Object.keys(freshMap).length} from git).`
+    `lastmod-cache.json rebuilt with ${Object.keys(cache).length} HTML entries.`
 );
+if (missing > 0) {
+    console.warn(`${missing} tracked .html files had no git log date and were skipped.`);
+}

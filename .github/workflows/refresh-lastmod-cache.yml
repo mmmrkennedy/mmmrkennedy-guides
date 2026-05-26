@@ -1,10 +1,10 @@
 name: Refresh lastmod cache
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
+  # Primary refresh now runs locally in the pre-commit hook (.githooks/pre-commit),
+  # so the cache is correct in the same commit — no GitHub round-trip, no bot commit.
+  # Kept as a manual backstop: run it from the Actions tab if the cache ever drifts
+  # (e.g. a commit made with --no-verify, or before `bun install` set up the hook).
   workflow_dispatch:
 
 permissions:

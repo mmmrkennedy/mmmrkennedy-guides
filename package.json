@@ -7,7 +7,6 @@
         "// build": "Production builds — bundled, minified, versioned",
         "build": "bun run build:scripts && bun run build:react && BUNDLE=true bun run build:eleventy && BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/minify-html.js && bun build:sitemap",
         "build:full": "bun run clean && bun run build",
-        "serve:prod": "bun run build:full && python build_scripts/serve.py",
         "// dev": "Development servers — unbundled, hot reload",
         "dev": "eleventy --serve",
         "dev:watch": "concurrently --names \"tsc,vite,11ty\" --prefix-colors \"yellow,cyan,green\" \"tsc -p tsconfig.scripts.json --watch\" \"vite build --watch\" \"eleventy --serve\"",
@@ -28,7 +27,9 @@
         "lint:fix": "eslint . --fix",
         "lint:css": "stylelint \"**/*.css\"",
         "lint:css:fix": "stylelint \"**/*.css\" --fix",
-        "css:check": "node build_scripts/css-usage-analyzer.js"
+        "css:check": "node build_scripts/css-usage-analyzer.js",
+        "// git": "Local git hooks (re-applied on install)",
+        "prepare": "git config core.hooksPath .githooks"
     },
     "keywords": [
         "zombies",
