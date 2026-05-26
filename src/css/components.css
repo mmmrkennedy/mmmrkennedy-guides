@@ -209,6 +209,125 @@ a:hover {
     height: var(--space-2xl);
 }
 
+/* Legend panel — always-available "how to read this guide" reference */
+
+/* Launcher: small round icon button that sits beside the page title */
+.legend-launcher {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    margin-left: var(--space-sm);
+    border-radius: 50%;
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+.legend-launcher:not(:disabled):hover {
+    opacity: 1;
+}
+
+.legend-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    background: rgb(0 0 0 / 65%);
+}
+
+.legend-overlay.is-open {
+    display: flex;
+}
+
+.legend-panel {
+    width: 100%;
+    max-width: 30rem;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: var(--space-lg);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 8px;
+}
+
+.legend-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+}
+
+.legend-title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    color: var(--color-text-primary);
+}
+
+.legend-close {
+    padding: 0 var(--space-sm);
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    background: transparent;
+    border: none;
+}
+
+.legend-close:hover {
+    color: var(--color-text-primary);
+}
+
+.legend-intro,
+.legend-tip {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.legend-tip {
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.legend-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.legend-row {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: var(--space-md);
+    align-items: baseline;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.legend-row:last-child {
+    border-bottom: none;
+}
+
+.legend-swatch {
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.legend-desc {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+}
+
+.legend-desc strong {
+    color: var(--color-text-primary);
+}
+
 /* Information Boxes */
 .note,
 .no-return,
@@ -639,163 +758,3 @@ body.ads-hidden .ad-left-sidebar { display: none !important; }
 body.ads-minimal:has(.solver-only-page) .ad-left-sidebar { display: none !important; }
 
 /* Minimal mode: JS toggles individual .ad-inline visibility via inline display style */
-
-/* Tutorial Confirm */
-.tutorial-confirm {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: var(--color-bg-primary);
-    border-bottom: 1px solid var(--color-border-subtle);
-    border-radius: 6px 6px 0 0;
-    padding: var(--space-lg);
-    text-align: center;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
-    z-index: 1;
-}
-
-.tutorial-confirm.active {
-    display: block;
-}
-
-.tutorial-confirm p {
-    margin-bottom: var(--space-md);
-}
-
-.tutorial-confirm-btns {
-    display: flex;
-    gap: var(--space-sm);
-    justify-content: center;
-}
-
-/* Tutorial Overlay */
-.tutorial-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgb(0 0 0 / 80%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.tutorial-popup {
-    position: relative;
-    background-color: var(--color-bg-primary);
-    border: 2px solid var(--color-border-subtle);
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgb(0 0 0 / 50%);
-    padding: var(--space-lg);
-    max-width: 550px;
-    width: 90%;
-    color: var(--color-text-primary);
-}
-
-.tutorial-header {
-    margin-bottom: var(--space-lg);
-    border-bottom: 1px solid var(--color-border-subtle);
-    padding-bottom: var(--space-sm);
-    text-align: center;
-}
-
-.tutorial-header h2 {
-    font-size: var(--font-size-xl);
-    font-weight: bold;
-    margin: 0;
-    color: var(--color-tier-1);
-}
-
-.tutorial-exit-btn {
-    position: absolute;
-    top: var(--space-sm);
-    right: var(--space-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    background-color: transparent;
-    border: 1px solid var(--color-warning-border);
-    border-radius: 4px;
-    color: var(--color-warning-border);
-    font-size: 1.25rem;
-    line-height: 1;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
-}
-
-.tutorial-exit-btn:hover {
-    background-color: var(--color-warning-border);
-    color: var(--color-bg-primary);
-}
-
-.tutorial-pages-container {
-    min-height: 180px;
-    margin-bottom: var(--space-lg);
-}
-
-.tutorial-page {
-    display: none;
-    animation: fadein 0.5s;
-}
-
-.tutorial-page.active {
-    display: block;
-}
-
-.tutorial-page p {
-    margin-bottom: var(--space-sm);
-    line-height: var(--line-height-normal);
-}
-
-.tutorial-page ul {
-    margin-left: var(--space-lg);
-    margin-bottom: var(--space-md);
-}
-
-.tutorial-page li {
-    margin-bottom: var(--space-sm);
-}
-
-.tutorial-navigation {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--space-lg);
-}
-
-.tutorial-progress-container {
-    margin-top: var(--space-md);
-}
-
-.tutorial-progress-bar {
-    height: 6px;
-    background-color: var(--color-bg-tertiary);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: var(--space-sm);
-}
-
-.tutorial-progress-fill {
-    height: 100%;
-    width: 0; /* Updated by JS */
-    background-color: var(--color-link-default);
-    transition: width 0.3s ease;
-}
-
-.tutorial-progress-text {
-    text-align: center;
-    font-size: var(--font-size-sm);
-    color: var(--color-link-external);
-}
-
-@keyframes fadein {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}

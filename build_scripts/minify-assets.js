@@ -13,7 +13,7 @@ const BUNDLE = process.env.BUNDLE === "true";
 const JS_BUNDLE_ORDER = [
     "core/page-utils.js",
     "navigation/scroll-manager.js",
-    "ui/tutorial-system.js",
+    "ui/legend.js",
     "ui/lightbox.js",
     "ui/ads.js",
     "content/link-processor.js",

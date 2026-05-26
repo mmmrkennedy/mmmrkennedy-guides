@@ -141,6 +141,16 @@
 <div class="top-buttons-background-box">
     <!-- Title at the top of the page -->
     <h1 class="title-text">{{ pageTitle }}</h1>
+    <button type="button" id="legendLauncher" class="btn legend-launcher"
+            aria-haspopup="dialog" aria-expanded="false" aria-controls="legendOverlay"
+            aria-label="How to read this guide">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <path d="M12 17h.01" />
+        </svg>
+    </button>
 
     <!-- Mobile devices content -->
     <div id="mobile-content">
@@ -207,7 +217,7 @@
 {%- else %}
 <script src="/js/core/page-utils.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/navigation/scroll-manager.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/tutorial-system.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/legend.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/lightbox.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/ads.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/link-processor.js?v={{ site.buildVersion }}" defer></script>
@@ -221,6 +231,42 @@
 {%- if useReactSolvers %}
     <!-- REACT_BUNDLE_PLACEHOLDER -->
 {%- endif %}
+
+<!-- Legend / "How to read this guide" overlay (launcher lives in the title bar) -->
+<div class="legend-overlay" id="legendOverlay" role="dialog" aria-modal="true" aria-labelledby="legendTitle">
+    <div class="legend-panel">
+        <div class="legend-header">
+            <h2 id="legendTitle" class="legend-title">How to read this guide</h2>
+            <button type="button" id="legendClose" class="legend-close" aria-label="Close">&times;</button>
+        </div>
+
+        <p class="legend-intro">Links are colour-coded by where they take you:</p>
+        <ul class="legend-list">
+            <li class="legend-row">
+                <a class="legend-swatch">Blue text</a>
+                <span class="legend-desc"><strong>Image</strong> - opens in a viewer. Use &larr; / &rarr; to move between images; click outside or &times; to close.</span>
+            </li>
+            <li class="legend-row">
+                <a class="legend-swatch link-to-page">Teal text</a>
+                <span class="legend-desc"><strong>Internal</strong> - jumps to another spot within this page.</span>
+            </li>
+            <li class="legend-row">
+                <a class="legend-swatch internal-link">Copper text</a>
+                <span class="legend-desc"><strong>Page</strong> - navigates to another page on this site.</span>
+            </li>
+            <li class="legend-row">
+                <a class="legend-swatch external-link">Green text</a>
+                <span class="legend-desc"><strong>External</strong> - opens another website (YouTube, Reddit&hellip;) in a new tab.</span>
+            </li>
+            <li class="legend-row">
+                <a class="legend-swatch solver-link">Violet text</a>
+                <span class="legend-desc"><strong>Solver</strong> - opens an interactive tool.</span>
+            </li>
+        </ul>
+
+        <p class="legend-tip">Tip: the <strong>Back to Top</strong> button jumps you to the start of any guide.</p>
+    </div>
+</div>
 
 <div id="lightbox" class="lightbox">
     <span class="close-lightbox">&times;</span>

@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
             },
             { name: "Scroll Anchors", fn: () => window.ScrollManager?.scrollToAnchors() },
-            { name: "Tutorial System", fn: () => window.TutorialSystem?.tutorialPopupInit() },
+            { name: "Legend", fn: () => window.Legend?.initLegend() },
             { name: "Solver Buttons", fn: () => window.LinkProcessor?.setupSolverButtons() },
             { name: "Quick Links", fn: () => window.QuickLinks?.initializeQuickLinks() },
             { name: "Sidebar TOC", fn: () => window.QuickLinks?.initializeSidebarToc() },
