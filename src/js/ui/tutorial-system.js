@@ -3,6 +3,9 @@
  * Handles tutorial popup, navigation, and progress tracking
  */
 
+// Tutorial disabled pending rework — set to true to re-enable.
+const TUTORIAL_ENABLED = false;
+
 /**
  * Checks if current page is the index page
  */
@@ -18,6 +21,8 @@ function isIndexPage() {
  * Initializes tutorial popup for first-time users
  */
 function tutorialPopupInit() {
+    if (!TUTORIAL_ENABLED) return;
+
     if (!isIndexPage()) return;
 
     if (!localStorage.getItem("zombiesGuidesTutorialShown")) {
