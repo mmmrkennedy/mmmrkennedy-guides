@@ -689,10 +689,15 @@ module.exports = function(eleventyConfig) {
         const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
         const iso = lastmodCache[key];
         if (!iso) return "";
-        return new Date(iso).toLocaleDateString("en-US", {
+        // Use the calendar date as recorded in the stored offset (the leading
+        // YYYY-MM-DD) and format it in UTC, so the build server's timezone (UTC on
+        // Cloudflare) can't shift an evening-local date onto the next day.
+        const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+        return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
+            timeZone: "UTC",
         });
     });
 
