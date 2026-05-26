@@ -28,6 +28,7 @@ Finished:
 - Ascension (BO1)
 - Nuketown (BO2)
 - Ashes Of The Damned (BO7)
+- Astra Malorum (BO7)
 
 Planned:
 

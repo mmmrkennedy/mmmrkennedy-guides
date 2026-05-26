@@ -184,6 +184,14 @@
     {%- else %}
         {{ content | safe }}
     {%- endif %}
+
+    <footer class="site-footer">
+        <p class="site-footer__copyright">&copy; {% year %} mmmrkennedy</p>
+        {%- set updated = page.inputPath | lastmod %}
+        {%- if updated %}
+        <p class="site-footer__updated">Last updated {{ updated }}</p>
+        {%- endif %}
+    </footer>
 </div>
 
 

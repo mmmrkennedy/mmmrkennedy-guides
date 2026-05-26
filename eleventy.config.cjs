@@ -5,6 +5,15 @@ const path = require("path");
 const BUILD_VERSION = Date.now().toString();
 let cachedManifest = null;
 
+// Git-based last-modified dates, kept fresh by GitHub Actions (refresh-lastmod-cache.cjs).
+// Same source the sitemap uses. Keyed by repo-root-relative path, e.g. "src/index.html".
+let lastmodCache = {};
+try {
+    lastmodCache = require("./build_scripts/lastmod-cache.json");
+} catch {
+    console.warn("lastmod-cache.json not found — footer 'last updated' dates will be omitted.");
+}
+
 // ========================================
 // TRANSFORM FUNCTIONS
 // ========================================
@@ -672,6 +681,20 @@ module.exports = function(eleventyConfig) {
 
     // Add a shortcode for the current year (useful for copyright)
     eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`);
+
+    // Given a page's inputPath (e.g. "./src/index.html"), return its git last-modified
+    // date from lastmod-cache.json, formatted like "May 11, 2026". Empty string if unknown.
+    eleventyConfig.addFilter("lastmod", (inputPath) => {
+        if (!inputPath) return "";
+        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
+        const iso = lastmodCache[key];
+        if (!iso) return "";
+        return new Date(iso).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    });
 
     return {
         dir: {
