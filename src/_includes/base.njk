@@ -268,14 +268,16 @@
     </div>
 </div>
 
-<div id="lightbox" class="lightbox">
-    <span class="close-lightbox">&times;</span>
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <button class="close-lightbox" type="button" aria-label="Close"></button>
     <div class="lightbox-content">
         <div class="lightbox-caption"></div>
         <img id="lightbox-img" src="" alt="Enlarged image">
-        <video id="lightbox-video" controls loop style="display: none; max-height: 80vh; object-fit: contain;">
+        <video id="lightbox-video" controls loop style="display: none; object-fit: contain;">
             Your browser does not support the video tag.
         </video>
+        <button class="lightbox-nav lightbox-prev" type="button" aria-label="Previous image"></button>
+        <button class="lightbox-nav lightbox-next" type="button" aria-label="Next image"></button>
     </div>
 </div>
 </body>

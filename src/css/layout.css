@@ -116,10 +116,31 @@ Page structure and containers.
     z-index: 2000;
     justify-content: center;
     align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.lightbox.is-open {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .lightbox-content {
+    /* No transform here: it would trap the position:fixed desktop nav arrows.
+       Anchor for the absolutely-positioned caption (and mobile arrows). */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
     max-width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lightbox {
+        transition: none;
+    }
 }
 
 .lightbox-content img,
@@ -133,6 +154,12 @@ Page structure and containers.
 
 .lightbox-content img {
     cursor: zoom-in;
+
+    /* Gestures are handled in JS; stop the browser hijacking touch for scroll/zoom */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    transform-origin: center center;
 }
 
 .lightbox.zoomed {
@@ -147,19 +174,23 @@ Page structure and containers.
     margin-right: auto;
 }
 
+/* JS sets the image to its natural pixel size; lift the fitted caps so it can grow */
 .lightbox.zoomed .lightbox-content img {
-    max-width: 300vw;
-    max-height: 300vh;
+    max-width: none;
+    max-height: none;
     cursor: zoom-out;
 }
 
 .close-lightbox {
     position: absolute;
-    top: 1.25rem;
-    right: 0.625rem;
+    top: 0.75rem;
+    right: 0.75rem;
     font-size: 1.75rem;
     color: var(--color-bg-primary);
     background-color: var(--color-tier-1);
+    border: none;
+    padding: 0;
+    font-family: inherit;
     cursor: pointer;
     opacity: 0.9;
     display: flex;
@@ -168,9 +199,14 @@ Page structure and containers.
     width: var(--space-2xl);
     height: var(--space-2xl);
     border-radius: 4px;
-    line-height: 1;
-    text-align: center;
     transition: opacity 0.2s ease;
+}
+
+.close-lightbox::before {
+    /* The × glyph is optically low in its line box; nudge it up to center */
+    content: "\00d7";
+    line-height: 1;
+    transform: translateY(-3px);
 }
 
 .close-lightbox:hover {
@@ -178,13 +214,127 @@ Page structure and containers.
 }
 
 .lightbox-caption {
-    position: relative;
-    top: calc(var(--space-sm) * -1);
+    /* Imagus-style: a compact dark label floating just above the image's top edge,
+       so it never covers image content. Anchored to .lightbox-content (= image box). */
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    margin-bottom: var(--space-xs);
+    z-index: 2001;
+    color: var(--color-text-primary);
+    background-color: rgb(26 26 26 / 78%); /* --color-bg-primary @ 78% */
+    border: 1px solid rgb(201 169 97 / 60%); /* --color-tier-1 @ 60% */
+    backdrop-filter: blur(8px);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    line-height: var(--line-height-tight);
+    max-width: 100%;
+    text-align: left;
+}
+
+/* On-screen prev/next arrows (shown by JS only when there are 2+ items).
+   Desktop: fixed to the viewport's side edges. Mobile: absolute, below the image. */
+.lightbox-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-2xl);
+    height: var(--space-2xl);
+    font-size: 2rem;
+    line-height: 1;
     color: var(--color-bg-primary);
     background-color: var(--color-tier-1);
-    padding: var(--space-sm) var(--space-md);
+    border: none;
     border-radius: 4px;
-    font-size: var(--font-size-base);
-    width: fit-content;
-    left: unset;
+    cursor: pointer;
+    opacity: 0.9;
+    z-index: 2001;
+    transition: opacity 0.2s ease;
+}
+
+.lightbox-nav:hover {
+    opacity: 1;
+}
+
+.lightbox-nav:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.lightbox-prev {
+    left: 0.625rem;
+}
+
+.lightbox-next {
+    right: 0.625rem;
+}
+
+/* Chevrons via pseudo-elements (decorative — the aria-label is the real name),
+   nudged up to correct the glyph's optical low bias, matching the close button. */
+.lightbox-nav::before {
+    line-height: 1;
+    transform: translateY(-3px);
+}
+
+.lightbox-prev::before {
+    content: "\2039";
+}
+
+.lightbox-next::before {
+    content: "\203a";
+}
+
+.close-lightbox:focus-visible,
+.lightbox-nav:focus-visible {
+    outline: 2px solid var(--color-bg-primary);
+    outline-offset: 2px;
+    opacity: 1;
+}
+
+/* Mobile: maximise image area, enlarge touch targets, respect notches */
+@media (width < 48.0625em) { /* --bp-md */
+    .lightbox {
+        width: 100vw;
+        height: 100dvh;
+        touch-action: none;
+        overscroll-behavior: contain;
+    }
+
+    .lightbox-content img,
+    .lightbox-content video {
+        max-width: 100vw;
+        max-height: calc(90dvh - 5rem); /* leave a row below the image for the arrows */
+    }
+
+    .close-lightbox {
+        width: 44px;
+        height: 44px;
+        font-size: 2rem;
+        top: calc(0.5rem + env(safe-area-inset-top));
+        right: calc(0.5rem + env(safe-area-inset-right));
+    }
+
+    /* Drop the arrows just below the image's bottom corners (anchored to the image),
+       inset slightly from the edges */
+    .lightbox-nav {
+        position: absolute;
+        top: 100%;
+        margin-top: 0.5rem;
+        width: 44px;
+        height: 44px;
+        transform: none;
+    }
+
+    .lightbox-prev {
+        left: 0.5rem;
+    }
+
+    .lightbox-next {
+        right: 0.5rem;
+    }
 }
