@@ -757,4 +757,5 @@ body.ads-hidden .ad-left-sidebar { display: none !important; }
 /* Hide left sidebar on solver-only pages when in minimal mode */
 body.ads-minimal:has(.solver-only-page) .ad-left-sidebar { display: none !important; }
 
-/* Minimal mode: JS toggles individual .ad-inline visibility via inline display style */
+/* Minimal mode: sidebars + multiplex only — hide all inline ads */
+body.ads-minimal .ad-inline { display: none !important; }

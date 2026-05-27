@@ -8,7 +8,7 @@
 
 const ADS_KEY = "ads-mode";
 const MOBILE_MAX_WIDTH = 768;
-const injected = { sidebars: false, inline: false };
+const injected = { sidebars: false, inline: false, multiplex: false };
 
 function isMobileViewport() {
     return window.innerWidth <= MOBILE_MAX_WIDTH;
@@ -63,7 +63,6 @@ function pushAd(container) {
 }
 
 const AD_INTERVAL_PX_FULL = 2000;
-const AD_INTERVAL_PX_MINIMAL = 3600;
 
 function insertInlineAdSlot(afterContainer, contentPxBefore) {
     const wrapper = document.createElement("div");
@@ -232,7 +231,8 @@ function applyMode(mode) {
     document.body.classList.add(`ads-${mode}`);
 
     const needSidebars = mode !== "hidden" && !isMobileViewport();
-    const needInline = mode !== "hidden";
+    const needMultiplex = mode !== "hidden";
+    const needInline = mode === "full";
 
     if (needSidebars && !injected.sidebars) {
         injectSidebarAd();
@@ -244,14 +244,17 @@ function applyMode(mode) {
         if (!isIndexPage()) {
             injectInlineAdSlots();
         }
-        injectMultiplexAd();
         // if (isIndexPage()) injectInFeedAds();
         injected.inline = true;
     }
 
+    if (needMultiplex && !injected.multiplex) {
+        injectMultiplexAd();
+        injected.multiplex = true;
+    }
+
     if (needInline && !isIndexPage() && !isSolverOnlyPage()) {
-        const intervalPx = mode === "minimal" ? AD_INTERVAL_PX_MINIMAL : AD_INTERVAL_PX_FULL;
-        applyInlineInterval(intervalPx);
+        applyInlineInterval(AD_INTERVAL_PX_FULL);
     }
 
     // Re-sync sidebar positions after body class change lifts any display:none override
@@ -290,8 +293,6 @@ function initAdToggle() {
 }
 
 function initAds() {
-    return;
-
     initAdToggle();
 
     function start() {
@@ -332,8 +333,8 @@ function makeAdsRed() {
     document.head.appendChild(style);
 }
 
-// document.addEventListener("DOMContentLoaded", () => {
-//     makeAdsRed()
-// })
+document.addEventListener("DOMContentLoaded", () => {
+    makeAdsRed()
+})
 
 window.Ads = { initAds, makeAdsRed };
