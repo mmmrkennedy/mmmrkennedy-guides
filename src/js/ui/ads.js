@@ -333,8 +333,8 @@ function makeAdsRed() {
     document.head.appendChild(style);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    makeAdsRed()
-})
+// document.addEventListener("DOMContentLoaded", () => {
+//     makeAdsRed()
+// })
 
 window.Ads = { initAds, makeAdsRed };
