@@ -718,6 +718,19 @@ module.exports = function(eleventyConfig) {
         return editcountCache[key] || null;
     });
 
+    // Format a guide's `editors` frontmatter (a comma-separated string or a
+    // list) into a grammatical English list: "A", "A and B", "A, B, and C".
+    // Empty string if there are no editors, so the footer can skip it.
+    eleventyConfig.addFilter("formatEditors", (editors) => {
+        const names = (Array.isArray(editors) ? editors : String(editors || "").split(","))
+            .map((name) => String(name).trim())
+            .filter(Boolean);
+        if (names.length === 0) return "";
+        if (names.length === 1) return names[0];
+        if (names.length === 2) return `${names[0]} and ${names[1]}`;
+        return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+    });
+
     return {
         dir: {
             input: "src", // Read from src

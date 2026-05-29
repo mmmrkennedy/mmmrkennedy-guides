@@ -198,8 +198,10 @@
     <footer class="site-footer">
         {%- set updated = page.inputPath | lastmod %}
         {%- set edits = page.inputPath | editcount %}
+        {%- set editorList = editors | formatEditors %}
         <p class="site-footer__meta">
             <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
+            {%- if editorList %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
             {%- if updated %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__updated">Last updated {{ updated }}</span>{% endif %}
             {%- if edits %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
             <span class="site-footer__views"></span>
