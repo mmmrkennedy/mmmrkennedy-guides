@@ -156,7 +156,11 @@ function initializeSidebarToc() {
  * sits flush to the left of the content, regardless of scrollbar width.
  */
 function positionSidebarToc(sidebar) {
-    function update() {
+    const contentWindow = document.querySelector(".content-window");
+    const footer = document.querySelector(".content-window .site-footer");
+    const bottomGap = 24; // matches --space-lg
+    // Horizontal: keep the sidebar flush to the left of the content column.
+    function updateHorizontal() {
         const firstContainer = document.querySelector(".content-window .content-container");
         if (!firstContainer)
             return;
@@ -171,11 +175,37 @@ function positionSidebarToc(sidebar) {
         sidebar.style.right = `${window.innerWidth - rightEdge}px`;
         sidebar.style.width = `${width}px`;
     }
-    update();
+    // Vertical: clamp the bottom so a long TOC never overlaps the footer once
+    // the page scrolls to the end. Shrinking max-height lets it scroll internally.
+    function updateHeight() {
+        const navTop = sidebar.getBoundingClientRect().top;
+        let bottomLimit = window.innerHeight - bottomGap;
+        if (footer) {
+            const footerTop = footer.getBoundingClientRect().top;
+            bottomLimit = Math.min(bottomLimit, footerTop - bottomGap);
+        }
+        sidebar.style.maxHeight = `${Math.max(0, bottomLimit - navTop)}px`;
+    }
+    updateHorizontal();
+    updateHeight();
+    // The footer lives inside .content-window, so its viewport position changes
+    // as that container scrolls — re-clamp on scroll (rAF-throttled).
+    let scrollFrame = null;
+    contentWindow?.addEventListener("scroll", () => {
+        if (scrollFrame !== null)
+            return;
+        scrollFrame = requestAnimationFrame(() => {
+            scrollFrame = null;
+            updateHeight();
+        });
+    }, { passive: true });
     let resizeTimer;
     window.addEventListener("resize", () => {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(update, 100);
+        resizeTimer = setTimeout(() => {
+            updateHorizontal();
+            updateHeight();
+        }, 100);
     });
 }
 /**
