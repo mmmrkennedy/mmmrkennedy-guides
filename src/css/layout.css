@@ -24,8 +24,20 @@ Page structure and containers.
     margin: var(--space-xs) 0;
 }
 
-/* Single-line meta row: copyright • last updated • edits */
+/* Single-line meta row: copyright • last updated • edits • views */
 .site-footer__sep {
+    margin: 0 var(--space-xs);
+    opacity: 0.5;
+}
+
+/* Views count is filled in by JS (view-counter). Hidden until it has a value,
+   and draws its own leading separator so it matches the static bullets. */
+.site-footer__views:empty {
+    display: none;
+}
+
+.site-footer__views::before {
+    content: "\2022";
     margin: 0 var(--space-xs);
     opacity: 0.5;
 }

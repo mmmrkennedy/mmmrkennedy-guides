@@ -21,6 +21,7 @@ const JS_BUNDLE_ORDER = [
     "content/solver-button-processor.js",
     "quick-links-utils.js",
     "scripts.js",
+    "ui/view-counter.js",
 ];
 
 function findFiles(dir, extensions) {

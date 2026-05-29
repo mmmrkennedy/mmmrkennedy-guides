@@ -202,6 +202,7 @@
             <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
             {%- if updated %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__updated">Last updated {{ updated }}</span>{% endif %}
             {%- if edits %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
+            <span class="site-footer__views"></span>
         </p>
     </footer>
 </div>
@@ -227,6 +228,7 @@
 <script src="/js/content/solver-button-processor.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/quick-links-utils.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/scripts.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/view-counter.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
 
 {%- if useReactSolvers %}
