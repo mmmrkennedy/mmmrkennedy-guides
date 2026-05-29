@@ -2,7 +2,8 @@
 /**
  * refresh-lastmod-cache.cjs
  *
- * Run by GitHub Actions (with full git history) to update lastmod-cache.json.
+ * Run by GitHub Actions (with full git history) to update lastmod-cache.json
+ * and editcount-cache.json (commits-per-file, used for the footer edit count).
  * Does NOT build the sitemap — that happens on Cloudflare CI using the cache.
  *
  * Usage: node build_scripts/refresh-lastmod-cache.cjs
@@ -13,6 +14,7 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 const LASTMOD_CACHE = path.resolve(__dirname, "lastmod-cache.json");
+const EDITCOUNT_CACHE = path.resolve(__dirname, "editcount-cache.json");
 
 function git(args) {
     return execSync(`git ${args}`, {
@@ -38,12 +40,15 @@ function isShallow() {
     }
 }
 
-function getGitLastModified() {
+// Single pass over the full history gives us both the newest commit date per
+// file (for lastmod) and the number of commits that touched it (for edit count).
+function getGitHistory() {
     const output = git(
         "-c core.quotepath=false log --format=%cI --name-only --diff-filter=ACMRT"
     ).trim();
 
-    const map = {};
+    const dates = {};
+    const counts = {};
     let currentDate = null;
     for (const line of output.split("\n")) {
         const trimmed = line.trim();
@@ -52,10 +57,13 @@ function getGitLastModified() {
             currentDate = trimmed;
         } else if (currentDate) {
             const normalized = trimmed.replace(/\\/g, "/");
-            if (!(normalized in map)) map[normalized] = currentDate;
+            // Log is newest-first, so the first sighting is the newest date.
+            if (!(normalized in dates)) dates[normalized] = currentDate;
+            // Every appearance is one commit that touched this file.
+            counts[normalized] = (counts[normalized] || 0) + 1;
         }
     }
-    return map;
+    return { dates, counts };
 }
 
 // Currently-tracked .html files. We only build sitemap entries for these, so
@@ -103,6 +111,12 @@ function writeCache(map) {
     fs.writeFileSync(LASTMOD_CACHE, JSON.stringify(sorted, null, 2) + "\n");
 }
 
+function writeEditCounts(map) {
+    const sorted = {};
+    for (const k of Object.keys(map).sort()) sorted[k] = map[k];
+    fs.writeFileSync(EDITCOUNT_CACHE, JSON.stringify(sorted, null, 2) + "\n");
+}
+
 if (!isGitRepo()) {
     console.error("Not inside a git repository. Aborting.");
     process.exit(1);
@@ -116,7 +130,7 @@ if (isShallow()) {
 }
 
 console.log("Reading full git history...");
-const dates = getGitLastModified();
+const { dates, counts } = getGitHistory();
 
 if (Object.keys(dates).length === 0) {
     console.error("No file dates found in git log. Aborting.");
@@ -134,21 +148,29 @@ if (htmlFiles.length === 0) {
 const staged = new Set(getStagedHtmlFiles());
 const now = nowIso();
 const cache = {};
+const editCounts = {};
 let missing = 0;
 for (const file of htmlFiles) {
+    const logCount = counts[file] || 0;
     if (staged.has(file)) {
         cache[file] = now; // about to be committed — not in git log yet
+        editCounts[file] = logCount + 1; // the pending commit is one more edit
     } else if (file in dates) {
         cache[file] = dates[file];
+        editCounts[file] = logCount;
     } else {
         missing++;
     }
 }
 
 writeCache(cache);
+writeEditCounts(editCounts);
 
 console.log(
     `lastmod-cache.json rebuilt with ${Object.keys(cache).length} HTML entries.`
+);
+console.log(
+    `editcount-cache.json rebuilt with ${Object.keys(editCounts).length} HTML entries.`
 );
 if (missing > 0) {
     console.warn(`${missing} tracked .html files had no git log date and were skipped.`);

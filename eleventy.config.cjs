@@ -14,6 +14,14 @@ try {
     console.warn("lastmod-cache.json not found — footer 'last updated' dates will be omitted.");
 }
 
+// Commits-per-file ("edit count"), from the same refresh script as lastmodCache.
+let editcountCache = {};
+try {
+    editcountCache = require("./build_scripts/editcount-cache.json");
+} catch {
+    console.warn("editcount-cache.json not found — footer edit counts will be omitted.");
+}
+
 // ========================================
 // TRANSFORM FUNCTIONS
 // ========================================
@@ -699,6 +707,15 @@ module.exports = function(eleventyConfig) {
             day: "numeric",
             timeZone: "UTC",
         });
+    });
+
+    // Given a page's inputPath, return how many commits have touched it (its
+    // "edit count") from editcount-cache.json. Null if unknown, so the template
+    // can skip rendering rather than show "0 edits".
+    eleventyConfig.addFilter("editcount", (inputPath) => {
+        if (!inputPath) return null;
+        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
+        return editcountCache[key] || null;
     });
 
     return {

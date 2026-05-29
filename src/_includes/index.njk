@@ -112,11 +112,13 @@
             </div>
 
             <footer class="site-footer">
-                <p class="site-footer__copyright">&copy; {% year %} mmmrkennedy</p>
                 {%- set updated = page.inputPath | lastmod %}
-                {%- if updated %}
-                <p class="site-footer__updated">Last updated {{ updated }}</p>
-                {%- endif %}
+                {%- set edits = page.inputPath | editcount %}
+                <p class="site-footer__meta">
+                    <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
+                    {%- if updated %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__updated">Last updated {{ updated }}</span>{% endif %}
+                    {%- if edits %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
+                </p>
             </footer>
         </div>
 

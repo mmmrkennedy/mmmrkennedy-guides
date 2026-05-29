@@ -28,17 +28,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Refresh lastmod-cache.json
+      - name: Refresh lastmod + editcount caches
         run: node build_scripts/refresh-lastmod-cache.cjs
 
-      - name: Commit updated cache if changed
+      - name: Commit updated caches if changed
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add build_scripts/lastmod-cache.json
+          git add build_scripts/lastmod-cache.json build_scripts/editcount-cache.json
           if git diff --cached --quiet; then
-            echo "No changes to lastmod-cache.json — skipping commit."
+            echo "No cache changes — skipping commit."
           else
-            git commit -m "chore: refresh lastmod-cache.json [skip ci]"
+            git commit -m "chore: refresh lastmod + editcount caches [skip ci]"
             git push
           fi

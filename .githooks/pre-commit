@@ -13,7 +13,7 @@ if git diff --cached --name-only --diff-filter=ACMRD -- "*.html" | grep -q .; th
         echo "  (commit with --no-verify to skip this hook if needed)" >&2
         exit 1
     fi
-    git add build_scripts/lastmod-cache.json
+    git add build_scripts/lastmod-cache.json build_scripts/editcount-cache.json
 else
     echo "pre-commit: no staged .html — skipping lastmod-cache refresh."
 fi
