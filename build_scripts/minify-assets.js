@@ -19,7 +19,6 @@ const JS_BUNDLE_ORDER = [
     "content/link-processor.js",
     "content/quick-links.js",
     "content/solver-button-processor.js",
-    "device/mobile-detection.js",
     "quick-links-utils.js",
     "scripts.js",
 ];

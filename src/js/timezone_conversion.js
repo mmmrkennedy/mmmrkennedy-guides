@@ -52,14 +52,3 @@ document.addEventListener("DOMContentLoaded", function () {
         timezone_element.innerHTML = ` (the equivalent in your local time is <strong>${time_1}</strong> to <strong>${time_2}</strong>)`;
     }
 });
-/*
-// Example usage:
-const equivalentTimes = getEquivalentTimesInTimezone('Europe/London'); // Pass a timezone like 'Europe/London'
-console.log('12 AM EST in the specified timezone:', equivalentTimes.equivalentTo12AMEST);
-console.log('1 AM EST in the specified timezone:', equivalentTimes.equivalentTo1AMEST);
-
-// For the user's local timezone
-userLocalTimes = getEquivalentTimesInTimezone();
-console.log('12 AM EST in your local timezone:', userLocalTimes.equivalentTo12AMEST);
-console.log('1 AM EST in your local timezone:', userLocalTimes.equivalentTo1AMEST);
-*/
