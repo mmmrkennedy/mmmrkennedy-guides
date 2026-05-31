@@ -5,7 +5,7 @@ type CellType = "empty" | "rod";
 type Phase = "setup" | "results";
 type Confidence = "high" | "med" | "low";
 
-const defaultMessage = "Experimental! Scoring is still being reverse-engineered. Solutions are ranked by confidence (High > Med > Low). Try High first, but Med and Low may also work. Message \"Mark\" on the discord if you find an incorrect solution. Click cells to place control rods, then click Solve.";
+const defaultMessage = "Experimental! Click cells to place control rods, then click Solve.";
 
 function makeGrid(): CellType[][] {
     return Array.from({ length: 4 }, () => Array(4).fill("empty") as CellType[]);
