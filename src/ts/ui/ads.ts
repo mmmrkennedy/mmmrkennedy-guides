@@ -131,7 +131,9 @@ function injectSidebarAd(): void {
     wrapper.className = "ad-right-sidebar";
     wrapper.innerHTML = buildSidebarAdHTML();
     document.body.appendChild(wrapper);
-    pushAd();
+    // positionSidebarAd sizes the slot and pushes once it first reaches a
+    // usable width. AdSense reads availableWidth at push time, so we must
+    // never push an unpositioned (0-width) slot.
     positionSidebarAd(wrapper);
 }
 
@@ -154,6 +156,7 @@ function getContentBounds(): { minLeft: number; maxRight: number } {
 }
 
 function positionSidebarAd(adEl: HTMLElement): void {
+    let pushed = false;
     function update(): void {
         const { maxRight } = getContentBounds();
         if (maxRight === -Infinity) { adEl.style.display = "none"; return; }
@@ -165,6 +168,9 @@ function positionSidebarAd(adEl: HTMLElement): void {
         adEl.style.display = "block";
         adEl.style.left = `${leftEdge}px`;
         adEl.style.width = `${width}px`;
+        // Push only once the slot has a real width — handles the case where
+        // the sidebar is injected too narrow and only becomes usable on resize.
+        if (!pushed) { pushed = true; pushAd(); }
     }
     update();
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -177,11 +183,12 @@ function injectLeftSidebarAd(): void {
     wrapper.className = "ad-left-sidebar";
     wrapper.innerHTML = buildSidebarAdHTML();
     document.body.appendChild(wrapper);
-    pushAd();
+    // positionLeftSidebarAd sizes the slot and pushes once usable (see injectSidebarAd).
     positionLeftSidebarAd(wrapper);
 }
 
 function positionLeftSidebarAd(adEl: HTMLElement): void {
+    let pushed = false;
     function update(): void {
         const { minLeft } = getContentBounds();
         if (minLeft === Infinity) { adEl.style.display = "none"; return; }
@@ -193,6 +200,8 @@ function positionLeftSidebarAd(adEl: HTMLElement): void {
         adEl.style.display = "block";
         adEl.style.left = `${margin}px`;
         adEl.style.width = `${width}px`;
+        // Push only once the slot has a real width (see positionSidebarAd).
+        if (!pushed) { pushed = true; pushAd(); }
     }
     update();
     let timer: ReturnType<typeof setTimeout> | undefined;

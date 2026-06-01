@@ -114,7 +114,9 @@ function injectSidebarAd() {
     wrapper.className = "ad-right-sidebar";
     wrapper.innerHTML = buildSidebarAdHTML();
     document.body.appendChild(wrapper);
-    pushAd();
+    // positionSidebarAd sizes the slot and pushes once it first reaches a
+    // usable width. AdSense reads availableWidth at push time, so we must
+    // never push an unpositioned (0-width) slot.
     positionSidebarAd(wrapper);
 }
 function getSidebarGap() {
@@ -132,6 +134,7 @@ function getContentBounds() {
     return { minLeft, maxRight };
 }
 function positionSidebarAd(adEl) {
+    let pushed = false;
     function update() {
         const { maxRight } = getContentBounds();
         if (maxRight === -Infinity) {
@@ -149,6 +152,12 @@ function positionSidebarAd(adEl) {
         adEl.style.display = "block";
         adEl.style.left = `${leftEdge}px`;
         adEl.style.width = `${width}px`;
+        // Push only once the slot has a real width — handles the case where
+        // the sidebar is injected too narrow and only becomes usable on resize.
+        if (!pushed) {
+            pushed = true;
+            pushAd();
+        }
     }
     update();
     let timer;
@@ -161,10 +170,11 @@ function injectLeftSidebarAd() {
     wrapper.className = "ad-left-sidebar";
     wrapper.innerHTML = buildSidebarAdHTML();
     document.body.appendChild(wrapper);
-    pushAd();
+    // positionLeftSidebarAd sizes the slot and pushes once usable (see injectSidebarAd).
     positionLeftSidebarAd(wrapper);
 }
 function positionLeftSidebarAd(adEl) {
+    let pushed = false;
     function update() {
         const { minLeft } = getContentBounds();
         if (minLeft === Infinity) {
@@ -182,6 +192,11 @@ function positionLeftSidebarAd(adEl) {
         adEl.style.display = "block";
         adEl.style.left = `${margin}px`;
         adEl.style.width = `${width}px`;
+        // Push only once the slot has a real width (see positionSidebarAd).
+        if (!pushed) {
+            pushed = true;
+            pushAd();
+        }
     }
     update();
     let timer;

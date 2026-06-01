@@ -13,6 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const target = document.querySelector(".site-footer__views");
     if (!target)
         return;
+    // No /api/views backend on the local dev server — skip the fetch entirely
+    // so it doesn't 404. The placeholder stays empty/hidden, same as a failure.
+    if (isLocalHost())
+        return;
     const path = normalizePath(window.location.pathname);
     const sessionKey = "viewed:" + path;
     // First sighting this session → POST (increments). Afterwards → GET (read only).
@@ -39,6 +43,11 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch((err) => {
         console.warn("View counter unavailable:", err);
     });
+    /** True on the local dev server, where no /api/views Pages Function exists. */
+    function isLocalHost() {
+        const h = window.location.hostname;
+        return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
+    }
     /** Mirror the server's normalization: leading slash, no trailing slash (except root). */
     function normalizePath(p) {
         if (!p.startsWith("/"))
