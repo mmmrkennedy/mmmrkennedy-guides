@@ -8,12 +8,24 @@
     {%- if mapName and solverTitle %}
         {%- set pageTitle = mapName + ' ' + solverTitle + ' | ' + titleSuffix %}
     {%- elif mapName %}
-        {%- set pageTitle = mapName + ' Guide | ' + titleSuffix %}
+        {%- set pageTitle = mapName + ' Easter Egg Guide | ' + titleSuffix %}
     {%- else %}
         {%- set pageTitle = title %}
     {%- endif %}
     <title>{{ pageTitle }}</title>
-    <meta name="description" content="{{ description or 'Complete Call of Duty Zombies Easter Egg guide for ' + pageTitle + '. Step-by-step walkthrough with pictures, videos, and detailed instructions.' }}">
+
+    {%- if mapName and solverTitle %}
+        {%- set metaDescription = description or 'Interactive ' + solverTitle + ' for the ' + mapName + ' Easter Egg in ' + titleSuffix + '. Auto-solve this Call of Duty Zombies main quest step with a step-by-step walkthrough tool.' %}
+    {%- elif mapName %}
+        {%- set metaDescription = description or 'Complete ' + mapName + ' Easter Egg guide for ' + titleSuffix + '. Full main quest (main Easter Egg) walkthrough with step-by-step instructions, pictures, and videos — works solo and co-op.' %}
+    {%- else %}
+        {%- set metaDescription = description or 'Complete Call of Duty Zombies Easter Egg guide. Step-by-step main quest walkthrough with pictures, videos, and detailed instructions.' %}
+    {%- endif %}
+    <meta name="description" content="{{ metaDescription }}">
+    {%- if mapName %}
+        {%- set metaKeywords = mapName + ' Easter Egg, ' + mapName + ' Easter Egg guide, ' + mapName + ' main quest, ' + mapName + ' main Easter Egg, ' + mapName + ' walkthrough, ' + mapName + ' guide, ' + mapName + ' steps, ' + mapName + ' tutorial, ' + mapName + ' solo Easter Egg, ' + titleSuffix + ', Call of Duty Zombies, COD Zombies, Zombies Easter Egg guide, main quest walkthrough' %}
+        <meta name="keywords" content="{{ metaKeywords }}">
+    {%- endif %}
     <meta name="author" content="mmmrkennedy">
     {%- if unfinished or page.url in unfinishedPages %}
         <meta name="robots" content="noindex, nofollow">
@@ -26,7 +38,7 @@
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://mmmrkennedy.com{{ page.url | cleanUrl }}">
     <meta property="og:title" content="{{ pageTitle }}">
-    <meta property="og:description" content="{{ description or 'Complete walkthrough and Easter Egg guide for ' + pageTitle + ' with step-by-step instructions, pictures, and videos.' }}">
+    <meta property="og:description" content="{{ metaDescription }}">
     <meta property="og:image" content="{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}">
     <meta property="og:site_name" content="mmmrkennedy's Zombies Guides">
 
@@ -34,7 +46,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://mmmrkennedy.com{{ page.url | cleanUrl }}">
     <meta name="twitter:title" content="{{ pageTitle }}">
-    <meta name="twitter:description" content="{{ description or 'Complete walkthrough and Easter Egg guide for ' + pageTitle }}">
+    <meta name="twitter:description" content="{{ metaDescription }}">
     <meta name="twitter:image" content="{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}">
 
     <!-- Stylesheets -->
@@ -69,7 +81,11 @@
             "@context": "https://schema.org",
             "@type": "HowTo",
             "name": "{{ pageTitle }}",
-            "description": "{{ description or 'Complete Call of Duty Zombies Easter Egg guide for ' + pageTitle + '. Step-by-step walkthrough with pictures, videos, and detailed instructions.' }}",
+            {%- if mapName %}
+            "alternateName": "{{ mapName }} Easter Egg Guide",
+            "keywords": "{{ metaKeywords }}",
+            {%- endif %}
+            "description": "{{ metaDescription }}",
             "url": "https://mmmrkennedy.com{{ page.url | cleanUrl }}",
             "image": "{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}",
             "author": {
