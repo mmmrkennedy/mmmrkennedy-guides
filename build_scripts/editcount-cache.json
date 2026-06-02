@@ -43,6 +43,7 @@
   "src/games/BO6/the_tomb/the_tomb.html": 3,
   "src/games/BO7/ashes_of_the_damned/ashes_of_the_damned_guide.html": 20,
   "src/games/BO7/astra_malorum/astra_malorum_guide.html": 7,
+  "src/games/BO7/kowakujo/kowakujo_guide.html": 1,
   "src/games/BO7/paradox_junction/paradox_junction_guide.html": 4,
   "src/games/BO7/totenreich/totenreich_guide.html": 2,
   "src/games/BO7/totenreich/totenreich_solver.html": 4,
@@ -77,7 +78,7 @@
   "src/games/WW2/the_tortured_path/survival_maps/bodega_cervantes.html": 9,
   "src/games/WW2/the_tortured_path/survival_maps/uss_mount_olympus.html": 9,
   "src/games/WW2/the_tortured_path/the_tortured_path_guide.html": 10,
-  "src/index.html": 28,
+  "src/index.html": 29,
   "src/react-solvers/dist/react-solvers/index.html": 2,
   "src/react-solvers/index.html": 9
 }
