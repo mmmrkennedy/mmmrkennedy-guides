@@ -8,7 +8,7 @@
 # IMPORTANT: set `name` to your actual Pages project name, and fill
 # `database_id` after you run `wrangler d1 create guides-feedback`.
 
-name = "mmmrkennedy-guides"            # TODO: confirm this matches your Pages project name
+name = "mmmrkennedyzombiesguides"
 pages_build_output_dir = "dist"
 compatibility_date = "2025-01-01"
 
@@ -16,7 +16,7 @@ compatibility_date = "2025-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "guides-feedback"
-database_id = "REPLACE_WITH_ID_FROM_d1_create"   # TODO: fill after `wrangler d1 create`
+database_id = "48528733-1919-4fb7-9954-abf886bae318"
 migrations_dir = "migrations"
 
 # View counter previously lived in this KV namespace. Kept here only so the
@@ -24,4 +24,4 @@ migrations_dir = "migrations"
 # Safe to remove this binding once views are confirmed live on D1.
 [[kv_namespaces]]
 binding = "VIEWS"
-id = "REPLACE_WITH_EXISTING_VIEWS_KV_ID"          # TODO: from Pages → Settings → KV bindings
+id = "35b6f88678a44910b991fc2d8955e17a"
