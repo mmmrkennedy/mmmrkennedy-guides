@@ -1,0 +1,42 @@
+/* Trending indicator
+ * ------------------
+ * Subtle 🔥 placed on the most-viewed guide and solver of the week, injected on
+ * the home page by src/ts/ui/trending.ts. Kept understated: small, gentle pulse,
+ * and no motion for users who prefer reduced motion. */
+
+/* Super-subtle warm highlight behind the trending link. */
+.trending-link {
+    background: rgb(232 150 62 / 4%);
+    border-radius: 4px;
+    padding: 0.05em 0.3em;
+}
+
+.trending-flame {
+    display: inline-block;
+    margin-left: 0.35em;
+    font-size: 0.8em;
+    line-height: 1;
+    vertical-align: baseline;
+    cursor: default;
+    animation: trending-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes trending-pulse {
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.12);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .trending-flame {
+        animation: none;
+        opacity: 0.85;
+    }
+}

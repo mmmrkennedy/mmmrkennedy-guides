@@ -23,6 +23,7 @@ const JS_BUNDLE_ORDER = [
     "scripts.js",
     "ui/view-counter.js",
     "ui/line-flagger.js",
+    "ui/trending.js",
 ];
 
 function findFiles(dir, extensions) {

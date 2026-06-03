@@ -40,5 +40,21 @@ export async function onRequestPost({ request, env }) {
     )
         .bind(path)
         .first();
+
+    // Also bump today's per-day bucket for "trending / popular this week".
+    // Best-effort: if the view_days table doesn't exist yet, the total counter
+    // above must still succeed, so swallow any error here.
+    const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+    try {
+        await env.DB.prepare(
+            "INSERT INTO view_days (path, day, count) VALUES (?1, ?2, 1) " +
+                "ON CONFLICT(path, day) DO UPDATE SET count = count + 1",
+        )
+            .bind(path, day)
+            .run();
+    } catch {
+        /* view_days not migrated yet — ignore */
+    }
+
     return json({ path, count: row ? row.count : 1 });
 }
