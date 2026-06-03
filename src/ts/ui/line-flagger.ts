@@ -20,6 +20,9 @@
 type FeedbackReason = "unclear" | "outdated" | "wrong" | "buggy";
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Pages can opt out (e.g. the home/index page) via <body data-no-flags>.
+    if (document.body.hasAttribute("data-no-flags")) return;
+
     const lines = document.querySelectorAll<HTMLElement>(
         ".content-container p, .content-container li",
     );
