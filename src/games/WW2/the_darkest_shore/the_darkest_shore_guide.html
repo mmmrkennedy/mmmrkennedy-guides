@@ -115,7 +115,7 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
         <li>Once charged, you can purchase the Ranged Ripsaw Upgrade for 500 jolts. You can now shoot saw blades, but the Ripsaw will do less melee damage.</li>
     </ol>
 
-    <p class="upgrade-title" id="rip_saw_upgrade">R.I.P. Saw Upgrade (Pack-a-Punch Ripsaw)</p>
+    <p class="upgrade-title" id="ripsaw_upgrade">R.I.P. Saw Upgrade (Pack-a-Punch Ripsaw)</p>
     <p class="weapon-desc">The R.I.P. Saw is a Pack-a-Punched version of the Ranged Ripsaw that fires stronger sawblades with increased ammo and damage, and still retains its melee attack.</p>
     <ol>
         <li>
@@ -597,24 +597,30 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
 
 <div class="content-container" id="dr_straub">
     <h2 class="section-title">Dr. Straub Locations ("Still Lurking" Trophy/Achievement)</h2>
-    <p class="disclaimer">Not much information is known about how to get Dr. Straub to spawn, or all the locations, so some information might be inaccurate. Sorry.</p>
+    <p class="disclaimer">All the spawn locations, and how he spawns has been confirmed with a combination of modding, and reading the game's code.</p>
     <ul>
         <li>
-            Randomly around the map, <a href="pictures/dr_straub/straub_example.webp">Dr. Straub (a man in a lab coat)</a> will spawn in one of the locations. He will probably just stand there, but he could do other actions. Shooting him will get you the "Still Lurking" Trophy/Achievement. Potential spawn locations:
+            Randomly around the map, <a href="pictures/dr_straub/dr_straub_example.png">Dr. Straub (a man in a lab coat)</a> will spawn in one of the locations. Dr. Straub will spawn as soon as the match starts. Shooting him will get you the "Still Lurking" Trophy/Achievement. Potential spawn locations:
             <ul>
-                <li>
-                    <a href="pictures/dr_straub/beach.webp">Beach Passage - In the Zombie spawn halfway up the stairs</a>
-                </li>
-                <li>
-                    <a href="pictures/dr_straub/sub.webp">U-Boat Pens - On the Submarine behind the M1927 wallbuy</a>
-                </li>
-                <li>
-                    <a href="pictures/dr_straub/window.webp">U-Boat Pens - In the Zombie spawn between the Minecart and the stairs</a>
-                </li>
-                <li>
-                    <a href="pictures/dr_straub/bar_wallbuy.webp">Artillery Bunker - In the small square window left of the BAR wallbuy</a>
-                </li>
-                <li>Somewhere in the Minecart tunnel (Unconfirmed)</li>
+                <li><a href="pictures/dr_straub/beach_passage_1.png">Beach Passage - In the Zombie spawn halfway up the stairs</a></li>
+                <li><a href="pictures/dr_straub/beach_passage_2.png">Beach Passage - In the same Zombie spawn as the previous locations, farther back</a></li>
+                <li><a href="pictures/dr_straub/uboat_pens_on_sub.png">U-Boat Pens - On the Submarine behind the M1927 wallbuy</a></li>
+                <li><a href="pictures/dr_straub/uboat_pens_right_of_m1927.png">U-Boat Pens - Right of the M1927 wallbuy</a></li>
+                <li><a href="pictures/dr_straub/pap_bridge.png">Bunker 3 - Off the right side of the "bridge" to the Pack-a-Punch</a></li>
+                <li><a href="pictures/dr_straub/artillery_bunker_bar_wallbuy.png">Artillery Bunker - In the window, left of the Bar wallbuy</a></li>
+                <li><a href="pictures/dr_straub/artillery_bunker_on_roof.png">Artillery Bunker - On the roof, near the Bar wallbuy</a></li>
+                <li><a href="pictures/dr_straub/overlook_m1941.png">Overlook - In the broken bunker, right of the M1941 wallbuy</a></li>
+                <li><a href="pictures/dr_straub/minecart_tunnel.png">Minecart Tunnel - In the doorway, across from the Secret Room</a> (<a href="pictures/dr_straub/minecart_tunnel_fullbright.png">Fullbright lighting</a>)</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Spawn behaviour:</strong>
+            <ul>
+                <li>He spawns at one spot at a time, picked at random, and only somewhere no one is looking.</li>
+                <li>Dr. Straub will wait at a location indefinitely. Looking straight at him makes him leave.</li>
+                <li>Once Straub leaves a location, he'll spawm somewhere else after 3-5 seconds.</li>
+                <li>Each spawn is only used once per match. Once he's appeared somewhere, that spot is disabled for the rest of the game.</li>
+                <li>He stops spawning once the final boss fight starts.</li>
             </ul>
         </li>
     </ul>
@@ -686,17 +692,17 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>You should put on sunscreen.</i></td>
-                <td>Survive 20 waves in the first room.</td>
+                <td>Survive Wave 20 with no open doors.</td>
                 <td>N/A</td>
             </tr>
             <tr>
                 <td><i>Are you afraid of the dark?</i></td>
-                <td>Survive 25 waves in the first room.</td>
+                <td>Survive Wave 25 with no open doors.</td>
                 <td>N/A</td>
             </tr>
             <tr>
                 <td><i>No rush.</i></td>
-                <td>Survive 20 waves without sprinting.</td>
+                <td>Survive Wave 20 without sprinting</td>
                 <td>Camp in front of the Pack-a-Punch</td>
             </tr>
         </tbody>
@@ -715,18 +721,18 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>Scrounge and scheme.</i></td>
-                <td>Get 25k by wave 10.</td>
+                <td>Get 25,000 points within 30 Mins of the start of the match.</td>
                 <td class="strategy" rowspan="2">
                     Use the Round 0 Beach Rush Despawn Trick (See <a href="https://youtu.be/LtocV4ptaTM?t=34" class="external-link">this video (YouTube)</a> by <a href="https://www.youtube.com/@GlitchingQueen" class="external-link">Glitching Queen</a>)
                 </td>
             </tr>
             <tr>
                 <td><i>Add more zeros.</i></td>
-                <td>Get 30k by wave 15.</td>
+                <td>Get 30,000 points before round 15.</td>
             </tr>
             <tr>
                 <td><i>Take it with you.</i></td>
-                <td>Beat the Main Quest having more than 30k.</td>
+                <td>Beat the Main Quest with any player having more than 15,000 points</td>
                 <td>
                     See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to beat it.
                 </td>
@@ -747,18 +753,18 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>Frog in water.</i></td>
-                <td>Survive around 3-5 minutes without taking damage during the U-Boat Pens lockdown (fire step).</td>
+                <td>Survive 5 Waves during the U-Boat Pens lockdown fire step.</td>
                 <td class="strategy" rowspan="3">
                     See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to get to the U-Boat Pens lockdown step.
                 </td>
             </tr>
             <tr>
                 <td><i>Kitchen appliances.</i></td>
-                <td>Get about 100 trap kills during U-Boat Pens lockdown (fire step).</td>
+                <td>Get about 100 trap kills during U-Boat Pens lockdown fire step.</td>
             </tr>
             <tr>
                 <td><i>Take a deep breath.</i></td>
-                <td>Get 10 headshots in a row during U-Boat Pens lockdown (fire step).</td>
+                <td>Get 10 headshots with any standard bullet weapon (no pistols, no explosives) during the U-Boat Pens lockdown fire step.</td>
             </tr>
         </tbody>
     </table>
@@ -776,21 +782,21 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>Don't touch the merchandise!</i></td>
-                <td>Obtain the Pommel without going down or losing Armour.</td>
+                <td>Obtain the Pommel without taking any damage from an Anointed enemy.</td>
                 <td>
-                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to get the Pommel. You shouldn't buy armour to not risk losing it.
+                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to get the Pommel. The Anointed enemies are the glowing enemies (Pest, Wustling, and Meuchler) that spawn during the Sacrifice Rituals in the Main Quest (the ones that drop the head you need to pick up).
                 </td>
             </tr>
             <tr>
                 <td><i>Streaking around the island.</i></td>
-                <td>Obtain the Pommel without any player using Special Abilities, Mods or Consumables.</td>
-                <td>You can't use self-revives, they’re considered consumables</td>
+                <td>Obtain the Pommel without any player using Special Abilities.</td>
+                <td>You can use Mods, and Consumables, only Special Ability usage (Freefire, Shellshock, etc.) is checked.</td>
             </tr>
             <tr>
                 <td><i>No dirty kills</i></td>
-                <td>Obtain the Pommel without getting kills with the Ripsaw weapon.</td>
+                <td>Obtain the Pommel without doing damage with a <strong>ranged attack</strong> with the Ripsaw weapon.</td>
                 <td>
-                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to get the Pommel.
+                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to get the Pommel. You are allowed to use the melee attack, you just can shoot the Ripsaw.
                 </td>
             </tr>
         </tbody>
@@ -809,18 +815,24 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>Survive on your feet.</i></td>
-                <td>Complete the Boss Fight with no players going down.</td>
-                <td class="strategy" rowspan="3">
-                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for info about the Boss Fight.
+                <td>Beat the final boss fight with no downs <strong>during</strong> the boss fight.</td>
+                <td class="strategy">
+                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for info about the Boss Fight. The downs are only tracked during the boss fight. Downs are tracked for the whole team, so one player downing will void the whole team's completion.
                 </td>
             </tr>
             <tr>
                 <td><i>There is no point.</i></td>
-                <td>Defeat the Purple Meistermeuchler first in the boss fight.</td>
+                <td>Beat the final boss fight having let frontline (purple) Meistermeuchler buff fewer than 10 Zombies total</td>
+                <td class="strategy">
+                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for info about the Boss Fight. The Purple Meistermeuchler buffs nearby Zombies (not other Meistermeuchlers). The number of Zombies buffs increments across the whole boss fight, and does not reset. Focus your damage on the boss as soon as it spawns. If you KO it fast enough you can stop the next buff, but once a buff is going off you can't cancel it with damage. Kill any Zombies you see to limit what the boss can buff.
+                </td>
             </tr>
             <tr>
                 <td><i>Bright lights and pain.</i></td>
-                <td>Complete the Boss Fight without any players being stunned by the Red Meistermeuchler.</td>
+                <td>Beat the final boss fight without any players being stunned by the Red Meistermeuchler.</td>
+                <td class="strategy">
+                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for info about the Boss Fight. Focus damage on the Red Meistermeuchler when it spawns to KO it quickly as possible.
+                </td>
             </tr>
         </tbody>
     </table>
@@ -839,7 +851,7 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             <tr>
                 <td><i>Lose a head or two.</i></td>
                 <td>Complete the Wave 0 Beach Rush only getting headshots.</td>
-                <td class="strategy" rowspan="3">Can only be done on Solo</td>
+                <td class="strategy" rowspan="2">Can only be done on Solo.</td>
             </tr>
             <tr>
                 <td><i>Entrenched on the Beach.</i></td>
@@ -848,6 +860,7 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             <tr>
                 <td><i>Sweeping for gold.</i></td>
                 <td>Complete the Wave 0 Beach Rush while crouched.</td>
+                <td class="strategy">Can only be done on Solo. You have ~5 seconds from the start of the game to crouch before you fail.</td>
             </tr>
         </tbody>
     </table>
@@ -879,7 +892,7 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>The pain train keeps coming.</i></td>
-                <td>Survive four consecutive waves using only traps.</td>
+                <td>Survive 5 consecutive waves using only traps.</td>
                 <td>
                     The trap you can get to the fastest is the Propeller trap in the 'U-Boat Pens.' You can build points quickly by grouping the Zombies up then using Shellshock and the Fiery Burst mod.
                 </td>
@@ -907,15 +920,15 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>Mathematician.</i></td>
-                <td>Don't miss any of the ships during the cannon step.</td>
+                <td>Sink every ship during the Main Quest Artillery Cannon step without missing a shot.</td>
                 <td>
-                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to aim the cannons; there is a helper image that will tell you exactly where to fire.
+                    See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to aim the Artillery; there is a helper image that will tell you exactly where to fire.
                 </td>
             </tr>
             <tr>
                 <td><i>I live underground.</i></td>
-                <td>Get 10 bomber headshots in a row while riding the minecart.</td>
-                <td>N/A</td>
+                <td>Get 10 Bomber Zombie headshots kills in a row while riding the minecart.</td>
+                <td>You can kill other Zombies in between, it just that if you kill a Minecart Bomber, it needs to be with a headshot. If the Bomber explodes on it's own, it doesn't reset the streak.</td>
             </tr>
         </tbody>
     </table>
@@ -933,13 +946,13 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>Natural 20.</i></td>
-                <td>Survive 25 waves with the first Mystery Box weapon you receive.</td>
-                <td>If you have a weapon variant equipped, it will be 25 waves after Pack-a-Punching, otherwise 25 waves after receiving it from the box.</td>
+                <td>Survive 25 Waves with the first Mystery Box weapon you receive.</td>
+                <td>If you have a weapon variant equipped, the Wave counter <i>might</i> only starts after you Pack-a-Punch (depends on the variant). It's unknown which variant (if any) requires a Pack-a-Punch.</td>
             </tr>
             <tr>
                 <td><i>Something New.</i></td>
-                <td>Survive 20 waves using either the Gewher 43, Sten, or GMPG without switching weapons.</td>
-                <td>If you have a weapon variant equipped, or you spawn with it, it will be 20 waves after Pack-a-Punching, otherwise 20 waves after receiving it from the box.</td>
+                <td>Survive 25 Waves using either the Gewher 43, Sten, or GMPG without switching weapons.</td>
+                <td>If you have a weapon variant equipped, or you spawn with one of the weapons, the Waves <i>might</i> not start counting until you Pack-a-Punch it (depends on the variant).  It's unknown which variant (if any) requires a Pack-a-Punch.</td>
             </tr>
             <tr>
                 <td><i>To death you say?</i></td>
@@ -964,18 +977,18 @@ description: Complete WW2 Zombies "The Darkest Shore" map guide. Features Ripsaw
             </tr>
             <tr>
                 <td><i>Travel light, carry a big stick.</i></td>
-                <td>Complete the Easter Egg spending under 40k jolts among all players, 10k per player.</td>
-                <td>You can use discount consumables</td>
+                <td>Complete the Easter Egg with no player spending over 9,000 points</td>
+                <td>See the <a href="#main_ee" class="link-to-page">Main Quest</a> section. You can use discount consumables.</td>
             </tr>
             <tr>
                 <td><i>Sticks and stones.</i></td>
-                <td>Obtain the Pommel of Barbarossa spending less than 20k jolts.</td>
-                <td>You can use discount consumables</td>
+                <td>Obtain the Pommel of Barbarossa with no player spending over 7,500 points.</td>
+                <td>See the <a href="#main_ee" class="link-to-page">Main Quest</a> section for how to get the Pommel. You can use discount consumables.</td>
             </tr>
             <tr>
                 <td><i>Waste not want not.</i></td>
-                <td>Reach Wave 40 spending under 10k jolts.</td>
-                <td>Train in the 'U-Boat Pens' getting kills with the un-upgraded Ripsaw</td>
+                <td>Complete Wave 40 with no player spending over 10,000 points.</td>
+                <td>Train in the 'U-Boat Pens' getting kills with the <a href="#ripsaw">un-upgraded Ripsaw</a>.</td>
             </tr>
         </tbody>
     </table>
