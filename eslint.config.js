@@ -158,4 +158,16 @@ export default [
             "no-unused-vars": "off",
         },
     },
+    // Build/CLI scripts run in Node and legitimately log progress to stdout.
+    {
+        files: ["build_scripts/**"],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+        },
+        rules: {
+            "no-console": "off",
+        },
+    },
 ];

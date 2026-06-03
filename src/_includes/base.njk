@@ -247,6 +247,7 @@
 <script src="/js/quick-links-utils.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/scripts.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/view-counter.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/line-flagger.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
 
 {%- if useReactSolvers %}
@@ -282,6 +283,10 @@
             <li class="legend-row">
                 <a class="legend-swatch solver-link">Violet text</a>
                 <span class="legend-desc"><strong>Solver</strong> - opens an interactive tool.</span>
+            </li>
+            <li class="legend-row">
+                <a class="legend-swatch" style="color:var(--color-danger-text)">⚑ Flag</a>
+                <span class="legend-desc"><strong>Flag a line</strong> - hover any sentence or bullet and click the ⚑ at its end to report something that doesn’t make sense, is out of date, is wrong, or doesn’t work in-game.</span>
             </li>
         </ul>
 

@@ -1,0 +1,192 @@
+/* Guide feedback — inline line flagging
+ * --------------------------------------
+ * Styles for the ⚑ flag affordance, the shared "flag this line" popover, the
+ * confirmation toast, and the auto-shown "may be buggy" caution note.
+ * Relies only on existing tokens.css variables. Behaviour lives in
+ * src/ts/ui/line-flagger.ts. */
+
+/* Inline flag affordance */
+.gfb-flaggable {
+    position: relative;
+}
+
+.gfb-flag {
+    display: inline-block;
+    margin-left: var(--space-xs);
+    padding: 0 0.2rem;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.12s, color 0.12s;
+    vertical-align: baseline;
+}
+
+.gfb-flaggable:hover > .gfb-flag {
+    opacity: 0.5;
+}
+
+.gfb-flag:hover,
+.gfb-flag:focus-visible {
+    opacity: 1;
+    color: var(--color-danger-text);
+    outline: none;
+}
+
+.gfb-flagged {
+    background: rgb(192 112 48 / 8%);
+    border-radius: 4px;
+    box-shadow: 0 0 0 0.3rem rgb(192 112 48 / 8%);
+}
+
+.gfb-flagged > .gfb-flag {
+    opacity: 1;
+    color: var(--color-danger-text);
+}
+
+/* Auto-note for buggy steps (reuses the danger/amber note tokens) */
+.gfb-buggy-note {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+    margin: 0 0 var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-left: 3px solid var(--color-danger-border);
+    background: var(--color-danger-bg);
+    border-radius: 6px;
+    color: var(--color-danger-text);
+    font-size: var(--font-size-sm);
+}
+
+/* Popover */
+.gfb-pop {
+    position: fixed;
+    z-index: 1000;
+    width: min(20rem, calc(100vw - 1rem));
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 10px;
+    padding: var(--space-md);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 45%);
+    color: var(--color-text-primary);
+}
+
+.gfb-pop__title {
+    margin: 0 0 var(--space-xs);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-tier-1);
+}
+
+.gfb-pop__quote {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    border-left: 2px solid var(--color-border-medium);
+    padding-left: var(--space-sm);
+}
+
+.gfb-pop__reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+.gfb-reason {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.gfb-reason[aria-pressed="true"] {
+    border-color: var(--color-danger-text);
+    color: var(--color-danger-text);
+}
+
+.gfb-pop textarea {
+    width: 100%;
+    min-height: 3rem;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 6px;
+    padding: var(--space-sm);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    resize: vertical;
+}
+
+.gfb-pop textarea:focus {
+    outline: none;
+    border-color: var(--color-link-default);
+}
+
+.gfb-pop__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+.gfb-pop__btn {
+    border: 1px solid var(--color-border-medium);
+    background: transparent;
+    border-radius: 6px;
+    padding: var(--space-xs) var(--space-md);
+    font: inherit;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+}
+
+.gfb-pop__btn--send {
+    color: var(--color-link-default);
+    border-color: var(--color-link-default);
+}
+
+.gfb-pop__btn--send[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.gfb-pop__hint {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.gfb-pop__hint.is-error {
+    color: var(--color-no-return-text);
+}
+
+/* Toast */
+.gfb-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.25rem;
+    transform: translateX(-50%) translateY(1rem);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-tip-border);
+    border-radius: 8px;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 1100;
+}
+
+.gfb-toast.is-on {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}

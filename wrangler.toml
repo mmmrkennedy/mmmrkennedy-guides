@@ -1,0 +1,27 @@
+# Wrangler config — used for LOCAL development (`wrangler pages dev`) and for the
+# D1 CLI (`wrangler d1 migrations apply`, `wrangler d1 execute`).
+#
+# Production bindings are managed in the Cloudflare dashboard
+# (Pages → Settings → Functions → bindings), so this file is primarily a
+# convenience for local testing and migrations. See docs/feedback-runbook.md.
+#
+# IMPORTANT: set `name` to your actual Pages project name, and fill
+# `database_id` after you run `wrangler d1 create guides-feedback`.
+
+name = "mmmrkennedy-guides"            # TODO: confirm this matches your Pages project name
+pages_build_output_dir = "dist"
+compatibility_date = "2025-01-01"
+
+# D1 database holding the `flags` (feedback) and `views` tables.
+[[d1_databases]]
+binding = "DB"
+database_name = "guides-feedback"
+database_id = "REPLACE_WITH_ID_FROM_d1_create"   # TODO: fill after `wrangler d1 create`
+migrations_dir = "migrations"
+
+# View counter previously lived in this KV namespace. Kept here only so the
+# one-time backfill (build_scripts/migrate-kv-to-d1.mjs) can read the old counts.
+# Safe to remove this binding once views are confirmed live on D1.
+[[kv_namespaces]]
+binding = "VIEWS"
+id = "REPLACE_WITH_EXISTING_VIEWS_KV_ID"          # TODO: from Pages → Settings → KV bindings
