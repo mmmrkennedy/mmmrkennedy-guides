@@ -610,34 +610,29 @@ async function smartCopyImages() {
             .map((e) => ({ src: path.join("src", e.name), dest: path.join("dist", e.name) })),
     ];
 
-    let copied = 0;
-    let skipped = 0;
-    let lastLoggedDir = null;
-
-    for (const { src, dest } of pairs) {
-        // Log directory changes, but only up to 2 levels deep under games/
-        const relDir = path.relative("src/games", path.dirname(src));
-        if (!relDir.startsWith("..")) {
-            const parts = relDir === "." ? [] : relDir.split(path.sep);
-            if (parts.length >= 1) {
-                const dirKey = parts.slice(0, 2).join("/");
-                if (dirKey !== lastLoggedDir) {
-                    // console.log(`[smartCopyImages] Copying images from /games/${dirKey}/`);
-                    lastLoggedDir = dirKey;
-                }
-            }
-        }
-
-        if (shouldCopy(src, dest)) {
-            fs.mkdirSync(path.dirname(dest), { recursive: true });
-            fs.copyFileSync(src, dest);
-            copied++;
-        } else {
-            skipped++;
-        }
+    // Decide what actually needs copying (mtime check), then pre-create the unique
+    // destination directories once so the concurrent copies below never race on mkdir.
+    const todo = pairs.filter(({ src, dest }) => shouldCopy(src, dest));
+    const skipped = pairs.length - todo.length;
+    for (const dir of new Set(todo.map(({ dest }) => path.dirname(dest)))) {
+        fs.mkdirSync(dir, { recursive: true });
     }
 
-    console.log(`[smartCopyImages] ${copied} copied, ${skipped} skipped (unchanged)`);
+    // Copy concurrently. The bottleneck on a clean build (e.g. Cloudflare, which
+    // starts from an empty dist every deploy) is per-file syscall latency across
+    // thousands of images, not raw throughput — so a worker pool hides that latency
+    // and cuts a cold copy from ~100s to a fraction of that.
+    const CONCURRENCY = 32;
+    let next = 0;
+    async function worker() {
+        while (next < todo.length) {
+            const { src, dest } = todo[next++];
+            await fs.promises.copyFile(src, dest);
+        }
+    }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, todo.length) }, worker));
+
+    console.log(`[smartCopyImages] ${todo.length} copied, ${skipped} skipped (unchanged)`);
 }
 
 // ========================================
