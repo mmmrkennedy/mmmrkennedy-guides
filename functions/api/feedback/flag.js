@@ -5,7 +5,7 @@
 // enforced both in SQL (INSERT OR IGNORE against the UNIQUE (line_hash, ip_hash,
 // reason) index) so one person can't inflate a buggy count.
 
-import { normalizePath, json, hashIp } from "../_shared.js";
+import { normalizePath, json, hashIp, notifyFlag } from "../_shared.js";
 
 const REASONS = new Set(["unclear", "outdated", "wrong", "buggy"]);
 const MAX_QUOTE = 300;
@@ -13,7 +13,7 @@ const MAX_DETAIL = 1000;
 const MAX_LINE_HASH = 64;
 const MIN_DETAIL = 4;
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
     if (!env.DB) return json({ error: "D1 binding 'DB' is not configured" }, 500);
 
     let body;
@@ -45,8 +45,9 @@ export async function onRequestPost({ request, env }) {
 
     const ipHash = await hashIp(request, env);
 
+    let result;
     try {
-        await env.DB.prepare(
+        result = await env.DB.prepare(
             "INSERT OR IGNORE INTO flags (path, line_hash, quote, reason, detail, ip_hash) " +
                 "VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         )
@@ -54,6 +55,14 @@ export async function onRequestPost({ request, env }) {
             .run();
     } catch {
         return json({ error: "could not record flag" }, 500);
+    }
+
+    // Notify only on a genuinely new row — INSERT OR IGNORE drops duplicates, so
+    // a re-flag of the same line writes nothing and shouldn't buzz the phone.
+    if (result && result.meta && result.meta.changes > 0) {
+        const notify = notifyFlag(env, request, { path, reason, quote, detail });
+        if (waitUntil) waitUntil(notify);
+        else await notify;
     }
 
     return json({ ok: true });

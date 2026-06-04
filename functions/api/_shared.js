@@ -30,6 +30,38 @@ export function json(body, status = 200, extraHeaders = {}) {
     });
 }
 
+// Push a notification to ntfy.sh when a new flag lands. Best-effort: gated on the
+// NTFY_TOPIC secret being set, and any failure is swallowed so a notification
+// problem can never affect the flag write. Call via waitUntil so it never blocks
+// the response. The topic name IS the secret (anyone who knows it can read the
+// notifications), so keep it unguessable.
+export async function notifyFlag(env, request, flag) {
+    const topic = env && env.NTFY_TOPIC;
+    if (!topic) return; // notifications disabled (e.g. local/dev)
+
+    let click = "";
+    try {
+        click = new URL(request.url).origin + "/admin/flags";
+    } catch {
+        // request.url unavailable — notification just won't have a tap target
+    }
+
+    const payload = {
+        topic,
+        title: `New flag: ${flag.reason}`,
+        message: `${flag.path}\n"${flag.quote || "(no quote)"}"\n— ${flag.detail}`,
+        tags: ["triangular_flag_on_post"],
+        priority: 4, // high — buzzes the phone
+    };
+    if (click) payload.click = click;
+
+    try {
+        await fetch("https://ntfy.sh", { method: "POST", body: JSON.stringify(payload) });
+    } catch {
+        // best-effort; never throw out of a notification
+    }
+}
+
 // One-way hash of the client IP. Salted with FEEDBACK_IP_SALT (set as a secret)
 // so the stored value can't be reversed back to an IP, while staying stable for
 // dedupe / rate-limit triage. Returns null if no IP is available.
