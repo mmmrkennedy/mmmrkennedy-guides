@@ -37,7 +37,10 @@ export function json(body, status = 200, extraHeaders = {}) {
 // notifications), so keep it unguessable.
 export async function notifyFlag(env, request, flag) {
     const topic = env && env.NTFY_TOPIC;
-    if (!topic) return; // notifications disabled (e.g. local/dev)
+    if (!topic) {
+        console.log("notifyFlag: NTFY_TOPIC is not set in env — skipping"); // DIAG
+        return; // notifications disabled (e.g. local/dev)
+    }
 
     let click = "";
     try {
@@ -56,8 +59,19 @@ export async function notifyFlag(env, request, flag) {
     if (click) payload.click = click;
 
     try {
-        await fetch("https://ntfy.sh", { method: "POST", body: JSON.stringify(payload) });
-    } catch {
+        const res = await fetch("https://ntfy.sh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+            console.log(`notifyFlag: ntfy accepted (status ${res.status}) for topic ${topic}`); // DIAG
+        } else {
+            const text = await res.text().catch(() => "");
+            console.error(`notifyFlag: ntfy rejected — status ${res.status} ${res.statusText} body=${text}`); // DIAG
+        }
+    } catch (err) {
+        console.error("notifyFlag: fetch threw —", (err && err.message) || err); // DIAG
         // best-effort; never throw out of a notification
     }
 }

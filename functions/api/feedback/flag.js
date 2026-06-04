@@ -59,10 +59,13 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
     // Notify only on a genuinely new row — INSERT OR IGNORE drops duplicates, so
     // a re-flag of the same line writes nothing and shouldn't buzz the phone.
+    console.log("flag insert meta:", JSON.stringify(result && result.meta)); // DIAG
     if (result && result.meta && result.meta.changes > 0) {
         const notify = notifyFlag(env, request, { path, reason, quote, detail });
         if (waitUntil) waitUntil(notify);
         else await notify;
+    } else {
+        console.log("flag insert: no new row (deduped) — not notifying"); // DIAG
     }
 
     return json({ ok: true });
