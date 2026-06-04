@@ -37,10 +37,7 @@ export function json(body, status = 200, extraHeaders = {}) {
 // notifications), so keep it unguessable.
 export async function notifyFlag(env, request, flag) {
     const topic = env && env.NTFY_TOPIC;
-    if (!topic) {
-        console.log("notifyFlag: NTFY_TOPIC is not set in env — skipping"); // DIAG
-        return; // notifications disabled (e.g. local/dev)
-    }
+    if (!topic) return; // notifications disabled (e.g. local/dev)
 
     let click = "";
     try {
@@ -58,20 +55,24 @@ export async function notifyFlag(env, request, flag) {
     };
     if (click) payload.click = click;
 
+    const headers = { "Content-Type": "application/json" };
+    // Publish authenticated so ntfy's rate limit is tied to the account, not the
+    // shared Cloudflare egress IP — whose anonymous daily quota is perpetually
+    // exhausted by everyone else publishing from Workers (causes 429s).
+    if (env.NTFY_TOKEN) headers.Authorization = `Bearer ${env.NTFY_TOKEN}`;
+
     try {
         const res = await fetch("https://ntfy.sh", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify(payload),
         });
-        if (res.ok) {
-            console.log(`notifyFlag: ntfy accepted (status ${res.status}) for topic ${topic}`); // DIAG
-        } else {
+        if (!res.ok) {
             const text = await res.text().catch(() => "");
-            console.error(`notifyFlag: ntfy rejected — status ${res.status} ${res.statusText} body=${text}`); // DIAG
+            console.error(`notifyFlag: ntfy rejected — ${res.status} ${text}`);
         }
     } catch (err) {
-        console.error("notifyFlag: fetch threw —", (err && err.message) || err); // DIAG
+        console.error("notifyFlag: fetch threw —", (err && err.message) || err);
         // best-effort; never throw out of a notification
     }
 }
