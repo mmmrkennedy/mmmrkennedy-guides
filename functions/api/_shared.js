@@ -30,6 +30,55 @@ export function json(body, status = 200, extraHeaders = {}) {
     });
 }
 
+// Send a Telegram message when a new flag lands. Best-effort: disabled unless
+// BOTH TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set, and any failure is logged
+// but swallowed so a notification problem never affects the flag write. Call via
+// waitUntil so it never blocks the response. Unlike ntfy, Telegram authenticates
+// by bot token, so there's no shared-egress-IP rate limit to trip over.
+export async function notifyFlag(env, request, flag) {
+    const token = env && env.TELEGRAM_BOT_TOKEN;
+    const chatId = env && env.TELEGRAM_CHAT_ID;
+    if (!token || !chatId) return; // notifications disabled (e.g. local/dev)
+
+    let adminUrl = "";
+    try {
+        adminUrl = new URL(request.url).origin + "/admin/flags";
+    } catch {
+        // request.url unavailable — message just won't carry the admin link
+    }
+
+    // Plain text (no parse_mode) so guide content can't break Markdown/HTML
+    // parsing. Telegram auto-links the bare URL.
+    const lines = [
+        `🚩 New flag: ${flag.reason}`,
+        flag.path,
+        `"${flag.quote || "(no quote)"}"`,
+        `— ${flag.detail}`,
+    ];
+    if (adminUrl) lines.push(adminUrl);
+
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: lines.join("\n"),
+                disable_web_page_preview: true,
+            }),
+        });
+        if (!res.ok) {
+            // Body carries Telegram's reason (e.g. "chat not found", "Unauthorized").
+            // Never log the URL — it contains the bot token.
+            const body = await res.text().catch(() => "");
+            console.error(`notifyFlag: telegram rejected — ${res.status} ${body}`);
+        }
+    } catch (err) {
+        console.error("notifyFlag: telegram fetch threw —", (err && err.message) || err);
+        // best-effort; never throw out of a notification
+    }
+}
+
 // One-way hash of the client IP. Salted with FEEDBACK_IP_SALT (set as a secret)
 // so the stored value can't be reversed back to an IP, while staying stable for
 // dedupe / rate-limit triage. Returns null if no IP is available.
