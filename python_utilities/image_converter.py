@@ -189,14 +189,17 @@ def find_guide_folder(image_path: Path) -> Path | None:
     return Path(*parts[:idx])
 
 
-def update_html_references(converted: list[Path]) -> None:
+def update_html_references(converted: list[Path]) -> list[Path]:
     """
     For every successfully-converted image, rewrite its references in the
     HTML files of its guide folder. Each HTML is read/written exactly once
     even if many of its images were converted.
+
+    Returns the list of HTML files that were actually modified, so callers
+    (e.g. the git hook) can re-stage exactly those.
     """
     if not converted:
-        return
+        return []
 
     # Group converted images by guide folder so each HTML is only touched once.
     by_guide: dict[Path, list[Path]] = {}
@@ -216,6 +219,7 @@ def update_html_references(converted: list[Path]) -> None:
 
     total_files_changed = 0
     total_replacements = 0
+    changed_files: list[Path] = []
 
     for guide, images in by_guide.items():
         html_files = list(guide.glob("*.html"))
@@ -258,11 +262,13 @@ def update_html_references(converted: list[Path]) -> None:
                     continue
                 total_files_changed += 1
                 total_replacements += file_replacements
+                changed_files.append(html_path)
                 print(f"  {html_path.relative_to(guide.parent)}: "
                       f"{file_replacements} replacement(s)")
 
     print(f"\nHTML update: {total_replacements} replacement(s) "
           f"across {total_files_changed} file(s).")
+    return changed_files
 
 
 def warn_if_no_src(root: Path) -> bool:
@@ -295,6 +301,88 @@ def convert_dir_to_png(root: Path) -> None:
     images = find_images(root, {".webp"})
     print(f"Found {len(images)} webp files in {root}")
     run_batch(images, convert_to_png, "Conversion to PNG")
+
+
+# ---------- git pre-commit hook ----------
+
+def _repo_root() -> Path:
+    """Repo root: python_utilities/image_converter.py -> two levels up."""
+    return Path(__file__).resolve().parent.parent
+
+
+def _repo_games_dir() -> Path:
+    """
+    src/games under the repo root, resolved relative to this file so the hook
+    works regardless of the directory git invokes it from.
+    """
+    return _repo_root() / SRC_SEGMENT / "games"
+
+
+def _git_stage(args: list[str], paths: list[Path]) -> None:
+    """
+    Run a git index command over many paths via stdin (NUL-separated), avoiding
+    command-line length limits on a first-run mass conversion. Paths are passed
+    as repo-relative POSIX strings — git pathspecs use forward slashes and treat
+    backslashes as escapes, so absolute Windows paths must not be handed over raw.
+    """
+    if not paths:
+        return
+    root = _repo_root()
+    rels = []
+    for p in paths:
+        p = p.resolve()
+        try:
+            rels.append(p.relative_to(root).as_posix())
+        except ValueError:
+            rels.append(p.as_posix())  # outside the repo; let git reject it
+    data = "\0".join(rels)
+    subprocess.run(
+        ["git", *args, "--pathspec-from-file=-", "--pathspec-file-nul"],
+        input=data, text=True, check=True,
+    )
+
+
+def run_hook(quality: int = 90) -> int:
+    """
+    Pre-commit entry point. Walks src/games for any PNG/JPG/BMP, converts them to
+    WebP, rewrites their HTML references, and stages the results so only
+    optimized WebP gets committed.
+
+    Returns an exit code: 0 = ok / nothing to do, 1 = an image failed to convert
+    (the caller should abort the commit).
+    """
+    _check_tool("cwebp")
+    games_dir = _repo_games_dir()
+    if not games_dir.is_dir():
+        print(f"pre-commit: {games_dir} not found — nothing to convert.")
+        return 0
+
+    images = find_images(games_dir, SOURCE_EXTS)
+    if not images:
+        return 0
+
+    print(f"pre-commit: converting {len(images)} image(s) under "
+          f"src/games to WebP @ q={quality}...")
+    converted = run_batch(images, lambda p: convert_to_webp(p, quality),
+                          f"WebP @ q={quality}")
+    changed_html = update_html_references(converted)
+
+    # Stage the new .webp files, the rewritten HTML, and the removal of the
+    # originals. PNG is gitignored so its "removal" is a no-op (--ignore-unmatch
+    # absorbs that); tracked JPG/BMP removals do get staged.
+    _git_stage(["rm", "--cached", "--quiet", "--ignore-unmatch"], converted)
+    _git_stage(["add"], [p.with_suffix(".webp") for p in converted])
+    _git_stage(["add"], changed_html)
+    if converted or changed_html:
+        print(f"pre-commit: staged {len(converted)} WebP + "
+              f"{len(changed_html)} HTML file(s).")
+
+    failed = len(images) - len(converted)
+    if failed:
+        print(f"pre-commit: {failed} image(s) failed to convert — "
+              "aborting commit.", file=sys.stderr)
+        return 1
+    return 0
 
 
 # ---------- prompts ----------
@@ -358,4 +446,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if "--hook" in sys.argv[1:]:
+        sys.exit(run_hook())
     main()
