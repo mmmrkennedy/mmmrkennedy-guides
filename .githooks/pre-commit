@@ -1,44 +1,11 @@
 #!/bin/sh
-# Pre-commit automation. Commit with --no-verify to skip this hook if needed.
+# Refresh lastmod-cache.json in this same commit, so the sitemap dates are
+# correct without waiting for the GitHub Action round-trip.
 #
-#   1. Convert staged PNG/JPG/JPEG/BMP images to WebP, rewrite their HTML
-#      references, and re-stage the result — so only optimized WebP is committed.
-#   2. Refresh lastmod-cache.json when .html is staged, so the sitemap dates are
-#      correct without waiting for the GitHub Action round-trip. (The refresh
-#      script dates staged files "now" since they aren't in `git log` yet.)
-#
-# Step 1 runs before step 2 on purpose: if image conversion rewrites and
-# re-stages an .html file, the lastmod refresh below will pick it up.
+# Only runs when .html files are staged (added/changed/renamed/deleted), so
+# CSS/JS/image-only commits are untouched. The refresh script dates staged
+# files "now" since they aren't in `git log` yet.
 
-# --- pick a Python interpreter (image_converter.py is stdlib-only, needs 3.10+) ---
-if [ -x ".venv/Scripts/python.exe" ]; then
-    PY=".venv/Scripts/python.exe"
-elif [ -x ".venv/bin/python" ]; then
-    PY=".venv/bin/python"
-elif command -v py >/dev/null 2>&1; then
-    PY="py -3"
-elif command -v python >/dev/null 2>&1; then
-    PY="python"
-elif command -v python3 >/dev/null 2>&1; then
-    PY="python3"
-else
-    PY=""
-fi
-
-# --- 1. Convert any PNG/JPG/BMP under src/games to WebP ---
-# Runs every commit; the walk is cheap and converts only what it finds. PNG is
-# gitignored, so this is how screenshots get turned into committable WebP.
-if [ -n "$PY" ]; then
-    if ! $PY python_utilities/image_converter.py --hook; then
-        echo "pre-commit: image conversion failed — aborting commit." >&2
-        echo "  (commit with --no-verify to skip this hook if needed)" >&2
-        exit 1
-    fi
-else
-    echo "pre-commit: no Python interpreter found — skipping image conversion." >&2
-fi
-
-# --- 2. Refresh lastmod cache when HTML is staged ---
 if git diff --cached --name-only --diff-filter=ACMRD -- "*.html" | grep -q .; then
     echo "pre-commit: staged .html detected — refreshing lastmod-cache.json…"
     if ! node build_scripts/refresh-lastmod-cache.cjs; then
