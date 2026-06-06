@@ -20,8 +20,6 @@
         "clean": "rimraf dist",
         "// images": "Image conversion utilities",
         "convert:images": "python python_utilities/image_converter.py",
-        "convert:images:webp": "python python_utilities/image_converter.py --mode webp --quality 90",
-        "convert:images:png": "python python_utilities/image_converter.py --mode png",
         "// lint": "Linting and formatting",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",

@@ -22,18 +22,21 @@
 /*.js
   Cache-Control: public, max-age=2592000, must-revalidate
 
-# Cache static assets for 1 year (these rarely change)
+# Cache static assets for 30 days. NOT `immutable`: filenames are not
+# content-hashed, so an `immutable` entry (incl. a 404 served before the
+# file existed) would stick for its full lifetime and never revalidate.
+# stale-while-revalidate keeps cache hits fast while letting entries self-heal.
 /*.webp
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
 
 /*.jpg
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
 
 /*.png
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
 
 /*.gif
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
 
 # Cache fonts for 1 year
 /*.woff2

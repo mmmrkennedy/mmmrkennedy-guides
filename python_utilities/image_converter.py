@@ -75,17 +75,23 @@ def backup_original(input_path: Path) -> tuple[bool, str, Path | None]:
     return True, "ok", backup_path
 
 
-def convert_to_webp(input_path: Path, quality: int) -> tuple[Path, bool, str]:
+def convert_to_webp(input_path: Path, quality: int,
+                    lossless: bool = True) -> tuple[Path, bool, str]:
     """Returns (path, success, message). Original is deleted only on success."""
     backup_ok, backup_msg, _ = backup_original(input_path)
     if not backup_ok:
         return input_path, False, f"skipped: {backup_msg}"
 
     output_path = input_path.with_suffix(".webp")
+    # In lossless mode -q is the compression *effort* (still 0-100), not visual
+    # quality — output is pixel-perfect. -pass is lossy-only, so drop it there.
+    if lossless:
+        encode_args = ["-lossless", "-q", str(quality), "-m", "6", "-mt"]
+    else:
+        encode_args = ["-q", str(quality), "-m", "6", "-pass", "10", "-mt"]
     try:
         subprocess.run(
-            ["cwebp", "-q", str(quality), "-m", "6", "-pass", "10", "-mt",
-             str(input_path), "-o", str(output_path)],
+            ["cwebp", *encode_args, str(input_path), "-o", str(output_path)],
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True,
         )
     except subprocess.CalledProcessError as e:
@@ -280,15 +286,17 @@ def warn_if_no_src(root: Path) -> bool:
     return True
 
 
-def convert_dir_to_webp(root: Path, quality: int, include_webp: bool) -> None:
+def convert_dir_to_webp(root: Path, quality: int, include_webp: bool,
+                        lossless: bool = True) -> None:
     _check_tool("cwebp")
     if not warn_if_no_src(root):
         return
     exts = SOURCE_EXTS | {".webp"} if include_webp else SOURCE_EXTS
     images = find_images(root, exts)
     print(f"Found {len(images)} images in {root}")
-    converted = run_batch(images, lambda p: convert_to_webp(p, quality),
-                          f"Conversion to WebP @ q={quality}")
+    mode = "lossless" if lossless else f"q={quality}"
+    converted = run_batch(images, lambda p: convert_to_webp(p, quality, lossless),
+                          f"Conversion to WebP @ {mode}")
     # Don't rewrite HTML for webp->webp re-encodes (suffix didn't change).
     suffix_changed = [p for p in converted if p.suffix.lower() != ".webp"]
     update_html_references(suffix_changed)
@@ -301,88 +309,6 @@ def convert_dir_to_png(root: Path) -> None:
     images = find_images(root, {".webp"})
     print(f"Found {len(images)} webp files in {root}")
     run_batch(images, convert_to_png, "Conversion to PNG")
-
-
-# ---------- git pre-commit hook ----------
-
-def _repo_root() -> Path:
-    """Repo root: python_utilities/image_converter.py -> two levels up."""
-    return Path(__file__).resolve().parent.parent
-
-
-def _repo_games_dir() -> Path:
-    """
-    src/games under the repo root, resolved relative to this file so the hook
-    works regardless of the directory git invokes it from.
-    """
-    return _repo_root() / SRC_SEGMENT / "games"
-
-
-def _git_stage(args: list[str], paths: list[Path]) -> None:
-    """
-    Run a git index command over many paths via stdin (NUL-separated), avoiding
-    command-line length limits on a first-run mass conversion. Paths are passed
-    as repo-relative POSIX strings — git pathspecs use forward slashes and treat
-    backslashes as escapes, so absolute Windows paths must not be handed over raw.
-    """
-    if not paths:
-        return
-    root = _repo_root()
-    rels = []
-    for p in paths:
-        p = p.resolve()
-        try:
-            rels.append(p.relative_to(root).as_posix())
-        except ValueError:
-            rels.append(p.as_posix())  # outside the repo; let git reject it
-    data = "\0".join(rels)
-    subprocess.run(
-        ["git", *args, "--pathspec-from-file=-", "--pathspec-file-nul"],
-        input=data, text=True, check=True,
-    )
-
-
-def run_hook(quality: int = 90) -> int:
-    """
-    Pre-commit entry point. Walks src/games for any PNG/JPG/BMP, converts them to
-    WebP, rewrites their HTML references, and stages the results so only
-    optimized WebP gets committed.
-
-    Returns an exit code: 0 = ok / nothing to do, 1 = an image failed to convert
-    (the caller should abort the commit).
-    """
-    _check_tool("cwebp")
-    games_dir = _repo_games_dir()
-    if not games_dir.is_dir():
-        print(f"pre-commit: {games_dir} not found — nothing to convert.")
-        return 0
-
-    images = find_images(games_dir, SOURCE_EXTS)
-    if not images:
-        return 0
-
-    print(f"pre-commit: converting {len(images)} image(s) under "
-          f"src/games to WebP @ q={quality}...")
-    converted = run_batch(images, lambda p: convert_to_webp(p, quality),
-                          f"WebP @ q={quality}")
-    changed_html = update_html_references(converted)
-
-    # Stage the new .webp files, the rewritten HTML, and the removal of the
-    # originals. PNG is gitignored so its "removal" is a no-op (--ignore-unmatch
-    # absorbs that); tracked JPG/BMP removals do get staged.
-    _git_stage(["rm", "--cached", "--quiet", "--ignore-unmatch"], converted)
-    _git_stage(["add"], [p.with_suffix(".webp") for p in converted])
-    _git_stage(["add"], changed_html)
-    if converted or changed_html:
-        print(f"pre-commit: staged {len(converted)} WebP + "
-              f"{len(changed_html)} HTML file(s).")
-
-    failed = len(images) - len(converted)
-    if failed:
-        print(f"pre-commit: {failed} image(s) failed to convert — "
-              "aborting commit.", file=sys.stderr)
-        return 1
-    return 0
 
 
 # ---------- prompts ----------
@@ -418,16 +344,18 @@ def main() -> None:
 
         if choice == "1":
             if input("Default config? (y/n): ").lower() != "n":
-                convert_dir_to_webp(DEFAULT_DIR, 90, include_webp=False)
+                convert_dir_to_webp(DEFAULT_DIR, 90, include_webp=False, lossless=True)
                 image_dir = DEFAULT_DIR
             else:
                 image_dir = prompt_dir(image_dir)
                 if not image_dir.is_dir():
                     print(f"Not a directory: {image_dir}")
                     continue
-                quality = prompt_int("Quality 1-100 [90]: ", 90, 1, 100)
+                lossless = input("Lossless? (y/n) [y]: ").lower() != "n"
+                label = "Effort 1-100 [90]: " if lossless else "Quality 1-100 [90]: "
+                quality = prompt_int(label, 90, 1, 100)
                 include = input("Include existing webp files? (y/n) [n]: ").lower() == "y"
-                convert_dir_to_webp(image_dir, quality, include)
+                convert_dir_to_webp(image_dir, quality, include, lossless)
             break
 
         elif choice == "2":
@@ -446,6 +374,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    if "--hook" in sys.argv[1:]:
-        sys.exit(run_hook())
     main()
