@@ -43,3 +43,7 @@ nul
 /html_sizes.txt
 /_img_backup/
 /src/games/_webp_replace_candidates.csv
+/src/games/WW2/the_darkest_shore/pictures/dr_straub/STRAUB SPAWNS DARKEST SHORE.txt
+/src/games/WW2/the_final_reich/pictures/dr_straub/STRAUB SPAWNS FINAL REICH.txt
+/docs/r2-migration-part1-lift-and-shift.md
+/docs/r2-migration-part2-responsive-variants.md

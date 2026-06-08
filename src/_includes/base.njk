@@ -234,13 +234,13 @@
 {% endif %}
 
 {%- if site.bundled %}
-<script src="/js/bundle.min.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/bundle.core.min.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/bundle.ads.min.js?v={{ site.buildVersion }}" async></script>
 {%- else %}
 <script src="/js/core/page-utils.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/navigation/scroll-manager.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/legend.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/lightbox.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/ads.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/link-processor.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/quick-links.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/solver-button-processor.js?v={{ site.buildVersion }}" defer></script>
@@ -248,6 +248,8 @@
 <script src="/js/scripts.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/view-counter.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/line-flagger.js?v={{ site.buildVersion }}" defer></script>
+<!-- Ads load as an independent async island (ads.ts self-bootstraps) -->
+<script src="/js/ui/ads.js?v={{ site.buildVersion }}" async></script>
 {%- endif %}
 
 {%- if useReactSolvers %}

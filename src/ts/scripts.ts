@@ -184,7 +184,8 @@ document.addEventListener("DOMContentLoaded", () => {
             { name: "Lightbox Init", fn: () => window.Lightbox?.initLightbox() },
             { name: "Reveal Button Build", fn: () => window.SolverButtonProcessor?.initRevealButtons() },
             { name: "Solver Components", fn: () => void includeSolverComponent() },
-            { name: "Ads", fn: () => window.Ads?.initAds() },
+            // Ads are NOT initialized here — ads.ts self-bootstraps as an
+            // independent async island so it can't delay core interactivity.
         ];
 
         for (const step of initializationSteps) {

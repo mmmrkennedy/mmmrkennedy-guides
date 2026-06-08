@@ -10,12 +10,12 @@ const __dirname = path.dirname(__filename);
 const distDir = path.join(__dirname, "..", "dist");
 const BUNDLE = process.env.BUNDLE === "true";
 
-const JS_BUNDLE_ORDER = [
+// Core site JS (nav, lightbox, legend, scroll, content, etc.) — loaded `defer`.
+const JS_CORE_ORDER = [
     "core/page-utils.js",
     "navigation/scroll-manager.js",
     "ui/legend.js",
     "ui/lightbox.js",
-    "ui/ads.js",
     "content/link-processor.js",
     "content/quick-links.js",
     "content/solver-button-processor.js",
@@ -25,6 +25,11 @@ const JS_BUNDLE_ORDER = [
     "ui/line-flagger.js",
     "ui/trending.js",
 ];
+
+// Ads — split into its own bundle, loaded `async` and decoupled from core so a
+// slow/blocked/failed ad payload never delays core interactivity. ads.js
+// self-bootstraps (see ads.ts), so it needs no ordering relative to core.
+const JS_ADS_ORDER = ["ui/ads.js"];
 
 function findFiles(dir, extensions) {
     const files = [];
@@ -84,16 +89,23 @@ async function bundleCSS() {
     }
 }
 
-async function bundleJS() {
-    const outPath = path.join(distDir, "js", "bundle.min.js");
+async function bundleJSFile(order, outName) {
+    const outPath = path.join(distDir, "js", outName);
     try {
-        const parts = JS_BUNDLE_ORDER.map((f) => `(function(){\n${fs.readFileSync(path.join(distDir, "js", f), "utf8")}\n})();`);
+        const parts = order.map((f) => `(function(){\n${fs.readFileSync(path.join(distDir, "js", f), "utf8")}\n})();`);
         const result = await terserMinify(parts.join("\n"), { compress: true, mangle: true });
         if (!result.code) throw new Error("terser returned no output");
         fs.writeFileSync(outPath, result.code, "utf8");
     } catch (error) {
-        console.error("❌ Error bundling JS:", error.message);
+        console.error(`❌ Error bundling ${outName}:`, error.message);
     }
+}
+
+async function bundleJS() {
+    await Promise.all([
+        bundleJSFile(JS_CORE_ORDER, "bundle.core.min.js"),
+        bundleJSFile(JS_ADS_ORDER, "bundle.ads.min.js"),
+    ]);
 }
 
 // console.log("🚀 Starting asset minification...\n");
