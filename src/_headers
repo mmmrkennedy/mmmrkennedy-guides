@@ -22,21 +22,23 @@
 /*.js
   Cache-Control: public, max-age=2592000, must-revalidate
 
-# Cache static assets for 30 days. NOT `immutable`: filenames are not
-# content-hashed, so an `immutable` entry (incl. a 404 served before the
-# file existed) would stick for its full lifetime and never revalidate.
-# stale-while-revalidate keeps cache hits fast while letting entries self-heal.
+# Images: revalidate before every reuse. Filenames are NOT content-hashed, so a
+# changed image keeps the same URL. `no-cache` means "store, but check with the
+# origin before serving from cache" — the browser sends a conditional request
+# (If-None-Match / If-Modified-Since) and Cloudflare answers 304 with no body
+# when unchanged, or sends the new bytes immediately when the image changed.
+# (`no-cache` does NOT mean "don't cache" — that would be `no-store`.)
 /*.webp
-  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+  Cache-Control: public, no-cache
 
 /*.jpg
-  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+  Cache-Control: public, no-cache
 
 /*.png
-  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+  Cache-Control: public, no-cache
 
 /*.gif
-  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+  Cache-Control: public, no-cache
 
 # Cache fonts for 1 year
 /*.woff2
