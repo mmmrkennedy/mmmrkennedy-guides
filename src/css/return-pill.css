@@ -1,0 +1,89 @@
+/* Return pill
+ * ----------
+ * A dismissible "← Back to «section»" affordance shown after following an
+ * in-page cross-reference, so the reader can jump straight back to where they
+ * were. Built/controlled by src/ts/ui/return-pill.ts. */
+
+.return-pill {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+    z-index: 1500;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    max-width: min(90vw, 30rem);
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-tier-1);
+    border-radius: 999px;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
+    cursor: pointer;
+
+    /* Hidden until armed: nudged down + faded, and click-through disabled. */
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 1rem);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.return-pill.is-visible {
+    opacity: 0.97;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+
+.return-pill:hover {
+    opacity: 1;
+    border-color: var(--color-text-primary);
+}
+
+.return-pill:focus-visible {
+    outline: 2px solid var(--color-tier-1);
+    outline-offset: 2px;
+}
+
+.return-pill__icon {
+    flex-shrink: 0;
+    color: var(--color-tier-1);
+}
+
+.return-pill__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.return-pill__dismiss {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-left: var(--space-xs);
+    border-radius: 50%;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    line-height: 1;
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.return-pill__dismiss:hover {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .return-pill {
+        transition: opacity 0.2s ease;
+        transform: translate(-50%, 0);
+    }
+}

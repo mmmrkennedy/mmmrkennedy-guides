@@ -60,13 +60,14 @@ function getQuickLinkElements(doc: Document): QuickLinkItem[] {
                 container.dataset.sectionHeaderLevel !== undefined ? container.dataset.sectionHeaderLevel : 0,
         });
 
-        const titles = container.querySelectorAll<HTMLElement>("p.step-group-title, p.upgrade-title, p.sub-sub-step");
+        const titles = container.querySelectorAll<HTMLElement>("p.title-tier-2, p.title-tier-3, p.title-tier-4");
 
         for (const [titleCounter, title] of titles.entries()) {
             if (shouldExcludeElement(title)) continue;
 
             let indentLevel = 1;
-            if (title.classList.contains("sub-sub-step") && titleCounter !== 0) {
+            // tier-4 looks like tier-3 but nests one level deeper in the Contents list.
+            if (title.classList.contains("title-tier-4") && titleCounter !== 0) {
                 indentLevel = 2;
             }
             if (title.dataset.customIndent) {

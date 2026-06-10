@@ -8,6 +8,27 @@ description: "A website compiling accurate and up-to-date information on all Cal
     This Website is open-source, and we welcome any contributors in the <a href="https://discord.com/invite/hQng3Yz48A" class="external-link" target="_blank">Discord Server</a>.
 </h4>
 
+<!-- Map finder: live filter + game jump-chips. Sticky, progressively enhanced
+     by index-filter.ts (the full list below works without JS). -->
+<nav class="index-nav" data-index-nav aria-label="Map navigation">
+    <div class="index-nav__search">
+        <svg class="index-nav__search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input type="search" id="index-filter" class="index-nav__input" placeholder="Filter maps by name…" aria-label="Filter maps by name" autocomplete="off" spellcheck="false">
+        <button type="button" class="index-nav__clear" aria-label="Clear filter" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+            </svg>
+        </button>
+    </div>
+    <div class="index-nav__chips"></div>
+</nav>
+
+<p class="index-nav__empty" role="status" hidden>No maps match your search.</p>
+
 <h2 id="BO7">Black Ops 7</h2>
 <ul>
     <li>

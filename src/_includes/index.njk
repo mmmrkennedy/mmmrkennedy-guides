@@ -125,6 +125,7 @@
 
         {%- if site.bundled %}
         <script src="/js/bundle.core.min.js?v={{ site.buildVersion }}" defer></script>
+        <script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
         <script src="/js/bundle.ads.min.js?v={{ site.buildVersion }}" async></script>
         {%- else %}
         <script src="/js/core/page-utils.js?v={{ site.buildVersion }}" defer></script>
@@ -136,6 +137,7 @@
         <script src="/js/scripts.js?v={{ site.buildVersion }}" defer></script>
         <script src="/js/ui/view-counter.js?v={{ site.buildVersion }}" defer></script>
         <script src="/js/ui/trending.js?v={{ site.buildVersion }}" defer></script>
+        <script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
         <!-- Ads load as an independent async island (ads.ts self-bootstraps) -->
         <script src="/js/ui/ads.js?v={{ site.buildVersion }}" async></script>
         {%- endif %}

@@ -32,8 +32,14 @@ h4 {
     font-size: clamp(0.875rem, 2.5vw, 1.125rem);
 }
 
-/* Section Titles - Three-tier hierarchy */
-.section-title {
+/* Heading hierarchy — read the number, get the level.
+ *   title-tier-1  largest  (section heading; gold)        Contents nav: top level
+ *   title-tier-2  medium   (sub-section; amber)           Contents nav: indent 1
+ *   title-tier-3  smallest (sub-sub heading; olive)       Contents nav: indent 1
+ *   title-tier-4  == tier-3 visually, but nests one level deeper in the Contents nav
+ * Smaller number = bigger/higher. tier-3 and tier-4 share the look; only their
+ * auto-generated Contents-list indent differs (see quick-links-utils.ts). */
+.title-tier-1 {
     color: var(--color-tier-1);
     font-size: var(--font-size-xl);
     font-weight: 600;
@@ -42,7 +48,7 @@ h4 {
     margin: var(--space-lg) 0 var(--space-md);
 }
 
-.step-group-title {
+.title-tier-2 {
     color: var(--color-tier-2);
     font-size: var(--font-size-lg);
     font-weight: 600;
@@ -51,8 +57,8 @@ h4 {
     margin: var(--space-lg) 0 var(--space-md);
 }
 
-.upgrade-title,
-.sub-sub-step {
+.title-tier-3,
+.title-tier-4 {
     color: var(--color-tier-3);
     font-size: var(--font-size-md);
     font-weight: 600;

@@ -1,0 +1,121 @@
+/* Home-page map finder
+ * --------------------
+ * Sticky bar atop the index: a live text filter and a row of game "chips" that
+ * jump to each section, so a map near the bottom of the long list is reachable
+ * without a long scroll. Built/enhanced by src/ts/ui/index-filter.ts. */
+
+.index-nav {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    margin-bottom: var(--space-sm);
+    background-color: var(--color-bg-primary);
+    border-bottom: 1px solid var(--color-border-subtle);
+    box-shadow: 0 4px 8px rgb(0 0 0 / 18%);
+}
+
+/* Search field ----------------------------------------------------------- */
+.index-nav__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.index-nav__search-icon {
+    position: absolute;
+    left: var(--space-sm);
+    color: var(--color-text-muted);
+    pointer-events: none;
+}
+
+/* Override the global <input> sizing/margins for a full-width search box. */
+.index-nav__input {
+    width: 100%;
+    margin: 0;
+    padding-left: calc(var(--space-md) + 1.25rem);
+    padding-right: calc(var(--space-md) + 1.25rem);
+}
+
+/* Hide the browser's native search "×" — we provide our own clear button. */
+.index-nav__input::-webkit-search-cancel-button {
+    appearance: none;
+}
+
+.index-nav__clear {
+    position: absolute;
+    right: var(--space-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.index-nav__clear:hover {
+    color: var(--color-text-primary);
+}
+
+/* Jump chips ------------------------------------------------------------- */
+.index-nav__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.index-nav__chip {
+    display: inline-block;
+    padding: 0.25rem 0.7rem;
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+    background-color: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.index-nav__chip:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-text-muted);
+}
+
+.index-nav__chip.is-active {
+    color: var(--color-bg-primary);
+    background-color: var(--color-tier-1);
+    border-color: var(--color-tier-1);
+    font-weight: 600;
+}
+
+/* A game with no matches under the current filter — dimmed and unclickable. */
+.index-nav__chip.is-empty {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* "No results" notice + filtered-out rows -------------------------------- */
+.index-nav__empty {
+    padding: var(--space-md);
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+.index-hidden {
+    display: none !important;
+}

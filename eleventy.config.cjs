@@ -110,14 +110,15 @@ function buildNavStructure(document) {
         });
 
         // Find sub-items within this container
-        const subItems = container.querySelectorAll("p.step-group-title, p.upgrade-title, p.sub-sub-step");
+        const subItems = container.querySelectorAll("p.title-tier-2, p.title-tier-3, p.title-tier-4");
 
         for (const [index, subItem] of subItems.entries()) {
             if (shouldExcludeFromNav(subItem)) continue;
 
-            // Calculate indent level
+            // Calculate indent level. tier-4 looks like tier-3 but nests one
+            // level deeper in the Contents list.
             let indent = 1;
-            if (subItem.classList.contains("sub-sub-step") && index !== 0) {
+            if (subItem.classList.contains("title-tier-4") && index !== 0) {
                 indent = 2;
             }
             if (subItem.dataset.customIndent) {

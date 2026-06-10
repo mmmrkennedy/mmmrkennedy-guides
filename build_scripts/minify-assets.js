@@ -24,6 +24,7 @@ const JS_CORE_ORDER = [
     "ui/view-counter.js",
     "ui/line-flagger.js",
     "ui/trending.js",
+    "ui/return-pill.js",
 ];
 
 // Ads — split into its own bundle, loaded `async` and decoupled from core so a
