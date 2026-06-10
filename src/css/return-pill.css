@@ -64,16 +64,22 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-left: var(--space-xs);
+    width: 1.75rem;
+    height: 1.75rem;
     border-radius: 50%;
     color: var(--color-text-muted);
-    font-size: 1rem;
+    font-size: 1.75rem;
     line-height: 1;
     transition:
         color 0.15s ease,
         background-color 0.15s ease;
+}
+
+/* The × glyph sits low in its line box by default (aligned to the math axis,
+ * not the box center), so nudge the ink up to optical center. */
+.return-pill__dismiss::before {
+    content: "\00d7";
+    transform: translateY(-0.1em);
 }
 
 .return-pill__dismiss:hover {

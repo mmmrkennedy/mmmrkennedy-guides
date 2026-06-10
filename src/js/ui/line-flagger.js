@@ -179,9 +179,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---- Attach a ⚑ + stable id to each leaf paragraph / bullet ----
     const flaggable = [];
     lines.forEach((el) => {
-        if (el.matches("li") && el.querySelector("ul, ol, table, p"))
-            return; // grouping row, not a leaf
-        if (!el.textContent || !el.textContent.trim())
+        // Flaggable when the line has its own text. lineText() excludes any
+        // nested list/table/paragraph (each its own flaggable line), so an <li>
+        // that introduces a sublist (e.g. "Wait for X to spawn." + <ul>) is still
+        // flaggable by its own wording, while a pure grouping <li> is skipped.
+        if (!lineText(el))
             return;
         el.classList.add("gfb-flaggable");
         el.dataset.lineId = lineId(el);
@@ -200,7 +202,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             openPop(flag, el);
         });
-        el.appendChild(flag);
+        // Put the ⚑ at the end of the line's own text — before any nested
+        // sublist/table — not after the whole subtree.
+        const nested = el.querySelector(":scope > ul, :scope > ol, :scope > table, :scope > p");
+        if (nested)
+            el.insertBefore(flag, nested);
+        else
+            el.appendChild(flag);
     });
     // ---- Auto-note: ask which lines crossed the buggy threshold, warn on them ----
     fetch("/api/feedback?path=" + encodeURIComponent(path))
@@ -238,9 +246,28 @@ document.addEventListener("DOMContentLoaded", () => {
             el.parentNode?.insertBefore(note, el);
         }
     }
-    /** Normalized visible text of a line, with the ⚑ button stripped. */
+    /**
+     * Normalized visible text of a line — its OWN text only. Text inside a nested
+     * list/table/paragraph (each its own flaggable line) plus injected chrome (the
+     * ⚑ button and any buggy-note) are excluded, so a list item that introduces a
+     * sublist hashes and quotes by its own wording. For a leaf line with no nested
+     * block this equals its full text, so existing line ids stay stable.
+     */
     function lineText(el) {
-        return (el.textContent || "").replace(/⚑/g, "").replace(/\s+/g, " ").trim();
+        let out = "";
+        el.childNodes.forEach((n) => {
+            if (n.nodeType === Node.TEXT_NODE) {
+                out += n.nodeValue ?? "";
+                return;
+            }
+            if (n.nodeType !== Node.ELEMENT_NODE)
+                return;
+            const e = n;
+            if (e.matches("ul, ol, table, p, .gfb-flag, .gfb-buggy-note"))
+                return;
+            out += e.textContent ?? "";
+        });
+        return out.replace(/⚑/g, "").replace(/\s+/g, " ").trim();
     }
     /** Stable id for a line: FNV-1a (32-bit) of its normalized, lowercased text. */
     function lineId(el) {

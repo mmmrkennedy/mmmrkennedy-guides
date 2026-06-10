@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
         el.innerHTML =
             '<svg class="return-pill__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>' +
             '<span class="return-pill__text"></span>' +
-            '<span class="return-pill__dismiss" aria-hidden="true">×</span>';
+            '<span class="return-pill__dismiss" aria-hidden="true"></span>'; // glyph drawn via ::before so it can be nudged to optical center
         el.addEventListener("click", (e) => {
             if ((e.target as HTMLElement).closest(".return-pill__dismiss")) {
                 hide();
@@ -67,7 +67,16 @@ document.addEventListener("DOMContentLoaded", () => {
     function show(fromLabel: string, section: HTMLElement | null): void {
         const el = ensurePill();
         if (labelEl) {
-            labelEl.textContent = fromLabel ? `Back to ${fromLabel}` : "Back to where you were";
+            if (fromLabel) {
+                labelEl.textContent = "Back to ";
+                const em = document.createElement("i");
+                const strong = document.createElement("strong");
+                strong.textContent = fromLabel;
+                em.appendChild(strong);
+                labelEl.appendChild(em);
+            } else {
+                labelEl.textContent = "Back to where you were";
+            }
         }
         el.setAttribute("aria-label", labelEl?.textContent ?? "Back");
 

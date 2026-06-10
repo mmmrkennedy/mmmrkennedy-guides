@@ -13,6 +13,11 @@
 .gfb-flag {
     display: inline-block;
     margin-left: var(--space-xs);
+    /* Collapse the flag's layout footprint: without this, a line that exactly
+     * fills the available width pushes the ⚑ onto a new (empty) line. The
+     * negative right margin removes the width it reserves for line-breaking
+     * while the glyph still paints right after the text. */
+    margin-right: -1.75rem;
     padding: 0 0.2rem;
     border: 0;
     background: none;
@@ -25,7 +30,10 @@
     vertical-align: baseline;
 }
 
-.gfb-flaggable:hover > .gfb-flag {
+/* Reveal a line's flag on hover — but not when the pointer is actually over a
+ * nested flaggable line, since :hover also matches ancestors. Without the :has()
+ * guard, hovering a sub-bullet would light up every parent line's flag too. */
+.gfb-flaggable:hover:not(:has(.gfb-flaggable:hover)) > .gfb-flag {
     opacity: 0.5;
 }
 
