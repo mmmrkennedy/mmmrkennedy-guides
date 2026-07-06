@@ -21,6 +21,9 @@
     {%- else %}
         {%- set metaDescription = description or 'Complete Call of Duty Zombies Easter Egg guide. Step-by-step main quest walkthrough with pictures, videos, and detailed instructions.' %}
     {%- endif %}
+    {%- if aliases %}
+        {%- set metaDescription = metaDescription + ' Also known as ' + (aliases | join(', ')) + '.' %}
+    {%- endif %}
     <meta name="description" content="{{ metaDescription }}">
     {%- if mapName %}
         {%- set metaKeywords = mapName + ' Easter Egg, ' + mapName + ' Easter Egg guide, ' + mapName + ' main quest, ' + mapName + ' main Easter Egg, ' + mapName + ' walkthrough, ' + mapName + ' guide, ' + mapName + ' steps, ' + mapName + ' tutorial, ' + mapName + ' solo Easter Egg, ' + titleSuffix + ', Call of Duty Zombies, COD Zombies, Zombies Easter Egg guide, main quest walkthrough' %}
@@ -82,7 +85,7 @@
             "@type": "HowTo",
             "name": "{{ pageTitle }}",
             {%- if mapName %}
-            "alternateName": "{{ mapName }} Easter Egg Guide",
+            "alternateName": [{% for alias in aliases %}"{{ alias }} Easter Egg Guide", {% endfor %}"{{ mapName }} Easter Egg Guide"],
             "keywords": "{{ metaKeywords }}",
             {%- endif %}
             "description": "{{ metaDescription }}",
@@ -209,6 +212,12 @@
         </div>
     {%- else %}
         {{ content | safe }}
+        {%- if about %}
+        <section class="about-map">
+            <h2 class="about-map__title">About This Map</h2>
+            <p class="about-map__text">{{ about }}</p>
+        </section>
+        {%- endif %}
     {%- endif %}
 
     <footer class="site-footer">

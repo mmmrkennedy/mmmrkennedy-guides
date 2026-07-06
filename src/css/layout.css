@@ -11,6 +11,31 @@ Page structure and containers.
     overflow-y: hidden;
 }
 
+/* About This Map — quiet SEO blurb styled like the footer; must stay visible
+   (real text, readable size) so it doesn't read as keyword stuffing */
+.about-map {
+    max-width: 75ch;
+    margin: var(--space-md) auto var(--space-md);
+    padding: var(--space-sm);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.about-map__title {
+    margin: 0 0 var(--space-xs);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+}
+
+.about-map__text {
+    margin: 0;
+    line-height: 1.6;
+}
+
 /* Site Footer — copyright + last-updated date + edit count */
 .site-footer {
     padding: var(--space-lg) var(--space-md);

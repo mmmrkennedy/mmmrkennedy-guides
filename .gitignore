@@ -27,6 +27,7 @@ migrations_data/
 !SEO_img.png
 
 # Project-specific
+__pycache__/
 venv/
 easter_egg_help/
 guide_making_utils/
