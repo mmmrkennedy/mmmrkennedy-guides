@@ -29,6 +29,7 @@ Finished:
 - Nuketown (BO2)
 - Ashes Of The Damned (BO7)
 - Astra Malorum (BO7)
+- Call of the Dead (BO1)
 
 Planned:
 

@@ -1,26 +1,260 @@
 ---
-layout: guide.njk
+layout: guide-with-solver.njk
 mapName: 'Call of the Dead'
-description: Complete Black Ops 1 Zombies Call of the Dead Easter Egg guide.
-unfinished: true
+aliases: ['COTD']
+about: >-
+    Call of the Dead (COTD) is the second Black Ops 1 DLC Zombies map, released with the Escalation map pack, and set around an arctic shipwreck in Siberia. This guide covers the 'Stand-In' / 'Ensemble Cast' main quest (main Easter Egg), George Romero, and the 'Not Ready to Die' song Easter Egg.
+description: Complete Black Ops 1 Zombies "Call of the Dead" map guide. Features the 'Stand-In' / 'Ensemble Cast' main quest, the V-R11 and Scavenger wonder weapons, George Romero, and the 'Not Ready to Die' song easter egg.
 ---
 
-<!-- Wonder Weapons -->
-<div class="content-container" id="CHANGE ME">
-    <h2>CHANGE ME</h2>
-    <p class="weapon-desc">The CHANGE ME can be Pack-a-Punched and does not require an Easter Egg to do so.</p>
-    <p class="weapon-desc">The CHANGE ME is available through the mystery box and via the following quest:</p>
+<!-- Power -->
+<div class="content-container" data-section-ind="Map Progression" id="power">
+    <h2 class="title-tier-1">Power</h2>
+    <ul>
+        <li>The <a href="pictures/power/power_switch.webp">Power Switch</a> is at the top of the <a href="pictures/power/power_ship.webp">broken ship</a>.</li>
+    </ul>
 </div>
 
-<!-- Main Easter Egg -->
-<div class="content-container" id="main_ee">
-    <h2>CHANGE ME</h2>
-    <p class="stats">Stats (Solo): Difficulty - CHANGE ME, Est. Completion Time - CHANGE ME, RNG Rating - CHANGE ME</p>
-    <ol>
-        <li class="dummy-li">
-            <p class="title-tier-2" id="main_ee_step1">CHANGE ME</p>
+<!-- Pack-a-Punch -->
+<div class="content-container" id="pap">
+    <h2 class="title-tier-1">Pack-a-Punch</h2>
+    <ul>
+        <li>Once the power is turned on, the Lighthouse will activate.</li>
+        <li>
+            Every 1:40-2 minutes, there will be a lightning effect, and the Lighthouse will spin around rapidly. After 15 seconds, the Lighthouse will shine its light on one of three locations:
+            <ul>
+                <li>
+                    <a href="pictures/pap/pap_spawn.webp">Spawn - Right of Quick Revive</a>
+                </li>
+                <li>
+                    <a href="pictures/pap/pap_behind_lighthouse.webp">Behind the Lighthouse - In the water between the Lighthouse and the Stamin-Up machine.</a>
+                </li>
+                <li>
+                    <a href="pictures/pap/pap_jug.webp">Bow of the Ship - In the water, near the Juggernog machine</a>
+                </li>
+            </ul>
         </li>
-        <li>CHANGE ME</li>
-        <li>CHANGE ME</li>
+        <li>The Pack-a-Punch will appear at this location. It stays there for 2 minutes before leaving for another 1:40-2 minutes. The Pack-a-Punch cannot leave while it's being used.</li>
+    </ul>
+</div>
+
+<!-- George Romero -->
+<div class="content-container" id="george_romero">
+    <h2 class="title-tier-1">George Romero (Large Boss Zombie) / Free Perk and Death Machine</h2>
+    <ul>
+        <li>George Romero spawns from the pool of water at the start of the match. He has two states, Calm and Angry. While Calm, he slowly walks after the nearest player and will occasionally yell, causing nearby Zombies to become super-sprinters.</li>
+        <li>George enters his Angry state if he takes any damage or successfully strikes a player with his stagelight. The transition is marked by a screenshake and shouting. His appearance becomes zombified and he starts running. While Angry, he can electrify nearby Zombies by striking the ground with his stagelight.</li>
+        <li>To calm him permanently, lead him into any body of water. Shooting him with the V-R11 will temporarily calm him for a few seconds before he re-enters his Angry state. Attacking George while he's in water will not trigger his Angry state.</li>
+        <li>George's health scales with player count, 250,000 per player (roughly 1,666 round 1 Zombies' worth), up to 1,000,000 in a four-player game. He cannot be permanently killed and will return two rounds after being defeated. Insta-Kill and Nukes have no effect on him.</li>
+        <li>The aura around George's stagelight is the only indicator of his remaining health. It flickers as he takes damage, then turns <a href="pictures/george_romero/low_health_george.webp">orange</a> when he's close to being defeated. When defeated, he retreats into the water, dropping a Death Machine and a Random Perk Bottle. Once you've completed the Main Quest in any match, the Death Machine is replaced by a Wunderwaffe DG-2.</li>
+        <li>Shooting George with the upgraded V-R11 forces him to retreat without dropping any rewards. He will either return after a random amount of time in the same round, or wait until the following round.</li>
+    </ul>
+</div>
+
+<!-- Main Quest -->
+<div class="content-container" data-section-ind="Easter Eggs" id="main_ee">
+    <h2 class="title-tier-1">"Stand-In" (Solo) and "Ensemble Cast" (Co-Op) Main Quest</h2>
+    <p class="stats">Stats (Solo): Difficulty - 3/10, Est. Completion Time - 25 to 45 Mins</p>
+    <p>
+        <label for="main-ee-version-selector"><b>Select Solo or Co-op Version:</b></label>
+        <select id="main-ee-version-selector" name="main-ee-version" onchange="toggleCoopSteps(this.value)">
+            <option value="solo">Solo</option>
+            <option value="coop" selected>Co-op</option>
+        </select>
+    </p>
+    <ol>
+        <li>Turn on the <a href="#power">power</a>.</li>
+        <li>
+            Go to the room below the PhD Flopper perk machine, at the bottom of the Lighthouse, and knife the <a href="pictures/main_ee/metal_door.webp">Metal Door</a> to hear dialogue from the Ultimis characters.
+        </li>
+        <li>
+            Wait for the characters to mention needing a fuse. Find the power fuse in the PhD Flopper room. Fuse locations:
+            <ul>
+                <li>
+                    <a href="pictures/main_ee/fuse_desk.webp">PhD Flopper Room - On the desk, left of the PhD machine</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/fuse_locker.webp">PhD Flopper Room - Left of the locker, in front of the PhD machine</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/fuse_table.webp">PhD Flopper Room - On the table with the car batteries</a>
+                </li>
+            </ul>
+        </li>
+        <li>Insert the fuse into the <a href="pictures/main_ee/electrical_box.webp">electrical box</a> to the right of the Metal Door. Some more dialogue will play.</li>
+        <li>
+            About 20 seconds after inserting the fuse, four <a href="pictures/main_ee/gen_door.webp">generators will activate with a red light</a>. Destroy all four with explosives (Semtex recommended; <a href="pictures/main_ee/semtex.webp">wallbuy at the Bow of the ship</a>, above the Juggernog machine). Each generator's light goes out once it's destroyed. Generator locations:
+            <ul>
+                <li>
+                    <a href="pictures/main_ee/gen_door.webp">Lighthouse - Across from the Metal Door</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/gen_mpl.webp">Ship Stern - In the water, outside the map, right of the MPL wallbuy</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/gen_shortcut.webp">In the shortcut from the ship to spawn</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/gen_stamin_up.webp">Behind the Lighthouse - Out the Zombie spawn window, left of the Stamin-Up machine</a>
+                </li>
+            </ul>
+        </li>
+        <li>Once all four generators' lights are off, knife the Metal Door again.</li>
+        <li class="coop-only">
+            Find a <a href="pictures/main_ee/bottle_example.webp">frozen vodka bottle</a> hanging from a railing. Bottle locations:
+            <ul>
+                <li>
+                    <a href="pictures/main_ee/bottle_below_the_box.webp">Front of the Lighthouse - Railing on the stairs outside the PhD Flopper room</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/bottle_box.webp">Front of the Lighthouse - Railing above the previous location, by the Mystery Box location</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/bottle_mpl.webp">Ship - Railing above and to the right of the MPL wallbuy</a>
+                </li>
+                <li>
+                    <a href="pictures/main_ee/bottle_shortcut.webp">Ship - Railing connecting the two sides of the broken ship</a>
+                </li>
+            </ul>
+        </li>
+        <li class="coop-only">
+            Once you find the bottle, one player must stand <strong>directly</strong> below it to catch it. Once they're in position, another player must knife the ice to make the bottle drop.
+            <ul>
+                <li>You don't need to interact with the bottle to catch it, just stand under it.</li>
+                <li>If you don't catch the bottle, it'll break and immediately respawn in another location.</li>
+            </ul>
+        </li>
+        <li class="coop-only">Insert the vodka bottle into the <a href="pictures/main_ee/tube.webp">tube on the left side of the Metal Door</a>. Knife the door again for more dialogue.</li>
+        <li class="coop-only">
+            Activate the four radios by interacting with them in the order below.
+            <ul>
+                <li>If you interact with a radio out of order, nothing will happen until you've interacted with any four radios total. All four radios will then buzz and won't respond for a few seconds. After that, retry from the first.</li>
+                <li>
+                    Interact order:
+                    <ol>
+                        <li>
+                            <a href="pictures/main_ee/radio_power.webp">Ship - On top of a computer, in front of the Mystery Box location under the power room</a>
+                        </li>
+                        <li>
+                            <a href="pictures/main_ee/radio_staminup.webp">Stamin-Up Room - On a barrel, right of a Zombie spawn</a>
+                        </li>
+                        <li>
+                            <a href="pictures/main_ee/radio_crate.webp">Ship Bow - In a cargo crate, at the bottom of the Zipline from the top of the Lighthouse</a>
+                        </li>
+                        <li>
+                            <a href="pictures/main_ee/radio_door.webp">Metal Door Room - On a cabinet under the stairs, right of a Zombie spawn window</a>
+                        </li>
+                    </ol>
+                </li>
+            </ul>
+        </li>
+        <li>
+            Go to the ship's bridge (power room). Turn the <a href="pictures/main_ee/wheel_pre.webp">steering wheel</a> twice to the right, so the <a href="pictures/main_ee/wheel_post.webp">brown peg is in the bottom right position</a>. Then on the <a href="pictures/main_ee/levers_pre.webp">device, right of the steering wheel</a>, pull the leftmost lever once, and the rightmost lever three times (<a href="pictures/main_ee/levers_post.webp">what it should look like</a>). If done correctly, a foghorn will sound and a <a href="pictures/main_ee/sub.webp">submarine</a> will surface in the distance near the Juggernog area.
+        </li>
+        <li class="coop-only">Wait for the submarine to fully surface. The next step only works while the submarine is up.</li>
+        <li class="coop-only">
+            Activate the four foghorns in the order below. Any player can press any horn, and there is no time limit.
+            <ul>
+                <li>
+                    If you press a horn out of order, nothing happens until four horns have been pressed. On the fourth press the submarine submerges and won't come back up until the current round ends. <strong>Stop pressing horns while the submarine is sinking</strong>, as those presses still count toward your next attempt a nd will ruin it. Once the round ends, the submarine resurfaces after a short delay, and you can start the sequence again from the first horn.
+                </li>
+                <li>Foghorn locations and order:
+                    <ol>
+                        <li>
+                            <a href="pictures/main_ee/horn_lighthouse_1.webp">At the base of the Lighthouse, next to the pool of water</a>
+                        </li>
+                        <li>
+                            <a href="pictures/main_ee/horn_speed_cola_1.webp">After the slide to Speed Cola, around the corner to the right, in the water</a>
+                        </li>
+                        <li>
+                            <a href="pictures/main_ee/horn_lighthouse_2.webp">At the base of the Lighthouse, on the left hand side next to the building</a>
+                        </li>
+                        <li>
+                            <a href="pictures/main_ee/horn_speed_cola_2.webp">After the slide to Speed Cola, behind the huge rock on the island</a>
+                        </li>
+                    </ol>
+                </li>
+            </ul>
+        </li>
+        <li class="coop-only">
+            Each of the four Lighthouse floors has a coloured number dial on the wall. Interacting with a dial will increase its number and the number of the adjacent dials (above and below, if applicable) by 1. The dials need to be set to the following numbers (from top to bottom): <a href="pictures/main_ee/yellow.webp">yellow</a> = 2, <a href="pictures/main_ee/orange.webp">orange</a> = 7, <a href="pictures/main_ee/blue.webp">blue</a> = 4, <a href="pictures/main_ee/purple.webp">purple</a> = 6. Use the solver or the instructions below to set the dials to these numbers:
+            <ul>
+                <li>
+                    Optimal way to set the dials:
+                    <ol>
+                        <li>Turn Purple until Purple is correct</li>
+                        <li>Turn Orange until Blue is correct</li>
+                        <li>Turn Yellow until Orange is correct</li>
+                        <li>Turn Yellow until Yellow is correct, but also turn Purple the same amount</li>
+                        <li>Turn Blue until Blue is correct</li>
+                    </ol>
+                </li>
+            </ul>
+        </li>
+        <li class="dummy-li coop-only">
+            <div id="dials-solver-react"></div>
+        </li>
+        <li>Acquire the V-R11 wonder weapon from the Mystery Box (there is no other way to get it).</li>
+        <li>
+            Shoot a Zombie with the V-R11 on the bottom floor of the Lighthouse. It will turn human, run into the <a href="pictures/main_ee/beam_lighthouse_stairs.webp">beam in the middle of the Lighthouse stairs</a>, and start floating upward.
+        </li>
+        <li>
+            Shoot the floating human until it goes into a <a href="pictures/main_ee/downed_human.webp">downed state</a>. Once the downed human reaches the top, the Golden Rod will appear and float to the bottom.
+            <ul>
+                <li>If you don't down the human before he reaches the top, you can retry immediately with another Zombie.</li>
+            </ul>
+        </li>
+        <li>Pick up the <a href="pictures/main_ee/golden_rod.webp">Golden Rod</a> and insert it into the <a href="pictures/main_ee/tube.webp">tube to the left of the Metal Door</a>.</li>
+        <li>Wait for the dialogue to finish. The fuse box next to the door will start sparking. Knife it to complete the Easter Egg.</li>
+        <li>A Wunderwaffe DG-2 will drop as a powerup. There is only one, and any player can pick it up. It will disappear on the usual powerup timer if left on the ground. After you complete the Easter Egg once, killing George Romero in any future game drops a Wunderwaffe instead of a Death Machine.</li>
     </ol>
 </div>
+
+<!-- Not Ready to Die Song -->
+<div class="content-container" id="song_ee">
+    <h2 class="title-tier-1">"Not Ready to Die" Song</h2>
+    <p class="song-link">
+        Link to song on streaming <a href="https://songport.link/t/avenged-sevenfold-not-ready-to-die-from-call-of-the-gii9lmsm" class="external-link">here</a>.
+    </p>
+    <ul>
+        <li>
+            Interact with three "Red Meteors" around the map. Meteor locations:
+            <ul>
+                <li>
+                    <a href="pictures/song_ee/rock_spawn.webp">Spawn - On a barrel next to the water</a>
+                </li>
+                <li>
+                    <a href="pictures/song_ee/rock_phd.webp">PhD Flopper room - Underneath a small table</a>
+                </li>
+                <li>
+                    <a href="pictures/song_ee/rock_cafeteria.webp">Ship's Stern - On a bench in the ship's dining area (first room below the power room)</a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<script>
+    function toggleCoopSteps(version) {
+        document.querySelectorAll("#main_ee .coop-only").forEach((el) => {
+            el.style.display = version === "solo" ? "none" : "";
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const selector = document.getElementById("main-ee-version-selector");
+        if (selector) {
+            toggleCoopSteps(selector.value);
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountDialSolver("dials-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

@@ -30,6 +30,24 @@
     vertical-align: baseline;
 }
 
+/* Info-box callouts (.note, .tip, .boss-fight-phases, …) use width: fit-content,
+ * so the box sizes to its intrinsic content width. An inline-block ⚑ child drags
+ * that intrinsic width DOWN via its negative margin-right, shrinking the box below
+ * the text's own one-line width and forcing the *text* to wrap (e.g. "Phases 1 and
+ * 2" broke onto two lines). Taking the flag out of flow inside these boxes stops it
+ * from driving the box width; .gfb-flaggable is position: relative, so the flag
+ * still paints at its normal inline spot right after the text. */
+.note > .gfb-flag,
+.no-return > .gfb-flag,
+.danger > .gfb-flag,
+.requirement > .gfb-flag,
+.tip > .gfb-flag,
+.disclaimer > .gfb-flag,
+.boss-fight-phases > .gfb-flag,
+.notes > .gfb-flag {
+    position: absolute;
+}
+
 /* Reveal a line's flag on hover — but not when the pointer is actually over a
  * nested flaggable line, since :hover also matches ancestors. Without the :has()
  * guard, hovering a sub-bullet would light up every parent line's flag too. */
