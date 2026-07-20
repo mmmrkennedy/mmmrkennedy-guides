@@ -5,7 +5,7 @@ type CellType = "empty" | "rod";
 type Phase = "setup" | "results";
 type Confidence = "high" | "med" | "low";
 
-const defaultMessage = "Experimental! Click cells to place control rods, then click Solve.";
+const defaultMessage = "Click cells to place control rods, then click Solve.";
 
 function makeGrid(): CellType[][] {
     return Array.from({ length: 4 }, () => Array(4).fill("empty") as CellType[]);
