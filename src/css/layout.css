@@ -195,6 +195,12 @@ Page structure and containers.
     box-shadow: 0 8px 32px rgb(0 0 0 / 40%);
 }
 
+/* Audio has no visual frame to fit; give the player a sensible, capped width. */
+.lightbox-content audio {
+    width: min(90vw, 480px);
+    display: block;
+}
+
 .lightbox-content img {
     cursor: zoom-in;
 
@@ -273,7 +279,12 @@ Page structure and containers.
     font-size: var(--font-size-sm);
     font-weight: 500;
     line-height: var(--line-height-tight);
-    max-width: 100%;
+
+    /* Sized to its text, capped at the image's width. The max() floor keeps
+       placeholder states ("Loading...", "Error loading audio") readable: the
+       media is hidden then, so .lightbox-content — and thus 100% — is 0 wide. */
+    width: max-content;
+    max-width: min(90vw, max(100%, 20rem));
     text-align: left;
 }
 

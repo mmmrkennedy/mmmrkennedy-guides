@@ -301,9 +301,10 @@ function classifyLinks(content, outputPath) {
             }
         }
 
-        const VALID_EXTS = [".webp", ".html", ".webm", ".gif", ".jpg", ".jpeg", ".png", ".mp4"];
-        const LIGHTBOX_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".gif", ".webm", ".mp4", ".mov"]);
+        const VALID_EXTS = [".webp", ".html", ".webm", ".gif", ".jpg", ".jpeg", ".png", ".mp4", ".flac", ".mp3", ".ogg", ".wav", ".m4a"];
+        const LIGHTBOX_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".gif", ".webm", ".mp4", ".mov", ".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
         const LIGHTBOX_VIDEO_EXTS = new Set([".webm", ".mp4", ".mov"]);
+        const LIGHTBOX_AUDIO_EXTS = new Set([".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
         let modified = false;
 
         const result = processable.replace(/<a(\s[^>]*)>/gi, (match, attrs) => {
@@ -369,7 +370,11 @@ function classifyLinks(content, outputPath) {
             let dataMediaType = null;
             if (hrefExt && LIGHTBOX_EXTS.has(hrefExt)) {
                 existing.add("lightbox-trigger");
-                dataMediaType = LIGHTBOX_VIDEO_EXTS.has(hrefExt) ? "video" : "image";
+                dataMediaType = LIGHTBOX_VIDEO_EXTS.has(hrefExt)
+                    ? "video"
+                    : LIGHTBOX_AUDIO_EXTS.has(hrefExt)
+                        ? "audio"
+                        : "image";
             }
 
             if (
@@ -578,7 +583,12 @@ function preRenderRevealButtons(content, outputPath) {
 // SMART IMAGE COPY
 // ========================================
 
-const IMAGE_EXTENSIONS = new Set([".webp", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".webm", ".ico", ".xml", ".txt"]);
+// Extensions eligible for the smart asset copy below (not strictly images — also
+// includes video, audio, and a few root-level static files).
+const IMAGE_EXTENSIONS = new Set([
+    ".webp", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".webm", ".ico", ".xml", ".txt",
+    ".flac", ".mp3", ".ogg", ".wav", ".m4a",
+]);
 
 function walkDir(dir, results = []) {
     if (!fs.existsSync(dir)) return results;

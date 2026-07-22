@@ -1,5 +1,5 @@
 /**
- * Lightbox system for images and videos
+ * Lightbox system for images, video, and audio
  * Handles media display, navigation, and keyboard controls
  */
 
@@ -29,7 +29,9 @@ let lastFocused: HTMLElement | null = null; // element focused before opening, r
 function getFocusableElements(): HTMLElement[] {
     const lightbox = document.getElementById("lightbox");
     if (!lightbox) return [];
-    const candidates = lightbox.querySelectorAll<HTMLElement>("button:not([disabled]), video[controls]");
+    const candidates = lightbox.querySelectorAll<HTMLElement>(
+        "button:not([disabled]), video[controls], audio[controls]"
+    );
     return Array.from(candidates).filter((el) => el.offsetParent !== null);
 }
 
@@ -128,9 +130,10 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
     const lightbox = document.getElementById("lightbox");
     const lightboxImg = document.getElementById("lightbox-img");
     const lightboxVideo = document.getElementById("lightbox-video") as HTMLVideoElement | null;
+    const lightboxAudio = document.getElementById("lightbox-audio") as HTMLAudioElement | null;
     const lightboxCaption = document.querySelector(".lightbox-caption");
 
-    if (!lightbox || !lightboxImg || !lightboxVideo || !lightboxCaption) return;
+    if (!lightbox || !lightboxImg || !lightboxVideo || !lightboxAudio || !lightboxCaption) return;
 
     // Remember what to return focus to — only on the initial open, not while
     // navigating between items (where focus is already inside the dialog).
@@ -156,6 +159,10 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
     }
     lightboxImg.style.display = "none";
     lightboxVideo.style.display = "none";
+    lightboxAudio.style.display = "none";
+    // Stop any video/audio still playing from the previous item before showing the next
+    lightboxVideo.pause();
+    lightboxAudio.pause();
     lightboxCaption.textContent = "Loading...";
 
     if (mediaType === "image") {
@@ -210,6 +217,24 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
         lightboxVideo.play().catch((e) => {
             console.warn("Auto-play prevented:", e);
         });
+    } else if (mediaType === "audio") {
+        lightboxAudio.setAttribute("src", mediaSrc);
+        lightboxAudio.style.display = "block";
+        lightboxCaption.textContent = captionText;
+
+        lightboxAudio.onloadeddata = function () {
+            lightboxCaption.textContent = captionText;
+        };
+
+        lightboxAudio.onerror = function () {
+            lightboxCaption.textContent = "Error loading audio";
+            lightboxAudio.style.display = "none";
+        };
+
+        // The opening click is a user gesture, so autoplay with sound is allowed
+        lightboxAudio.play().catch((e) => {
+            console.warn("Auto-play prevented:", e);
+        });
     }
 }
 
@@ -235,6 +260,7 @@ function navigateToNext(): void {
 function closeLightbox(): void {
     const lightbox = document.getElementById("lightbox");
     const lightboxVideo = document.getElementById("lightbox-video") as HTMLVideoElement | null;
+    const lightboxAudio = document.getElementById("lightbox-audio") as HTMLAudioElement | null;
 
     if (lightbox) {
         // Fade out, then hide once the transition has run. The guard lets a
@@ -251,6 +277,11 @@ function closeLightbox(): void {
     if (lightboxVideo) {
         lightboxVideo.pause();
         lightboxVideo.currentTime = 0;
+    }
+
+    if (lightboxAudio) {
+        lightboxAudio.pause();
+        lightboxAudio.currentTime = 0;
     }
 
     // Return focus to whatever opened the lightbox
@@ -315,8 +346,11 @@ function initLightbox(): void {
         const href = anchor.getAttribute("href");
         if (!href) return;
 
-        const mediaExtensions = [".webp", ".jpg", ".jpeg", ".png", ".gif", ".webm", ".mp4", ".mov"];
-        const isMedia = mediaExtensions.some((ext) => href.toLowerCase().endsWith(ext));
+        const videoExtensions = [".webm", ".mp4", ".mov"];
+        const audioExtensions = [".flac", ".mp3", ".ogg", ".wav", ".m4a"];
+        const mediaExtensions = [".webp", ".jpg", ".jpeg", ".png", ".gif", ...videoExtensions, ...audioExtensions];
+        const hrefLower = href.toLowerCase();
+        const isMedia = mediaExtensions.some((ext) => hrefLower.endsWith(ext));
         if (!isMedia) return;
 
         event.preventDefault();
@@ -324,8 +358,11 @@ function initLightbox(): void {
         // Ensure the anchor has the lightbox-trigger class and media type set
         if (!anchor.classList.contains("lightbox-trigger")) {
             anchor.classList.add("lightbox-trigger");
-            const isVideo = [".webm", ".mp4", ".mov"].some((ext) => href.toLowerCase().endsWith(ext));
-            anchor.dataset.mediaType = isVideo ? "video" : "image";
+            anchor.dataset.mediaType = videoExtensions.some((ext) => hrefLower.endsWith(ext))
+                ? "video"
+                : audioExtensions.some((ext) => hrefLower.endsWith(ext))
+                  ? "audio"
+                  : "image";
         }
 
         // Rebuild trigger list to include any links added after initial page load

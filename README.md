@@ -30,6 +30,7 @@ Finished:
 - Ashes Of The Damned (BO7)
 - Astra Malorum (BO7)
 - Call of the Dead (BO1)
+- Shangri-La (BO1)
 
 Planned:
 
