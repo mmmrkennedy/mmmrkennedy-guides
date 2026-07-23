@@ -11,3 +11,4 @@ Check for any CHANGE MEs in the new guide
 Check for unused images
 Update frontmatter to be SEO
 Run through the copy-edit skill
+Add the link to streaming for songs

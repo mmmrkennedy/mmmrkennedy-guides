@@ -112,8 +112,7 @@ export default function IWMainQuestWordFilter({ title }: { title?: string }) {
         <div className="solver-container solver-container--word-filter">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Type letters to filter the word list. The solver shows matching words and the possible next letters
-                based on your current input.
+                Type your in-game letters to filter the word list. The solver shows matching words and the possible next letters based on your current input automatically.
             </p>
 
             <div className="solver-form-row">

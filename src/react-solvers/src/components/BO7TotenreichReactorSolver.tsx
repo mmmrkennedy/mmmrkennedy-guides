@@ -5,7 +5,7 @@ type CellType = "empty" | "rod";
 type Phase = "setup" | "results";
 type Confidence = "high" | "med" | "low";
 
-const defaultMessage = "Click cells to place control rods, then click Solve.";
+const defaultMessage = "Click cells to place control rods, then click Solve to see the valid Uranium Rod placements.";
 
 function makeGrid(): CellType[][] {
     return Array.from({ length: 4 }, () => Array(4).fill("empty") as CellType[]);
@@ -187,11 +187,11 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         const score = Math.round(s.netNoBonus);
         return (
             <>
-                Solution {idx + 1} of {sols.length} — Confidence:{" "}
+                Solution {idx + 1} of {sols.length} - Confidence:{" "}
                 <span style={{ color: colors[s.confidence], fontWeight: "bold" }}>
                     {labels[s.confidence]}
                 </span>
-                {" "}— Score: {score}
+                {" "}- Score: {score}
             </>
         );
     };

@@ -67,10 +67,30 @@
 }
 
 /* Jump chips ------------------------------------------------------------- */
+
+/* Chips take the row; the completion tally is pushed to the trailing edge.
+ * Both wrap, so on narrow screens the tally drops to its own right-aligned line. */
+.index-nav__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-md);
+}
+
 .index-nav__chips {
     display: flex;
     flex-wrap: wrap;
+    flex: 1 1 auto;
     gap: var(--space-xs);
+}
+
+/* Completion tally — deliberately quiet: muted, small, no background. */
+.index-progress {
+    margin-left: auto;
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+    white-space: nowrap;
 }
 
 .index-nav__chip {

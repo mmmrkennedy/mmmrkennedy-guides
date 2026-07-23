@@ -60,8 +60,7 @@ export default function IWBeastFloppySolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--floppy">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click the 4 symbols that appear in your game in any order. The solver will validate the sequence and show
-                the correct order if valid. Click a selected symbol to deselect it.
+                Click the 4 symbols that appear in your game in any order. The solver will show the correct order if avaliable. Click a selected symbol to deselect it.
             </p>
 
             <div className="solver-symbol-select is-grid" role="group" aria-label="Symbol picker">

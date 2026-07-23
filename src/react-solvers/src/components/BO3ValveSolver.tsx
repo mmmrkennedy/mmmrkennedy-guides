@@ -118,9 +118,7 @@ export default function BO3ValveSolver({ title }: { title?: string }) {
         <div className="solver-container">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Pick the locations of the <span className="solver-text--green">Green Light Valve</span> and the{" "}
-                <span className="solver-text--pink">Pink Cylinder Valve</span>. The solver will show which valves to
-                adjust and their target settings.
+                Pick the locations of the <span className="solver-text--green">Green Light Valve</span> and the{" "} <span className="solver-text--pink">Pink Cylinder Valve</span>. The solver will show the required positions of each valve.
             </p>
 
             <div className="solver-form-row">

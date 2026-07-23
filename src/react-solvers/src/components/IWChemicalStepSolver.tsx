@@ -305,7 +305,7 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
         setShowStep2(true);
 
         if (letter === "Invalid Insect Num") {
-            messages.push("Insect Number is invalid — enter a valid Insect Number.");
+            messages.push("Insect Number is invalid - enter a valid Insect Number.");
             setShowInsectContainer(true);
             insectNumNeeded = true;
         } else if (letter === "Enter your Insect Number") {
@@ -316,7 +316,7 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
 
         if (String(finalONum).includes("or")) {
             messages.push(
-                "Multiple possible O Numbers — enter the correct one to continue. Options listed below.",
+                "Multiple possible O Numbers - enter the correct one to continue. Options listed below.",
             );
             setShowONumContainer(true);
             setShowStep3(true);
@@ -325,7 +325,7 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
 
         if (letter === "Invalid Racing Num") {
             messages.push(
-                "Can't determine the result from the Insect Repellent Number alone — enter the Racing Fuel Number.",
+                "Can't determine the result from the Insect Repellent Number alone - enter the Racing Fuel Number.",
             );
             setShowRacingContainer(true);
             setShowStep3(true);
@@ -369,8 +369,7 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--chemical-step">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Multi-step solver. Enter values as prompted and click Calculate to reveal the next step. Use "Show all
-                inputs" to skip the progressive disclosure.
+                This is a multi-step solver. Enter values as prompted and click Calculate to reveal the next step. Use "Show all inputs" to show all steps at once (not recommended).
             </p>
 
             <p className="solver-step-label">Step 1</p>

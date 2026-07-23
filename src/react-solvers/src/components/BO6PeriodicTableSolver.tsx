@@ -181,8 +181,7 @@ export default function BO6PeriodicTableSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--periodic">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Type 1–2 letters from the in-game monitor. The solver searches forwards and backwards (e.g. "fc"
-                matches Californium "Cf"). Exact matches show first, followed by partial matches.
+                Type 1 or 2 letters from the in-game monitor(s). The solver automatically searches for matching elements. Exact matches show first, followed by partial matches.
             </p>
 
             <div className="solver-form-row">

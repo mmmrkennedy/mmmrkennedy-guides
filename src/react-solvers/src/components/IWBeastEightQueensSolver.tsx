@@ -92,7 +92,7 @@ export default function IWBeastEightQueensSolver({ title }: { title?: string }) 
         phase === "setup"
             ? "Click the square where the starting Queen sits in your game, then press Solve."
             : solution
-                ? "Solution found — place the remaining Queens at the marked squares."
+                ? "Solution found - place the remaining Queens at the marked squares."
                 : "No solution found. Reset and try a different starting square.";
 
     const handleSquareClick = (row: number, col: number) => {

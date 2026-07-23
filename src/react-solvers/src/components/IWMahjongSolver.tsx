@@ -87,8 +87,7 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--mahjong">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click tiles as they appear in-game. A valid hand is 4 melds + 1 pair (14 tiles total). A meld is three
-                of a kind or three consecutive (e.g. 3-3-3 or 3-4-5). Click a placed tile to remove it.
+                Click the tiles as they appear in-game. A valid hand is 4 melds + 1 pair (14 tiles total). A meld is three of a kind or three consecutive (e.g. 3-3-3 or 3-4-5). Click a placed tile to remove it.
             </p>
 
             <div className="solver-symbol-select" role="group" aria-label="Mahjong tile picker">
@@ -116,7 +115,7 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
             <div className="solver-output" aria-live="polite">
                 {handResult?.isWinning ? (
                     <>
-                        <p><strong>Winning hand</strong> — arrange your tiles in this order:</p>
+                        <p><strong>Winning hand</strong> - arrange your tiles in this order:</p>
                         <div className="mahjong-hand">
                             {handResult.melds.map((meld, mi) => (
                                 <div key={`meld-${mi}`} className="mahjong-meld">
@@ -148,7 +147,7 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
                     <>
                         <p>
                             {isComplete && handResult && !handResult.isWinning
-                                ? <strong className="solver-error">Invalid hand — no valid arrangement of 4 melds + 1 pair.</strong>
+                                ? <strong className="solver-error">Invalid hand - no valid arrangement of 4 melds + 1 pair.</strong>
                                 : <>Selected tiles ({selectedValues.length}/14):</>}
                         </p>
                         <div className="mahjong-progress-row">

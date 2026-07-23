@@ -52,6 +52,45 @@ document.addEventListener("DOMContentLoaded", () => {
     if (groups.length === 0)
         return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // --- Completion tally ----------------------------------------------------
+    // Counted from the list itself so it can never drift from the links: every
+    // /games/ entry that isn't a `.solver-link` is one map, keyed by path so a
+    // map listed under two games (Shangri-La under BO1 and BO3, the Zombies
+    // Chronicles remasters) counts once. A map is complete unless every listing
+    // of it is `.disabled`.
+    function renderProgress() {
+        const box = document.querySelector("[data-index-progress]");
+        if (!box)
+            return;
+        const maps = new Map(); // path -> complete
+        container.querySelectorAll("a[href]").forEach((a) => {
+            if (a.classList.contains("solver-link"))
+                return;
+            const path = (a.getAttribute("href") ?? "").split(/[?#]/)[0].replace(/\/+$/, "");
+            if (!path.startsWith("/games/"))
+                return;
+            const complete = !a.classList.contains("disabled");
+            maps.set(path, (maps.get(path) ?? false) || complete);
+        });
+        const total = maps.size;
+        if (total === 0)
+            return;
+        let done = 0;
+        for (const complete of maps.values())
+            if (complete)
+                done++;
+        // Clamp the rounding so a single missing map can never read as "100%".
+        let pct = Math.round((done / total) * 100);
+        if (pct === 100 && done < total)
+            pct = 99;
+        if (pct === 0 && done > 0)
+            pct = 1;
+        box.textContent = `${done} / ${total} Guides Complete · ${pct}%`;
+        const left = total - done;
+        box.title = left === 0 ? "Every map is covered" : `${left} still being written`;
+        box.hidden = false;
+    }
+    renderProgress();
     // --- Jump chips ----------------------------------------------------------
     chipsBox.addEventListener("click", (e) => {
         const chip = e.target.closest(".index-nav__chip");

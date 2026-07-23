@@ -477,6 +477,21 @@ td {
  */
 
 /* Forms */
+
+/* Guide-content labels sit inline, immediately before their control. Source
+   whitespace between `</label>` and the control can't be relied on for the gap
+   — the production HTML minifier collapses it away — so the space comes from
+   here instead. A non-breaking space is used because a plain one would collapse
+   at the end of the label's line box and render as nothing. */
+label::after {
+    content: "\a0";
+}
+
+/* Solver forms lay their labels out with flex gap; they don't want the extra. */
+.solver-container label::after {
+    content: none;
+}
+
 input,
 select {
     background-color: var(--color-bg-tertiary);

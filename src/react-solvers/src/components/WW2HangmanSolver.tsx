@@ -51,7 +51,7 @@ export default function WW2HangmanSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--hangman">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Enter the correct letters in order, plus any wrong guesses, to narrow down the possible words.
+                Enter the correct letters in order, along with any wrong guesses. The Solver will automatically filter the words.
             </p>
 
             <div className="solver-form-row">

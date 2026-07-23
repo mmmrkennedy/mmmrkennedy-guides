@@ -24,7 +24,13 @@ description: "A website compiling accurate and up-to-date information on all Cal
             </svg>
         </button>
     </div>
-    <div class="index-nav__chips"></div>
+    <div class="index-nav__row">
+        <div class="index-nav__chips"></div>
+        <!-- Completion tally. Filled in by index-filter.ts by counting the map
+             links below, so the number can never drift from the actual list.
+             Hidden until then, so no placeholder shows if the script doesn't run. -->
+        <span class="index-progress" data-index-progress hidden></span>
+    </div>
 </nav>
 
 <p class="index-nav__empty" role="status" hidden>No maps match your search.</p>
@@ -45,6 +51,9 @@ description: "A website compiling accurate and up-to-date information on all Cal
     </li>
     <li>
         <a data-prefetchable href="/games/BO7/kowakujo/kowakujo_guide" class="disabled">Kowakujō</a>
+    </li>
+    <li>
+        <a data-prefetchable href="/games/BO7/rex_infernus/rex_infernus_guide" class="disabled">Rex Infernus</a>
     </li>
 </ul>
 
@@ -213,12 +222,8 @@ description: "A website compiling accurate and up-to-date information on all Cal
 <ul>
     <li><a data-prefetchable href="/games/AW/outbreak_AW/outbreak_AW_guide">Outbreak</a></li>
     <li><a data-prefetchable href="/games/AW/infection/infection_guide">Infection</a></li>
-    <li>
-        <a data-prefetchable href="/games/AW/carrier/carrier_guide" class="disabled">Carrier</a>
-    </li>
-    <li>
-        <a data-prefetchable href="/games/AW/descent/descent_guide" class="disabled">Descent</a>
-    </li>
+    <li><a data-prefetchable href="/games/AW/carrier/carrier_guide" class="disabled">Carrier</a></li>
+    <li><a data-prefetchable href="/games/AW/descent/descent_guide" class="disabled">Descent</a></li>
 </ul>
 
 <h2 id="BO2">Black Ops 2</h2>

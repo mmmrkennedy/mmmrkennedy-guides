@@ -157,8 +157,7 @@ export default function IWGnSSkull4Solver({ title }: { title?: string }) {
         <div className="solver-container solver-container--skull4">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Choose the target word, then click the 4 symbols matching the swingset symbols in your game. The code
-                updates automatically. Click a filled slot to clear it.
+                Choose the target word, then click the 4 symbols matching the swingset symbols in your game. The solution will be shown automatically. Click a filled slot to clear it.
             </p>
 
             <div className="solver-form-row">

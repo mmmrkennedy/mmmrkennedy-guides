@@ -8,6 +8,8 @@ type RotationList = [RotationValue, RotationValue, RotationValue, RotationValue]
 
 const DIRECTION_SYMBOLS: string[] = ["↑", "→", "↓", "←"];
 const STATUE_LABELS: string[] = ["A", "B", "C", "D"];
+// All statues facing down — the in-game solved position, and the starting point.
+const DEFAULT_DIRECTIONS: RotationList = [2, 2, 2, 2];
 const PUZZLE_OFFSETS: number[][] = [
     [1, 1, 1],
     [1, 2, 1, 1],
@@ -65,7 +67,7 @@ function solvePuzzle(directions: RotationList, puzzleID: PuzzleID): string[] {
     // Validate input directions
     for (let i = 0; i < workingDirections.length; i++) {
         if (offsets[i] === 2 && (workingDirections[i] === 1 || workingDirections[i] === 3)) {
-            return [`Invalid input — check Statue ${STATUE_LABELS[i]}.`];
+            return [`Invalid input - check Statue ${STATUE_LABELS[i]}.`];
         }
     }
 
@@ -151,30 +153,38 @@ function solvePuzzle(directions: RotationList, puzzleID: PuzzleID): string[] {
 
 export default function WW2StatueSolver({ title }: { title?: string }) {
     const [activeWall, setActiveWall] = useState<WallID>("wall1");
-    const [directions, setDirections] = useState<RotationList>([2, 2, 2, 2]);
+    const [directions, setDirections] = useState<RotationList>(DEFAULT_DIRECTIONS);
+    // Re-solved by every handler below, so the output tracks the statues live.
+    // Null only until the first interaction, which is when the nudge shows.
     const [result, setResult] = useState<string[] | null>(null);
 
     const statueCount = activeWall === "wall1" ? 3 : 4;
 
+    function puzzleIdFor(wall: WallID): PuzzleID {
+        return Number(wall.replace("wall", "")) as PuzzleID;
+    }
+
     function handleWallClick(wallId: WallID) {
         setActiveWall(wallId);
-        setResult(null);
+        setResult(solvePuzzle([...directions], puzzleIdFor(wallId)));
     }
 
     function handleStatueClick(statueIndex: StatueIndex) {
         const newDirections: RotationList = [...directions];
         newDirections[statueIndex] = ((newDirections[statueIndex] + 1) % 4) as RotationValue;
         setDirections(newDirections);
-        setResult(null);
+        setResult(solvePuzzle([...newDirections], puzzleIdFor(activeWall)));
     }
 
-    function handleSolve() {
-        const puzzleID = Number(activeWall.replace("wall", "")) as PuzzleID;
-        setResult(solvePuzzle([...directions], puzzleID));
-    }
+    // Redundant now that every input re-solves. Kept commented, alongside its
+    // button below, so auto-solve can be backed out in one edit.
+    // function handleSolve() {
+    //     setResult(solvePuzzle([...directions], puzzleIdFor(activeWall)));
+    // }
 
+    // Back to the untouched state, nudge and all — not "Already solved!".
     function handleReset() {
-        setDirections([2, 2, 2, 2]);
+        setDirections(DEFAULT_DIRECTIONS);
         setResult(null);
     }
 
@@ -182,8 +192,7 @@ export default function WW2StatueSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--statue">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Pick the wall you're solving, then click each statue to cycle its facing direction (↑ → ↓ ←) until they
-                match the in-game positions. Click Solve for the turn instructions.
+                Pick the wall you're solving, then click each statue to cycle its facing direction (↑ → ↓ ←) until they match the in-game positions. The turn instructions update as you go.
             </p>
 
             <div className="solver-controls is-centered" role="group" aria-label="Wall picker">
@@ -224,17 +233,19 @@ export default function WW2StatueSolver({ title }: { title?: string }) {
             </div>
 
             <div className="solver-controls">
+                {/* Superseded by auto-solve — restore this and handleSolve together.
                 <button type="button" className="btn btn--solver" onClick={handleSolve}>Solve</button>
+                */}
                 <button type="button" className="btn btn--solver" onClick={handleReset}>Reset</button>
             </div>
 
-            {result && (
-                <div className="solver-output" aria-live="polite">
-                    {result.map((line, i) => (
-                        <p key={i}>{line}</p>
-                    ))}
-                </div>
-            )}
+            <div className="solver-output" aria-live="polite">
+                {result ? (
+                    result.map((line, i) => <p key={i}>{line}</p>)
+                ) : (
+                    <p style={{ color: "var(--color-text-muted)" }}>Set the statues to their in-game directions.</p>
+                )}
+            </div>
         </div>
     );
 }

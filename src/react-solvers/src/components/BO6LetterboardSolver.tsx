@@ -34,7 +34,7 @@ function calculateCode(word: Word | null, boardId: BoardId | null): CalcResult {
         if (!group) {
             return {
                 kind: "error",
-                reason: `Letter "${letter}" isn't on this board — check your board choice.`,
+                reason: `Letter "${letter}" isn't on this board - check your board choice.`,
             };
         }
         digits += String(group.length);
@@ -58,8 +58,7 @@ export default function BO6LetterboardSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--letterboard">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Pick the word from the in-game letterboard and the letters you see in the bottom-left corner. The code
-                appears automatically.
+                Pick the word from the fax machine paper and the letter(s) you see in the bottom-left corner of the chalkboard. The code will appear automatically.
             </p>
 
             <div className="solver-form-row">

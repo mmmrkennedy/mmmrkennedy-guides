@@ -36,7 +36,7 @@ function calculate(slots: Slots): CalcResult {
     const f3 = Math.abs(Y + Z - X);
 
     if (f1 < 0 || f2 < 0 || f3 < 0) {
-        return { kind: "error", reason: "Invalid selection — a formula returned a negative number." };
+        return { kind: "error", reason: "Invalid selection - a formula returned a negative number." };
     }
 
     const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
@@ -83,8 +83,7 @@ export default function BO6BeamsmasherMathSolver({ title }: { title?: string }) 
         <div className="solver-container solver-container--beamsmasher">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click each symbol matching the sticky notes on the in-game computer. Symbols fill the X / Y / Z slots in
-                order. Click a filled slot or its symbol again to clear it.
+                Click the symbols from the in-game computer's sticky notes in order, starting with X. Click a filled slot or its symbol again to clear it. The solution appears automatically.
             </p>
 
             <div className="solver-symbol-select is-grid" role="group" aria-label="Symbol picker">

@@ -69,8 +69,7 @@ export default function BO6MaxisItemsSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--maxis">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click the 4 S.A.M. files <strong>in the order they appeared in-game</strong>. The solver will sort them
-                chronologically by date and show the code. Click a filled slot to remove that pick.
+                Click the 4 S.A.M. files that appear in-game. The solver will automatically sort them chronologically by date and show the code. Click a filled slot to remove that pick.
             </p>
 
             <div className="solver-text-picker" role="group" aria-label="S.A.M. file picker">
