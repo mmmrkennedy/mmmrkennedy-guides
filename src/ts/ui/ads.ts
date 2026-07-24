@@ -12,11 +12,19 @@ const ADS_KEY = "ads-mode";
 const MOBILE_MAX_WIDTH = 768;
 const injected = { sidebars: false, inline: false, multiplex: false };
 
+/**
+ * Site-wide kill switch. While true, ads are forced to "hidden" for everyone —
+ * a stored 'ads-mode' preference is ignored, no slots are injected, and the
+ * toggle button is hidden. Flip to false to restore normal behaviour.
+ */
+const ADS_DISABLED = true;
+
 function isMobileViewport(): boolean {
     return window.innerWidth <= MOBILE_MAX_WIDTH;
 }
 
 function getAdsMode(): AdsMode {
+    if (ADS_DISABLED) return "hidden";
     const stored = localStorage.getItem(ADS_KEY);
     return stored === "minimal" || stored === "hidden" ? stored : "full";
 }
@@ -245,6 +253,7 @@ function applyMode(mode: AdsMode): void {
 }
 
 function setMode(mode: AdsMode): void {
+    if (ADS_DISABLED) return;
     localStorage.setItem(ADS_KEY, mode);
     applyMode(mode);
 }
@@ -254,6 +263,14 @@ function initAdToggle(): void {
     if (!btn) return;
 
     const indicator = document.getElementById("ad-mode-indicator");
+
+    // Nothing to toggle while ads are disabled site-wide — hide the control.
+    if (ADS_DISABLED) {
+        btn.style.display = "none";
+        if (indicator) indicator.style.display = "none";
+        return;
+    }
+
     const NEXT_MODE: Record<AdsMode, AdsMode> = { full: "minimal", minimal: "hidden", hidden: "full" };
     const NEXT_LABEL: Record<AdsMode, string> = { full: "Minimal Ads", minimal: "Hide Ads", hidden: "Show Ads" };
     const MODE_LABEL: Record<AdsMode, string> = { full: "showing: full", minimal: "showing: minimal", hidden: "showing: none" };
