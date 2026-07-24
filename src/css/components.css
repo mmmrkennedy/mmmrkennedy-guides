@@ -79,9 +79,21 @@ a:hover {
     color: #c8a150;
 }
 
+/* A guide that isn't written yet: dimmed to secondary text so it reads as
+   deliberately inactive rather than as a link that lost its colour. The build
+   renames its href to data-href (the `unlinkUnwrittenGuides` transform in
+   eleventy.config.cjs), so it's an anchor that can't navigate — no need to
+   block pointer events, which means the not-allowed cursor sits on the name
+   itself. Touch has no hover, so index-filter.ts answers a tap with a toast. */
 .disabled {
-    pointer-events: none;
-    color: inherit;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    cursor: not-allowed;
+}
+
+/* Undo the global link hover: it still matches, but nothing here is clickable. */
+.disabled:hover {
+    opacity: 1;
     text-decoration: none;
 }
 

@@ -33,6 +33,13 @@ Desktop-specific upgrades. Base styles are mobile-first.
     .ad-multiplex {
         max-width: 100%;
     }
+
+    /* Enough width that the footer meta row rarely wraps — let its hairline
+       separators breathe. */
+    .site-footer__sep,
+    .site-footer__views::before {
+        margin-inline: 0.7em;
+    }
 }
 
 @media (width >= 48.0625em) { /* --bp-md */

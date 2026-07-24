@@ -419,6 +419,37 @@ function classifyLinks(content, outputPath) {
 }
 
 /**
+ * Eleventy transform: turn links to unwritten guides into plain text.
+ *
+ * Guides that don't exist yet are authored as `<a class="disabled" href="...">`
+ * so the href is already in place for whenever the guide lands. This renames
+ * that href to data-href in the output, which makes it an anchor with nowhere
+ * to go: it can't be followed, focused or middle-clicked, and crawlers stop
+ * seeing links to pages that aren't there. Because it's no longer a link, CSS
+ * can style hover on the name itself (see `.disabled` in components.css)
+ * instead of blocking pointer events wholesale.
+ *
+ * Runs last, so classifyLinks and addVersioning still see the real href.
+ */
+function unlinkUnwrittenGuides(content, outputPath) {
+    if (!outputPath?.endsWith(".html")) return content;
+    if (!content.includes("disabled")) return content;
+
+    let modified = false;
+    const result = content.replace(/<a\s[^>]*>/gi, (tag) => {
+        // Exact class token only: `btn--disabled` or `is-disabled` must not match.
+        // Leading `\s` keeps this off attributes that merely end in "class".
+        const classAttr = /\sclass=["']([^"']*)["']/i.exec(tag);
+        if (!classAttr || !classAttr[1].split(/\s+/).includes("disabled")) return tag;
+        // `\s` before href so an already-renamed data-href is left alone.
+        if (!/\shref=/i.test(tag)) return tag;
+        modified = true;
+        return tag.replace(/(\s)href=/i, "$1data-href=");
+    });
+    return modified ? result : content;
+}
+
+/**
  * Eleventy transform to add version parameters to CSS and JS links
  * and add version display component
  */
@@ -658,6 +689,7 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addTransform("classifyLinks", classifyLinks);
     eleventyConfig.addTransform("addVersioning", addVersioning);
     eleventyConfig.addTransform("injectReactBundle", injectReactBundle);
+    eleventyConfig.addTransform("unlinkUnwrittenGuides", unlinkUnwrittenGuides);
 
     // Performance optimization: use passthrough for dev server (faster)
     eleventyConfig.setServerPassthroughCopyBehavior("passthrough");
@@ -696,8 +728,15 @@ module.exports = function(eleventyConfig) {
     // Add a shortcode for the current year (useful for copyright)
     eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`);
 
-    // Given a page's inputPath (e.g. "./src/index.html"), return its git last-modified
-    // date from lastmod-cache.json, formatted like "May 11, 2026". Empty string if unknown.
+    // Given a page's inputPath (e.g. "./src/index.html"), return the bare calendar
+    // date git recorded for it ("2026-05-11"). Empty string if unknown.
+    eleventyConfig.addFilter("lastmodISO", (inputPath) => {
+        if (!inputPath) return "";
+        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
+        return (lastmodCache[key] || "").slice(0, 10);
+    });
+
+    // Same date formatted like "May 11, 2026", for the footer's hover tooltip.
     eleventyConfig.addFilter("lastmod", (inputPath) => {
         if (!inputPath) return "";
         const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
@@ -713,6 +752,31 @@ module.exports = function(eleventyConfig) {
             day: "numeric",
             timeZone: "UTC",
         });
+    });
+
+    // Same date as "3 days ago" / "last month" / "2 years ago", for the footer's
+    // visible text. This is only the no-JS fallback: it is baked in at build time
+    // and would drift as the deploy ages, so relative-time.ts re-renders it in the
+    // browser against the reader's own clock. Keep the two bucket ladders in sync.
+    const relativeFmt = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    eleventyConfig.addFilter("lastmodRelative", (inputPath) => {
+        if (!inputPath) return "";
+        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
+        const iso = lastmodCache[key];
+        if (!iso) return "";
+        const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+        const now = new Date();
+        // Compare calendar date to calendar date — both sides pinned to UTC noon so
+        // no timezone or DST shift can nudge the difference across a day boundary.
+        const then = Date.UTC(y, m - 1, d);
+        const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const days = Math.max(0, Math.round((today - then) / 86400000));
+
+        if (days < 1) return "today";
+        if (days < 7) return relativeFmt.format(-days, "day");
+        if (days < 31) return relativeFmt.format(-Math.round(days / 7), "week");
+        if (days < 365) return relativeFmt.format(-Math.max(1, Math.round(days / 30.44)), "month");
+        return relativeFmt.format(-Math.max(1, Math.round(days / 365.25)), "year");
     });
 
     // Given a page's inputPath, return how many commits have touched it (its

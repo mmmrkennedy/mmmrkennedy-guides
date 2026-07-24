@@ -29,6 +29,7 @@ h4 {
 }
 
 .discord-link-text {
+    margin-top: 0 !important;
     font-size: clamp(0.875rem, 2.5vw, 1.125rem);
 }
 

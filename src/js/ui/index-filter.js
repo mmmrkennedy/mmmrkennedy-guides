@@ -57,16 +57,18 @@ document.addEventListener("DOMContentLoaded", () => {
     // /games/ entry that isn't a `.solver-link` is one map, keyed by path so a
     // map listed under two games (Shangri-La under BO1 and BO3, the Zombies
     // Chronicles remasters) counts once. A map is complete unless every listing
-    // of it is `.disabled`.
+    // of it is `.disabled` — and those carry data-href, not href, because the
+    // build unlinks them (see `unlinkUnwrittenGuides` in eleventy.config.cjs).
     function renderProgress() {
         const box = document.querySelector("[data-index-progress]");
         if (!box)
             return;
         const maps = new Map(); // path -> complete
-        container.querySelectorAll("a[href]").forEach((a) => {
+        container.querySelectorAll("a[href], a[data-href]").forEach((a) => {
             if (a.classList.contains("solver-link"))
                 return;
-            const path = (a.getAttribute("href") ?? "").split(/[?#]/)[0].replace(/\/+$/, "");
+            const target = a.getAttribute("href") ?? a.getAttribute("data-href") ?? "";
+            const path = target.split(/[?#]/)[0].replace(/\/+$/, "");
             if (!path.startsWith("/games/"))
                 return;
             const complete = !a.classList.contains("disabled");
@@ -91,6 +93,35 @@ document.addEventListener("DOMContentLoaded", () => {
         box.hidden = false;
     }
     renderProgress();
+    // --- "Not written yet" tap hint ------------------------------------------
+    // A map without a guide is a `.disabled` anchor the build has stripped the
+    // href from, so clicking it does nothing at all. On a mouse the not-allowed
+    // cursor says why, but touch has no hover — so a tap gets an explanation.
+    // Reuses .gfb-toast from feedback.css; the line flagger (its other user) is
+    // off on this page via <body data-no-flags>.
+    const toast = document.createElement("div");
+    toast.className = "gfb-toast";
+    toast.setAttribute("role", "status");
+    document.body.appendChild(toast);
+    let toastTimer;
+    container.addEventListener("click", (e) => {
+        const dead = e.target?.closest("a.disabled");
+        if (!dead)
+            return;
+        // Built as nodes rather than innerHTML so the map name stays text
+        const name = document.createElement("strong");
+        name.textContent = (dead.textContent ?? "").trim();
+        if (name.textContent.startsWith("The ")) {
+            toast.replaceChildren(name, " guide has not been written yet");
+        }
+        else {
+            toast.replaceChildren("The ", name, " guide has not been written yet");
+        }
+        toast.classList.add("is-on");
+        if (toastTimer)
+            clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("is-on"), 2600);
+    });
     // --- Jump chips ----------------------------------------------------------
     chipsBox.addEventListener("click", (e) => {
         const chip = e.target.closest(".index-nav__chip");

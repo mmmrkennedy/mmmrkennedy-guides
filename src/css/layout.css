@@ -38,33 +38,90 @@ Page structure and containers.
 
 /* Site Footer — copyright + last-updated date + edit count */
 .site-footer {
-    padding: var(--space-lg) var(--space-md);
+    position: relative;
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
     text-align: center;
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
-    border-top: 1px solid var(--color-border-subtle);
 }
 
-.site-footer p {
-    margin: var(--space-xs) 0;
+/* Hairline divider that fades out at both ends rather than butting into the
+   viewport edges, with a breath of the site's gold at the centre. Drawn as a
+   pseudo-element because a border can't carry a gradient. */
+.site-footer::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent,
+        var(--color-border-medium) 20%,
+        var(--color-tier-3) 50%,
+        var(--color-border-medium) 80%,
+        transparent
+    );
 }
 
-/* Single-line meta row: copyright • last updated • edits • views */
+/* Single-line meta row: copyright │ updated │ edits │ views.
+   Flex (not inline text) so a narrow screen wraps between whole items and the
+   wrapped rows stay evenly spaced. */
+.site-footer__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    row-gap: var(--space-xs);
+    margin: 0;
+    line-height: var(--line-height-tight);
+}
+
+/* Separators are hairline rules, not bullet glyphs — quieter, and they echo the
+   divider above. Empty spans in the markup; the rule is drawn entirely here.
+   Margins start tight so a phone fits more of the row on one line before it
+   wraps (a wrap can strand a rule at the end of a line); responsive.css opens
+   them up once there's width to spare. */
 .site-footer__sep {
-    margin: 0 var(--space-xs);
-    opacity: 0.5;
+    flex: none;
+    width: 1px;
+    height: 0.85em;
+    margin: 0 0.5em;
+    background-color: currentcolor;
+    opacity: 0.3;
+}
+
+/* The one warm note in the row — everything else stays muted grey. */
+.site-footer__copyright {
+    color: var(--color-tier-2);
+}
+
+/* Counts sit next to each other across pages; tabular figures stop them jittering. */
+.site-footer__edits,
+.site-footer__views {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Carries a `title` with the full date — hint that it's hoverable. */
+.site-footer__updated {
+    border-bottom: 1px dotted rgb(255 255 255 / 12%);
+    cursor: help;
 }
 
 /* Views count is filled in by JS (view-counter). Hidden until it has a value,
-   and draws its own leading separator so it matches the static bullets. */
+   and draws its own leading separator so it matches the static ones. */
 .site-footer__views:empty {
     display: none;
 }
 
 .site-footer__views::before {
-    content: "\2022";
-    margin: 0 var(--space-xs);
-    opacity: 0.5;
+    content: "";
+    display: inline-block;
+    width: 1px;
+    height: 0.85em;
+    margin: 0 0.5em;
+    vertical-align: -0.12em;
+    background-color: currentcolor;
+    opacity: 0.3;
 }
 
 /* Main Content Window */

@@ -3,6 +3,13 @@
 /games/:a/:b/games/*   /   301
 /games/:a/games/*      /   301
 
+# Pages renamed to the site-wide *_guide convention (2026-07-24). Keeps old
+# bookmarks and search results working.
+/games/BO6/the_tomb/the_tomb                              /games/BO6/the_tomb/the_tomb_guide                              301
+/games/WW2/the_tortured_path/survival_maps/altar_of_blood      /games/WW2/the_tortured_path/survival_maps/altar_of_blood_guide      301
+/games/WW2/the_tortured_path/survival_maps/bodega_cervantes    /games/WW2/the_tortured_path/survival_maps/bodega_cervantes_guide    301
+/games/WW2/the_tortured_path/survival_maps/uss_mount_olympus   /games/WW2/the_tortured_path/survival_maps/uss_mount_olympus_guide   301
+
 /games/BO7/   /#BO7   301
 /games/BO6/   /#BO6   301
 /games/VG/    /#VG    301

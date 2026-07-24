@@ -22,6 +22,7 @@ const JS_CORE_ORDER = [
     "quick-links-utils.js",
     "scripts.js",
     "ui/view-counter.js",
+    "ui/relative-time.js",
     "ui/line-flagger.js",
     "ui/trending.js",
     "ui/return-pill.js",

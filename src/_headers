@@ -16,6 +16,22 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
+# Guide and solver pages are served extensionless (/games/BO6/terminus/terminus_guide),
+# so neither rule above ever matched them — they fell through to the Pages default
+# and revalidated on every visit. Matched by name suffix rather than by path depth:
+# assets sit at the same depth (/games/IW/wyler_language_symbols/a.webp), and a
+# depth-based rule would take them off the image rules below. Every page ends in
+# one of these suffixes; keep it that way when adding pages.
+/games/*_guide
+/games/*_solver
+/games/*_solvers
+/games/*_table
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
 /*.css
   Cache-Control: public, max-age=2592000, must-revalidate
 
@@ -28,6 +44,13 @@
 # (If-None-Match / If-Modified-Since) and Cloudflare answers 304 with no body
 # when unchanged, or sends the new bytes immediately when the image changed.
 # (`no-cache` does NOT mean "don't cache" — that would be `no-store`.)
+#
+# NOT IN EFFECT as of 2026-07-24: the zone's Browser Cache TTL is set to 4 hours,
+# which overrides any origin TTL shorter than itself, so images actually reach
+# browsers as `public, max-age=14400` and can be up to 4h stale. CSS/JS/fonts are
+# unaffected because their TTLs are longer than 4h. No value below 4h can win
+# here — the fix is Caching → Configuration → Browser Cache TTL → "Respect
+# Existing Headers" in the Cloudflare dashboard.
 /*.webp
   Cache-Control: public, no-cache
 

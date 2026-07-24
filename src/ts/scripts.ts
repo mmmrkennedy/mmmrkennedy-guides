@@ -37,8 +37,18 @@ document.addEventListener("DOMContentLoaded", () => {
 =======================================
 HOVER PREFETCH FOR INTERNAL LINKS
 =======================================
+Disabled 2026-07-24 in favour of Cloudflare Speed Brain, which prefetches on the
+same conservative hover/pointerdown signal at the edge. While Speed Brain is on
+it owns every request carrying `Sec-Purpose: prefetch` and answers the ones it
+considers ineligible with an empty 503 (`Cf-Speculation-Refused: prefetch
+refused: not eligible`), so this code could only ever produce a wasted round
+trip. Flip the flag back on if Speed Brain is ever turned off.
  */
+const HOVER_PREFETCH_ENABLED: boolean = false;
+
 document.addEventListener("DOMContentLoaded", () => {
+    if (!HOVER_PREFETCH_ENABLED) return;
+
     try {
         // Track which pages we've already prefetched
         const prefetchedUrls = new Set<string>();
@@ -63,10 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Find all internal links (excluding external, anchors, and disabled ones)
         const htmlLinks = document.querySelectorAll<HTMLAnchorElement>("a[data-prefetchable]:not(.disabled)");
-        if (htmlLinks.length === 0) {
-            console.warn("No HTML links found to prefetch");
-            return;
-        }
+        // Only the index carries prefetchable links; every guide page hits this.
+        if (htmlLinks.length === 0) return;
 
         htmlLinks.forEach((link) => {
             const href = link.getAttribute("href");

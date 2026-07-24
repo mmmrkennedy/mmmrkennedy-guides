@@ -222,13 +222,15 @@
 
     <footer class="site-footer">
         {%- set updated = page.inputPath | lastmod %}
+        {%- set updatedISO = page.inputPath | lastmodISO %}
+        {%- set updatedRel = page.inputPath | lastmodRelative %}
         {%- set edits = page.inputPath | editcount %}
         {%- set editorList = editors | formatEditors %}
         <p class="site-footer__meta">
             <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
-            {%- if editorList %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
-            {%- if updated %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__updated">Last updated {{ updated }}</span>{% endif %}
-            {%- if edits %}<span class="site-footer__sep" aria-hidden="true">&bull;</span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
+            {%- if editorList %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
+            {%- if updated %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__updated" datetime="{{ updatedISO }}" title="Last updated {{ updated }}">Updated {{ updatedRel }}</time>{% endif %}
+            {%- if edits %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
             <span class="site-footer__views"></span>
         </p>
     </footer>
@@ -256,6 +258,7 @@
 <script src="/js/quick-links-utils.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/scripts.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/view-counter.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/relative-time.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/line-flagger.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/return-pill.js?v={{ site.buildVersion }}" defer></script>
 <!-- Ads load as an independent async island (ads.ts self-bootstraps) -->

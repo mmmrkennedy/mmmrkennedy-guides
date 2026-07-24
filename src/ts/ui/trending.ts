@@ -8,7 +8,7 @@
  * guide-vs-solver split and link matching are done here from the index's own
  * links: solver links carry `.solver-link`, and `.disabled` (unfinished) links
  * are skipped — so it works even where a path doesn't follow naming conventions
- * (e.g. /the_tomb/the_tomb, /citadelle_void_table).
+ * (e.g. /citadelle_void_table).
  */
 document.addEventListener("DOMContentLoaded", () => {
     if (!document.body.hasAttribute("data-trending")) return;
