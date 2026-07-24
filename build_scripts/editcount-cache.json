@@ -1,9 +1,9 @@
 {
   "og-image.html": 2,
-  "src/games/AW/carrier/carrier_guide.html": 8,
+  "src/games/AW/carrier/carrier_guide.html": 9,
   "src/games/AW/descent/descent_guide.html": 8,
   "src/games/AW/infection/infection_guide.html": 13,
-  "src/games/AW/outbreak_AW/outbreak_AW_guide.html": 14,
+  "src/games/AW/outbreak_AW/outbreak_AW_guide.html": 15,
   "src/games/BO1/ascension/ascension_guide.html": 18,
   "src/games/BO1/call_of_the_dead/call_of_the_dead_dial_solver.html": 3,
   "src/games/BO1/call_of_the_dead/call_of_the_dead_guide.html": 12,
@@ -79,7 +79,7 @@
   "src/games/WW2/the_tortured_path/survival_maps/bodega_cervantes.html": 11,
   "src/games/WW2/the_tortured_path/survival_maps/uss_mount_olympus.html": 11,
   "src/games/WW2/the_tortured_path/the_tortured_path_guide.html": 18,
-  "src/index.html": 34,
+  "src/index.html": 35,
   "src/react-solvers/dist/react-solvers/index.html": 2,
   "src/react-solvers/index.html": 9
 }

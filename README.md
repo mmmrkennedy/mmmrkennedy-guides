@@ -31,6 +31,7 @@ Finished:
 - Astra Malorum (BO7)
 - Call of the Dead (BO1)
 - Shangri-La (BO1)
+- Carrier (AW)
 
 Planned:
 
