@@ -86,14 +86,14 @@ a:hover {
    block pointer events, which means the not-allowed cursor sits on the name
    itself. Touch has no hover, so index-filter.ts answers a tap with a toast. */
 .disabled {
-    color: var(--color-text-secondary);
+    color: var(--color-text-primary);
+    opacity: 0.85;
     text-decoration: none;
-    cursor: not-allowed;
+    cursor: pointer;
 }
 
-/* Undo the global link hover: it still matches, but nothing here is clickable. */
 .disabled:hover {
-    opacity: 1;
+    opacity: 0.85;
     text-decoration: none;
 }
 

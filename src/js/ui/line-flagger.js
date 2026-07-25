@@ -1,4 +1,20 @@
 "use strict";
+/**
+ * Blocks nested inside a line that are lines of their own: they're excluded from
+ * the line's text, and the ⚑ goes before the first of them rather than after the
+ * whole subtree. `.table-scroll` is the wrapper the build puts around every
+ * <table> (wrapTables in eleventy.config.cjs), so a bare `table` never actually
+ * appears as a child here — without the wrapper in this list a list item that
+ * introduces a table swallowed the entire table's text into its hash and quote,
+ * and parked its flag below the table.
+ */
+const NESTED_BLOCK = "ul, ol, table, p, .table-scroll";
+/** Same set, matched only as a direct child. */
+const NESTED_BLOCK_CHILD = NESTED_BLOCK.split(", ")
+    .map((sel) => ":scope > " + sel)
+    .join(", ");
+/** Nested blocks plus the chrome this script injects — all skipped by lineText(). */
+const NOT_OWN_TEXT = NESTED_BLOCK + ", .gfb-flag, .gfb-buggy-note";
 document.addEventListener("DOMContentLoaded", () => {
     // Pages can opt out (e.g. the home/index page) via <body data-no-flags>.
     if (document.body.hasAttribute("data-no-flags"))
@@ -204,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         // Put the ⚑ at the end of the line's own text — before any nested
         // sublist/table — not after the whole subtree.
-        const nested = el.querySelector(":scope > ul, :scope > ol, :scope > table, :scope > p");
+        const nested = el.querySelector(NESTED_BLOCK_CHILD);
         if (nested)
             el.insertBefore(flag, nested);
         else
@@ -263,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (n.nodeType !== Node.ELEMENT_NODE)
                 return;
             const e = n;
-            if (e.matches("ul, ol, table, p, .gfb-flag, .gfb-buggy-note"))
+            if (e.matches(NOT_OWN_TEXT))
                 return;
             out += e.textContent ?? "";
         });

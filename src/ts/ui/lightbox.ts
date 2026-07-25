@@ -160,6 +160,12 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
     lightboxImg.style.display = "none";
     lightboxVideo.style.display = "none";
     lightboxAudio.style.display = "none";
+    // Drop any pending reveal/error callbacks from the previous item so they
+    // can't fire late and un-hide media that is no longer the current one.
+    lightboxVideo.onloadedmetadata = null;
+    lightboxVideo.onerror = null;
+    lightboxAudio.onloadeddata = null;
+    lightboxAudio.onerror = null;
     // Stop any video/audio still playing from the previous item before showing the next
     lightboxVideo.pause();
     lightboxAudio.pause();
@@ -200,18 +206,32 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
             lightboxImg.style.display = "none";
         };
     } else if (mediaType === "video") {
-        lightboxVideo.setAttribute("src", mediaSrc);
-        lightboxVideo.style.display = "block";
         lightboxCaption.textContent = captionText;
-
-        lightboxVideo.onloadeddata = function () {
-            lightboxCaption.textContent = captionText;
-        };
 
         lightboxVideo.onerror = function () {
             lightboxCaption.textContent = "Error loading video";
             lightboxVideo.style.display = "none";
         };
+
+        // A <video> with no metadata yet lays out at the default 300x150 box, so
+        // showing it before it knows its own size flashes a small empty frame.
+        // Reveal it only once the real dimensions are in.
+        const reveal = (): void => {
+            lightboxVideo.style.display = "block";
+        };
+
+        // Assigning src re-runs the media load algorithm even when the URL is
+        // unchanged, dropping readyState back to HAVE_NOTHING — that's why the
+        // flash came back on every re-open. Skip the reload for a repeat view.
+        const resolvedSrc = new URL(mediaSrc, document.baseURI).href;
+        if (lightboxVideo.src !== resolvedSrc || lightboxVideo.error) {
+            lightboxVideo.onloadedmetadata = reveal;
+            lightboxVideo.setAttribute("src", resolvedSrc);
+        } else if (lightboxVideo.readyState >= HTMLMediaElement.HAVE_METADATA) {
+            reveal();
+        } else {
+            lightboxVideo.onloadedmetadata = reveal;
+        }
 
         // Start playing the video (autoplay may be blocked by the browser)
         lightboxVideo.play().catch((e) => {
