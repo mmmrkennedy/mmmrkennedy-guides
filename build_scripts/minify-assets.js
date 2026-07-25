@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const distDir = path.join(__dirname, "..", "dist");
 const BUNDLE = process.env.BUNDLE === "true";
 
-// Core site JS (nav, lightbox, legend, scroll, content, etc.) — loaded `defer`.
+// Core site JS (nav, lightbox, legend, scroll, content, etc.), loaded `defer`.
 const JS_CORE_ORDER = [
     "core/page-utils.js",
     "navigation/scroll-manager.js",
@@ -25,10 +25,12 @@ const JS_CORE_ORDER = [
     "ui/relative-time.js",
     "ui/line-flagger.js",
     "ui/trending.js",
+    "ui/stats-live.js",
+    "ui/table-sort.js",
     "ui/return-pill.js",
 ];
 
-// Ads — split into its own bundle, loaded `async` and decoupled from core so a
+// Ads, split into its own bundle, loaded `async` and decoupled from core so a
 // slow/blocked/failed ad payload never delays core interactivity. ads.js
 // self-bootstraps (see ads.ts), so it needs no ordering relative to core.
 const JS_ADS_ORDER = ["ui/ads.js"];

@@ -11,7 +11,7 @@ let lastmodCache = {};
 try {
     lastmodCache = require("./build_scripts/lastmod-cache.json");
 } catch {
-    console.warn("lastmod-cache.json not found — footer 'last updated' dates will be omitted.");
+    console.warn("lastmod-cache.json not found; footer 'last updated' dates will be omitted.");
 }
 
 // Commits-per-file ("edit count"), from the same refresh script as lastmodCache.
@@ -19,7 +19,288 @@ let editcountCache = {};
 try {
     editcountCache = require("./build_scripts/editcount-cache.json");
 } catch {
-    console.warn("editcount-cache.json not found — footer edit counts will be omitted.");
+    console.warn("editcount-cache.json not found; footer edit counts will be omitted.");
+}
+
+// Initial-release dates, same key shape as lastmodCache. Unlike the two caches
+// above this one is NOT regenerated on CI: half of it was recovered from the old
+// zombiesGuides repo's history, which doesn't exist on the build server. It is
+// committed data, refreshed by hand via derive-release-dates.cjs. Pages absent
+// from it (unreleased guides, the index) simply render no release date.
+let releaseCache = {};
+try {
+    releaseCache = require("./build_scripts/release-dates.json");
+} catch {
+    console.warn("release-dates.json not found; footer release dates will be omitted.");
+}
+
+/**
+ * "2026-05-11" -> "May 11, 2026". Formatted in UTC off the leading calendar date
+ * so the build server's timezone (UTC on Cloudflare) can't shift an evening-local
+ * date onto the next day.
+ */
+function formatCalendarDate(iso) {
+    if (!iso) return "";
+    const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC",
+    });
+}
+
+/** Normalize a page's inputPath ("./src/index.html") to a cache key ("src/index.html"). */
+function cacheKeyFor(inputPath) {
+    return inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
+/**
+ * "2026-05-11" -> "3 days ago" / "last month" / "2 years ago".
+ *
+ * Baked in at build time, so it would drift as the deploy ages; relative-time.ts
+ * re-renders it in the browser against the reader's own clock. Keep this bucket
+ * ladder and the one there in sync, or pages visibly reword when the script runs.
+ */
+const relativeFmt = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+function formatRelativeDate(iso) {
+    if (!iso) return "";
+    const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+    const now = new Date();
+    // Compare calendar date to calendar date, both sides pinned to UTC noon so
+    // no timezone or DST shift can nudge the difference across a day boundary.
+    const then = Date.UTC(y, m - 1, d);
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const days = Math.max(0, Math.round((today - then) / 86400000));
+
+    if (days < 1) return "today";
+    if (days < 7) return relativeFmt.format(-days, "day");
+    if (days < 31) return relativeFmt.format(-Math.round(days / 7), "week");
+    if (days < 365) return relativeFmt.format(-Math.max(1, Math.round(days / 30.44)), "month");
+    return relativeFmt.format(-Math.max(1, Math.round(days / 365.25)), "year");
+}
+
+// ========================================
+// WORD COUNTS
+// ========================================
+
+// Below this a page is a solver shell or a stub, not something with a readable
+// length worth quoting, so it gets no footer count and no share of the total.
+const WORDCOUNT_FLOOR = 100;
+
+/**
+ * Words of visible prose in a chunk of page HTML. Comments, <script>/<style>/
+ * <template> bodies and every tag (with its attributes, so class names, hrefs
+ * and alt text never count) are dropped before tokenizing. A word starts with
+ * a letter or digit; inner apostrophes and hyphens keep "Pack-a-Punch" and
+ * "Hell's" as one word each.
+ */
+function countWords(html) {
+    if (!html) return 0;
+    const text = String(html)
+        .replace(/<!--[\s\S]*?-->/g, " ")
+        .replace(/<(script|style|template)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&[a-z#0-9]+;/gi, "");
+    const words = text.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu);
+    return words ? words.length : 0;
+}
+
+const PICTURE_EXTENSIONS = new Set([".webp", ".png", ".jpg", ".jpeg", ".gif"]);
+
+/** Every file under `dir` (recursively) whose name passes `keep`. */
+function walkFiles(dir, keep, results = []) {
+    if (!fs.existsSync(dir)) return results;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walkFiles(full, keep, results);
+        else if (keep(entry.name)) results.push(full);
+    }
+    return results;
+}
+
+/**
+ * Everything the stats page and the index footer report, measured once per build.
+ *
+ * src/index.html is the registry: each `h2[id]` opens a game section, and the
+ * links under it are that game's maps in release order. A link is a map the site
+ * intends to cover; `.disabled` means the guide isn't written yet (the build
+ * serves those a placeholder, so their words aren't readable and don't count);
+ * `.solver-link` is a tool, not a guide. Reading it here means the stats can
+ * never disagree with the index: one list, one source.
+ *
+ * Per guide the counts come from the authored source, not the rendered page, for
+ * the same reason the footer's does: transforms add chrome after the layout runs.
+ */
+let statsCache = null;
+function siteStats() {
+    if (statsCache) return statsCache;
+
+    const srcDir = path.join(__dirname, "src");
+    const games = [];
+    const guides = [];
+    let solverCount = 0;
+
+    let doc;
+    try {
+        doc = new JSDOM(fs.readFileSync(path.join(srcDir, "index.html"), "utf8")).window.document;
+    } catch (e) {
+        console.warn("Couldn't read src/index.html, stats will be empty:", e.message);
+        statsCache = emptyStats();
+        return statsCache;
+    }
+
+    // A remastered map (Nacht, Kino, Origins…) is listed under both the game it
+    // shipped in and the one that remastered it. Its roster slot counts for each
+    // game (that's what coverage means), but the guide itself is measured once,
+    // so the per-game word totals still add up to the site total.
+    //
+    // The index runs newest game first, so walking the sections BOTTOM-TO-TOP
+    // reaches a map's original game before any remaster of it: Der Riese counts
+    // as World at War, not Black Ops 3, and that's the game its row in the table
+    // names.
+    const measured = new Map();
+    const allMaps = new Set();
+
+    for (const heading of [...doc.querySelectorAll("h2[id]")].reverse()) {
+        const game = { key: heading.id, label: heading.textContent.trim(), planned: 0, written: 0, words: 0, pictures: 0 };
+        // The maps of a game are the links between this <h2> and the next one.
+        for (let el = heading.nextElementSibling; el && el.tagName !== "H2"; el = el.nextElementSibling) {
+            for (const link of el.querySelectorAll("a[href]")) {
+                if (link.classList.contains("solver-link")) { solverCount += 1; continue; }
+                const href = link.getAttribute("href").split(/[?#]/)[0].replace(/^\//, "");
+                if (!href.startsWith("games/")) continue;
+
+                allMaps.add(href);
+                game.planned += 1;
+                if (link.classList.contains("disabled")) continue; // not written yet
+
+                if (measured.has(href)) {
+                    // Already measured under an earlier game: coverage only.
+                    if (measured.get(href)) game.written += 1;
+                    continue;
+                }
+
+                const file = path.join(srcDir, href + ".html");
+                if (!fs.existsSync(file)) { measured.set(href, false); continue; }
+                const raw = fs.readFileSync(file, "utf8");
+                // Strip the YAML frontmatter so its keys don't count as prose.
+                const body = raw.replace(/^---\r?\n[\s\S]*?\r?\n---/, "");
+                const words = countWords(body);
+                if (words < WORDCOUNT_FLOOR) { measured.set(href, false); continue; } // a stub
+
+                const pictures = walkFiles(
+                    path.dirname(file),
+                    (n) => PICTURE_EXTENSIONS.has(path.extname(n).toLowerCase()),
+                ).length;
+                const cacheKey = "src/" + href + ".html";
+                const steps = (body.match(/<li[\s>]/g) || []).length;
+
+                guides.push({
+                    name: link.textContent.trim(),
+                    game: game.key,
+                    gameLabel: game.label,
+                    url: "/" + href,
+                    words,
+                    steps,
+                    pictures,
+                    videos: (body.match(/youtube|youtu\.be|<video[\s>]/gi) || []).length,
+                    tables: (body.match(/<table[\s>]/g) || []).length,
+                    sections: (body.match(/class="content-container"/g) || []).length,
+                    edits: editcountCache[cacheKey] || 0,
+                    updated: (lastmodCache[cacheKey] || "").slice(0, 10),
+                    released: (releaseCache[cacheKey] || "").slice(0, 10),
+                    // How much prose each step carries: the "verbosity" of a guide.
+                    density: steps ? words / steps : 0,
+                });
+
+                measured.set(href, true);
+                game.written += 1;
+                game.words += words;
+                game.pictures += pictures;
+            }
+        }
+        if (game.planned) games.push(game);
+    }
+
+    guides.sort((a, b) => b.words - a.words);
+    const byYear = releasesByYear(guides);
+    const sum = (key) => guides.reduce((n, g) => n + g[key], 0);
+    const top = (key) => guides.reduce((best, g) => (!best || g[key] > best[key] ? g : best), null);
+
+    statsCache = {
+        totals: {
+            words: sum("words"),
+            guides: guides.length,
+            // Distinct maps, so a remaster listed under two games counts once.
+            planned: allMaps.size,
+            solvers: solverCount,
+            steps: sum("steps"),
+            pictures: sum("pictures"),
+            videos: sum("videos"),
+            tables: sum("tables"),
+            sections: sum("sections"),
+            edits: sum("edits"),
+            games: games.length,
+            avgWords: guides.length ? Math.round(sum("words") / guides.length) : 0,
+            firstRelease: guides.reduce(
+                (first, g) => (g.released && (!first || g.released < first) ? g.released : first),
+                "",
+            ),
+        },
+        guides,
+        byWords: guides.slice(0, 10),
+        byPictures: [...guides].sort((a, b) => b.pictures - a.pictures).slice(0, 10),
+        // Filtered on words, not on `written`: a game whose only published maps
+        // are remasters measured under their original game has nothing to plot.
+        byGame: [...games].filter((g) => g.words > 0).sort((a, b) => b.words - a.words),
+        byYear: byYear,
+        // Nunjucks `set` inside a loop doesn't escape the loop, so the chart's
+        // scale has to arrive precomputed.
+        byYearMax: byYear.reduce((n, y) => Math.max(n, y.count), 0),
+        coverage: [...games].sort((a, b) => b.written / b.planned - a.written / a.planned),
+        extremes: {
+            longest: guides[0] || null,
+            shortest: guides[guides.length - 1] || null,
+            mostSteps: top("steps"),
+            mostPictures: top("pictures"),
+            mostEdited: top("edits"),
+            densest: top("density"),
+        },
+    };
+    return statsCache;
+}
+
+/**
+ * Guides grouped by the year they first went live, oldest first, with empty
+ * years kept so the chart reads as a timeline rather than a ranking. Guides with
+ * no recorded release date sit out: release-dates.json covers what shipped, and
+ * a missing entry means "unknown", not "released in year zero".
+ */
+function releasesByYear(guides) {
+    const counts = new Map();
+    for (const g of guides) {
+        if (!g.released) continue;
+        const year = Number(g.released.slice(0, 4));
+        counts.set(year, (counts.get(year) || 0) + 1);
+    }
+    if (counts.size === 0) return [];
+
+    const years = [...counts.keys()];
+    const out = [];
+    for (let y = Math.min(...years); y <= Math.max(...years); y++) {
+        out.push({ year: y, count: counts.get(y) || 0 });
+    }
+    return out;
+}
+
+function emptyStats() {
+    return {
+        totals: { words: 0, guides: 0, planned: 0, solvers: 0, steps: 0, pictures: 0, videos: 0, tables: 0, sections: 0, edits: 0, games: 0, avgWords: 0, firstRelease: "" },
+        guides: [], byWords: [], byPictures: [], byGame: [], byYear: [], byYearMax: 0, coverage: [],
+        extremes: { longest: null, shortest: null, mostSteps: null, mostPictures: null, mostEdited: null, densest: null },
+    };
 }
 
 // ========================================
@@ -59,7 +340,7 @@ function generateQuickLinks(content, outputPath) {
         renderNavigation(container, navStructure, outputPath);
 
         const result = dom.serialize();
-        // console.log(`[generateQuickLinks] ${outputPath} — ${Date.now() - t0}ms`);
+        // console.log(`[generateQuickLinks] ${outputPath} in ${Date.now() - t0}ms`);
         return result;
     } catch (error) {
         console.error(`Error generating quick links for ${outputPath}:`, error.message);
@@ -410,7 +691,7 @@ function classifyLinks(content, outputPath) {
         });
 
         const final = qlSection ? result.replace(PLACEHOLDER, qlSection) : result;
-        // console.log(`[classifyLinks] ${outputPath} — ${Date.now() - t0}ms`);
+        // console.log(`[classifyLinks] ${outputPath} in ${Date.now() - t0}ms`);
         return modified ? final : content;
     } catch (error) {
         console.error(`Error classifying links in ${outputPath}:`, error.message);
@@ -504,7 +785,7 @@ function addVersioning(content, outputPath) {
             }
         }
 
-        // console.log(`[addVersioning] ${outputPath} — ${Date.now() - t0}ms`);
+        // console.log(`[addVersioning] ${outputPath} in ${Date.now() - t0}ms`);
         return modified;
     } catch (error) {
         console.error(`Error adding versioning to ${outputPath}:`, error.message);
@@ -561,7 +842,7 @@ function injectReactBundle(content, outputPath) {
             modified = modified.replace("<!-- REACT_BUNDLE_PLACEHOLDER -->", scriptTag);
         }
 
-        // console.log(`[injectReactBundle] ${outputPath} — ${Date.now() - t0}ms`);
+        // console.log(`[injectReactBundle] ${outputPath} in ${Date.now() - t0}ms`);
         return modified;
     } catch (error) {
         console.error(`❌ Error injecting React bundle in ${outputPath}:`, error.message);
@@ -614,7 +895,7 @@ function preRenderRevealButtons(content, outputPath) {
 // SMART IMAGE COPY
 // ========================================
 
-// Extensions eligible for the smart asset copy below (not strictly images — also
+// Extensions eligible for the smart asset copy below (not strictly images, also
 // includes video, audio, and a few root-level static files).
 const IMAGE_EXTENSIONS = new Set([
     ".webp", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".webm", ".ico", ".xml", ".txt",
@@ -662,7 +943,7 @@ async function smartCopyImages() {
 
     // Copy concurrently. The bottleneck on a clean build (e.g. Cloudflare, which
     // starts from an empty dist every deploy) is per-file syscall latency across
-    // thousands of images, not raw throughput — so a worker pool hides that latency
+    // thousands of images, not raw throughput, so a worker pool hides that latency
     // and cuts a cold copy from ~100s to a fraction of that.
     const CONCURRENCY = 32;
     let next = 0;
@@ -732,51 +1013,46 @@ module.exports = function(eleventyConfig) {
     // date git recorded for it ("2026-05-11"). Empty string if unknown.
     eleventyConfig.addFilter("lastmodISO", (inputPath) => {
         if (!inputPath) return "";
-        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
-        return (lastmodCache[key] || "").slice(0, 10);
+        return (lastmodCache[cacheKeyFor(inputPath)] || "").slice(0, 10);
     });
 
     // Same date formatted like "May 11, 2026", for the footer's hover tooltip.
     eleventyConfig.addFilter("lastmod", (inputPath) => {
         if (!inputPath) return "";
-        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
-        const iso = lastmodCache[key];
-        if (!iso) return "";
-        // Use the calendar date as recorded in the stored offset (the leading
-        // YYYY-MM-DD) and format it in UTC, so the build server's timezone (UTC on
-        // Cloudflare) can't shift an evening-local date onto the next day.
-        const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-        return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            timeZone: "UTC",
-        });
+        return formatCalendarDate(lastmodCache[cacheKeyFor(inputPath)]);
     });
 
+    // The day the page first went live, from release-dates.json. Empty string for
+    // anything not in there (an unreleased guide, a solver that never had its own
+    // launch, the index), so the footer skips it rather than inventing a date.
+    eleventyConfig.addFilter("releasedISO", (inputPath) => {
+        if (!inputPath) return "";
+        return (releaseCache[cacheKeyFor(inputPath)] || "").slice(0, 10);
+    });
+
+    // Same date as "October 9, 2025". Absolute, not relative like `Updated`: a
+    // first-release date is a fact about the page, not news about it.
+    eleventyConfig.addFilter("released", (inputPath) => {
+        if (!inputPath) return "";
+        return formatCalendarDate(releaseCache[cacheKeyFor(inputPath)]);
+    });
+
+    // "2023-07-29" -> "July 29, 2023", for dates that arrive as bare ISO strings
+    // rather than as a page path (the stats page's aggregates).
+    eleventyConfig.addFilter("calendarDate", (iso) => formatCalendarDate(iso));
+
     // Same date as "3 days ago" / "last month" / "2 years ago", for the footer's
-    // visible text. This is only the no-JS fallback: it is baked in at build time
-    // and would drift as the deploy ages, so relative-time.ts re-renders it in the
-    // browser against the reader's own clock. Keep the two bucket ladders in sync.
-    const relativeFmt = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    // visible text.
     eleventyConfig.addFilter("lastmodRelative", (inputPath) => {
         if (!inputPath) return "";
-        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
-        const iso = lastmodCache[key];
-        if (!iso) return "";
-        const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-        const now = new Date();
-        // Compare calendar date to calendar date — both sides pinned to UTC noon so
-        // no timezone or DST shift can nudge the difference across a day boundary.
-        const then = Date.UTC(y, m - 1, d);
-        const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-        const days = Math.max(0, Math.round((today - then) / 86400000));
+        return formatRelativeDate(lastmodCache[cacheKeyFor(inputPath)]);
+    });
 
-        if (days < 1) return "today";
-        if (days < 7) return relativeFmt.format(-days, "day");
-        if (days < 31) return relativeFmt.format(-Math.round(days / 7), "week");
-        if (days < 365) return relativeFmt.format(-Math.max(1, Math.round(days / 30.44)), "month");
-        return relativeFmt.format(-Math.max(1, Math.round(days / 365.25)), "year");
+    // The release date as an age, for the footer's hover tooltip. The visible
+    // text is the absolute date, so the tooltip carries what that date means now.
+    eleventyConfig.addFilter("releasedRelative", (inputPath) => {
+        if (!inputPath) return "";
+        return formatRelativeDate(releaseCache[cacheKeyFor(inputPath)]);
     });
 
     // Given a page's inputPath, return how many commits have touched it (its
@@ -784,9 +1060,37 @@ module.exports = function(eleventyConfig) {
     // can skip rendering rather than show "0 edits".
     eleventyConfig.addFilter("editcount", (inputPath) => {
         if (!inputPath) return null;
-        const key = inputPath.replace(/\\/g, "/").replace(/^\.\//, "");
-        return editcountCache[key] || null;
+        return editcountCache[cacheKeyFor(inputPath)] || null;
     });
+
+    // Word count of a page's own body HTML, for the footer. Counts the content
+    // as authored: transforms (quick links, reveal-button chrome, table
+    // wrappers) all run after the layout renders, so none of that chrome is in
+    // this string to inflate the number. Returns null below a floor so solver
+    // shells and stubs render no count at all rather than "12 words".
+    eleventyConfig.addFilter("wordcount", (html) => {
+        const n = countWords(html);
+        return n >= WORDCOUNT_FLOOR ? n : null;
+    });
+
+    // Per-guide and site-wide measurements, for the index footer and /stats.
+    eleventyConfig.addGlobalData("siteWords", () => siteStats().totals);
+    eleventyConfig.addGlobalData("stats", siteStats);
+
+    // Compact big numbers for tight spots: 149438 -> "149.4K".
+    eleventyConfig.addFilter("compact", (n) => {
+        if (typeof n !== "number") return n;
+        if (n < 1000) return String(n);
+        if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0).replace(/\.0$/, "") + "K";
+        return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    });
+
+    // Bar length as a percentage of the largest value in its chart.
+    eleventyConfig.addFilter("pct", (value, max) => (max > 0 ? Math.max(1.5, (value / max) * 100).toFixed(2) : "0"));
+
+    // 4182 -> "4,182". Grouped digits so the footer count stays readable.
+    eleventyConfig.addFilter("thousands", (n) =>
+        typeof n === "number" ? n.toLocaleString("en-US") : n);
 
     // Format a guide's `editors` frontmatter (a comma-separated string or a
     // list) into a grammatical English list: "A", "A and B", "A, B, and C".

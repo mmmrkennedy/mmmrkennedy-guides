@@ -59,6 +59,16 @@ Neutral dark theme with subtle warmth for character without being overbearing.
     --color-disclaimer-bg: rgb(124 110 184 / 10%);
     --color-disclaimer-text: #9a8be0;
 
+    /* Chart marks (stats page). Deliberately NOT the tier-1 gold: a mark has to
+       clear the OKLCH dark-mode lightness band (0.48–0.67) and the 0.10 chroma
+       floor to stay legible as a small filled shape, which #c9a961 misses on
+       both counts. These two are the nearest passing steps to the site's gold
+       and violet, and are separable under every simulated colour-vision
+       deficiency (worst-pair ΔE 22.1). */
+    --color-chart-bar: #b19046;         /* build-time data (words, steps, images) */
+    --color-chart-live: #9586de;        /* live data pulled from the view API */
+    --color-chart-track: rgb(177 144 70 / 18%); /* unfilled remainder, same ramp */
+
     /* Border Colours */
     --color-border-subtle: #333;
     --color-border-medium: #444;

@@ -1,0 +1,198 @@
+---
+layout: base.njk
+title: "Site Stats"
+description: "Numbers behind mmmrkennedy's Call of Duty Zombies guides: total words written, steps documented, screenshots taken, and which guide is the longest."
+skipTOC: true
+noFlags: true
+noLegend: true
+noWordCount: true
+statsPage: true
+---
+
+{%- set t = stats.totals %}
+
+<div class="content-container">
+    <div class="stat-hero">
+        <p class="stat-hero__value">{{ t.words | thousands }}</p>
+        <p class="stat-hero__label">words of guide written across {{ t.guides }} guides</p>
+    </div>
+
+    <ul class="stat-tiles">
+        <li class="stat-tile">
+            <span class="stat-tile__label">Guides published</span>
+            <span class="stat-tile__value">{{ t.guides }}<span class="stat-tile__unit"> / {{ t.planned }}</span></span>
+            <span class="stat-tile__note">maps the site plans to cover</span>
+        </li>
+        <li class="stat-tile">
+            <span class="stat-tile__label">Steps documented</span>
+            <span class="stat-tile__value">{{ t.steps | thousands }}</span>
+            <span class="stat-tile__note">individual bullet points</span>
+        </li>
+        <li class="stat-tile">
+            <span class="stat-tile__label">Screenshots</span>
+            <span class="stat-tile__value">{{ t.pictures | thousands }}</span>
+            <span class="stat-tile__note">images shipped with the guides</span>
+        </li>
+        <li class="stat-tile">
+            <span class="stat-tile__label">Average guide</span>
+            <span class="stat-tile__value">{{ t.avgWords | thousands }}</span>
+            <span class="stat-tile__note">words, about {{ (t.avgWords / 200) | round }} minutes of reading</span>
+        </li>
+        <li class="stat-tile">
+            <span class="stat-tile__label">Solvers &amp; tools</span>
+            <span class="stat-tile__value">{{ t.solvers }}</span>
+            <span class="stat-tile__note">interactive step solvers</span>
+        </li>
+        <li class="stat-tile">
+            <span class="stat-tile__label">Edits</span>
+            <span class="stat-tile__value">{{ t.edits | thousands }}</span>
+            <span class="stat-tile__note">commits touching a published guide</span>
+        </li>
+    </ul>
+</div>
+
+<div class="content-container">
+    <h2 class="title-tier-1">Longest guides by word count</h2>
+    <p class="chart-note">Top 10 of {{ t.guides }} published guides.</p>
+    {%- set max = stats.byWords[0].words %}
+    <ol class="chart">
+        {%- for g in stats.byWords %}
+        <li class="chart__row">
+            <a class="chart__label" href="{{ g.url }}">{{ g.name }}</a>
+            <span class="chart__plot"><span class="chart__bar" style="width: {{ g.words | pct(max) }}%"></span></span>
+            <span class="chart__value">{{ g.words | thousands }}</span>
+        </li>
+        {%- endfor %}
+    </ol>
+</div>
+
+<div class="content-container">
+    <h2 class="title-tier-1">Words by game</h2>
+    <p class="chart-note">Only published guides count toward a game's total.</p>
+    {%- set maxGame = stats.byGame[0].words %}
+    <ol class="chart">
+        {%- for game in stats.byGame %}
+        <li class="chart__row">
+            <span class="chart__label">{{ game.label }}</span>
+            <span class="chart__plot"><span class="chart__bar" style="width: {{ game.words | pct(maxGame) }}%"></span></span>
+            <span class="chart__value">{{ game.words | thousands }}</span>
+        </li>
+        {%- endfor %}
+    </ol>
+</div>
+
+<div class="content-container">
+    <h2 class="title-tier-1">Coverage by game</h2>
+    <p class="chart-note">
+        How many of each game's maps have a published guide. A remastered map counts
+        toward both games' rosters, but its words only count once, under the game it
+        originally shipped in.
+    </p>
+    <ol class="chart chart--meter">
+        {%- for game in stats.coverage %}
+        <li class="chart__row">
+            <span class="chart__label">{{ game.label }}</span>
+            <span class="chart__plot chart__plot--track"><span class="chart__bar" style="width: {{ game.written | pct(game.planned) if game.written else 0 }}%"></span></span>
+            <span class="chart__value">{{ game.written }} / {{ game.planned }}</span>
+        </li>
+        {%- endfor %}
+    </ol>
+</div>
+
+<div class="content-container">
+    <h2 class="title-tier-1">Guides published by year</h2>
+    <p class="chart-note">
+        When each guide first went live{% if t.firstRelease %}, starting {{ t.firstRelease | calendarDate }}{% endif %}.
+        A guide is counted once, on its release, not on the years of edits that followed.
+    </p>
+    <ol class="chart">
+        {%- for y in stats.byYear %}
+        <li class="chart__row">
+            <span class="chart__label">{{ y.year }}</span>
+            <span class="chart__plot"><span class="chart__bar" style="width: {{ y.count | pct(stats.byYearMax) }}%"></span></span>
+            <span class="chart__value">{{ y.count }}</span>
+        </li>
+        {%- endfor %}
+    </ol>
+</div>
+
+<div class="content-container">
+    <h2 class="title-tier-1">Most screenshots</h2>
+    <p class="chart-note">Images stored alongside each guide, {{ t.pictures | thousands }} in total.</p>
+    {%- set maxPics = stats.byPictures[0].pictures %}
+    <ol class="chart">
+        {%- for g in stats.byPictures %}
+        <li class="chart__row">
+            <a class="chart__label" href="{{ g.url }}">{{ g.name }}</a>
+            <span class="chart__plot"><span class="chart__bar" style="width: {{ g.pictures | pct(maxPics) }}%"></span></span>
+            <span class="chart__value">{{ g.pictures | thousands }}</span>
+        </li>
+        {%- endfor %}
+    </ol>
+</div>
+
+<div class="content-container" id="live-views">
+    <h2 class="title-tier-1">Most read in the last 7 days</h2>
+    <p class="chart-note stats-live__status">Loading live view counts…</p>
+    <ol class="chart chart--live stats-live__chart" hidden></ol>
+</div>
+
+<div class="content-container">
+    <h2 class="title-tier-1">Record holders</h2>
+    {%- set x = stats.extremes %}
+    <ul class="records">
+        <li class="record"><span class="record__label">Longest guide</span>
+            <a class="record__name" href="{{ x.longest.url }}">{{ x.longest.name }}</a>
+            <span class="record__value">{{ x.longest.words | thousands }} words</span></li>
+        <li class="record"><span class="record__label">Shortest guide</span>
+            <a class="record__name" href="{{ x.shortest.url }}">{{ x.shortest.name }}</a>
+            <span class="record__value">{{ x.shortest.words | thousands }} words</span></li>
+        <li class="record"><span class="record__label">Most steps</span>
+            <a class="record__name" href="{{ x.mostSteps.url }}">{{ x.mostSteps.name }}</a>
+            <span class="record__value">{{ x.mostSteps.steps | thousands }} steps</span></li>
+        <li class="record"><span class="record__label">Most screenshots</span>
+            <a class="record__name" href="{{ x.mostPictures.url }}">{{ x.mostPictures.name }}</a>
+            <span class="record__value">{{ x.mostPictures.pictures | thousands }} images</span></li>
+        <li class="record"><span class="record__label">Most revised</span>
+            <a class="record__name" href="{{ x.mostEdited.url }}">{{ x.mostEdited.name }}</a>
+            <span class="record__value">{{ x.mostEdited.edits }} edits</span></li>
+        <li class="record"><span class="record__label">Wordiest steps</span>
+            <a class="record__name" href="{{ x.densest.url }}">{{ x.densest.name }}</a>
+            <span class="record__value">{{ x.densest.density | round(1) }} words per step</span></li>
+    </ul>
+</div>
+
+<div class="content-container">
+    <h2 class="title-tier-1">Every published guide</h2>
+    <p class="chart-note">The same numbers the charts above are drawn from. Click a column to sort by it.</p>
+    {#- Sorted by words descending at build time; table-sort.ts takes over from
+        there, which is why Words starts out carrying the aria-sort. #}
+    <table class="stats-table" data-sortable>
+        <thead>
+        <tr>
+            <th scope="col" data-sort-type="text">Guide</th>
+            <th scope="col" data-sort-type="text">Game</th>
+            <th scope="col" class="stats-table__num" data-sort-type="number" aria-sort="descending">Words</th>
+            <th scope="col" class="stats-table__num" data-sort-type="number">Steps</th>
+            <th scope="col" class="stats-table__num" data-sort-type="number">Images</th>
+            <th scope="col" class="stats-table__num" data-sort-type="number">Edits</th>
+            <th scope="col" data-sort-type="date">Released</th>
+            <th scope="col" data-sort-type="date">Updated</th>
+        </tr>
+        </thead>
+        <tbody>
+        {%- for g in stats.guides %}
+        <tr>
+            <td><a href="{{ g.url }}">{{ g.name }}</a></td>
+            <td>{{ g.gameLabel }}</td>
+            <td class="stats-table__num">{{ g.words | thousands }}</td>
+            <td class="stats-table__num">{{ g.steps | thousands }}</td>
+            <td class="stats-table__num">{{ g.pictures | thousands }}</td>
+            <td class="stats-table__num">{{ g.edits }}</td>
+            <td>{{ g.released }}</td>
+            <td>{{ g.updated }}</td>
+        </tr>
+        {%- endfor %}
+        </tbody>
+    </table>
+</div>

@@ -17,7 +17,7 @@
     {%- if mapName and solverTitle %}
         {%- set metaDescription = description or 'Interactive ' + solverTitle + ' for the ' + mapName + ' Easter Egg in ' + titleSuffix + '. Auto-solve this Call of Duty Zombies main quest step with a step-by-step walkthrough tool.' %}
     {%- elif mapName %}
-        {%- set metaDescription = description or 'Complete ' + mapName + ' Easter Egg guide for ' + titleSuffix + '. Full main quest (main Easter Egg) walkthrough with step-by-step instructions, pictures, and videos — works solo and co-op.' %}
+        {%- set metaDescription = description or 'Complete ' + mapName + ' Easter Egg guide for ' + titleSuffix + '. Full main quest (main Easter Egg) walkthrough with step-by-step instructions, pictures, and videos, for solo and co-op.' %}
     {%- else %}
         {%- set metaDescription = description or 'Complete Call of Duty Zombies Easter Egg guide. Step-by-step main quest walkthrough with pictures, videos, and detailed instructions.' %}
     {%- endif %}
@@ -156,10 +156,11 @@
     {%- endif %}
 </head>
 
-<body{% if skipTOC %} data-skip-toc="true"{% endif %}>
+<body{% if skipTOC %} data-skip-toc="true"{% endif %}{% if noFlags %} data-no-flags{% endif %}{% if statsPage %} data-stats-live{% endif %}>
 <div class="top-buttons-background-box">
     <!-- Title at the top of the page -->
     <h1 class="title-text">{{ pageTitle }}</h1>
+    {%- if not noLegend %}
     <button type="button" id="legendLauncher" class="btn legend-launcher"
             aria-haspopup="dialog" aria-expanded="false" aria-controls="legendOverlay"
             aria-label="How to read this guide">
@@ -170,6 +171,7 @@
             <path d="M12 17h.01" />
         </svg>
     </button>
+    {%- endif %}
 
     <!-- Mobile devices content -->
     <div id="mobile-content">
@@ -224,13 +226,22 @@
         {%- set updated = page.inputPath | lastmod %}
         {%- set updatedISO = page.inputPath | lastmodISO %}
         {%- set updatedRel = page.inputPath | lastmodRelative %}
+        {%- set released = page.inputPath | released %}
+        {%- set releasedISO = page.inputPath | releasedISO %}
+        {%- set releasedRel = page.inputPath | releasedRelative %}
         {%- set edits = page.inputPath | editcount %}
         {%- set editorList = editors | formatEditors %}
+        {#- An unfinished page shows the placeholder above instead of `content`,
+            so it must not advertise the word count of a body nobody can read. #}
+        {%- set words = null if (unfinished or noWordCount or page.url in unfinishedPages) else (content | wordcount) %}
         <p class="site-footer__meta">
             <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
             {%- if editorList %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
+            {%- if released %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__released" datetime="{{ releasedISO }}" title="Released {{ releasedRel }}">Initial release {{ released }}</time>{% endif %}
             {%- if updated %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__updated" datetime="{{ updatedISO }}" title="Last updated {{ updated }}">Updated {{ updatedRel }}</time>{% endif %}
             {%- if edits %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
+            {%- if words %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__words">{{ words | thousands }} words</span>{% endif %}
+            {%- if not statsPage %}<span class="site-footer__sep" aria-hidden="true"></span><a class="site-footer__link" href="/stats">Site stats</a>{% endif %}
             <span class="site-footer__views"></span>
         </p>
     </footer>
@@ -261,6 +272,10 @@
 <script src="/js/ui/relative-time.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/line-flagger.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/return-pill.js?v={{ site.buildVersion }}" defer></script>
+{%- if statsPage %}
+<script src="/js/ui/stats-live.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/table-sort.js?v={{ site.buildVersion }}" defer></script>
+{%- endif %}
 <!-- Ads load as an independent async island (ads.ts self-bootstraps) -->
 <script src="/js/ui/ads.js?v={{ site.buildVersion }}" async></script>
 {%- endif %}
@@ -270,6 +285,7 @@
 {%- endif %}
 
 <!-- Legend / "How to read this guide" overlay (launcher lives in the title bar) -->
+{%- if not noLegend %}
 <div class="legend-overlay" id="legendOverlay" role="dialog" aria-modal="true" aria-labelledby="legendTitle">
     <div class="legend-panel">
         <div class="legend-header">
@@ -308,6 +324,7 @@
         <p class="legend-tip">Tip: the <strong>Back to Top</strong> button jumps you to the start of any guide.</p>
     </div>
 </div>
+{%- endif %}
 
 <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
     <button class="close-lightbox" type="button" aria-label="Close"></button>

@@ -116,10 +116,15 @@
                 {%- set updatedISO = page.inputPath | lastmodISO %}
                 {%- set updatedRel = page.inputPath | lastmodRelative %}
                 {%- set edits = page.inputPath | editcount %}
+                {#- The index has no guide body of its own worth counting, so it
+                    reports the whole library instead. #}
+                {%- set words = siteWords.words %}
                 <p class="site-footer__meta">
                     <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
                     {%- if updated %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__updated" datetime="{{ updatedISO }}" title="Last updated {{ updated }}">Updated {{ updatedRel }}</time>{% endif %}
                     {%- if edits %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
+                    {%- if words %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__words">{{ words | thousands }} words across {{ siteWords.guides }} guides</span>{% endif %}
+                    <span class="site-footer__sep" aria-hidden="true"></span><a class="site-footer__link" href="/stats">Site stats</a>
                     <span class="site-footer__views"></span>
                 </p>
             </footer>
@@ -128,6 +133,7 @@
         {%- if site.bundled %}
         <script src="/js/bundle.core.min.js?v={{ site.buildVersion }}" defer></script>
         <script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
+        <script src="/js/ui/birthday.js?v={{ site.buildVersion }}" defer></script>
         <script src="/js/bundle.ads.min.js?v={{ site.buildVersion }}" async></script>
         {%- else %}
         <script src="/js/core/page-utils.js?v={{ site.buildVersion }}" defer></script>
@@ -141,6 +147,7 @@
         <script src="/js/ui/relative-time.js?v={{ site.buildVersion }}" defer></script>
         <script src="/js/ui/trending.js?v={{ site.buildVersion }}" defer></script>
         <script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
+        <script src="/js/ui/birthday.js?v={{ site.buildVersion }}" defer></script>
         <!-- Ads load as an independent async island (ads.ts self-bootstraps) -->
         <script src="/js/ui/ads.js?v={{ site.buildVersion }}" async></script>
         {%- endif %}

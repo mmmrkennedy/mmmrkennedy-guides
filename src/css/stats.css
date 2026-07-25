@@ -1,0 +1,299 @@
+/* Stats page
+ * ----------
+ * Hero figure, stat tiles, and the horizontal bar charts on /stats. Every value
+ * a bar encodes is also printed beside it and repeated in the full table at the
+ * bottom of the page, so nothing is reachable only by hovering or only by
+ * comparing bar lengths. Mark colours live in tokens.css.
+ */
+
+.stats-intro {
+    color: var(--color-text-secondary);
+}
+
+/* --- Hero figure: the one number the page leads with --- */
+.stat-hero {
+    margin: var(--space-xl) 0 var(--space-2xl);
+    text-align: center;
+}
+
+.stat-hero__value {
+    margin: 0;
+    color: var(--color-tier-1);
+    font-size: clamp(3rem, 12vw, 5rem);
+    font-weight: 600;
+    line-height: 1;
+
+    /* Proportional figures: tabular digits look loose at display sizes. */
+    font-variant-numeric: proportional-nums;
+}
+
+.stat-hero__label {
+    margin: var(--space-sm) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+}
+
+/* --- Stat tiles --- */
+.stat-tiles {
+    display: grid;
+
+    /* 17rem lands on three tiles across the content column, so six tiles read as
+       two even rows rather than a row of five and an orphan. */
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.stat-tile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 6px;
+}
+
+.stat-tile__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.stat-tile__value {
+    color: var(--color-text-primary);
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: proportional-nums;
+}
+
+.stat-tile__unit {
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.stat-tile__note {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+/* --- Horizontal bar charts --- */
+.chart-note {
+    margin-top: calc(-1 * var(--space-sm));
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.chart {
+    display: flex;
+    flex-direction: column;
+
+    /* The 2px surface gap that separates neighbouring marks. */
+    gap: 2px;
+    margin: var(--space-lg) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.chart__row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 13rem) 1fr minmax(3.5rem, auto);
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+    transition: background-color 0.12s;
+}
+
+.chart__row:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+.chart__label {
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+a.chart__label {
+    color: var(--color-link-default);
+    text-decoration: none;
+}
+
+a.chart__label:hover,
+a.chart__label:focus-visible {
+    text-decoration: underline;
+}
+
+/* The plot area. No track by default: a bare bar on the page surface reads
+   cleaner; only the coverage meter needs its unfilled remainder shown. */
+.chart__plot {
+    display: block;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.chart__plot--track {
+    background-color: var(--color-chart-track);
+}
+
+.chart__bar {
+    display: block;
+    height: 100%;
+    background-color: var(--color-chart-bar);
+
+    /* Square at the baseline, rounded at the data end. */
+    border-radius: 0 4px 4px 0;
+}
+
+.chart--live .chart__bar {
+    background-color: var(--color-chart-live);
+}
+
+/* Values are direct labels, so they wear text tokens rather than the mark's
+   colour, and align in a column, the one place tabular figures belong. */
+.chart__value {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* --- Record holders --- */
+.records {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: var(--space-md);
+    margin: var(--space-lg) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.record {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-left: var(--space-md);
+    border-left: 3px solid var(--color-chart-bar);
+}
+
+.record__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.record__name {
+    color: var(--color-link-default);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.record__name:hover,
+.record__name:focus-visible {
+    text-decoration: underline;
+}
+
+.record__value {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Full table --- */
+.stats-table {
+    font-size: var(--font-size-sm);
+}
+
+.stats-table th,
+.stats-table td {
+    padding: var(--space-sm) var(--space-md);
+}
+
+.stats-table__num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-table a {
+    color: var(--color-link-default);
+    text-decoration: none;
+}
+
+.stats-table a:hover,
+.stats-table a:focus-visible {
+    text-decoration: underline;
+}
+
+/* --- Sortable columns (built by table-sort.ts) --- */
+
+/* The button takes over the cell's padding so the whole header is clickable,
+   not just the few pixels of text in the middle of it. */
+.stats-table th:has(.stats-table__sort) {
+    padding: 0;
+}
+
+.stats-table__sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+/* Numeric headers are right-aligned, so their control has to be too. */
+.stats-table__num .stats-table__sort {
+    justify-content: flex-end;
+}
+
+.stats-table__sort:hover,
+.stats-table__sort:focus-visible {
+    color: var(--color-tier-2);
+}
+
+/* Sort state lives on the th's aria-sort, so the indicator reads from the same
+   attribute a screen reader does and the two can't disagree. */
+.stats-table__sort::after {
+    content: "↕";
+    font-size: 0.8em;
+    opacity: 0.35;
+}
+
+.stats-table th[aria-sort="ascending"] .stats-table__sort::after {
+    content: "▲";
+    opacity: 1;
+}
+
+.stats-table th[aria-sort="descending"] .stats-table__sort::after {
+    content: "▼";
+    opacity: 1;
+}
+
+.stats-table th[aria-sort="ascending"] .stats-table__sort,
+.stats-table th[aria-sort="descending"] .stats-table__sort {
+    color: var(--color-tier-2);
+}
+
+/* --- Narrow screens: the label gets its own line above its bar --- */
+@media (width <= 30em) {
+    .chart__row {
+        grid-template-columns: 1fr auto;
+        gap: var(--space-xs) var(--space-md);
+    }
+
+    .chart__label {
+        grid-column: 1 / -1;
+    }
+}

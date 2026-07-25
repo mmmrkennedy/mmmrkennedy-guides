@@ -11,7 +11,7 @@ Page structure and containers.
     overflow-y: hidden;
 }
 
-/* About This Map — quiet SEO blurb styled like the footer; must stay visible
+/* About This Map: quiet SEO blurb styled like the footer; must stay visible
    (real text, readable size) so it doesn't read as keyword stuffing */
 .about-map {
     max-width: 75ch;
@@ -36,7 +36,7 @@ Page structure and containers.
     line-height: 1.6;
 }
 
-/* Site Footer — copyright + last-updated date + edit count */
+/* Site Footer: copyright + last-updated date + edit count */
 .site-footer {
     position: relative;
     padding: var(--space-xl) var(--space-md) var(--space-lg);
@@ -76,7 +76,7 @@ Page structure and containers.
     line-height: var(--line-height-tight);
 }
 
-/* Separators are hairline rules, not bullet glyphs — quieter, and they echo the
+/* Separators are hairline rules, not bullet glyphs, so they're quieter, and they echo the
    divider above. Empty spans in the markup; the rule is drawn entirely here.
    Margins start tight so a phone fits more of the row on one line before it
    wraps (a wrap can strand a rule at the end of a line); responsive.css opens
@@ -90,19 +90,37 @@ Page structure and containers.
     opacity: 0.3;
 }
 
-/* The one warm note in the row — everything else stays muted grey. */
+/* The one warm note in the row; everything else stays muted grey. */
 .site-footer__copyright {
     color: var(--color-tier-2);
 }
 
 /* Counts sit next to each other across pages; tabular figures stop them jittering. */
 .site-footer__edits,
+.site-footer__words,
 .site-footer__views {
     font-variant-numeric: tabular-nums;
 }
 
-/* Carries a `title` with the full date — hint that it's hoverable. */
-.site-footer__updated {
+/* Footer navigation (the /stats link). Sits at the muted weight of the rest of
+   the meta row rather than the usual link blue, so it reads as footer furniture
+   and not as a call to action. */
+.site-footer__link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted rgb(255 255 255 / 12%);
+}
+
+.site-footer__link:hover,
+.site-footer__link:focus-visible {
+    color: var(--color-text-secondary);
+    border-bottom-color: currentcolor;
+}
+
+/* Both carry a `title` (the full date on one, the age on the other), so both
+   get the hint that they're hoverable. */
+.site-footer__updated,
+.site-footer__released {
     border-bottom: 1px dotted rgb(255 255 255 / 12%);
     cursor: help;
 }
@@ -339,7 +357,7 @@ Page structure and containers.
 
     /* Sized to its text, capped at the image's width. The max() floor keeps
        placeholder states ("Loading...", "Error loading audio") readable: the
-       media is hidden then, so .lightbox-content — and thus 100% — is 0 wide. */
+       media is hidden then, so .lightbox-content (and thus 100%) is 0 wide. */
     width: max-content;
     max-width: min(90vw, max(100%, 20rem));
     text-align: left;
@@ -385,7 +403,7 @@ Page structure and containers.
     right: 0.625rem;
 }
 
-/* Chevrons via pseudo-elements (decorative — the aria-label is the real name),
+/* Chevrons via pseudo-elements (decorative, since the aria-label is the real name),
    nudged up to correct the glyph's optical low bias, matching the close button. */
 .lightbox-nav::before {
     line-height: 1;

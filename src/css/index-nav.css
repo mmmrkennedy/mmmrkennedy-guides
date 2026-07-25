@@ -40,7 +40,7 @@
     padding-right: calc(var(--space-md) + 1.25rem);
 }
 
-/* Hide the browser's native search "×" — we provide our own clear button. */
+/* Hide the browser's native search "×"; we provide our own clear button. */
 .index-nav__input::-webkit-search-cancel-button {
     appearance: none;
 }
@@ -84,7 +84,7 @@
     gap: var(--space-xs);
 }
 
-/* Completion tally — deliberately quiet: muted, small, no background. */
+/* Completion tally, deliberately quiet: muted, small, no background. */
 .index-progress {
     margin-left: auto;
     font-size: var(--font-size-sm);
@@ -123,7 +123,7 @@
     font-weight: 600;
 }
 
-/* A game with no matches under the current filter — dimmed and unclickable. */
+/* A game with no matches under the current filter: dimmed and unclickable. */
 .index-nav__chip.is-empty {
     opacity: 0.3;
     pointer-events: none;
@@ -138,4 +138,25 @@
 
 .index-hidden {
     display: none !important;
+}
+
+/* Birthday line ---------------------------------------------------------- */
+
+/* Shown one day a year, above the map finder, by birthday.ts, so it stays a
+   quiet line of text rather than a banner competing with the list below it.
+   `hidden` in the markup does the hiding; nothing here needs to. */
+.site-birthday {
+    margin: 0 0 var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 6px;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.site-birthday__age {
+    color: var(--color-tier-2);
+    font-weight: 600;
 }

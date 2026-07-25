@@ -7,13 +7,25 @@
 # files "now" since they aren't in `git log` yet.
 
 if git diff --cached --name-only --diff-filter=ACMRD -- "*.html" | grep -q .; then
-    echo "pre-commit: staged .html detected — refreshing lastmod-cache.json…"
+    echo "pre-commit: staged .html detected, refreshing lastmod-cache.json…"
     if ! node build_scripts/refresh-lastmod-cache.cjs; then
-        echo "pre-commit: refresh-lastmod-cache.cjs failed — aborting commit." >&2
+        echo "pre-commit: refresh-lastmod-cache.cjs failed; aborting commit." >&2
         echo "  (commit with --no-verify to skip this hook if needed)" >&2
         exit 1
     fi
     git add build_scripts/lastmod-cache.json build_scripts/editcount-cache.json
 else
-    echo "pre-commit: no staged .html — skipping lastmod-cache refresh."
+    echo "pre-commit: no staged .html, skipping lastmod-cache refresh."
+fi
+
+# Stamp release-dates.json for any guide whose index link just became enabled,
+# so the footer's "Initial release" date lands in the same commit that ships it.
+# Only src/index.html matters here: that's the file the release signal lives in.
+if git diff --cached --name-only --diff-filter=ACMR -- "src/index.html" | grep -q .; then
+    if ! node build_scripts/stamp-release-dates.cjs; then
+        echo "pre-commit: stamp-release-dates.cjs failed; aborting commit." >&2
+        echo "  (commit with --no-verify to skip this hook if needed)" >&2
+        exit 1
+    fi
+    git add build_scripts/release-dates.json
 fi

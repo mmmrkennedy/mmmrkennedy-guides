@@ -1,33 +1,45 @@
 /**
  * Relative time
  * -------------
- * Re-renders the footer's "Updated 3 days ago" against the reader's own clock.
+ * Re-renders the footer's ages against the reader's own clock: the visible
+ * "Updated 3 days ago", and the "Released 2 years ago" tooltip on the initial
+ * release date.
  *
- * The build bakes a relative string into the page (see the `lastmodRelative`
- * filter in eleventy.config.cjs), but that text ages with the deploy: a guide
- * edited yesterday still reads "yesterday" three weeks later. This reads the
- * machine-readable `datetime` attribute and rewrites the text on load, so the
+ * The build bakes both strings into the page (see the `lastmodRelative` and
+ * `releasedRelative` filters in eleventy.config.cjs), but that text ages with the
+ * deploy: a guide edited yesterday still reads "yesterday" three weeks later. This
+ * reads the machine-readable `datetime` attribute and rewrites on load, so the
  * baked-in string only ever shows to readers without JS.
  *
- * The bucket ladder here must match `lastmodRelative`, or pages would visibly
- * flip wording the moment the script runs.
+ * The release date itself is absolute and never rewritten; only the tooltip that
+ * says how long ago it was.
+ *
+ * The bucket ladder here must match `formatRelativeDate` in eleventy.config.cjs,
+ * or pages would visibly flip wording the moment the script runs.
  */
 document.addEventListener("DOMContentLoaded", () => {
-    const nodes = document.querySelectorAll<HTMLTimeElement>("time[datetime].site-footer__updated");
-    if (nodes.length === 0) return;
+    const updated = document.querySelectorAll<HTMLTimeElement>("time[datetime].site-footer__updated");
+    const released = document.querySelectorAll<HTMLTimeElement>("time[datetime].site-footer__released");
+    if (updated.length === 0 && released.length === 0) return;
 
     const fmt = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
-    nodes.forEach((node) => {
+    updated.forEach((node) => {
         const days = daysSince(node.dateTime);
         if (days === null) return;
         node.textContent = "Updated " + relative(days);
     });
 
+    released.forEach((node) => {
+        const days = daysSince(node.dateTime);
+        if (days === null) return;
+        node.title = "Released " + relative(days);
+    });
+
     /**
      * Whole days between a "YYYY-MM-DD" attribute and the reader's local calendar
      * date. Both sides are reinterpreted as UTC so the subtraction is pure date
-     * arithmetic — no timezone offset or DST hour can shift the result by a day.
+     * arithmetic, so no timezone offset or DST hour can shift the result by a day.
      * Null if the attribute isn't a bare calendar date.
      */
     function daysSince(datetime: string): number | null {
