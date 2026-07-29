@@ -57,6 +57,23 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
+# CSS/JS are content-addressed as of 2026-07-29 — build_scripts/minify-assets.js
+# puts a hash of the bytes in the filename (bundle.a94d3556.min.css), so a given
+# URL's content never changes and 30 days of caching is safe. Before that, the
+# version rode in a query string (?v=<build timestamp>) while the path stayed
+# constant, and an edge entry poisoned during deploy propagation served
+# month-old CSS under a brand-new ?v= for the full max-age below.
+#
+# Do NOT add a longer `immutable` rule for the hashed files alongside these.
+# Pages does not let a more specific rule override a general one — per
+# developers.cloudflare.com/pages/configuration/headers/, "if a header is applied
+# twice in the _headers file, the values are joined with a comma separator", so
+# /*.css plus /css/bundle.*.min.css would emit
+# `public, max-age=2592000, must-revalidate, public, max-age=31536000, immutable`.
+# Getting immutable would mean deleting these two rules and marking /css/* and
+# /js/* immutable wholesale — which silently freezes any future *unhashed* file
+# for a year (/css/styles.css is still unhashed today; the react-solvers dev page
+# references it). Not worth trading that trap for one conditional request a month.
 /*.css
   Cache-Control: public, max-age=2592000, must-revalidate
 
