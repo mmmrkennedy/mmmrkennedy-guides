@@ -7,7 +7,7 @@ Helper classes and special cases.
 
 .solver-with-button {
     width: 100%;
-    margin: var(--space-md);
+    margin: var(--space-md) 0;
 }
 
 .button-activated-div {

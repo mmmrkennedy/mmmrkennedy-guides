@@ -199,14 +199,13 @@
 
     <div class="version-display">
         <div class="version-and-toggle">
-            <span class="version-text">v.{{ site.buildVersionShort }}</span>
             <button type="button" id="ad-toggle-btn" class="ad-toggle-btn" aria-pressed="true">Hide Ads</button>
             <span id="ad-mode-indicator" class="ad-mode-indicator"></span>
         </div>
     </div>
 </div>
 
-<div class="content-window">
+<div class="content-window{% if not statsPage %} prose{% endif %}">
     {%- if unfinished or page.url in unfinishedPages %}
         <div class="content-container">
             <h2>Sorry, this page is not ready yet!</h2>

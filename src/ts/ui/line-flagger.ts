@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.body.hasAttribute("data-no-flags")) return;
 
     const lines = document.querySelectorAll<HTMLElement>(
-        ".content-container p, .content-container li",
+        ".content-container p, .content-container li:not(.dummy-li)"
     );
     if (lines.length === 0) return;
 

@@ -4,6 +4,15 @@
  * jump to each section, so a map near the bottom of the long list is reachable
  * without a long scroll. Built/enhanced by src/ts/ui/index-filter.ts. */
 
+/* The bar has to cover the full width of the column it sits in, not just the
+ * container's content box. <ul> has a smaller padding-inline-start than
+ * .content-container's own inline padding, so the list's bullet markers land in
+ * that padding — outside the bar — and were visibly scrolling past its edges.
+ * Pull the bar out over the padding and give the same amount back as its own
+ * padding, so the background reaches the edge while the search field and chips
+ * stay aligned with the list below. On mobile the container spans the viewport,
+ * so this is what makes the bar full-bleed. Values track .content-container's
+ * inline padding in layout.css / responsive.css — keep them in sync. */
 .index-nav {
     position: sticky;
     top: 0;
@@ -11,11 +20,19 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    padding: var(--space-sm) 0;
+    padding: var(--space-sm) var(--space-md);
+    margin-inline: calc(var(--space-md) * -1);
     margin-bottom: var(--space-sm);
     background-color: var(--color-bg-primary);
     border-bottom: 1px solid var(--color-border-subtle);
     box-shadow: 0 4px 8px rgb(0 0 0 / 18%);
+}
+
+@media (width >= 48.0625em) { /* --bp-md: .content-container padding widens */
+    .index-nav {
+        padding-inline: var(--space-lg);
+        margin-inline: calc(var(--space-lg) * -1);
+    }
 }
 
 /* Search field ----------------------------------------------------------- */

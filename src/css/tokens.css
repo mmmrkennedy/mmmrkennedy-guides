@@ -18,7 +18,12 @@ Neutral dark theme with subtle warmth for character without being overbearing.
     /* Hierarchy Colors - Muted gold/amber palette */
     --color-tier-1: #c9a961; /* Muted gold - Main sections */
     --color-tier-2: #b89a5a; /* Deeper amber - Sub-sections */
-    --color-tier-3: #8a7a52; /* Olive gold - Tertiary sections */
+
+    /* Olive gold - Tertiary sections. Kept at 6.0:1 on --color-bg-primary:
+       tier-3 renders at 18px/600, which is below the 18.66px bold threshold for
+       the WCAG large-text exemption, so it needs the full 4.5:1. Don't push it
+       past ~6.1 — tier-2 sits at 6.47:1 and the two stop reading as levels. */
+    --color-tier-3: #a8975f;
 
     /* Link Colors - Distinct but harmonious */
     --color-link-default: #78a8e8; /* Brighter blue */
@@ -76,6 +81,7 @@ Neutral dark theme with subtle warmth for character without being overbearing.
     /* Spacing Scale - Consistent rhythm */
     --space-xs: 0.25rem;
     --space-sm: 0.5rem;
+    --space-smd: 0.75rem; /* half-step between sm and md */
     --space-md: 1rem;
     --space-lg: 1.5rem;
     --space-xl: 2rem;

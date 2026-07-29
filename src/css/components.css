@@ -146,9 +146,11 @@ a:hover {
     border-color: #c9a961;
     color: #c9a961;
     font-size: var(--font-size-base);
-    font-weight: 600;
+    font-weight: 500;
     background: transparent;
     transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    border-radius: 12px;
+    text-transform: uppercase;
 }
 
 .btn--reveal:not(:disabled):hover {
@@ -223,7 +225,15 @@ a:hover {
 
 /* Legend panel — always-available "how to read this guide" reference */
 
-/* Launcher: small round icon button that sits beside the page title */
+/* Launcher: small round icon button that sits beside the page title.
+ *
+ * The header centres its flex line, so this button counted toward the centring
+ * and pushed the title 20px (half its own footprint) to the left at every
+ * viewport size. The negative inline-end margin cancels the space it claims, so
+ * the line measures as the title alone and the title lands dead centre, while
+ * the button still renders immediately after it. Sized off its own width and
+ * margin so the two stay in step; when the header is built without the button
+ * (noLegend) there is nothing to cancel and the title is already centred. */
 .legend-launcher {
     display: inline-flex;
     align-items: center;
@@ -231,7 +241,7 @@ a:hover {
     width: 2rem;
     height: 2rem;
     padding: 0;
-    margin-left: var(--space-sm);
+    margin-inline: var(--space-sm) calc(-2rem - var(--space-sm));
     border-radius: 50%;
     flex-shrink: 0;
     opacity: 0.85;
@@ -340,7 +350,12 @@ a:hover {
     color: var(--color-text-primary);
 }
 
-/* Information Boxes */
+/* Information Boxes
+ * Same shape as .ability below, so the two read as one system: an accent rule
+ * down the side, a barely-there tint, and the type named in a small label above
+ * the text. Each box sets --accent (rule), --accent-bg (tint) and --accent-text
+ * (label); the body keeps the normal text colour so it reads like the rest of
+ * the guide instead of a block of coloured text. */
 .note,
 .no-return,
 .danger,
@@ -349,88 +364,130 @@ a:hover {
 .disclaimer,
 .boss-fight-phases,
 .notes {
-    padding: var(--space-md);
     margin: var(--space-md) 0;
-    border-radius: 4px;
-    width: fit-content;
-    max-width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+    background: var(--accent-bg);
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+}
+
+/* The label. Emoji stays so the type is still recognisable at a glance without
+ * relying on colour alone. */
+.note::before,
+.no-return::before,
+.danger::before,
+.requirement::before,
+.tip::before,
+.disclaimer::before {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--accent-text);
+    font-weight: 600;
 }
 
 .note {
-    border: 1px solid var(--color-note-border);
-    background: var(--color-note-bg);
-    color: var(--color-note-text);
+    --accent: var(--color-note-border);
+    --accent-bg: var(--color-note-bg);
+    --accent-text: var(--color-note-text);
 }
 
 .no-return {
-    border: 1px solid var(--color-no-return-border);
-    background: var(--color-no-return-bg);
-    color: var(--color-no-return-text);
+    --accent: var(--color-no-return-border);
+    --accent-bg: var(--color-no-return-bg);
+    --accent-text: var(--color-no-return-text);
 }
 
 .danger {
-    border: 1px solid var(--color-danger-border);
-    background: var(--color-danger-bg);
-    color: var(--color-danger-text);
+    --accent: var(--color-danger-border);
+    --accent-bg: var(--color-danger-bg);
+    --accent-text: var(--color-danger-text);
 }
 
 .requirement {
-    border: 1px solid var(--color-requirement-border);
-    background: var(--color-requirement-bg);
-    color: var(--color-requirement-text);
+    --accent: var(--color-requirement-border);
+    --accent-bg: var(--color-requirement-bg);
+    --accent-text: var(--color-requirement-text);
 }
 
 .tip {
-    border: 1px solid var(--color-tip-border);
-    background: var(--color-tip-bg);
-    color: var(--color-tip-text);
+    --accent: var(--color-tip-border);
+    --accent-bg: var(--color-tip-bg);
+    --accent-text: var(--color-tip-text);
 }
 
 .disclaimer {
-    border: 1px solid var(--color-disclaimer-border);
-    background: var(--color-disclaimer-bg);
-    color: var(--color-disclaimer-text);
+    --accent: var(--color-disclaimer-border);
+    --accent-bg: var(--color-disclaimer-bg);
+    --accent-text: var(--color-disclaimer-text);
 }
 
 .note::before {
-    content: "📝 ";
-    margin-right: var(--space-xs);
+    content: "📝 Note";
 }
 
 .no-return::before {
-    content: "⛔ ";
-    margin-right: var(--space-xs);
+    content: "⛔ Point of No Return";
 }
 
 .danger::before {
-    content: "💀 ";
-    margin-right: var(--space-xs);
+    content: "💀 Warning";
 }
 
 .requirement::before {
-    content: "📋 ";
-    margin-right: var(--space-xs);
+    content: "📋 Requirement";
 }
 
 .tip::before {
-    content: "💡 ";
-    margin-right: var(--space-xs);
+    content: "💡 Tip";
 }
 
 .disclaimer::before {
-    content: "❓ ";
-    margin-right: var(--space-xs);
+    content: "❓ Disclaimer";
 }
 
+/* These two label themselves in their own text ("Phase 1", "<strong>Wolf
+ * Bow:</strong> …"), so they take the frame without a label. */
 .boss-fight-phases {
+    --accent: var(--color-tier-2);
+    --accent-bg: var(--color-bg-secondary);
+
     color: var(--color-tier-2);
-    border-left: 3px solid var(--color-tier-2);
     font-size: var(--font-size-md);
 }
 
 .notes {
+    --accent: var(--color-note-border);
+    --accent-bg: var(--color-bg-secondary);
+}
+
+/* Ability block — the "what this thing does" line that sits between a
+ * title-tier-2 heading and its numbered steps (Charms, etc.). Kept out of the
+ * step list on purpose: an ability isn't a step, and starting the <ol> at 0 to
+ * fake one reads as a mis-numbered instruction. */
+.ability {
+    margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-left: 3px solid var(--color-tier-2);
+    border-radius: 0 4px 4px 0;
+    background: var(--color-bg-secondary);
     color: var(--color-text-primary);
-    border-left: 3px solid var(--color-note-border);
+    line-height: var(--line-height-normal);
+}
+
+.ability-label {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--color-tier-2);
+    font-weight: 600;
+}
+
+/* Qualifier beside the label, e.g. an ability that only works in co-op. */
+.ability-tag {
+    margin-left: var(--space-sm);
+    color: var(--color-text-muted);
+    font-weight: 400;
 }
 
 /* Tables */
@@ -678,17 +735,21 @@ details.spacing > ul {
     padding-inline-start: var(--space-xl);
 }
 
+/* Once held the build-version watermark, which was removed — it collided with
+ * the header on narrow screens and told readers nothing. What is left is the
+ * ad-mode toggle, which ads.ts hides outright while ads are disabled site-wide,
+ * so this renders nothing today. Kept so re-enabling ads brings the control
+ * back in a sane spot: right-aligned in flow on the index, pinned to the header
+ * strip on guides and stats (rule below). */
 .version-display {
-    position: fixed;
-    top: calc(var(--space-xs) * 8);
-    right: var(--space-xs);
+    display: flex;
+    justify-content: flex-end;
+    padding-inline: var(--space-md);
     font-size: 0.8rem;
     font-family: monospace;
     color: var(--color-text-muted);
     pointer-events: none;
-    z-index: 9999;
     user-select: none;
-    opacity: 0.6;
     white-space: nowrap;
 }
 
@@ -697,6 +758,8 @@ details.spacing > ul {
     top: var(--space-xs);
     bottom: unset;
     right: var(--space-xs);
+    padding-inline: 0;
+    z-index: 9999;
 }
 
 @media (width >= 48.0625em) {

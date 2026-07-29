@@ -70,6 +70,7 @@
         width: fit-content;
         min-width: 22.5rem;
         padding: var(--space-lg);
+        margin: var(--space-md) 0;
     }
 }
 

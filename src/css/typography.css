@@ -84,14 +84,63 @@ li {
     margin: var(--space-xs) 0 var(--space-sm);
 }
 
+/* Nested lists: pull the child up tight against the parent line it belongs to,
+ * instead of the 1rem the base ul/ol rule would give it. No margin-bottom here
+ * on purpose — whatever is set collapses through the parent <li>'s own 1rem
+ * bottom margin, so the gap after a nested group is already the paragraph gap
+ * above. */
+li > ul,
+li > ol {
+    margin-top: var(--space-smd);
+}
+
 .dummy-li {
     list-style: none;
     counter-increment: list-item 0;
 }
 
+/*
+ * ---------------------------------------------------------------------------
+ * Guide prose
+ * ---------------------------------------------------------------------------
+ * Scoped to .prose (set by base.njk on every page except the stats page) so it
+ * can't reach the index map lists or the stats tiles/charts — those are lists
+ * used as UI components, not prose, and the paragraph spacing below is wrong
+ * for them.
+ */
+
+/* Guide steps are 2–4 sentence paragraphs, so the gap between two <li> is a
+ * paragraph break and has to read as one. At 0.5rem it was 36px against a 27px
+ * line step — only 1.33x — and the eye had no way to find where a step ended,
+ * which is what made long sections read as a wall. 1rem overshot the other way
+ * at 1.63x, leaving the steps looking unrelated. 0.75rem sits at 40px / 1.48x:
+ * clear of the line rhythm without breaking the list apart. */
+.prose li {
+    margin-bottom: var(--space-smd);
+}
+
+/* The Contents nav is single-line links, not paragraphs — paragraph spacing
+   just makes it long enough to push the guide itself off the screen. */
+.prose .quick-links-container li {
+    margin-bottom: var(--space-xs);
+}
+
+/* No reading-measure cap here by choice: prose runs the full container width,
+ * which at the 1000px desktop max is ~105 characters per line (peaking at 134).
+ * That is well past the ~75 where the eye reliably finds the start of the next
+ * line, so long sections lean on the paragraph spacing above to stay legible.
+ * A cap was tried at 38rem (~72 avg / 79 max) and dropped — it left ~344px of
+ * empty column on desktop. If it comes back, cap the text and not the
+ * container, so tables and screenshots keep the full width. */
+
 /* Special paragraph styles */
+
+/* Deliberately NOT bold. These run 200–550 characters — at paragraph length a
+ * 600 weight stops reading as emphasis (nothing is emphasised if everything is)
+ * and the tighter semibold sidebearings make the block look denser than the
+ * 1.75 leading actually is. Regular weight; the following <ol> provides the
+ * structural break. */
 .weapon-desc {
-    font-weight: 600;
     margin: var(--space-sm) 0;
 }
 
