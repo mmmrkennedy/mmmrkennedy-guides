@@ -24,7 +24,8 @@ interface PageUtilsApi {
 interface ScrollManagerApi {
     scrollToTop(fromPopstate?: boolean): void;
     scrollToAnchors(): void;
-    scrollToElement(elementId: string, fromPopstate?: boolean): void;
+    scrollToElement(elementId: string, historyMode?: "push" | "replace" | "none"): void;
+    restoreStampedScroll(behavior?: ScrollBehavior): boolean;
     clearHashAndScrollTop(): void;
     initHistoryManagement(): void;
 }
@@ -62,6 +63,11 @@ interface SolverButtonProcessorApi {
     initRevealButtons(): void;
 }
 
+interface PathTabsApi {
+    initPathTabs(): void;
+    revealPathTo(id: string): void;
+}
+
 interface QuickLinksUtilsApi {
     getElementTitle(element: HTMLElement): string;
     getQuickLinkElements(doc: Document): QuickLinkItem[];
@@ -76,6 +82,7 @@ interface Window {
     LinkProcessor: LinkProcessorApi;
     QuickLinks: QuickLinksApi;
     SolverButtonProcessor: SolverButtonProcessorApi;
+    PathTabs: PathTabsApi;
     QuickLinksUtils: QuickLinksUtilsApi;
 
     navigateToIndex(): void;

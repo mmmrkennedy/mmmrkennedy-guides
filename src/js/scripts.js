@@ -160,17 +160,36 @@ MAIN INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
     try {
         const initializationSteps = [
+            // Runs first: a deep link into a collapsed path has to open that path
+            // before anything below tries to scroll the target into view.
+            { name: "Path Tabs", fn: () => window.PathTabs?.initPathTabs() },
             { name: "Scroll Manager", fn: () => window.ScrollManager?.initHistoryManagement() },
             {
                 name: "Scroll Manager Clear",
                 fn: () => {
                     const hash = window.location.hash;
-                    if (hash && hash.length > 1) {
-                        window.ScrollManager?.scrollToElement(hash.substring(1));
-                    }
-                    else {
+                    if (!hash || hash.length <= 1) {
+                        // Returning to an entry we stamped on the way out (Back from
+                        // another guide, without bfcache) — put the reader back where
+                        // they were rather than resetting them to the top.
+                        if (window.ScrollManager?.restoreStampedScroll())
+                            return;
                         window.ScrollManager?.clearHashAndScrollTop();
+                        return;
                     }
+                    const id = hash.substring(1);
+                    // "replace", not "push": this history entry already exists — the
+                    // reader arrived at this URL. Pushing a duplicate meant their
+                    // first Back press just re-landed them on the same page at the
+                    // top instead of going back.
+                    window.ScrollManager?.scrollToElement(id, "replace");
+                    // The browser performs its own fragment scroll once loading
+                    // finishes, which knows nothing about our fixed header offset
+                    // or any wider frame the target asked for via data-scroll-with.
+                    // Re-assert afterwards, leaving history untouched.
+                    window.addEventListener("load", () => {
+                        requestAnimationFrame(() => window.ScrollManager?.scrollToElement(id, "none"));
+                    }, { once: true });
                 },
             },
             { name: "Scroll Anchors", fn: () => window.ScrollManager?.scrollToAnchors() },

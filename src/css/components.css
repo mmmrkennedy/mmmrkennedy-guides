@@ -188,9 +188,14 @@ a:hover {
     inset: var(--btn-top, auto) var(--btn-right, auto) var(--btn-bottom, auto) var(--btn-left, auto);
 }
 
-.btn--fixed:hover {
-    opacity: 1;
-    transform: translateY(-1px);
+/* Real hover only — on touch, :hover sticks to the last-tapped element, leaving
+ * Home / Back to Top visibly brightened and nudged until something else is
+ * tapped. Same reason the return pill gates its hover state. */
+@media (hover: hover) {
+    .btn--fixed:hover {
+        opacity: 1;
+        transform: translateY(-1px);
+    }
 }
 
 .top-left {

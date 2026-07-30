@@ -83,6 +83,35 @@ Desktop-specific upgrades. Base styles are mobile-first.
         width: fit-content;
     }
 
+    /* Enough width for a real tab strip: tabs sit on the panel's top edge
+       instead of stacking as standalone buttons. */
+    .path-tabs__bar {
+        flex-flow: row wrap;
+        align-items: flex-end;
+        border-bottom: 1px solid var(--color-border-medium);
+    }
+
+    .path-tabs__tab {
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+
+        /* Cover the bar's border so the active tab reads as joined to its panel. */
+        margin-bottom: -1px;
+    }
+
+    .path-tabs__tab.is-active {
+        border-bottom: 1px solid var(--color-bg-secondary);
+    }
+
+    .path-tabs__panels {
+        margin-top: 0;
+    }
+
+    .path-tabs__panel {
+        border-top: 1px solid var(--color-border-medium);
+        border-radius: 0 4px 4px;
+    }
+
     .top-buttons-background-box {
         height: var(--header-height-desktop);
     }

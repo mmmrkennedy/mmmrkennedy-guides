@@ -20,6 +20,7 @@ const JS_CORE_ORDER = [
     "content/link-processor.js",
     "content/quick-links.js",
     "content/solver-button-processor.js",
+    "content/path-tabs.js",
     "quick-links-utils.js",
     "scripts.js",
     "ui/view-counter.js",

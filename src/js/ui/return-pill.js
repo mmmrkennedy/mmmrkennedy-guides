@@ -2,16 +2,22 @@
 /**
  * Return pill
  * -----------
- * After the reader follows an in-page cross-reference (a teal `.link-to-page`
- * link inside the guide body — e.g. "DRI-11 Beamsmasher" in a Main Quest step),
- * a small dismissible pill slides up: "← Back to «section»". Clicking it returns
- * them to the exact spot they jumped from.
+ * After the reader follows a cross-reference (a teal `.link-to-page` link inside
+ * the guide body — e.g. "DRI-11 Beamsmasher" in a Main Quest step), a small
+ * dismissible pill slides up: "← Back to «section»". Clicking it returns them to
+ * the exact spot they jumped from.
+ *
+ * Two flavours, same pill:
+ *   same-page  — the link also carries no `.internal-link` class. scroll-manager
+ *                handles the jump and dispatches "scrollmanager:navigate".
+ *   cross-page — `.link-to-page.internal-link`, pointing at another guide. The
+ *                browser does a real navigation, so the origin is handed over in
+ *                sessionStorage and picked up on the destination page.
  *
  * It does no scrolling of its own — it piggybacks on the history-based scroll
  * restoration in navigation/scroll-manager.ts (which stamps the leaving scroll
- * position into history). "Go back" is just history.back(); the popstate handler
- * there restores the position. We listen for the "scrollmanager:navigate" event
- * that scroll-manager dispatches on qualifying in-page link clicks.
+ * position into history, including on pagehide for real navigations). "Go back"
+ * is just history.back(); the popstate/pageshow handlers there restore position.
  *
  * The pill self-dismisses when it's no longer useful: the reader returns, clicks
  * ×, presses Escape, navigates with the browser buttons, or scrolls the origin
@@ -120,6 +126,68 @@ document.addEventListener("DOMContentLoaded", () => {
         const section = sectionFor(anchor);
         show(labelFor(section), section);
     });
+    /*
+    ---------------------------------------------------------------------------
+    Cross-page cross-references
+    ---------------------------------------------------------------------------
+    A link to another guide is a real navigation, so we can't just show the pill
+    — the origin has to survive the page load. Stash it on the way out, pick it
+    up on arrival.
+    */
+    const HANDOFF_KEY = "guides:return-to";
+    function readHandoff() {
+        let raw = null;
+        try {
+            raw = window.sessionStorage.getItem(HANDOFF_KEY);
+            // Only ever valid for the one navigation that wrote it.
+            window.sessionStorage.removeItem(HANDOFF_KEY);
+        }
+        catch {
+            return null; // storage disabled (private mode, blocked cookies)
+        }
+        if (!raw)
+            return null;
+        try {
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed.from === "string" ? parsed : null;
+        }
+        catch {
+            return null;
+        }
+    }
+    document.addEventListener("click", (e) => {
+        const anchor = e.target?.closest("a.link-to-page.internal-link");
+        if (!anchor)
+            return;
+        // Let modified clicks (new tab/window) go without arming anything —
+        // this tab isn't going anywhere, so there'd be nothing to come back from.
+        if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+            return;
+        if (anchor.target && anchor.target !== "_self")
+            return;
+        // Same document — scroll-manager's in-page path already covers it.
+        if (anchor.pathname === window.location.pathname)
+            return;
+        try {
+            const payload = {
+                from: window.location.href,
+                label: labelFor(sectionFor(anchor)),
+            };
+            window.sessionStorage.setItem(HANDOFF_KEY, JSON.stringify(payload));
+        }
+        catch {
+            /* storage unavailable — the reader just doesn't get the pill */
+        }
+    });
+    const handoff = readHandoff();
+    // Trust it only if the browser agrees we actually came from there: a new tab
+    // can inherit a copy of sessionStorage, and we don't want a phantom pill
+    // offering to "go back" to a page this tab was never on.
+    if (handoff && document.referrer && document.referrer.split("#")[0] === handoff.from.split("#")[0]) {
+        // No origin element to watch on this page — the section we left lives on
+        // the previous document, so the pill stays until used or dismissed.
+        show(handoff.label, null);
+    }
     // The reader navigated with the browser buttons — the offer is consumed.
     window.addEventListener("popstate", () => {
         if (armed)

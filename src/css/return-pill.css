@@ -38,9 +38,16 @@
     transform: translate(-50%, 0);
 }
 
-.return-pill:hover {
-    opacity: 1;
-    border-color: var(--color-text-primary);
+/* Touch devices leave :hover stuck on the last-tapped element, and this rule
+ * outranks the base `opacity: 0` — so a tapped-then-hidden pill stayed on screen
+ * until the reader tapped somewhere else, reading as "it took two presses".
+ * Gate on real hover, and require .is-visible so hover can never resurrect a
+ * hidden pill on hybrid touch-and-mouse devices. */
+@media (hover: hover) {
+    .return-pill.is-visible:hover {
+        opacity: 1;
+        border-color: var(--color-text-primary);
+    }
 }
 
 .return-pill:focus-visible {
@@ -82,9 +89,11 @@
     transform: translateY(-0.1em);
 }
 
-.return-pill__dismiss:hover {
-    color: var(--color-text-primary);
-    background-color: var(--color-bg-tertiary);
+@media (hover: hover) {
+    .return-pill__dismiss:hover {
+        color: var(--color-text-primary);
+        background-color: var(--color-bg-tertiary);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

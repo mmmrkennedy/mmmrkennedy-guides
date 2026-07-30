@@ -891,6 +891,105 @@ function preRenderRevealButtons(content, outputPath) {
     return dom.serialize();
 }
 
+/**
+ * Expands a `data-path-group` block into a segmented tab switcher.
+ *
+ * Authored form — direct children carrying `data-path-label` become the paths,
+ * and the one marked `data-path-default` is the one shown on load:
+ *
+ *   <div class="path-tabs" data-path-group="chemistry-step">
+ *     <div id="..." data-path-label="Solver Way" data-path-note="Recommended" data-path-default>…</div>
+ *     <div id="..." data-path-label="Intended Way" data-path-note="Tedious">…</div>
+ *   </div>
+ *
+ * The authored elements become the panels themselves rather than being wrapped,
+ * so any `id` on them stays a valid anchor target. Interaction lives in
+ * src/ts/content/path-tabs.ts.
+ */
+function preRenderPathTabs(content, outputPath) {
+    if (!outputPath?.endsWith(".html")) return content;
+    if (!content.includes("data-path-group")) return content;
+
+    try {
+        const dom = new JSDOM(content);
+        const document = dom.window.document;
+        const groups = document.querySelectorAll("[data-path-group]");
+        if (!groups.length) return content;
+
+        for (const group of groups) {
+            const groupName = group.getAttribute("data-path-group");
+            const paths = Array.from(group.children).filter((el) => el.hasAttribute("data-path-label"));
+
+            // A switcher needs something to switch between.
+            if (paths.length < 2) {
+                console.warn(
+                    `[preRenderPathTabs] "${groupName}" in ${outputPath} has ${paths.length} path(s); skipping.`,
+                );
+                continue;
+            }
+
+            const defaultIndex = Math.max(
+                0,
+                paths.findIndex((el) => el.hasAttribute("data-path-default")),
+            );
+
+            group.classList.add("path-tabs");
+
+            const bar = document.createElement("div");
+            bar.className = "path-tabs__bar";
+            bar.setAttribute("role", "tablist");
+
+            const panels = document.createElement("div");
+            panels.className = "path-tabs__panels";
+
+            paths.forEach((path, index) => {
+                const isDefault = index === defaultIndex;
+                const tabId = `path-${groupName}-tab-${index}`;
+                const panelId = `path-${groupName}-panel-${index}`;
+                const label = path.getAttribute("data-path-label");
+                const note = path.getAttribute("data-path-note");
+
+                const tab = document.createElement("button");
+                tab.type = "button";
+                tab.id = tabId;
+                tab.className = `path-tabs__tab${isDefault ? " is-active" : ""}`;
+                tab.setAttribute("role", "tab");
+                tab.setAttribute("aria-controls", panelId);
+                tab.setAttribute("aria-selected", String(isDefault));
+                tab.tabIndex = isDefault ? 0 : -1;
+                tab.innerHTML =
+                    `<span class="path-tabs__label">${label}</span>` +
+                    (note ? `<span class="path-tabs__note">${note}</span>` : "");
+                bar.appendChild(tab);
+
+                path.classList.add("path-tabs__panel");
+                path.setAttribute("role", "tabpanel");
+                path.setAttribute("aria-labelledby", tabId);
+
+                // Deep links to a panel should land on the tab bar, not on the
+                // panel's first line — otherwise the tabs sit off-screen and the
+                // reader can't tell there's another route. See resolveScrollTarget
+                // in src/ts/navigation/scroll-manager.ts.
+                path.setAttribute("data-scroll-with", ".path-tabs");
+                if (!path.id) path.id = panelId;
+                if (!isDefault) path.setAttribute("hidden", "");
+                path.removeAttribute("data-path-label");
+                path.removeAttribute("data-path-note");
+                path.removeAttribute("data-path-default");
+                panels.appendChild(path);
+            });
+
+            group.prepend(bar);
+            bar.after(panels);
+        }
+
+        return dom.serialize();
+    } catch (e) {
+        console.error(`Error building path tabs in ${outputPath}:`, e.message);
+        return content;
+    }
+}
+
 // ========================================
 // SMART IMAGE COPY
 // ========================================
@@ -966,6 +1065,7 @@ module.exports = function(eleventyConfig) {
     // Add transforms for quick links generation, link classification, versioning, and React bundle injection
     eleventyConfig.addTransform("wrapTables", wrapTables);
     eleventyConfig.addTransform("preRenderRevealButtons", preRenderRevealButtons);
+    eleventyConfig.addTransform("preRenderPathTabs", preRenderPathTabs);
     eleventyConfig.addTransform("generateQuickLinks", generateQuickLinks);
     eleventyConfig.addTransform("classifyLinks", classifyLinks);
     eleventyConfig.addTransform("addVersioning", addVersioning);
@@ -983,7 +1083,12 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/js");
     eleventyConfig.addPassthroughCopy("src/favicon");
     eleventyConfig.addPassthroughCopy("src/font");
-    eleventyConfig.addPassthroughCopy("src/react-solvers");
+    // NOT src/react-solvers — Vite already builds that directory into
+    // dist/react-solvers (see vite.config.js `outDir`), and it runs before
+    // Eleventy. Copying the source tree on top of it published every solver's
+    // .tsx source plus a stale nested dist/ (bundle + 1.2MB sourcemap) to the
+    // live site, and overwrote Vite's built index.html with the source one that
+    // points at /src/main.tsx. Production needs only Vite's assets/ output.
     eleventyConfig.addPassthroughCopy("src/_headers");
     eleventyConfig.addPassthroughCopy("src/_redirects");
 
