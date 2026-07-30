@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "// build": "Production builds — bundled, minified, versioned",
-        "build": "bun run build:scripts && bun run build:react && BUNDLE=true bun run build:eleventy && BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/minify-html.js && bun build:sitemap",
+        "build": "bun run build:scripts && bun run build:react && cross-env BUNDLE=true bun run build:eleventy && cross-env BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/minify-html.js && bun run build:sitemap",
         "build:full": "bun run clean && bun run build",
         "// dev": "Development servers — unbundled, hot reload",
         "dev": "eleventy --serve",
@@ -53,6 +53,7 @@
         "@preact/preset-vite": "^2.10.5",
         "clean-css-cli": "^5.6.3",
         "concurrently": "^9.2.1",
+        "cross-env": "^10.1.0",
         "eslint": "^9.38.0",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^7.0.0",

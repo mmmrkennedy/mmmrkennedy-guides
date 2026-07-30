@@ -28,9 +28,9 @@
         <meta name="twitter:description" content="{{ description }}">
         <meta name="twitter:image" content="https://mmmrkennedy.com/og_image.webp">
 
-        <!-- AdSense -->
+        <!-- AdSense: site-verification meta only; the loader is injected on
+             demand by src/ts/ui/ads.ts (see base.njk). -->
         <meta name="google-adsense-account" content="ca-pub-2164582284838563">
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2164582284838563" crossorigin="anonymous"></script>
 
         <!-- Stylesheets -->
         {%- if site.bundled %}
@@ -43,7 +43,8 @@
         <link rel="dns-prefetch" href="//ko-fi.com">
         <link rel="preconnect" href="//storage.ko-fi.com">
 
-        <!-- REACT_BUNDLE_MODULEPRELOAD -->
+        {#- No REACT_BUNDLE_MODULEPRELOAD here: the index has no solvers, so it
+            never loads the React bundle and must not preload it either. #}
 
         <!-- JSON-LD Structured Data -->
         <script type="application/ld+json">

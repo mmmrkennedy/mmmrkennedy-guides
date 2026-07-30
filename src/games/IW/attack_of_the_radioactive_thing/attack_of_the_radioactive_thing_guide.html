@@ -5,33 +5,9 @@ aliases: ['AOTRT', 'Radioactive Thing', 'Attack']
 about: >-
   Attack of the Radioactive Thing, commonly abbreviated as AOTRT (or just "Attack"), is the fourth Zombies map in Call of Duty Infinite Warfare. This guide covers the AOTRT main Easter Egg (the 'Soul-Less' main quest), the M.A.D. wonder weapon upgrades, the Skull Hop challenge, and all other side quests on the map.
 description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing" map guide. Features 'M.A.D.' upgrades, 'Soul-Less' main quest, Skull Hop quest, and all other side quests.
-preloadImages:
-  - /games/IW/wyler_language_symbols/a.webp
-  - /games/IW/wyler_language_symbols/b.webp
-  - /games/IW/wyler_language_symbols/c.webp
-  - /games/IW/wyler_language_symbols/d.webp
-  - /games/IW/wyler_language_symbols/e.webp
-  - /games/IW/wyler_language_symbols/f.webp
-  - /games/IW/wyler_language_symbols/g.webp
-  - /games/IW/wyler_language_symbols/h.webp
-  - /games/IW/wyler_language_symbols/i.webp
-  - /games/IW/wyler_language_symbols/j.webp
-  - /games/IW/wyler_language_symbols/k.webp
-  - /games/IW/wyler_language_symbols/l.webp
-  - /games/IW/wyler_language_symbols/m.webp
-  - /games/IW/wyler_language_symbols/n.webp
-  - /games/IW/wyler_language_symbols/o.webp
-  - /games/IW/wyler_language_symbols/p.webp
-  - /games/IW/wyler_language_symbols/q.webp
-  - /games/IW/wyler_language_symbols/r.webp
-  - /games/IW/wyler_language_symbols/s.webp
-  - /games/IW/wyler_language_symbols/t.webp
-  - /games/IW/wyler_language_symbols/u.webp
-  - /games/IW/wyler_language_symbols/v.webp
-  - /games/IW/wyler_language_symbols/w.webp
-  - /games/IW/wyler_language_symbols/x.webp
-  - /games/IW/wyler_language_symbols/y.webp
-  - /games/IW/wyler_language_symbols/z.webp
+# No preloadImages here: this page's solver assets sit far below the fold,
+# so preloading them only competed with the LCP paint. The solver-only page
+# for this map still preloads them, where they are above the fold.
 ---
 
 <div class="content-container" data-section-ind="Map Progression" id="power">
@@ -502,7 +478,9 @@ preloadImages:
         <li>
             Unlock <a href="#pap" class="link-to-page">Pack-a-Punch</a>.
         </li>
-        <li>Note: Steps 3 (body parts) and 4 (glass pieces) can be collected at the same time.</li>
+        <li class="dummy-li">
+            <p class="note">The items Steps 2 (body parts) and 3 (glass pieces) can be collected at the same time.</p>
+        </li>
         <li>
             You need to collect six body parts (Two arms, two legs, a torso, and a head) of a Zombie, which are scattered around the map. Each part can be collected at any time, in any order.
             <table>
@@ -722,13 +700,98 @@ preloadImages:
             <p class="title-tier-2" id="main_ee_step3">The Chemistry Step</p>
         </li>
         <li>
-            There are two ways to do the "Chemistry Step": the IW intended way, or using the Solver below. The Solver skips a lot of the more tedious parts, but both are described below for you to choose.
+            There are two ways to do the "Chemistry Step": the intended way, or using the Solver. The Solver skips a lot of the more tedious parts. Pick a method below and the steps for it will appear underneath.
         </li>
 
         <li class="dummy-li">
-            <p class="title-tier-4" id="main_ee_step4">The Intended Way (Not Recommended)</p>
+            <div data-path-group="chemistry" data-bool-quick-link="false">
 
-            <div class="solver-with-button" data-bool-quick-link="false" data-reveal-label="Click to show THE IW INTENDED WAY (NOT RECOMMENDED)">
+            <div id="main_ee_step5" data-path-label="The Solver Way" data-path-note="Recommended" data-path-default>
+                    <ol start="20">
+                        <li>
+                            Go to the Motel Office and note down the <a href="pictures/main_ee/m_number.webp">"M Number"</a> found on the wall right of the window.
+                        </li>
+                        <li>
+                            On the <a href="pictures/main_ee/elvira_tv.webp">TV beside Elvira in the TV Station</a>, there will be numbers and colours; note down which number is on the top of the TV (should be the "&lt; ##" one).
+                        </li>
+                        <li>
+                            Now enter your M number and the TV number into the solver below. It should return your O Number and a colour option on the TV.
+                            <ul>
+                                <li>
+                                    If you get an option for the O Number (like "9 or 11"), see Steps 21-23 in <a href="#main_ee_step4" class="link-to-page">The Intended Way</a> for how to determine the right O Number.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Go to the TV Station and interact with the <a href="pictures/main_ee/control_panel.webp">control panel</a> to change the map's colour. There are four options for you to change it to, Full Colour (default), Red, Green, and Blue. Change it to the colour on the TV that the solver tells to.
+                        </li>
+                        <li>
+                            Go to Spawn and look at the <a href="pictures/main_ee/board_spawn_full_colour.webp">board in the tent hallway</a>; note down the <a href="pictures/main_ee/chem_diamond_solver.webp">left and top numbers on the diamonds</a> for Insect Repellent and Racing Fuel, while in the colour vision the TV/Solver told you to. Add the numbers from each ingredient's diamond together to be left with one number for each ingredient. Don't add all four numbers together, just add the two from Insect to get the insect number, and the two for Racing Fuel to the Racing Fuel number.
+                        </li>
+                        <li>
+                            Wait till round 10; Zombies will start to drop a <a href="pictures/main_ee/battery.webp">battery</a>. Pick up a battery and bring it to one of the two radios below. Radio locations:
+
+                            <ul>
+                                <li>
+                                    <a href="pictures/main_ee/radio_power.webp">Power Station - On the ground near the porta-potty</a>
+                                </li>
+                                <li>
+                                    <a href="pictures/main_ee/radio_motel.webp">Motel - In the Motel Office, on the couch</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Interact with the radio to repair it, then interact again to play one of its recordings. You can keep interacting to play more. Once you play all of them, the radio needs to rewind (end the round to make it rewind). It will talk about one of two things:
+                            <ul>
+                                <li>A man will talk about how to produce chemicals (this radio can be ignored).</li>
+                                <li>
+                                    A man will talk about whether he thinks a chemical will kill the Radioactive Thing or not. One recording will say something like "I've devised the perfect solution to our mutated crab problem. CHEMICAL NAME!" This is the chemical you need to take note of. The other four recordings will say things like "I don't think CHEMICAL NAME will be useful in the current circumstance," or some other negative comment.
+                                </li>
+                                <li>
+                                    One of the negative comments could be understood as positive and that is, "CHEMICAL NAME may be a rather crude solution for what faces us." This is not an indication that the chemical should be used, despite the man saying it would work.
+                                </li>
+                                <li>
+                                    Chemical Names:
+                                    <ul>
+                                        <li>3,4-di-nitroxy-methyl-propane</li>
+                                        <li>1,3,5 tera-nitro-phenol</li>
+                                        <li>Octa-hydro-2,5-nitro-3,4,7-para-zokine</li>
+                                        <li>3-methyl-2,4-di-nitrobenzene</li>
+                                        <li>2,4-propane-3,5-tetra-nitrite</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>Once you have the M Number, TV number, Insect Repellent and Racing Fuel numbers, and the final chemical from the radio, input those into the Solver.
+                        </li>
+
+                        <li class="dummy-li">
+                            <div id="chemical-solver-react"></div>
+                        </li>
+
+                        <li>The Solver will return the chemicals and numbers to create your required chemical.</li>
+                        <li>
+                            To make a chemical, you need to bring its ingredients (<a href="#ingredients" class="link-to-page">ingredient locations here</a>) to the chemistry set in the garage, and place them on the <a href="pictures/main_ee/squares_chem.webp">squares in front of the tubes on the table</a>. Then input the number on the <a href="pictures/main_ee/keypard_number.webp">keypad of the chemistry set</a> by looking at a number's button, and then interacting with it.
+                        </li>
+                        <li>
+                            Once the number and ingredients are in, press the <a href="pictures/main_ee/big_button.webp">big button</a> to start the reaction.
+
+                            <ul>
+                                <li>
+                                    If the reaction fails after a couple of seconds, and you take damage, it means your numbers or ingredients were wrong. If you think the solver is wrong, please report it to me (Mark) on the <a href="https://discord.com/invite/hQng3Yz48A" class="external-link">Discord</a>, and see the <a href="#main_ee_step4" class="link-to-page">IW Intended Way</a> for how to determine the numbers manually.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Once you have your final chemical (the radio one), pick it up and interact with the Nuke. Once you're ready for the boss fight, all players must interact with the Nuke to start charging it. Once charged, interact with the Nuke to start the Boss Fight.
+                            <ul>
+                                <li>If you can't give the Nuke your chemical, it means you made the wrong one, and need to listen to the radio again to find the right one to make.</li>
+                            </ul>
+                        </li>
+                    </ol>
+            </div>
+
+            <div id="main_ee_step4" data-path-label="The Intended Way" data-path-note="Not Recommended">
                     <ol start="20">
                         <li>
                             Go to the Motel Office and note down the <a href="pictures/main_ee/m_number.webp">"M Number"</a> found on the wall right of the window.
@@ -865,93 +928,7 @@ preloadImages:
                         </li>
                     </ol>
             </div>
-        </li>
 
-        <li class="dummy-li">
-            <p class="title-tier-4" id="main_ee_step5">The Solver Way (Recommended)</p>
-            <div class="solver-with-button" data-bool-quick-link="false" data-reveal-label="Click to show THE SOLVER WAY (RECOMMENDED)">
-                    <ol start="20">
-                        <li>
-                            Go to the Motel Office and note down the <a href="pictures/main_ee/m_number.webp">"M Number"</a> found on the wall right of the window.
-                        </li>
-                        <li>
-                            On the <a href="pictures/main_ee/elvira_tv.webp">TV beside Elvira in the TV Station</a>, there will be numbers and colours; note down which number is on the top of the TV (should be the "&lt; ##" one).
-                        </li>
-                        <li>
-                            Now enter your M number and the TV number into the solver below. It should return your O Number and a colour option on the TV.
-                            <ul>
-                                <li>
-                                    If you get an option for the O Number (like "9 or 11"), see Steps 21-23 in <a href="#main_ee_step4" class="link-to-page">The Intended Way Section</a> for how to determine the right O Number.
-                                </li>
-                            </ul>
-                        </li>
-                        <li>
-                            Go to the TV Station and interact with the <a href="pictures/main_ee/control_panel.webp">control panel</a> to change the map's colour. There are four options for you to change it to, Full Colour (default), Red, Green, and Blue. Change it to the colour on the TV that the solver tells to.
-                        </li>
-                        <li>
-                            Go to Spawn and look at the <a href="pictures/main_ee/board_spawn_full_colour.webp">board in the tent hallway</a>; note down the <a href="pictures/main_ee/chem_diamond_solver.webp">left and top numbers on the diamonds</a> for Insect Repellent and Racing Fuel, while in the colour vision the TV/Solver told you to. Add the numbers from each ingredient's diamond together to be left with one number for each ingredient. Don't add all four numbers together, just add the two from Insect to get the insect number, and the two for Racing Fuel to the Racing Fuel number.
-                        </li>
-                        <li>
-                            Wait till round 10; Zombies will start to drop a <a href="pictures/main_ee/battery.webp">battery</a>. Pick up a battery and bring it to one of the two radios below. Radio locations:
-
-                            <ul>
-                                <li>
-                                    <a href="pictures/main_ee/radio_power.webp">Power Station - On the ground near the porta-potty</a>
-                                </li>
-                                <li>
-                                    <a href="pictures/main_ee/radio_motel.webp">Motel - In the Motel Office, on the couch</a>
-                                </li>
-                            </ul>
-                        </li>
-                        <li>
-                            Interact with the radio to repair it, then interact again to play one of its recordings. You can keep interacting to play more. Once you play all of them, the radio needs to rewind (end the round to make it rewind). It will talk about one of two things:
-                            <ul>
-                                <li>A man will talk about how to produce chemicals (this radio can be ignored).</li>
-                                <li>
-                                    A man will talk about whether he thinks a chemical will kill the Radioactive Thing or not. One recording will say something like "I've devised the perfect solution to our mutated crab problem. CHEMICAL NAME!" This is the chemical you need to take note of. The other four recordings will say things like "I don't think CHEMICAL NAME will be useful in the current circumstance," or some other negative comment.
-                                </li>
-                                <li>
-                                    One of the negative comments could be understood as positive and that is, "CHEMICAL NAME may be a rather crude solution for what faces us." This is not an indication that the chemical should be used, despite the man saying it would work.
-                                </li>
-                                <li>
-                                    Chemical Names:
-                                    <ul>
-                                        <li>3,4-di-nitroxy-methyl-propane</li>
-                                        <li>1,3,5 tera-nitro-phenol</li>
-                                        <li>Octa-hydro-2,5-nitro-3,4,7-para-zokine</li>
-                                        <li>3-methyl-2,4-di-nitrobenzene</li>
-                                        <li>2,4-propane-3,5-tetra-nitrite</li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </li>
-                        <li>Once you have the M Number, TV number, Insect Repellent and Racing Fuel numbers, and the final chemical from the radio, input those into the Solver.
-                        </li>
-
-                        <li class="dummy-li">
-                            <div id="chemical-solver-react"></div>
-                        </li>
-
-                        <li>The Solver will return the chemicals and numbers to create your required chemical.</li>
-                        <li>
-                            To make a chemical, you need to bring its ingredients (<a href="#ingredients" class="link-to-page">ingredient locations here</a>) to the chemistry set in the garage, and place them on the <a href="pictures/main_ee/squares_chem.webp">squares in front of the tubes on the table</a>. Then input the number on the <a href="pictures/main_ee/keypard_number.webp">keypad of the chemistry set</a> by looking at a number's button, and then interacting with it.
-                        </li>
-                        <li>
-                            Once the number and ingredients are in, press the <a href="pictures/main_ee/big_button.webp">big button</a> to start the reaction.
-
-                            <ul>
-                                <li>
-                                    If the reaction fails after a couple of seconds, and you take damage, it means your numbers or ingredients were wrong. If you think the solver is wrong, please report it to me (Mark) on the <a href="https://discord.com/invite/hQng3Yz48A" class="external-link">Discord</a>, and see the <a href="#main_ee_step4" class="link-to-page">IW Intended Way section</a> for how to determine the numbers manually.
-                                </li>
-                            </ul>
-                        </li>
-                        <li>
-                            Once you have your final chemical (the radio one), pick it up and interact with the Nuke. Once you're ready for the boss fight, all players must interact with the Nuke to start charging it. Once charged, interact with the Nuke to start the Boss Fight.
-                            <ul>
-                                <li>If you can't give the Nuke your chemical, it means you made the wrong one, and need to listen to the radio again to find the right one to make.</li>
-                            </ul>
-                        </li>
-                    </ol>
             </div>
         </li>
     </ol>

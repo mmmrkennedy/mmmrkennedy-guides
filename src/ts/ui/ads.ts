@@ -55,8 +55,38 @@ function buildSidebarAdHTML(): string {
      data-full-width-responsive="true"></ins>`;
 }
 
+const ADSENSE_SRC =
+    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2164582284838563";
+
+/**
+ * Load adsbygoogle.js on demand, once.
+ *
+ * This module owns the loader rather than the page templates: the tag used to
+ * sit in <head> on every page, so the whole Google stack (~1MB over ~28
+ * requests across pagead2, fundingchoicesmessages, adtrafficquality and
+ * doubleclick) was fetched even while ADS_DISABLED was true and not one slot
+ * was ever injected. Keeping it here means the single flag below is the only
+ * thing that decides whether Google is contacted at all, and a reader who sets
+ * ads to "hidden" never pays for it either.
+ *
+ * Safe to call before any pushAd(): window.adsbygoogle is a plain queue array
+ * until the script arrives, and AdSense drains whatever it finds on load.
+ */
+let adSenseRequested = false;
+function ensureAdSenseLoader(): void {
+    if (adSenseRequested || ADS_DISABLED) return;
+    adSenseRequested = true;
+    const script = document.createElement("script");
+    script.src = ADSENSE_SRC;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.onerror = () => console.warn("AdSense loader failed to load");
+    document.head.appendChild(script);
+}
+
 function pushAd(): void {
     try {
+        ensureAdSenseLoader();
         (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (e) {
         console.warn("AdSense push failed:", e);
