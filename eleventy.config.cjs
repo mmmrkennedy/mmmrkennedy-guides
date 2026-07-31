@@ -338,6 +338,7 @@ function generateQuickLinks(content, outputPath) {
         // Build navigation from page structure
         const navStructure = buildNavStructure(document);
         renderNavigation(container, navStructure, outputPath);
+        renderSidebarToc(document, container);
 
         const result = dom.serialize();
         // console.log(`[generateQuickLinks] ${outputPath} in ${Date.now() - t0}ms`);
@@ -489,6 +490,83 @@ function renderNavigation(container, structure, outputPath) {
 }
 
 /**
+ * Pre-renders the fixed sidebar TOC from the inline one.
+ *
+ * This used to be cloned client-side at DOMContentLoaded. On a throttled device
+ * that landed ~1s after first contentful paint — the guide was fully readable
+ * while the sidebar was still missing — because it had to wait for the whole
+ * document to parse, then the core bundle, then five earlier init steps.
+ * Shipping it in the HTML lets it paint with everything else; quick-links.ts
+ * hydrates this markup and keeps its runtime build as a fallback.
+ */
+function renderSidebarToc(document, tocContainer) {
+    document.querySelector(".sidebar-toc")?.remove();
+    if (!tocContainer.children.length) return;
+
+    const sidebar = document.createElement("nav");
+    sidebar.className = "sidebar-toc";
+    sidebar.dataset.prebuilt = "true";
+    sidebar.setAttribute("aria-label", "Page contents");
+
+    const header = document.createElement("div");
+    header.className = "sidebar-toc-header";
+
+    const label = document.createElement("p");
+    label.className = "sidebar-toc-label";
+    label.textContent = "Contents";
+    header.appendChild(label);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "sidebar-toc-toggle";
+    toggle.setAttribute("aria-label", "Toggle table of contents");
+    toggle.textContent = "Hide";
+    header.appendChild(toggle);
+
+    sidebar.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "sidebar-toc-body";
+    for (const child of tocContainer.children) {
+        body.appendChild(child.cloneNode(true));
+    }
+    sidebar.appendChild(body);
+
+    addSidebarSubToggles(document, body);
+
+    // Ahead of .content-window so it streams in before the guide body rather
+    // than after it. It's position:fixed, so DOM order doesn't affect layout.
+    const contentWindow = document.querySelector(".content-window");
+    if (contentWindow?.parentNode) {
+        contentWindow.parentNode.insertBefore(sidebar, contentWindow);
+    } else {
+        document.body.appendChild(sidebar);
+    }
+}
+
+/**
+ * Emits the collapse toggle for every sidebar item that has nested children,
+ * matching what setupSidebarSubToggles() builds at runtime. Sub-lists ship
+ * collapsed; quick-links.ts only has to attach the click handlers.
+ */
+function addSidebarSubToggles(document, container) {
+    for (const li of container.querySelectorAll("li")) {
+        const childUl = li.querySelector(":scope > ul");
+        if (!childUl) continue;
+
+        childUl.style.display = "none";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sidebar-toc-sub-toggle";
+        btn.setAttribute("aria-label", "Toggle sub-items");
+        btn.textContent = "▸";
+
+        li.insertBefore(btn, li.firstChild);
+    }
+}
+
+/**
  * Creates a navigation link element
  */
 function createNavLink(document, element, customName = null, _outputPath = "") {
@@ -546,6 +624,46 @@ function shouldExcludeFromNav(element) {
 }
 
 /**
+ * Cuts one element out of an HTML string, leaving a placeholder in its place.
+ *
+ * Lets a regex pass run over everything except that element. `marker` is any
+ * substring inside the element's opening tag; `tag` is that element's name,
+ * matched with depth counting so nested tags of the same name don't end it
+ * early. Returns null when the marker isn't in the document.
+ */
+function cutElement(content, marker, tag, placeholder) {
+    const markerIdx = content.indexOf(marker);
+    if (markerIdx === -1) return null;
+
+    const openTag = `<${tag}`;
+    const closeTag = `</${tag}>`;
+    const start = content.lastIndexOf(openTag, markerIdx);
+    if (start === -1) return null;
+
+    let depth = 0, pos = start;
+    while (pos < content.length) {
+        if (content[pos] !== "<") {
+            pos++;
+        } else if (content.startsWith(openTag, pos) && /[\s>]/.test(content[pos + openTag.length])) {
+            depth++;
+            pos += openTag.length;
+        } else if (content.startsWith(closeTag, pos)) {
+            if (--depth === 0) {
+                return {
+                    section: content.slice(start, pos + closeTag.length),
+                    rest: content.slice(0, start) + placeholder + content.slice(pos + closeTag.length),
+                };
+            }
+            pos += closeTag.length;
+        } else {
+            pos++;
+        }
+    }
+
+    return null;
+}
+
+/**
  * Eleventy transform to classify links and add appropriate CSS classes
  * Runs on all HTML output files
  */
@@ -554,32 +672,19 @@ function classifyLinks(content, outputPath) {
 
     // const t0 = Date.now();
     try {
-        // Extract quick-links-container so its internal anchor links are not reclassified
-        let qlSection = "";
+        // Lift both tables of contents out first, so their internal anchor links
+        // are not reclassified (they'd pick up .link-to-page and render italic).
         let processable = content;
-        const PLACEHOLDER = "\x00QL\x00";
+        const cutouts = [];
 
-        const qlIdx = content.indexOf("class=\"quick-links-container\"");
-        if (qlIdx !== -1) {
-            const divStart = content.lastIndexOf("<div", qlIdx);
-            if (divStart !== -1) {
-                let depth = 0, pos = divStart;
-                while (pos < content.length) {
-                    if (content[pos] === "<") {
-                        if (content.startsWith("<div", pos) && /[\s>]/.test(content[pos + 4])) {
-                            depth++;
-                            pos += 4;
-                        } else if (content.startsWith("</div>", pos)) {
-                            if (--depth === 0) {
-                                qlSection = content.slice(divStart, pos + 6);
-                                processable = content.slice(0, divStart) + PLACEHOLDER + content.slice(pos + 6);
-                                break;
-                            }
-                            pos += 6;
-                        } else pos++;
-                    } else pos++;
-                }
-            }
+        for (const [marker, tag, placeholder] of [
+            ["class=\"quick-links-container\"", "div", "\x00QL\x00"],
+            ["class=\"sidebar-toc\"", "nav", "\x00SB\x00"],
+        ]) {
+            const cut = cutElement(processable, marker, tag, placeholder);
+            if (!cut) continue;
+            processable = cut.rest;
+            cutouts.push([placeholder, cut.section]);
         }
 
         const VALID_EXTS = [".webp", ".html", ".webm", ".gif", ".jpg", ".jpeg", ".png", ".mp4", ".flac", ".mp3", ".ogg", ".wav", ".m4a"];
@@ -690,7 +795,12 @@ function classifyLinks(content, outputPath) {
             return `<a${newAttrs}>`;
         });
 
-        const final = qlSection ? result.replace(PLACEHOLDER, qlSection) : result;
+        // Function replacements, not strings: a heading containing `$&` or `$1`
+        // would otherwise be mangled on the way back in.
+        let final = result;
+        for (const [placeholder, section] of cutouts) {
+            final = final.replace(placeholder, () => section);
+        }
         // console.log(`[classifyLinks] ${outputPath} in ${Date.now() - t0}ms`);
         return modified ? final : content;
     } catch (error) {

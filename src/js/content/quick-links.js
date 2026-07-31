@@ -110,12 +110,21 @@ function generateQuickLinks(parentElement, elements) {
     parentElement.appendChild(fragment);
 }
 /**
- * Creates a fixed sidebar TOC by cloning the top ToC container.
- * Only visible at wide viewports via CSS.
+ * Wires up the fixed sidebar TOC. Only visible at wide viewports via CSS.
+ *
+ * The markup is normally pre-rendered by the generateQuickLinks transform, so
+ * it paints with the rest of the page; here we only attach behaviour to it.
+ * Building it at runtime is the fallback for pages that shipped without it.
  */
 function initializeSidebarToc() {
     if (document.body.dataset.skipToc === "true")
         return;
+    const prebuilt = document.querySelector(".sidebar-toc[data-prebuilt='true']");
+    if (prebuilt) {
+        bindSidebarToggles(prebuilt);
+        positionSidebarToc(prebuilt);
+        return;
+    }
     const tocContainer = document.querySelector(".quick-links-container");
     if (!tocContainer || !tocContainer.children.length)
         return;
@@ -142,13 +151,9 @@ function initializeSidebarToc() {
         tocBody.appendChild(child.cloneNode(true));
     }
     sidebar.appendChild(tocBody);
-    toggle.addEventListener("click", () => {
-        const collapsed = tocBody.style.display === "none";
-        tocBody.style.display = collapsed ? "" : "none";
-        toggle.textContent = collapsed ? "Hide" : "Show";
-    });
     setupSidebarSubToggles(tocBody);
     document.body.appendChild(sidebar);
+    bindSidebarToggles(sidebar);
     positionSidebarToc(sidebar);
 }
 /**
@@ -210,6 +215,7 @@ function positionSidebarToc(sidebar) {
 }
 /**
  * Adds collapse toggles to each li that contains a nested ul in the sidebar TOC.
+ * Only used on the runtime fallback path — the build emits these buttons itself.
  */
 function setupSidebarSubToggles(container) {
     const lisWithChildren = container.querySelectorAll("li:has(> ul)");
@@ -224,6 +230,27 @@ function setupSidebarSubToggles(container) {
         btn.setAttribute("aria-label", "Toggle sub-items");
         btn.textContent = "▸";
         li.insertBefore(btn, li.firstChild);
+    }
+}
+/**
+ * Attaches the show/hide behaviour to a sidebar's toggle buttons.
+ * Works the same whether the markup was pre-rendered or built above.
+ */
+function bindSidebarToggles(sidebar) {
+    const tocBody = sidebar.querySelector(".sidebar-toc-body");
+    const toggle = sidebar.querySelector(".sidebar-toc-toggle");
+    if (tocBody && toggle) {
+        toggle.addEventListener("click", () => {
+            const collapsed = tocBody.style.display === "none";
+            tocBody.style.display = collapsed ? "" : "none";
+            toggle.textContent = collapsed ? "Hide" : "Show";
+        });
+    }
+    const subToggles = sidebar.querySelectorAll(".sidebar-toc-sub-toggle");
+    for (const btn of subToggles) {
+        const childUl = btn.parentElement?.querySelector(":scope > ul");
+        if (!childUl)
+            continue;
         btn.addEventListener("click", (e) => {
             e.preventDefault();
             const collapsed = childUl.style.display === "none";

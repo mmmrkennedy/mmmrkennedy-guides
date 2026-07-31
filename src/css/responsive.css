@@ -170,11 +170,26 @@ Desktop-specific upgrades. Base styles are mobile-first.
     }
 
     .sidebar-toc {
+        /* Mirrors updateHorizontal() in quick-links.ts so the pre-rendered
+           sidebar is already in the right place at first paint, instead of
+           sitting at width 0 until the core bundle runs. --toc-content-left is
+           where the centred content column starts; the one thing CSS can't see
+           is .content-window's scrollbar, so JS re-measures and corrects the
+           few px afterwards. Keep the three constants in sync with that
+           function. */
+        --toc-gap: 10px;
+        --toc-min-left: 8px;
+        --toc-max-width: 340px;
+        --toc-content-left: calc((100vw - var(--content-max-width)) / 2);
+
         display: block;
         position: fixed;
         top: var(--header-height-desktop);
-        right: 0;
-        width: 0;
+        right: calc(100vw - var(--toc-content-left) + var(--toc-gap));
+        width: min(
+            var(--toc-max-width),
+            calc(var(--toc-content-left) - var(--toc-gap) - var(--toc-min-left))
+        );
         max-height: calc(100dvh - var(--header-height-desktop) - var(--space-lg));
         overflow: hidden auto;
         padding: var(--space-sm) var(--space-md);
