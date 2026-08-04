@@ -16,6 +16,8 @@
         "build:react": "vite build",
         "build:eleventy": "eleventy --incremental",
         "build:sitemap": "node build_scripts/generate-sitemap.cjs",
+        "// verify": "Post-deploy check — run against the live site after publishing",
+        "verify:deploy": "node build_scripts/verify-deploy.mjs",
         "minify": "node build_scripts/minify-assets.js",
         "clean": "rimraf dist",
         "// images": "Image conversion utilities",
