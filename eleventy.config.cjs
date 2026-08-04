@@ -736,7 +736,12 @@ function classifyLinks(content, outputPath) {
             }
 
             if (!href.startsWith("#") && !href.startsWith("http")) {
-                if (href.endsWith("/")) {
+                // A trailing slash means a half-written link (`pictures/foo/`), with
+                // one exception: "/" on its own is the site root, which is as
+                // complete as a path gets. Without this, a plain "Back to the
+                // index" link gets rewritten to href="#" and stops working — which
+                // is exactly what happened to the 404 page.
+                if (href.endsWith("/") && href !== "/") {
                     existing.add("incomplete-path");
                     overrideHref = "#";
                     console.warn(`Incomplete path in ${outputPath}: ${href}`);
