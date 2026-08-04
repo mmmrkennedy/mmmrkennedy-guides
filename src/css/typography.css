@@ -135,14 +135,8 @@ li > ol {
 
 /* Special paragraph styles */
 
-/* Deliberately NOT bold. These run 200–550 characters — at paragraph length a
- * 600 weight stops reading as emphasis (nothing is emphasised if everything is)
- * and the tighter semibold sidebearings make the block look denser than the
- * 1.75 leading actually is. Regular weight; the following <ol> provides the
- * structural break. */
-.weapon-desc {
-    margin: var(--space-sm) 0;
-}
+/* .weapon-desc is styled with the information boxes in components.css — it takes
+ * the same frame, so it lives with the rest of that system. */
 
 .stats,
 .song-link {

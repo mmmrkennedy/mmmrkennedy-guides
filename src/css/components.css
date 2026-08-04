@@ -368,7 +368,8 @@ a:hover {
 .tip,
 .disclaimer,
 .boss-fight-phases,
-.notes {
+.notes,
+.weapon-desc {
     margin: var(--space-md) 0;
     padding: var(--space-sm) var(--space-md);
     border-left: 3px solid var(--accent);
@@ -465,6 +466,38 @@ a:hover {
 .notes {
     --accent: var(--color-note-border);
     --accent-bg: var(--color-bg-secondary);
+}
+
+/* Wonder-weapon description: what the weapon does, sitting between the heading
+ * that names it and the <ol> of steps to build it. Rule in tier-2 gold to tie it
+ * to that heading, and no label for the same reason — the heading directly above
+ * already says which weapon this is.
+ *
+ * Two exceptions to the shared box above, both because this is the only one of
+ * these that runs paragraph-length (200–550 characters):
+ *   - keeps the body's 1.75 leading instead of dropping to 1.6, which is fine for
+ *     a two-line warning but too tight over five lines;
+ *   - deliberately NOT bold — at this length a 600 weight stops reading as
+ *     emphasis (nothing is emphasised if everything is) and the tighter semibold
+ *     sidebearings make the block look denser than the leading actually is. */
+.weapon-desc {
+    --accent: var(--color-tier-2);
+    --accent-bg: var(--color-bg-secondary);
+
+    line-height: var(--line-height-relaxed);
+}
+
+/* Weapons often take two of these back to back (what it does, then how it is
+ * obtained). As separate boxes they read as two unrelated asides, so consecutive
+ * ones merge into one panel: the negative margin collapses the 1rem gap to zero
+ * and the shared padding becomes the paragraph break inside it. */
+.weapon-desc + .weapon-desc {
+    margin-top: calc(var(--space-md) * -1);
+    padding-top: 0;
+}
+
+.weapon-desc:has(+ .weapon-desc) {
+    border-bottom-right-radius: 0;
 }
 
 /* Ability block — the "what this thing does" line that sits between a
