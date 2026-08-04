@@ -82,12 +82,12 @@ editors: [mmmrkennedy, Nati, Nomad]
             </ul>
         </li>
 
-        <li>
+        <li data-step-id="use-four-keypads">
             After using all four keypads, return to the security checkpoint and the window will open up revealing the Access Card. The player (Kahn, if available) can now obtain the <a href="pictures/main_ee/kahn_card.webp">Access Card</a> from the window, incrementing their Clearance Level by 1 (indicated by <a href="pictures/main_ee/hud_number_light_grey.webp">number on the keycard on the bottom left of the HUD</a>). If no one in the lobby is Kahn, then anyone can collect the Access Card.
         </li>
 
         <li class="dummy-li"><p class="title-tier-2" id="main_ee_step6">Getting Clearance Level 49</p></li>
-        <li>
+        <li data-step-id="access-cards-drop">
             Killing Zombies will now randomly drop <a href="pictures/main_ee/keycards_on_ground.webp">Access Cards</a> which can be obtained by simply walking over the drop location, incrementing their Clearance Level by 1. Collect cards until every player in the lobby has a Clearance Level of 49.
         </li>
         <li>Navigate to the Morgue and interact with the terminal where the Black Box was placed.</li>
@@ -127,10 +127,10 @@ editors: [mmmrkennedy, Nati, Nomad]
             None of the players in the match can go down; doing so will void completion, and you will get the normal ending if you continue the quest. Also, this ending will automatically end the game.
         </li>
         <li>
-            Complete the <a href="#main_ee" class="link-to-page">Main Quest</a> like normal up to step 12.
+            Complete the <a href="#main_ee" class="link-to-page">Main Quest</a> like normal up to step <span data-step-ref="use-four-keypads"></span>.
         </li>
         <li>
-            On step 13, you must kill the Zombies only using melee attacks. They will still drop the Access Cards, but your Clearance Level number on the HUD will stay <a href="pictures/main_ee/hud_number_light_grey.webp">light grey</a>.
+            On step <span data-step-ref="access-cards-drop"></span>, you must kill the Zombies only using melee attacks. They will still drop the Access Cards, but your Clearance Level number on the HUD will stay <a href="pictures/main_ee/hud_number_light_grey.webp">light grey</a>.
             <ul>
                 <li>
                     If you collect a card from a Zombie that wasn't killed by melee, the number on the HUD will turn <a href="pictures/main_ee/hud_number_dark_grey.webp">dark grey</a>, and you will have to restart the game to try again.

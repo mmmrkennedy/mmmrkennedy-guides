@@ -82,7 +82,7 @@ description: Complete Black Ops Cold War Zombies "Forsaken" map guide. Includes 
         <li>
             Obtain the <a href="#chrysalax" class="link-to-page">Chrysalax</a>.
         </li>
-        <li>
+        <li data-step-id="shoot-crystal-orbs">
             Find three large Aetherium Crystals and shoot the three orbs circling each one. The Chrysalax's Gun Form works best here. Once the orbs are gone, melee the Crystal with the Chrysalax to destroy it.
             <ul>
                 <li>
@@ -98,10 +98,10 @@ description: Complete Black Ops Cold War Zombies "Forsaken" map guide. Includes 
         <li>
             Once destroyed, the Crystal drops a <a href="pictures/main_ee/crystal_shard.webp">Crystal Shard</a> that replaces your tactical equipment when picked up. Picking it up spawns a nearby Abomination.
         </li>
-        <li>
+        <li data-step-id="throw-shard-abomination">
             Throw the Shard into the Abomination's mouth. Once it swallows it and its <a href="pictures/main_ee/red_tail_abomination.webp">tail turns red</a>, kill it and collect the <a href="pictures/main_ee/red_crystal_shard.webp">Catalyzed Crystal Shard</a>.
         </li>
-        <li><i>Repeat Steps 8-10 for the other two large Crystals.</i></li>
+        <li><i>Repeat Steps <span data-step-ref="shoot-crystal-orbs" data-step-ref-to="throw-shard-abomination"></span> for the other two large Crystals.</i></li>
 
         <li class="dummy-li"><p class="title-tier-2" id="main_ee_step3">Obtain the Monitoring Device</p></li>
         <li>Obtain a Pack-a-Punched Weapon with Dead Wire.</li>
@@ -159,7 +159,7 @@ description: Complete Black Ops Cold War Zombies "Forsaken" map guide. Includes 
         <li>
             How to Attack:
             <ol>
-                <li>
+                <li data-step-id="break-armour-spots">
                     The Forsaken has four armoured spots that must be broken in order before you can damage him:
                     <ol>
                         <li>Either shoulder (your choice)</li>
@@ -170,8 +170,8 @@ description: Complete Black Ops Cold War Zombies "Forsaken" map guide. Includes 
                 </li>
                 <li>Breaking each spot reveals a weak spot. Shoot it with one of the two laser cannons.</li>
                 <li>To charge the cannons, kill zombies in the circle below Sam.</li>
-                <li>Once charged, Sam activates a cannon and you can shoot the Forsaken.</li>
-                <li><i>Repeat Steps 1-4 for all four spots.</i></li>
+                <li data-step-id="shoot-forsaken">Once charged, Sam activates a cannon and you can shoot the Forsaken.</li>
+                <li><i>Repeat Steps <span data-step-ref="break-armour-spots" data-step-ref-to="shoot-forsaken"></span> for all four spots.</i></li>
             </ol>
         </li>
 

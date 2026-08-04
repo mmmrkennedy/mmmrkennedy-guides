@@ -153,8 +153,8 @@ description: Complete Black Ops Cold War Zombies "Mauer der Toten" map guide. In
         <li class="dummy-li"><p class="title-tier-2">Prerequisites</p></li>
         <li>Turn on Power and unlock Pack-a-Punch.</li>
         <li>
-            <a class="link-to-page" href="#klaus_base">Assemble and Fully Upgrade Klaus</a>
-            <p class="requirement"><strong>Note:</strong> <a class="link-to-page" href="#klaus_upgrade">Upgraded Klaus</a> is required for Step 15. Un-upgraded Klaus is required for Step 5.</p>
+            <a class="link-to-page" href="#klaus_base">Assemble Klaus</a>.
+            <p class="requirement"><a class="link-to-page" href="#klaus_upgrade">Upgraded Klaus</a> is required for Step <span data-step-ref="klaus-stops-train"></span>. Un-upgraded Klaus is required for Step <span data-step-ref="craft-helm-on-klaus"></span>.</p>
         </li>
         <li>
             Obtain the <a class="link-to-page" href="#cbrss">CRBR-S</a>.
@@ -176,7 +176,7 @@ description: Complete Black Ops Cold War Zombies "Mauer der Toten" map guide. In
             </ul>
         </li>
 
-        <li>
+        <li data-step-id="craft-helm-on-klaus">
             Once all three items have been collected, navigate to the <a href="pictures/klaus_ee/safehouse.webp">Safe House</a> and craft the Hacking Helm on <a href="pictures/klaus_ee/klaussitting.webp">Klaus</a>.
         </li>
         <li>
@@ -194,7 +194,7 @@ description: Complete Black Ops Cold War Zombies "Mauer der Toten" map guide. In
         <li>
             Shoot <a href="pictures/main_ee/luremachine.webp">this machine</a> with the CRBR-S to open it. Once open, the player can pick up an Endstation Lure.
         </li>
-        <li>
+        <li data-step-id="find-harvesters">
             Find three harvesters in the locations below. Only three of the seven harvesters spawn each game, so some spots will be empty. Locations:
             <ul>
                 <li>
@@ -218,10 +218,10 @@ description: Complete Black Ops Cold War Zombies "Mauer der Toten" map guide. In
         <li>
             Insert the canister into the harvester, then throw the lure near it to spawn Tempests. Kill the Tempests near the harvester to charge the canister. Once all Tempests are dead, pick up the canister. If it can't be picked up, kill more Tempests with another lure.
         </li>
-        <li>
+        <li data-step-id="deposit-canister">
             Bring the filled canister to the <a href="pictures/main_ee/conversionunit.webp">Conversion Unit</a> and deposit it.
         </li>
-        <li><i>Repeat Steps 11-13 for the other two Canisters.</i></li>
+        <li><i>Repeat Steps <span data-step-ref="find-harvesters" data-step-ref-to="deposit-canister"></span> for the other two Canisters.</i></li>
 
         <li class="dummy-li"><p class="title-tier-2" id="main_ee_step4">Stop the Train</p></li>
         <li>
@@ -230,7 +230,7 @@ description: Complete Black Ops Cold War Zombies "Mauer der Toten" map guide. In
         <li>
             Fully upgrade <a class="link-to-page" href="#klaus_base">Klaus</a>.
         </li>
-        <li>
+        <li data-step-id="klaus-stops-train">
             Command Klaus to <a href="pictures/main_ee/klaus_on_tracks.webp">stand on the track furthest from Mule Kick near the M16 wallbuy</a>. When the train comes, Klaus will stop it so you can board. If Klaus fails, wait until the next round, flip the Railway Switch, and try again.
         </li>
         <li>
@@ -241,11 +241,11 @@ description: Complete Black Ops Cold War Zombies "Mauer der Toten" map guide. In
         </li>
 
         <li class="dummy-li"><p class="title-tier-2" id="main_ee_step5">Obtain the Uranium</p></li>
-        <li>
+        <li data-step-id="satellite-computer">
             Navigate to the Safe House and interact with <a href="pictures/main_ee/safehouse_computer.webp">this computer</a> until the screen shows a satellite.
         </li>
         <li>Navigate to the Objective Marker and kill the HVT Megaton. Two Uranium Rocks will drop from the Megaton.</li>
-        <li>
+        <li data-step-id="craft-uranium-device">
             Pick one up and bring it to one of the workbenches to craft a Uranium Device.
             <ul>
                 <li><a href="pictures/main_ee/west_bench.webp">West Berlin Street</a></li>
@@ -257,12 +257,12 @@ description: Complete Black Ops Cold War Zombies "Mauer der Toten" map guide. In
             Navigate to the <a href="pictures/main_ee/penthouse_zipline.webp">Destroyed Penthouse Zipline</a> and attach the Uranium Device.
         </li>
         <li>
-            Repeat Step 22 for the other Radioactive Material and then navigate to the <a href="pictures/main_ee/korber_zipline.webp">Korber Rooftop Zipline</a> and attach the Uranium Device.
+            Repeat Step <span data-step-ref="craft-uranium-device"></span> for the other Radioactive Material and then navigate to the <a href="pictures/main_ee/korber_zipline.webp">Korber Rooftop Zipline</a> and attach the Uranium Device.
         </li>
-        <li>Both Uranium Devices will shoot across the zipline, collide in the middle, and land on the street below. Collect the Cleansed Uranium and return it to the conversion unit.</li>
+        <li data-step-id="collect-cleansed-uranium">Both Uranium Devices will shoot across the zipline, collide in the middle, and land on the street below. Collect the Cleansed Uranium and return it to the conversion unit.</li>
 
         <li class="dummy-li"><p class="no-return">Once the second Uranium is returned to the conversion unit, the Boss Fight will start.</p></li>
-        <li><i>Repeat Steps 20-25 to get another Cleansed Uranium.</i></li>
+        <li><i>Repeat Steps <span data-step-ref="satellite-computer" data-step-ref-to="collect-cleansed-uranium"></span> to get another Cleansed Uranium.</i></li>
 
         <li class="dummy-li"><p class="title-tier-2" id="main_ee_step6">Valentina Boss Fight</p></li>
         <li>

@@ -455,7 +455,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
     <h2 class="title-tier-1">Elvira Melee Upgrade</h2>
     <ol>
         <li>
-            Complete the <a href="#main_ee" class="link-to-page">Main Quest</a> up until step 11, where you open the Gas Station Garage.
+            Complete the <a href="#main_ee" class="link-to-page">Main Quest</a> up until step <span data-step-ref="open-garage-door"></span>, where you open the Gas Station Garage.
         </li>
         <li>
             Pick up the <a href="pictures/elvira_upgrade/pages.webp">pages on the shelf</a> in the Garage.
@@ -479,9 +479,9 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
             Unlock <a href="#pap" class="link-to-page">Pack-a-Punch</a>.
         </li>
         <li class="dummy-li">
-            <p class="note">The items Steps 2 (body parts) and 3 (glass pieces) can be collected at the same time.</p>
+            <p class="note">The items Steps <span data-step-ref="collect-body-parts"></span> (body parts) and <span data-step-ref="collect-glass-pieces"></span> (glass pieces) can be collected at the same time.</p>
         </li>
-        <li>
+        <li data-step-id="collect-body-parts">
             You need to collect six body parts (Two arms, two legs, a torso, and a head) of a Zombie, which are scattered around the map. Each part can be collected at any time, in any order.
             <table>
                 <thead>
@@ -567,7 +567,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
                 </tbody>
             </table>
         </li>
-        <li>
+        <li data-step-id="collect-glass-pieces">
             You need to collect three different pieces of glass (Elvira's Mirror, a broken mirror piece, and a car side mirror). This can be done at the same time as the body parts above. Each piece can be collected at any time, in any order.
             <table>
                 <thead>
@@ -623,7 +623,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
         <li>
             You must now interact with the machine again and input your number backwards. Once input, interact with the machine and the Zombie will become a <a href="pictures/main_ee/key.webp">key</a> for you to pick up.
         </li>
-        <li>
+        <li data-step-id="open-garage-door">
             Interact with the <a href="pictures/main_ee/garage_door.webp">Garage Door</a> of the Gas Station on the main street to open it.
         </li>
 
@@ -718,7 +718,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
                             Now enter your M number and the TV number into the solver below. It should return your O Number and a colour option on the TV.
                             <ul>
                                 <li>
-                                    If you get an option for the O Number (like "9 or 11"), see Steps 21-23 in <a href="#main_ee_step4" class="link-to-page">The Intended Way</a> for how to determine the right O Number.
+                                    If you get an option for the O Number (like "9 or 11"), see Steps <span data-step-ref="change-map-colour" data-step-ref-to="find-o-number"></span> in <a href="#main_ee_step4" class="link-to-page">The Intended Way</a> for how to determine the right O Number.
                                 </li>
                             </ul>
                         </li>
@@ -796,7 +796,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
                         <li>
                             Go to the Motel Office and note down the <a href="pictures/main_ee/m_number.webp">"M Number"</a> found on the wall right of the window.
                         </li>
-                        <li>
+                        <li data-step-id="change-map-colour">
                             Go to the TV Station and interact with the <a href="pictures/main_ee/control_panel.webp">control panel</a> to change the map's colour. There are four options for you to change it to, Full Colour (default), Red, Green, and Blue. Change it to Red.
                         </li>
                         <li>
@@ -817,7 +817,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
                                 </li>
                             </ul>
                         </li>
-                        <li>
+                        <li data-step-id="find-o-number">
                             Keep changing the colour and look at the O number locations until you find one that is "O = #" in Red, Green, and Blue. That is your O Number for the game. You can change the colour back to Full Colour for now.
                         </li>
                         <li>
@@ -1170,7 +1170,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
 
             <div class="solver-with-button" data-bool-quick-link="false" data-reveal-label="Click to show How to Solve Puzzle">
                     <ol>
-                        <li>
+                        <li data-step-id="convert-target-word">
                             Convert the Target Word to Numbers
                             <ul>
                                 <li>Write down the target word. Convert each letter to its position in the alphabet (e.g., 'a' = 1, 'z' = 26).</li>
@@ -1223,7 +1223,7 @@ description: Complete Infinite Warfare Zombies "Attack of the Radioactive Thing"
                         <li>
                             Match Values to the Target Word
                             <ul>
-                                <li>Compare the calculated values to the numbers of the target word from Step 1.</li>
+                                <li>Compare the calculated values to the numbers of the target word from Step <span data-step-ref="convert-target-word"></span>.</li>
                                 <li>For example, if the first target word value is 2, find a combination that produces 2.</li>
                             </ul>
                         </li>

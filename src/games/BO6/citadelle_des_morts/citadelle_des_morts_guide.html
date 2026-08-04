@@ -233,7 +233,7 @@ unfinished: true
             Speak to Gabriel Krafft by interacting with <a href="pictures/main_ee/dungeon_door.webp">a door in the Dungeon</a>.
         </li>
         <li>
-            Grab the <a href="pictures/main_ee/torn_pages.webp">4 Torn Pages from the Sitting Rooms</a>. Each page will always spawn in the same general area of the room. If you want to skip some of the following steps, note which pages have which eye symbols without picking them up and skip to <strong>Step 5</strong>. Note that the 4th page will always correspond to the Point of Power trap in the Sitting Rooms.
+            Grab the <a href="pictures/main_ee/torn_pages.webp">4 Torn Pages from the Sitting Rooms</a>. Each page will always spawn in the same general area of the room. If you want to skip some of the following steps, note which pages have which eye symbols without picking them up and skip to <strong>Step <span data-step-ref="point-of-power-traps"></span></strong>. Note that the 4th page will always correspond to the Point of Power trap in the Sitting Rooms.
             <ul>
                 <li>
                     <a href="pictures/main_ee/page_1.webp">Page I (Top Left) - Against the walls and boxes near the door leading to Entrance Hall</a>
@@ -256,7 +256,7 @@ unfinished: true
         <li>
             Melee the <a href="pictures/main_ee/undercroft_wall.webp">off-colored square on the wall in the Undercroft</a> with a Melee Macchiato punch to reveal a grid of alchemical symbols that switch places every few seconds.
         </li>
-        <li>
+        <li data-step-id="enter-symbol-code">
             You need to enter a 6-symbol code by shooting the symbols in the correct order. Go to the Tavern and find <a href="pictures/main_ee/dark_green_flasks.webp">6 dark green flasks labeled "I" through "VI"</a>. Interact with each flask to reveal a blue alchemical symbol from the grid. Return to the Undercroft and shoot the corresponding symbols — be careful not to shoot too fast, as the symbols change position rapidly.
         </li>
         <li>If done correctly, an orb will open parts of the wall to the left of the grid, revealing a book with missing pages. Interact with the book to place the 4 torn pages.</li>
@@ -264,8 +264,8 @@ unfinished: true
         <li class="dummy-li">
             <p class="step-group-title" id="main_ee_step3">Point of Power Traps</p>
         </li>
-        <li>
-            (<strong>Step 5</strong>) Each Torn Page shows a specific <a href="#trap_locations" class="link-to-page">Point of Power trap</a> on the map. Following the page's numerical order, head to each indicated trap. Activate the trap and get about 10 kills. If done correctly, a quote will play and the trap will immediately shut down, and the corresponding symbol will turn grey confirming the step was done. The final trap will always be located in the Sitting Rooms. Once all traps are done, an <a href="pictures/main_ee/orb_holder.webp">orb holder with four symbols will spawn on the wall between the Sitting Rooms and Oubliette</a>.
+        <li data-step-id="point-of-power-traps">
+            (<strong>Step <span data-step-ref="point-of-power-traps"></span></strong>) Each Torn Page shows a specific <a href="#trap_locations" class="link-to-page">Point of Power trap</a> on the map. Following the page's numerical order, head to each indicated trap. Activate the trap and get about 10 kills. If done correctly, a quote will play and the trap will immediately shut down, and the corresponding symbol will turn grey confirming the step was done. The final trap will always be located in the Sitting Rooms. Once all traps are done, an <a href="pictures/main_ee/orb_holder.webp">orb holder with four symbols will spawn on the wall between the Sitting Rooms and Oubliette</a>.
         </li>
 
         <li class="dummy-li">
@@ -483,7 +483,7 @@ unfinished: true
     <h2 class="section-title">Alchemical Incantation Defense (Free Loot)</h2>
     <ol>
         <li>
-            Complete <strong>Step 4</strong> of the <a href="#main_ee" class="link-to-page">Main Quest</a> (the Alchemical Code Wall).
+            Complete <strong>Step <span data-step-ref="enter-symbol-code"></span></strong> of the <a href="#main_ee" class="link-to-page">Main Quest</a> (the Alchemical Code Wall).
         </li>
         <li>Once all of the symbols on the Alchemical code wall have dimmed, use one of each Incantation on the wall to light up a row of symbols.</li>
         <li>Once all symbols are active again, a lockdown defense will initiate in the room. Survive 3 waves of zombies.</li>

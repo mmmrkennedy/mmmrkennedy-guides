@@ -718,16 +718,16 @@ Looking at Armour Stone = Aries All three gems collected from fireplaces = Tauru
         <li>
             The goal is to block the three coloured beams coming from the crystal in the middle using the circular part of the rings. The wheels can be spun left by interacting with the left side, or to the right by interacting with the right. When the wheels are spun, the rings Atlas is holding will spin. The easiest way to block all beams is:
             <ol>
-                <li>
+                <li data-step-id="wheel-middle-green">
                     Spin the <strong>Middle Wheel</strong> to the <strong>Left</strong> until the <span style="color: limegreen">Green light</span> is covered
                 </li>
                 <li>
                     Spin the <strong>Left Wheel</strong> to the <strong>Left</strong> until the <span style="color: cornflowerblue">Blue light</span> is covered (this will uncover the <span style="color: limegreen">Green light</span>)
                 </li>
-                <li>
+                <li data-step-id="wheel-right-red">
                     Spin the <strong>Right wheel</strong> to the <strong>Left</strong> until the <span style="color: red">Red light</span> is covered
                 </li>
-                <li><i>Repeat Steps 1–3 until all lights are covered</i></li>
+                <li><i>Repeat Steps <span data-step-ref="wheel-middle-green" data-step-ref-to="wheel-right-red" data-step-ref-sep="–"></span> until all lights are covered</i></li>
             </ol>
         </li>
 
@@ -1182,7 +1182,7 @@ Purple Stone - Master Bedroom: Knight Looking at Armour Stone = Aries All three 
         <li>
             Activate the <a href="pictures/sentinel_artifact.webp">Sentinel Artifact</a>.
         </li>
-        <li>
+        <li data-step-id="open-doors-order">
             Open the following doors in this order (any order works as long as you remember which door you opened in which order):
             <ol>
                 <li>
@@ -1206,7 +1206,7 @@ Purple Stone - Master Bedroom: Knight Looking at Armour Stone = Aries All three 
             </ol>
         </li>
 
-        <li>
+        <li data-step-id="look-at-gramophones">
             Look (aim and stare) at the Gramophones for about five seconds each, in the following order (there is no sound or cue confirming a successful "look"):
             <ol>
                 <li>
@@ -1232,7 +1232,7 @@ Purple Stone - Master Bedroom: Knight Looking at Armour Stone = Aries All three 
             Obtain a <a href="#pap" class="link-to-page">Pack-a-Punched</a> M1897 Trebuchet. It can be purchased from the <a href="pictures/infinite_ammo/" class="incomplete-path">wallbuy in the 'Library'</a>.
         </li>
         <li>
-            There are six vases around the mansion (each linked to one of the doors from Step 1) that need to be broken.
+            There are six vases around the mansion (each linked to one of the doors from Step <span data-step-ref="open-doors-order"></span>) that need to be broken.
             <ul>
                 <li>To break a vase, you need to perfectly land a shot from the upgraded M1897 Trebuchet into the hole on top of the vase.</li>
                 <li>
@@ -1268,7 +1268,7 @@ Purple Stone - Master Bedroom: Knight Looking at Armour Stone = Aries All three 
             If all vases were destroyed correctly, this <a href="pictures/infinite_ammo/" class="incomplete-path">candle</a> in the 'Forest Terrace' should no longer be lit.
         </li>
         <li>
-            There are six candles around the map (each linked to one of the doors from Step 1) that need to be ignited with the Wraith Fire equipment.
+            There are six candles around the map (each linked to one of the doors from Step <span data-step-ref="open-doors-order"></span>) that need to be ignited with the Wraith Fire equipment.
             <ul>
                 <li>
                     These candles need to be ignited in the <strong>reverse order</strong> of how the doors were opened.
@@ -1306,7 +1306,7 @@ Purple Stone - Master Bedroom: Knight Looking at Armour Stone = Aries All three 
             In the 'East Stairway,' pick up the <a href="pictures/infinite_ammo/" class="incomplete-path">Vinyl Record</a> leaning against a cabinet.
         </li>
         <li>
-            You must play the record at the gramophones from step 2 in the <strong>reverse order</strong> of how you looked at them.
+            You must play the record at the gramophones from step <span data-step-ref="look-at-gramophones"></span> in the <strong>reverse order</strong> of how you looked at them.
             <ul>
                 <li>
                     When placed, the record will play part of the map's secret song <a href="#song_ee" class="link-to-page">Mystery</a>.
