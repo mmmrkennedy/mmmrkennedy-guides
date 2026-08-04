@@ -1,0 +1,90 @@
+---
+layout: null
+permalink: /404.html
+eleventyExcludeFromCollections: true
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Page not found — mmmrkennedy's Zombies Guides</title>
+<!--
+    Deliberately self-contained: no bundle, no webfont, no image, no script.
+
+    Cloudflare Pages serves this file for anything it cannot find. Without it,
+    Pages answers unknown paths with index.html and a 200 — and because
+    src/_headers matches on path, a miss on /js/<hash>.js got stamped
+    `public, max-age=2592000`, so an edge node that briefly lacked a
+    newly-deployed asset cached that HTML under the asset's URL for 30 days.
+    Every visitor routed there then got text/html for a <script>, which
+    X-Content-Type-Options: nosniff blocks, and the site's JS was dead until
+    someone purged the cache by hand. This file makes that a 404 instead.
+
+    It must therefore never reference a hashed asset: the one moment it gets
+    served is the moment those assets may be unreachable.
+-->
+<style>
+    :root { color-scheme: dark }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 1.5rem;
+        background: #1a1a1a;
+        color: #e5e5e5;
+        font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+    }
+
+    main { max-width: 34rem }
+
+    .code {
+        margin: 0;
+        color: #c9a961;
+        font-size: clamp(3.5rem, 14vw, 6rem);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.02em;
+    }
+
+    h1 {
+        margin: 0.5rem 0 0.75rem;
+        font-size: 1.35rem;
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0 0 1.75rem;
+        color: #b0b0b0;
+    }
+
+    a.home {
+        display: inline-block;
+        padding: 0.6rem 1.4rem;
+        border: 1px solid #c9a961;
+        border-radius: 8px;
+        color: #c9a961;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    a.home:hover,
+    a.home:focus-visible {
+        background: #c9a961;
+        color: #1a1a1a;
+    }
+</style>
+</head>
+<body>
+<main>
+    <p class="code">404</p>
+    <h1>Page not found</h1>
+    <p>This guide may have been renamed, or the link may be out of date.</p>
+    <a class="home" href="/">Back to all guides</a>
+</main>
+</body>
+</html>
