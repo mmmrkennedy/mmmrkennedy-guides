@@ -8,6 +8,15 @@ let currentIndex = -1;
 const preloadedUrls = new Set();
 // Open/close fade duration; must match the .lightbox transition in layout.css
 const FADE_MS = 200;
+// How long a load may run before the spinner appears. Adjacent items are
+// preloaded and repeat views come from cache, so most opens resolve in a few
+// ms — showing the spinner immediately would just flash it.
+const SPINNER_DELAY_MS = 150;
+let spinnerTimer = null;
+// Bumped on every open. A slow item that resolves after the user has navigated
+// on carries a stale token and is dropped, so it can't clear the spinner or
+// paint itself over the item that replaced it.
+let loadToken = 0;
 // Touch gesture state (mobile pinch-zoom / pan / swipe). Desktop keeps the
 // mouse click-to-zoom path below; these are only driven by touch/pen pointers.
 const imgTransform = { scale: 1, tx: 0, ty: 0 };
@@ -98,6 +107,24 @@ function zoomOutDesktop(lightbox, img) {
     lightbox.scrollLeft = 0;
     lightbox.scrollTop = 0;
 }
+/** Cancels a pending spinner reveal and hides the spinner if it is already up. */
+function hideSpinner() {
+    if (spinnerTimer !== null) {
+        window.clearTimeout(spinnerTimer);
+        spinnerTimer = null;
+    }
+    document.querySelector(".lightbox-spinner")?.setAttribute("hidden", "");
+}
+/** Schedules the spinner to appear if `token` is still the current load. */
+function scheduleSpinner(token) {
+    hideSpinner();
+    spinnerTimer = window.setTimeout(() => {
+        spinnerTimer = null;
+        if (token !== loadToken)
+            return;
+        document.querySelector(".lightbox-spinner")?.removeAttribute("hidden");
+    }, SPINNER_DELAY_MS);
+}
 /** Preloads adjacent media for faster navigation. */
 function preloadAdjacentMedia(index) {
     if (!allTriggers.length)
@@ -130,6 +157,7 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
         lastFocused = document.activeElement;
     }
     currentIndex = index;
+    const token = ++loadToken;
     // Reset zoom state for each new image
     lightbox.classList.remove("zoomed");
     resetImageTransform();
@@ -156,10 +184,14 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
     lightboxVideo.pause();
     lightboxAudio.pause();
     lightboxCaption.textContent = "Loading...";
+    scheduleSpinner(token);
     if (mediaType === "image") {
         const img = new Image();
         img.src = mediaSrc;
         img.onload = function () {
+            if (token !== loadToken)
+                return;
+            hideSpinner();
             lightboxImg.setAttribute("src", mediaSrc);
             // Upscale small images so they don't render tiny in the lightbox.
             // Threshold: natural dims both under 600px. Scale to fit ~80vh / 90vw, capped at 3x.
@@ -179,6 +211,9 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
             preloadAdjacentMedia(currentIndex);
         };
         img.onerror = function () {
+            if (token !== loadToken)
+                return;
+            hideSpinner();
             lightboxCaption.textContent = "Error loading image";
             lightboxImg.style.display = "none";
         };
@@ -186,6 +221,7 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
     else if (mediaType === "video") {
         lightboxCaption.textContent = captionText;
         lightboxVideo.onerror = function () {
+            hideSpinner();
             lightboxCaption.textContent = "Error loading video";
             lightboxVideo.style.display = "none";
         };
@@ -193,6 +229,7 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
         // showing it before it knows its own size flashes a small empty frame.
         // Reveal it only once the real dimensions are in.
         const reveal = () => {
+            hideSpinner();
             lightboxVideo.style.display = "block";
         };
         // Assigning src re-runs the media load algorithm even when the URL is
@@ -211,10 +248,13 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
         }
         // Start playing the video (autoplay may be blocked by the browser)
         lightboxVideo.play().catch((e) => {
-            console.warn("Auto-play prevented:", e);
+            window.Log("warn", "Auto-play prevented:", e);
         });
     }
     else if (mediaType === "audio") {
+        // The player is revealed straight away and shows its own buffering
+        // state, so there is nothing for the spinner to sit on top of.
+        hideSpinner();
         lightboxAudio.setAttribute("src", mediaSrc);
         lightboxAudio.style.display = "block";
         lightboxCaption.textContent = captionText;
@@ -227,7 +267,7 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
         };
         // The opening click is a user gesture, so autoplay with sound is allowed
         lightboxAudio.play().catch((e) => {
-            console.warn("Auto-play prevented:", e);
+            window.Log("warn", "Auto-play prevented:", e);
         });
     }
 }
@@ -251,6 +291,9 @@ function navigateToNext() {
 }
 /** Closes the lightbox and stops any playing videos. */
 function closeLightbox() {
+    // Invalidate any in-flight load so it can't re-reveal media after the close
+    loadToken++;
+    hideSpinner();
     const lightbox = document.getElementById("lightbox");
     const lightboxVideo = document.getElementById("lightbox-video");
     const lightboxAudio = document.getElementById("lightbox-audio");
@@ -295,7 +338,7 @@ function initLightbox() {
     const lightbox = document.getElementById("lightbox");
     const closeBtn = document.querySelector(".close-lightbox");
     if (!lightbox || !closeBtn) {
-        console.warn("Lightbox elements not found");
+        window.Log("warn", "Lightbox elements not found");
         return;
     }
     closeBtn.addEventListener("click", closeLightbox);

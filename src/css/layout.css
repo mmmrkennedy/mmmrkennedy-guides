@@ -337,6 +337,61 @@ Page structure and containers.
     opacity: 1;
 }
 
+/* Loading spinner. Sibling of .lightbox-content rather than a child so it can be
+   centred in the viewport without joining the content column's flex flow — the
+   media is display:none while loading, and an in-flow spinner would move the
+   caption. JS only unhides it once a load has run past SPINNER_DELAY_MS, so
+   cache hits and preloaded neighbours never flash it. */
+.lightbox-spinner {
+    position: absolute;
+
+    /* The "Loading..." caption is anchored to a zero-width .lightbox-content
+       while the media is hidden, so it lands dead centre too. Drop the ring
+       below it rather than through it. */
+    top: calc(50% + var(--space-lg));
+    left: 50%;
+    width: var(--space-2xl);
+    height: var(--space-2xl);
+    margin: calc(var(--space-2xl) / -2) 0 0 calc(var(--space-2xl) / -2);
+    border: 3px solid rgb(201 169 97 / 25%); /* --color-tier-1 @ 25% */
+    border-top-color: var(--color-tier-1);
+    border-radius: 50%;
+    animation: lightbox-spin 0.8s linear infinite;
+    pointer-events: none;
+}
+
+/* The rule above beats the UA sheet's `[hidden] { display: none }`, so the
+   attribute has to be re-honoured here or the spinner never hides. */
+.lightbox-spinner[hidden] {
+    display: none;
+}
+
+@keyframes lightbox-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes lightbox-pulse {
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Spinning a ring is the whole signal here, so reduced motion gets an opacity
+   pulse rather than `animation: none` — a static ring reads as a stuck UI. */
+@media (prefers-reduced-motion: reduce) {
+    .lightbox-spinner {
+        animation: lightbox-pulse 1.4s ease-in-out infinite;
+        border-color: var(--color-tier-1);
+    }
+}
+
 .lightbox-caption {
     /* Imagus-style: a compact dark label floating just above the image's top edge,
        so it never covers image content. Anchored to .lightbox-content (= image box). */
