@@ -3,58 +3,20 @@
 //   GET  /admin/flags?status=open|resolved|dismissed|all   → HTML table
 //   POST /admin/flags  (form: action,id,path,line_hash,status) → mutate + redirect
 //
-// Protected by HTTP Basic Auth using env vars ADMIN_USER + ADMIN_PASS (set them
-// in the Cloudflare dashboard). Put Cloudflare Access in front of /admin/* too if
-// you want a second layer. Requires the D1 binding `DB`.
+// Sign-in happens on /admin/login (an HTML form, so password managers work) and
+// is carried by a signed session cookie; credentials come from the env vars
+// ADMIN_USER + ADMIN_PASS set in the Cloudflare dashboard. Put Cloudflare Access
+// in front of /admin/* too if you want a second layer. Requires the D1 binding `DB`.
+
+import { esc, htmlResponse, originAllowed, redirect, requireSession } from "./_auth.js";
 
 // Keep in sync with THRESHOLD in functions/api/feedback/index.js.
 const BUGGY_THRESHOLD = 5;
 const STATUSES = ["open", "resolved", "dismissed"];
 
-function esc(s) {
-    return String(s ?? "").replace(/[&<>"']/g, (c) =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
-    );
-}
-
-function authGate(request, env) {
-    if (!env.ADMIN_USER || !env.ADMIN_PASS) return "unconfigured";
-    const header = request.headers.get("Authorization") || "";
-    if (header.startsWith("Basic ")) {
-        let decoded = "";
-        try {
-            decoded = atob(header.slice(6));
-        } catch {
-            decoded = "";
-        }
-        const sep = decoded.indexOf(":");
-        const user = sep === -1 ? decoded : decoded.slice(0, sep);
-        const pass = sep === -1 ? "" : decoded.slice(sep + 1);
-        if (user === env.ADMIN_USER && pass === env.ADMIN_PASS) return "ok";
-    }
-    return "unauthorized";
-}
-
-function unauthorized() {
-    return new Response("Authentication required.", {
-        status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="flags admin", charset="UTF-8"' },
-    });
-}
-
-function htmlResponse(body, status = 200) {
-    return new Response(body, {
-        status,
-        headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
-    });
-}
-
 export async function onRequestGet({ request, env }) {
-    const gate = authGate(request, env);
-    if (gate === "unconfigured") {
-        return htmlResponse("<h1>Admin not configured</h1><p>Set ADMIN_USER and ADMIN_PASS env vars.</p>", 503);
-    }
-    if (gate !== "ok") return unauthorized();
+    const denied = await requireSession(request, env);
+    if (denied) return denied;
     if (!env.DB) return htmlResponse("<h1>DB binding 'DB' is not configured</h1>", 500);
 
     const url = new URL(request.url);
@@ -167,6 +129,9 @@ export async function onRequestGet({ request, env }) {
   body{margin:0;background:#15171b;color:#e8e8ea;font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
   header{padding:1rem 1.25rem;border-bottom:1px solid #2a2e35;position:sticky;top:0;background:#15171b;z-index:2}
   h1{margin:0 0 .5rem;font-size:1.15rem}
+  .titlebar{display:flex;align-items:baseline;justify-content:space-between;gap:1rem}
+  .signout{margin:0}
+  .signout button{font-size:.8em}
   nav{display:flex;gap:.5rem;flex-wrap:wrap}
   nav a{color:#cbd2dd;text-decoration:none;padding:.25rem .6rem;border:1px solid #2a2e35;border-radius:999px}
   nav a.active{border-color:#6ea8fe;color:#fff;background:#1d2733}
@@ -194,7 +159,13 @@ export async function onRequestGet({ request, env }) {
 </style></head>
 <body>
 <header>
-  <h1>Guide feedback — flags</h1>
+  <div class="titlebar">
+    <h1>Guide feedback — flags</h1>
+    <form class="signout" method="post" action="/admin/login">
+      <input type="hidden" name="action" value="logout">
+      <button type="submit">Sign out</button>
+    </form>
+  </div>
   <nav>
     ${navLink("open", "Open")}
     ${navLink("resolved", "Resolved")}
@@ -218,9 +189,9 @@ ${rowsHtml}
 }
 
 export async function onRequestPost({ request, env }) {
-    const gate = authGate(request, env);
-    if (gate === "unconfigured") return htmlResponse("<h1>Admin not configured</h1>", 503);
-    if (gate !== "ok") return unauthorized();
+    const denied = await requireSession(request, env);
+    if (denied) return denied;
+    if (!originAllowed(request)) return htmlResponse("<h1>Bad origin</h1>", 403);
     if (!env.DB) return htmlResponse("<h1>DB binding 'DB' is not configured</h1>", 500);
 
     const form = await request.formData();
@@ -250,6 +221,5 @@ export async function onRequestPost({ request, env }) {
         /* fall through to redirect; the list will reflect reality */
     }
 
-    const dest = new URL("/admin/flags?status=" + encodeURIComponent(status), request.url).href;
-    return new Response(null, { status: 303, headers: { Location: dest } });
+    return redirect(request, "/admin/flags?status=" + encodeURIComponent(status));
 }
