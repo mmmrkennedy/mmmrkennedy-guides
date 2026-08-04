@@ -163,13 +163,13 @@ document.addEventListener("DOMContentLoaded", () => {
         catch (err) {
             if (isLocalHost()) {
                 // No Functions on the eleventy dev server: behave like the demo.
-                console.warn("[line-flagger] no backend on localhost; would POST", payload);
+                window.Log("warn", "[line-flagger] no backend on localhost; would POST", payload);
                 target.classList.add("gfb-flagged");
                 closePop();
                 showToast("🚩 Thanks — flagged for review (local demo)");
             }
             else {
-                console.warn("Flag submission failed:", err);
+                window.Log("warn", "Flag submission failed:", err);
                 sending = false;
                 sendBtn.textContent = "Send";
                 sendBtn.disabled = false;
@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
         .catch((err) => {
         // Endpoint unreachable (e.g. eleventy dev server) — no notes, no noise.
-        console.warn("[line-flagger] buggy-note check skipped:", err);
+        window.Log("warn", "[line-flagger] buggy-note check skipped:", err);
     });
     /** Insert the caution note: inside an <li> (as first child) or before a <p>. */
     function injectBuggyNote(el) {

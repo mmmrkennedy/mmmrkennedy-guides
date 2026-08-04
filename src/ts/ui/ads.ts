@@ -80,7 +80,11 @@ function ensureAdSenseLoader(): void {
     script.src = ADSENSE_SRC;
     script.async = true;
     script.crossOrigin = "anonymous";
-    script.onerror = () => console.warn("AdSense loader failed to load");
+    // `window.Log?.` throughout this file, not the bare call the core scripts use:
+    // ads.js is an async island in its own bundle, so it can execute before
+    // core/logger.js has defined window.Log. A dropped ad warning is not worth a
+    // TypeError taking the rest of this file's bootstrap down with it.
+    script.onerror = () => window.Log?.("warn", "AdSense loader failed to load");
     document.head.appendChild(script);
 }
 
@@ -89,7 +93,7 @@ function pushAd(): void {
         ensureAdSenseLoader();
         (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (e) {
-        console.warn("AdSense push failed:", e);
+        window.Log?.("warn", "AdSense push failed:", e);
     }
 }
 

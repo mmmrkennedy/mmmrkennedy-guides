@@ -15,19 +15,19 @@ function initializeQuickLinks() {
             return;
         const parentElement = document.querySelector(".quick-links-container");
         if (!parentElement) {
-            console.warn("Quick Links container (quick-links-container) not found");
+            window.Log("warn", "Quick Links container (quick-links-container) not found");
             return;
         }
         // Exit early if navigation already exists (built at build-time)
         if (parentElement.children.length > 0)
             return;
         // Fallback: generate navigation dynamically only if empty
-        console.warn("Navigation not pre-built, generating at runtime (fallback)");
+        window.Log("warn", "Navigation not pre-built, generating at runtime (fallback)");
         const elementsData = window.QuickLinksUtils.getQuickLinkElements(document);
         generateQuickLinks(parentElement, elementsData);
     }
     catch (e) {
-        console.error("Error initializing quick links:", e);
+        window.Log("error", "Error initializing quick links:", e);
     }
 }
 /**

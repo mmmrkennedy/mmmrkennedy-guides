@@ -13,6 +13,8 @@ const BUNDLE = process.env.BUNDLE === "true";
 
 // Core site JS (nav, lightbox, legend, scroll, content, etc.), loaded `defer`.
 const JS_CORE_ORDER = [
+    // First: defines window.Log, which any script below may call.
+    "core/logger.js",
     "core/page-utils.js",
     "navigation/scroll-manager.js",
     "ui/legend.js",

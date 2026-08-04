@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const userLocalTimes = getEquivalentTimesInTimezone();
     const timezone_element = document.getElementById("timezone_conversion");
     if (!timezone_element) {
-        console.error("Timezone element not found!");
+        window.Log("error", "Timezone element not found!");
         return;
     }
     const time_1 = formatTime(userLocalTimes.equivalentTo12AMEST);

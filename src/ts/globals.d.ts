@@ -7,6 +7,12 @@
  * content/quick-links.
  */
 
+/** Console methods `Log` can dispatch to. */
+type LogLevel = "log" | "info" | "warn" | "error" | "debug";
+
+/** Levels as written at the call site — "warn" and "Warn" are both accepted. */
+type LogLevelInput = LogLevel | Capitalize<LogLevel>;
+
 /** A single entry in the generated quick-links / table of contents. */
 interface QuickLinkItem {
     element: HTMLElement;
@@ -74,6 +80,9 @@ interface QuickLinksUtilsApi {
 }
 
 interface Window {
+    /** Dev-only console output; silent in production. See core/logger.ts. */
+    Log: (level: LogLevelInput, ...args: unknown[]) => void;
+
     PageUtils: PageUtilsApi;
     ScrollManager: ScrollManagerApi;
     Legend: LegendApi;

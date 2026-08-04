@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
         function loadImage(imgUrl: string): void {
             if (imageCache.has(imgUrl)) return;
             const img = new Image();
-            img.onerror = () => console.error("Failed to load image:", imgUrl);
+            img.onerror = () => window.Log("error", "Failed to load image:", imgUrl);
             img.src = imgUrl;
             imageCache.set(imgUrl, img);
         }
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
             aTag.addEventListener("click", () => loadImage(imageUrl), { once: true });
         });
     } catch (error) {
-        console.error("Error initializing lightbox preloading:", error);
+        window.Log("error", "Error initializing lightbox preloading:", error);
     }
 });
 
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             link.as = "document";
 
             link.onerror = () => {
-                console.warn("Failed to prefetch:", url);
+                window.Log("warn", "Failed to prefetch:", url);
                 // Remove from set so we can retry if needed
                 prefetchedUrls.delete(url);
             };
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.isPrefetched = (url: string): boolean => prefetchedUrls.has(url);
         window.getPrefetchedUrls = (): string[] => Array.from(prefetchedUrls);
     } catch (error) {
-        console.error("Error initializing page prefetch:", error);
+        window.Log("error", "Error initializing page prefetch:", error);
     }
 });
 
@@ -114,7 +114,7 @@ async function loadSolverComponent(insert: HTMLElement): Promise<string | null> 
         // Extract event name from path
         return path.split("/").pop()?.replace(/\.html$/, "") ?? null;
     } catch (error) {
-        console.error(`Error loading solver component at ${path}:`, error);
+        window.Log("error", `Error loading solver component at ${path}:`, error);
         const message = error instanceof Error ? error.message : String(error);
         insert.innerHTML = `<p class="error" style="color: red; padding: 10px; border: 1px solid red; background: rgba(255,0,0,0.1);">
             Failed to load solver component: ${message}
@@ -134,7 +134,7 @@ async function includeSolverComponent(): Promise<void> {
         // Use Promise.allSettled to handle partial failures gracefully
         for (const insert of solverInserts) {
             if (!insert.dataset.solverHtmlPath) {
-                console.warn("Solver insert missing solverHtmlPath data attribute:", insert);
+                window.Log("warn", "Solver insert missing solverHtmlPath data attribute:", insert);
                 continue;
             }
             loadPromises.push(loadSolverComponent(insert));
@@ -147,7 +147,7 @@ async function includeSolverComponent(): Promise<void> {
             if (result.status === "fulfilled" && result.value) {
                 eventNames.push(result.value);
             } else if (result.status === "rejected") {
-                console.error(`Solver component ${index} failed to load:`, result.reason);
+                window.Log("error", `Solver component ${index} failed to load:`, result.reason);
             }
         });
 
@@ -156,11 +156,11 @@ async function includeSolverComponent(): Promise<void> {
             try {
                 document.dispatchEvent(new CustomEvent(eventName));
             } catch (error) {
-                console.error(`Error dispatching event ${eventName}:`, error);
+                window.Log("error", `Error dispatching event ${eventName}:`, error);
             }
         }
     } catch (error) {
-        console.error("Error in includeSolverComponent:", error);
+        window.Log("error", "Error in includeSolverComponent:", error);
     }
 }
 
@@ -228,10 +228,10 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 step.fn();
             } catch (error) {
-                console.error(`Error initializing ${step.name}:`, error);
+                window.Log("error", `Error initializing ${step.name}:`, error);
             }
         }
     } catch (error) {
-        console.error("Critical error during website initialization:", error);
+        window.Log("error", "Critical error during website initialization:", error);
     }
 });

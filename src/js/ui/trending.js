@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
         .catch((err) => {
         // Endpoint unreachable (e.g. eleventy dev server) — no indicator, no noise.
-        console.warn("[trending] unavailable:", err);
+        window.Log("warn", "[trending] unavailable:", err);
     });
     function decorate(anchor, label) {
         if (anchor.querySelector(".trending-flame"))

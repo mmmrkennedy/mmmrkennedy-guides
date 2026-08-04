@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
             target.textContent = formatCount(data.count) + " " + noun;
         })
         .catch((err) => {
-            console.warn("View counter unavailable:", err);
+            window.Log("warn", "View counter unavailable:", err);
         });
 
     /** True on the local dev server, where no /api/views Pages Function exists. */
