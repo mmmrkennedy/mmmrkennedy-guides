@@ -33,7 +33,13 @@ export function htmlResponse(body, status = 200, extraHeaders = {}) {
             // static assets, not Functions responses.
             "X-Frame-Options": "DENY",
             "X-Content-Type-Options": "nosniff",
-            "Referrer-Policy": "no-referrer",
+            // NOT `no-referrer`: per Fetch, a page with that policy sends
+            // `Origin: null` on its own form POSTs, which made originAllowed()
+            // below reject every real sign-in (curl was unaffected — it applies
+            // no referrer policy, which is why this survived testing).
+            // `same-origin` keeps admin URLs from leaking to third parties while
+            // leaving the Origin header intact.
+            "Referrer-Policy": "same-origin",
             ...extraHeaders,
         },
     });
@@ -175,9 +181,16 @@ export function clearedSessionCookie(request) {
 // Cross-site POSTs are already blocked by SameSite=Lax; this is the second layer
 // for browsers/clients that ignore it. Requests without an Origin (curl, old
 // clients) are allowed through — the session cookie is still required.
+//
+// "null" counts as absent rather than as a mismatch. Browsers send a null origin
+// for reasons that have nothing to do with an attack — a strict referrer policy,
+// a privacy extension, resistFingerprinting — and a hard reject there locks the
+// owner out of their own admin. A sandboxed iframe can also produce it, but that
+// attack still has to get past SameSite=Lax, which withholds the session cookie
+// on any cross-site POST; without the cookie the request is rejected anyway.
 export function originAllowed(request) {
     const origin = request.headers.get("Origin");
-    if (!origin) return true;
+    if (!origin || origin === "null") return true;
     try {
         return new URL(origin).host === new URL(request.url).host;
     } catch {
