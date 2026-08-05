@@ -393,37 +393,44 @@ a:hover {
     font-weight: 600;
 }
 
-.note {
+/* One set of colours per type, shared by the box and the inline variant below. */
+.note,
+.note-inline {
     --accent: var(--color-note-border);
     --accent-bg: var(--color-note-bg);
     --accent-text: var(--color-note-text);
 }
 
-.no-return {
+.no-return,
+.no-return-inline {
     --accent: var(--color-no-return-border);
     --accent-bg: var(--color-no-return-bg);
     --accent-text: var(--color-no-return-text);
 }
 
-.danger {
+.danger,
+.danger-inline {
     --accent: var(--color-danger-border);
     --accent-bg: var(--color-danger-bg);
     --accent-text: var(--color-danger-text);
 }
 
-.requirement {
+.requirement,
+.requirement-inline {
     --accent: var(--color-requirement-border);
     --accent-bg: var(--color-requirement-bg);
     --accent-text: var(--color-requirement-text);
 }
 
-.tip {
+.tip,
+.tip-inline {
     --accent: var(--color-tip-border);
     --accent-bg: var(--color-tip-bg);
     --accent-text: var(--color-tip-text);
 }
 
-.disclaimer {
+.disclaimer,
+.disclaimer-inline {
     --accent: var(--color-disclaimer-border);
     --accent-bg: var(--color-disclaimer-bg);
     --accent-text: var(--color-disclaimer-text);
@@ -451,6 +458,74 @@ a:hover {
 
 .disclaimer::before {
     content: "❓ Disclaimer";
+}
+
+/* Inline variants — the same six types for a line that belongs inside a list.
+ * No rule and no line of its own: the item keeps its bullet and stays level
+ * with its siblings, with the tint behind the text and the label run into the
+ * sentence. The label carries the type name, so the HTML starts straight at the
+ * sentence ("Warning:" and friends are not repeated in the markup).
+ *
+ * Padding is deliberately 0 on the inline-start side. An outside ::marker is
+ * placed against the border box, not the content box, so any padding there
+ * (even cancelled by a negative margin) leaves this line's bullet out of step
+ * with the bullets above and below it. The tint starting flush at the label is
+ * the cheaper compromise. */
+.note-inline,
+.no-return-inline,
+.danger-inline,
+.requirement-inline,
+.tip-inline,
+.disclaimer-inline {
+    padding: 0.1rem 0.35rem 0.1rem 0;
+    border-radius: 4px;
+    background: var(--accent-bg);
+}
+
+.note-inline::before,
+.no-return-inline::before,
+.danger-inline::before,
+.requirement-inline::before,
+.tip-inline::before,
+.disclaimer-inline::before {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.note-inline::marker,
+.no-return-inline::marker,
+.danger-inline::marker,
+.requirement-inline::marker,
+.tip-inline::marker,
+.disclaimer-inline::marker {
+    color: var(--accent);
+}
+
+/* No emoji on any of these — at one line the coloured label is enough, and a
+ * run of them down a list turns into a column of icons. The boxes above keep
+ * theirs, where the label sits on its own line and has room for it. */
+.note-inline::before {
+    content: "Note: ";
+}
+
+.no-return-inline::before {
+    content: "Point of No Return: ";
+}
+
+.danger-inline::before {
+    content: "Warning: ";
+}
+
+.requirement-inline::before {
+    content: "Requirement: ";
+}
+
+.tip-inline::before {
+    content: "Tip: ";
+}
+
+.disclaimer-inline::before {
+    content: "Disclaimer: ";
 }
 
 /* These two label themselves in their own text ("Phase 1", "<strong>Wolf
