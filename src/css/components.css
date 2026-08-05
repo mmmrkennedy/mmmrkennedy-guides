@@ -369,7 +369,8 @@ a:hover {
 .disclaimer,
 .boss-fight-phases,
 .notes,
-.weapon-desc {
+.weapon-desc,
+.info-list {
     margin: var(--space-md) 0;
     padding: var(--space-sm) var(--space-md);
     border-left: 3px solid var(--accent);
@@ -573,6 +574,64 @@ a:hover {
 
 .weapon-desc:has(+ .weapon-desc) {
     border-bottom-right-radius: 0;
+}
+
+/* The list-shaped member of the family: a <ul> of caveats sitting between a
+ * title-tier-2 heading that names them ("Warnings Before Proceeding") and the
+ * <ol> of steps they apply to. Same frame and colours as .weapon-desc directly
+ * above — the heading already labels it, so no ::before — because these two are
+ * the same beat in a section: read this before you start the steps. Left bare,
+ * such a list runs flush with the numbered steps under it and reads as step
+ * zero rather than as a warning about them.
+ *
+ * Three list-specific adjustments to the shared box:
+ *   - the inline padding has to carry the marker column too. Markers are
+ *     `outside`, so they sit left of the content edge; on the box's own 1rem
+ *     they land on top of the accent rule. 2rem keeps the same 1rem gap between
+ *     the rule and the bullets that the other boxes have to their text.
+ *   - the first and last items drop their outer margins, which would otherwise
+ *     stack on the box padding and leave the text floating off-centre.
+ *   - relaxed leading for the same reason .weapon-desc takes it: these items
+ *     run two or three lines each, not the single line a .tip does. */
+.info-list {
+    --accent: var(--color-tier-2);
+    --accent-bg: var(--color-bg-secondary);
+
+    padding-inline-start: var(--space-xl);
+    line-height: var(--line-height-relaxed);
+}
+
+.info-list > li:first-child {
+    margin-top: 0;
+}
+
+.info-list > li:last-child {
+    margin-bottom: 0;
+}
+
+/* The heading that names the list, pulled into the same panel so the two read
+ * as one block instead of a heading with an unrelated box under it. It takes
+ * the top half of the frame — same rule, same tint, top corner rounded — and
+ * the list below drops its top margin, top padding and top-right radius to
+ * close the seam, the same trick consecutive .weapon-desc boxes use above.
+ *
+ * The underline .title-tier-2 normally carries comes off: it exists to separate
+ * a heading from body text that shares the page background, and inside a tinted
+ * panel it just draws a line across the middle of the box. The tier-2 colour and
+ * weight stay, so the heading still reads at its usual level in the page. */
+.info-list-title {
+    margin-bottom: 0;
+    padding: var(--space-sm) var(--space-md) var(--space-xs);
+    border-bottom: none;
+    border-left: 3px solid var(--color-tier-2);
+    border-radius: 0 4px 0 0;
+    background: var(--color-bg-secondary);
+}
+
+.info-list-title + .info-list {
+    margin-top: 0;
+    padding-top: 0;
+    border-top-right-radius: 0;
 }
 
 /* Ability block — the "what this thing does" line that sits between a
