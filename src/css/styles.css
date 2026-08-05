@@ -1,13 +1,23 @@
+/* Bundle input. build_scripts/minify-assets.js inlines these into
+   bundle.min.css, so anything imported here ships on every page.
+
+   Page-specific sheets are therefore NOT imported here, even though they used
+   to be — index-nav.css, trending.css and stats.css only ever match on the
+   index and stats pages, and were costing every guide ~13KB of rules that can
+   never apply. index.njk links the first two, base.njk links stats.css behind
+   `statsPage`, and Solvers.css behind `useSolverCSS`. All four are listed in
+   STANDALONE_ASSETS so they are still content-addressed.
+
+   Because they now load after this bundle rather than inside it, they also sit
+   later in the cascade. Keep them free of rules that other files need to
+   override. */
 @import url("tokens.css");
 @import url("reset.css");
 @import url("typography.css");
 @import url("components.css");
 @import url("feedback.css");
-@import url("trending.css");
 @import url("layout.css");
 @import url("utilities.css");
 @import url("responsive.css");
-@import url("index-nav.css");
-@import url("stats.css");
 @import url("return-pill.css");
 @import url("kofi.css");

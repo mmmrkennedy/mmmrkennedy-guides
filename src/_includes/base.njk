@@ -58,8 +58,25 @@
     {%- else %}
         <link rel="stylesheet" type="text/css" href="/css/styles.css?v={{ site.buildVersion }}">
     {%- endif %}
+    {#- Only the stats page uses these rules, so they are not in the bundle —
+        see the note in css/styles.css. #}
+    {%- if statsPage %}
+        <link rel="stylesheet" type="text/css" href="/css/stats.css?v={{ site.buildVersion }}">
+    {%- endif %}
+    {#- On a solver-only page the solver IS the content, so its stylesheet blocks
+        first paint like any other. In a guide the solver sits thousands of words
+        below the fold, and blocking paint on 20KB that styles nothing visible
+        costs ~70ms of FCP on a throttled phone. There it loads async instead:
+        media="print" makes the browser fetch the sheet at low priority while it
+        matches no screen, and onload flips it to all the moment it lands.
+        No <noscript> fallback — the solver is React, so with JS off there is
+        nothing on the page for these rules to style. #}
     {%- if useSolverCSS %}
+        {%- if solverIsPrimary %}
         <link rel="stylesheet" type="text/css" href="/css/Solvers.css?v={{ site.buildVersion }}">
+        {%- else %}
+        <link rel="stylesheet" type="text/css" href="/css/Solvers.css?v={{ site.buildVersion }}" media="print" onload="this.media='all';this.onload=null">
+        {%- endif %}
     {%- endif %}
 
     <!-- AdSense: site-verification meta only. The adsbygoogle.js loader is
@@ -77,10 +94,15 @@
         <link rel="preload" as="image" href="{{ imgSrc }}">
         {%- endfor %}
     {%- endif %}
-    {#- Must carry the same condition as the matching REACT_BUNDLE_PLACEHOLDER
-        script tag near the end of <body>. Unconditional, this preloaded a 78KB
-        Preact bundle at high priority on all 80 pages while only 18 ever ran it. #}
-    {%- if useReactSolvers %}
+    {#- Preload only where the solver is the reason for the visit. Unconditional,
+        this preloaded a 78KB Preact bundle at high priority on all 80 pages while
+        only 18 ever ran it; narrowed to those 18, it still put the bundle — the
+        largest asset on a guide — into the same millisecond as the CSS that
+        blocks first paint, for a widget nobody has scrolled to yet. Worth ~50ms
+        of FCP on a throttled phone. The <script> near the end of <body> is not
+        conditioned on this and still loads it there, just without jumping the
+        queue ahead of the page the reader actually came for. #}
+    {%- if useReactSolvers and solverIsPrimary %}
     <!-- REACT_BUNDLE_MODULEPRELOAD -->
     {%- endif %}
 

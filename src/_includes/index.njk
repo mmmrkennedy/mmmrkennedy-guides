@@ -38,6 +38,12 @@
         {%- else %}
             <link rel="stylesheet" type="text/css" href="/css/styles.css?v={{ site.buildVersion }}">
         {%- endif %}
+        {#- Index-only, so out of the bundle rather than on all 80 pages; see the
+            note in css/styles.css. Both are above the fold on this page (the
+            search chips, the 🔥 on the most-viewed link), so they block paint
+            here as the bundle does. #}
+        <link rel="stylesheet" type="text/css" href="/css/index-nav.css?v={{ site.buildVersion }}">
+        <link rel="stylesheet" type="text/css" href="/css/trending.css?v={{ site.buildVersion }}">
         <!-- Favicon -->
         <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
         <link rel="dns-prefetch" href="//ko-fi.com">

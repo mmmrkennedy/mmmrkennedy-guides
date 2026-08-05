@@ -2,6 +2,10 @@
 layout: base.njk
 useSolverCSS: true
 useReactSolvers: true
+# The solver is the whole page here, not a widget inside a guide: its CSS and
+# bundle are the critical path, so base.njk preloads the bundle and lets the
+# stylesheet block paint. guide-with-solver.njk deliberately does not set this.
+solverIsPrimary: true
 skipTOC: true
 showKofi: true
 ---

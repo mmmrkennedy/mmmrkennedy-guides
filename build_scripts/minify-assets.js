@@ -44,12 +44,17 @@ const JS_ADS_ORDER = ["ui/ads.js"];
 // rather than derived: the point is that adding a page-level <script>/<link>
 // without adding it here is a deliberate choice, not an accident.
 //   - Solvers.css   — 18 solver/guide pages, gated behind `useSolverCSS`
+//   - index-nav, trending  — index-only (trending is gated by <body data-trending>)
+//   - stats.css     — the stats page only, gated behind `statsPage`
 //   - index-filter, birthday — index-only, so not worth carrying in the core bundle
 //   - timezone_conversion   — one guide (shaolin_shuffle)
 // Deliberately absent: css/styles.css. It is the bundler's input, and the only
 // page referencing it directly is the react-solvers dev harness.
 const STANDALONE_ASSETS = [
     "css/Solvers.css",
+    "css/index-nav.css",
+    "css/trending.css",
+    "css/stats.css",
     "js/ui/index-filter.js",
     "js/ui/birthday.js",
     "js/timezone_conversion.js",
