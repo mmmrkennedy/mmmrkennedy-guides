@@ -1344,8 +1344,25 @@
     background: var(--queens-dark);
 }
 
+/* Queen glyph, inlined rather than fetched. This hotlinked
+   upload.wikimedia.org, which cost a DNS lookup, a TLS handshake and ~350ms on
+   a throttled phone to deliver 1.4KB — and left the board's only artwork
+   dependent on a third party that owes us nothing.
+
+   "Chess qdt45" by Cburnett (https://commons.wikimedia.org/wiki/User:Cburnett),
+   used here under CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/).
+   Source: https://commons.wikimedia.org/wiki/File:Chess_qdt45.svg
+   The author offers it under CC BY-SA 3.0 / GPL v2+ / BSD-3 / GFDL 1.2+; the CC
+   licence is the one taken.
+
+   Reproduced UNMODIFIED. The payload is that file percent-encoded, and decodes
+   byte-for-byte back to it — an encoding, not an edit. Recolouring or redrawing
+   would make this an adaptation, which CC BY-SA requires be released under the
+   same licence and marked as changed. If you need a different colour, filter it
+   in CSS or draw your own glyph rather than editing the data below. The
+   reader-facing credit is in the site footer (base.njk). */
 .queens-cell.is-queen {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg");
+    background-image: url("data:image/svg+xml,%3C?xml version=%221.0%22 encoding=%22utf-8%22 standalone=%22no%22?%3E%0A%3C!DOCTYPE svg PUBLIC %22-//W3C//DTD SVG 1.1//EN%22%0A%22http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd%22%3E%0A%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 version=%221.1%22 width=%2245%22%0Aheight=%2245%22%3E%0A  %3Cg style=%22fill:%23000000;stroke:%23000000;stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round%22%3E%0A%0A    %3Cpath d=%22M 9,26 C 17.5,24.5 30,24.5 36,26 L 38.5,13.5 L 31,25 L 30.7,10.9 L 25.5,24.5 L 22.5,10 L 19.5,24.5 L 14.3,10.9 L 14,25 L 6.5,13.5 L 9,26 z%22%0A    style=%22stroke-linecap:butt;fill:%23000000%22 /%3E%0A    %3Cpath d=%22m 9,26 c 0,2 1.5,2 2.5,4 1,1.5 1,1 0.5,3.5 -1.5,1 -1,2.5 -1,2.5 -1.5,1.5 0,2.5 0,2.5 6.5,1 16.5,1 23,0 0,0 1.5,-1 0,-2.5 0,0 0.5,-1.5 -1,-2.5 -0.5,-2.5 -0.5,-2 0.5,-3.5 1,-2 2.5,-2 2.5,-4 -8.5,-1.5 -18.5,-1.5 -27,0 z%22 /%3E%0A    %3Cpath d=%22M 11.5,30 C 15,29 30,29 33.5,30%22 /%3E%0A    %3Cpath d=%22m 12,33.5 c 6,-1 15,-1 21,0%22 /%3E%0A    %3Ccircle cx=%226%22 cy=%2212%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2214%22 cy=%229%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2222.5%22 cy=%228%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2231%22 cy=%229%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2239%22 cy=%2212%22 r=%222%22 /%3E%0A    %3Cpath d=%22M 11,38.5 A 35,35 1 0 0 34,38.5%22%0A    style=%22fill:none; stroke:%23000000;stroke-linecap:butt;%22 /%3E%0A    %3Cg style=%22fill:none; stroke:%23ffffff;%22%3E%0A      %3Cpath d=%22M 11,29 A 35,35 1 0 1 34,29%22 /%3E%0A      %3Cpath d=%22M 12.5,31.5 L 32.5,31.5%22 /%3E%0A      %3Cpath d=%22M 11.5,34.5 A 35,35 1 0 0 33.5,34.5%22 /%3E%0A      %3Cpath d=%22M 10.5,37.5 A 35,35 1 0 0 34.5,37.5%22 /%3E%0A    %3C/g%3E%0A  %3C/g%3E%0A%3C/svg%3E%0A");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;

@@ -271,6 +271,16 @@
             {%- if not statsPage %}<span class="site-footer__sep" aria-hidden="true"></span><a class="site-footer__link" href="/stats">Site stats</a>{% endif %}
             <span class="site-footer__views"></span>
         </p>
+        {#- CC BY-SA 3.0 asks for credit "in any reasonable manner based on the
+            medium", which for a web page means somewhere a reader can actually
+            find it. Shown only where the artwork is: the queen glyph is a
+            background-image in Solvers.css, so it can only appear on a page
+            that loads it. See the licence note at .queens-cell.is-queen. #}
+        {%- if useSolverCSS %}
+        <p class="site-footer__credits">
+            Chess queen icon by <a class="site-footer__link" href="https://commons.wikimedia.org/wiki/User:Cburnett" rel="noopener">Cburnett</a>, used unmodified under <a class="site-footer__link" href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license noopener">CC BY-SA 3.0</a>.
+        </p>
+        {%- endif %}
     </footer>
 </div>
 

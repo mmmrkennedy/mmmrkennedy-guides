@@ -95,6 +95,15 @@ Page structure and containers.
     color: var(--color-tier-2);
 }
 
+/* Third-party artwork credit. A step quieter than the meta row above: it has to
+   be findable to satisfy the licence, not read by everyone. Inherits the
+   footer's own size and muted colour; only the opacity sets it back. */
+.site-footer__credits {
+    margin: var(--space-sm) 0 0;
+    line-height: var(--line-height-tight);
+    opacity: 0.7;
+}
+
 /* Counts sit next to each other across pages; tabular figures stop them jittering. */
 .site-footer__edits,
 .site-footer__words,
