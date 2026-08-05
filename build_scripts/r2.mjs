@@ -22,7 +22,7 @@
  * Both always dry-run first and ask before doing anything.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import fs from "node:fs";
@@ -34,6 +34,21 @@ const SRC = path.join(REPO, "src", "games");
 const BUCKET = "r2:mmmrkennedy-images";
 const REMOTE = `${BUCKET}/img`;
 const ORIGINALS = `${BUCKET}/originals`;
+
+// Downscaled copies for small screens. A phone renders the lightbox about 390
+// CSS px wide, so at 3x DPR it needs ~1170 real pixels — not the 2560 of the
+// master, and certainly not the 5MB some masters weigh. See
+// docs/r2-migration-part2-responsive-variants.md.
+const TIERS = [1280, 1920];
+
+// Encoded variants are cached here between runs so a second run only touches
+// what changed. Gitignored: it is derived data, rebuildable from src/ at any
+// time, and roughly 1.5GB.
+const CACHE = path.join(REPO, ".variants");
+
+// How many cwebp processes at once. Each already uses -mt internally, so this
+// is deliberately well below core count.
+const ENCODE_CONCURRENCY = 4;
 
 // Only the formats functions/games/[[path]].js serves. Without these the guide
 // .html files sitting in the same tree would be uploaded too.
@@ -79,6 +94,191 @@ function listMaps() {
 
 function toRemote(mapPath) {
     return `${REMOTE}/${mapPath.split(path.sep).join("/")}`;
+}
+
+/**
+ * Pixel width from a WebP header, without decoding the image or shelling out.
+ * RIFF container: "RIFF"<len>"WEBP"<chunk>, then the chunk carries the size.
+ * Returns 0 for anything unrecognised, which callers treat as "leave it alone".
+ */
+function webpWidth(file) {
+    let fd;
+    try {
+        fd = fs.openSync(file, "r");
+        const b = Buffer.alloc(32);
+        fs.readSync(fd, b, 0, 32, 0);
+        if (b.toString("ascii", 0, 4) !== "RIFF" || b.toString("ascii", 8, 12) !== "WEBP") return 0;
+        const chunk = b.toString("ascii", 12, 16);
+        if (chunk === "VP8 ") return b.readUInt16LE(26) & 0x3fff;
+        if (chunk === "VP8L") return (b.readUInt32LE(21) & 0x3fff) + 1;
+        if (chunk === "VP8X") return (b[24] | (b[25] << 8) | (b[26] << 16)) + 1;
+        return 0;
+    } catch {
+        return 0;
+    } finally {
+        if (fd !== undefined) fs.closeSync(fd);
+    }
+}
+
+/** Every .webp under `root`, recursively. */
+function walkWebp(root, out = []) {
+    for (const e of fs.readdirSync(root, { withFileTypes: true })) {
+        const p = path.join(root, e.name);
+        if (e.isDirectory()) walkWebp(p, out);
+        else if (e.name.toLowerCase().endsWith(".webp")) out.push(p);
+    }
+    return out;
+}
+
+/**
+ * What needs encoding, and what does not.
+ *
+ * Skipped, deliberately:
+ *   - anything already at or below the tier width, because upscaling a
+ *     128x128 sprite to 1280 would make it bigger AND worse;
+ *   - .webp only — the nine other images under src/games are animated GIFs
+ *     (calling cards, director's cut clips) and cwebp would flatten them to a
+ *     single frame;
+ *   - sources not newer than an already-cached variant, so a re-run costs
+ *     nothing for images that have not changed.
+ */
+function planVariants(root) {
+    const jobs = [];
+    let skippedSmall = 0;
+    let upToDate = 0;
+
+    for (const src of walkWebp(root)) {
+        const width = webpWidth(src);
+        if (!width) continue;
+        const rel = path.relative(SRC, src);
+
+        for (const tier of TIERS) {
+            if (width <= tier) {
+                skippedSmall++;
+                continue;
+            }
+            const dest = path.join(CACHE, String(tier), rel);
+            if (fs.existsSync(dest) && fs.statSync(dest).mtimeMs >= fs.statSync(src).mtimeMs) {
+                upToDate++;
+                continue;
+            }
+            jobs.push({ src, dest, tier });
+        }
+    }
+    return { jobs, skippedSmall, upToDate };
+}
+
+function encodeOne({ src, dest, tier }) {
+    return new Promise((resolve) => {
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        // Same settings the samples were judged on: q90 was accepted by eye at
+        // 1280 and rejected at full 2560, which is why only downscaled copies
+        // are lossy and the masters stay as they are.
+        const args = ["-q", "90", "-m", "6", "-pass", "10", "-mt", "-resize", String(tier), "0", src, "-o", dest];
+        const p = spawn("cwebp", args, { stdio: "ignore" });
+        p.on("error", () => resolve(false));
+        p.on("close", (code) => resolve(code === 0));
+    });
+}
+
+/** Bounded-concurrency encode with a single-line progress counter. */
+async function encodeAll(jobs) {
+    let done = 0;
+    let failed = 0;
+    let next = 0;
+
+    async function worker() {
+        for (;;) {
+            const i = next++;
+            if (i >= jobs.length) return;
+            const ok = await encodeOne(jobs[i]);
+            if (!ok) failed++;
+            done++;
+            if (done % 25 === 0 || done === jobs.length) {
+                stdout.write(`\r  encoding ${done}/${jobs.length}${failed ? `  (${failed} failed)` : ""}   `);
+            }
+        }
+    }
+
+    await Promise.all(Array.from({ length: ENCODE_CONCURRENCY }, worker));
+    stdout.write("\n");
+    return failed;
+}
+
+function dirSize(dir) {
+    if (!fs.existsSync(dir)) return 0;
+    let total = 0;
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, e.name);
+        total += e.isDirectory() ? dirSize(p) : fs.statSync(p).size;
+    }
+    return total;
+}
+
+const mb = (n) => `${(n / 1048576).toFixed(0)} MB`;
+
+async function doVariants(ask) {
+    if (spawnSync("cwebp", ["-version"], { stdio: "ignore" }).error) {
+        console.log("\n  cwebp not found on PATH. Install Google's libwebp.");
+        return;
+    }
+
+    console.log("\n  Generates downscaled copies for small screens, at " + TIERS.join("w and ") + "w.");
+    console.log("  Masters are untouched; these are extra files under variants/ in the bucket.");
+
+    const scope = (await ask("\n  (a)ll maps or (o)ne map? [a/o]: ")).trim().toLowerCase();
+    let root = SRC;
+    let mapRel = "";
+    if (scope === "o") {
+        mapRel = await askMap(ask, "generate variants for");
+        root = path.join(SRC, ...mapRel.split("/"));
+    }
+
+    console.log("\n  Scanning…");
+    const { jobs, skippedSmall, upToDate } = planVariants(root);
+
+    console.log(`  to encode      : ${jobs.length}`);
+    console.log(`  already cached : ${upToDate}`);
+    console.log(`  too small      : ${skippedSmall} (source already <= tier, would upscale)`);
+
+    if (jobs.length) {
+        // -pass 10 is slow by design; on a full run this is minutes, not seconds.
+        console.log(`\n  Encoding is CPU-heavy. The cache at .variants/ makes re-runs cheap,`);
+        console.log(`  and interrupting is safe — finished files are kept.`);
+        if (!(await confirm(ask, `Encode ${jobs.length} variants now? (y/N):`))) {
+            console.log("  Cancelled.");
+            return;
+        }
+        const failed = await encodeAll(jobs);
+        if (failed) console.log(`  ${failed} failed to encode.`);
+    } else {
+        console.log("\n  Nothing to encode.");
+    }
+
+    for (const tier of TIERS) {
+        const local = path.join(CACHE, String(tier), mapRel.split("/").join(path.sep));
+        if (!fs.existsSync(local)) continue;
+        console.log(`\n  ${tier}w cache: ${mb(dirSize(local))}`);
+    }
+
+    if (!(await confirm(ask, "\n  Upload variants to R2? (y/N):"))) {
+        console.log("  Left in .variants/ — re-run to upload later.");
+        return;
+    }
+
+    for (const tier of TIERS) {
+        const local = path.join(CACHE, String(tier), mapRel.split("/").join(path.sep));
+        if (!fs.existsSync(local)) continue;
+        const remote = `${BUCKET}/variants/${tier}${mapRel ? "/" + mapRel : ""}`;
+        console.log(`\n  ${local}\n  -> ${remote}\n`);
+        if (rclone(["copy", local, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"]) !== 0) {
+            console.log(`\n  Upload of ${tier}w failed.`);
+            return;
+        }
+    }
+
+    console.log("\n  Done. Bucket now holds:");
+    for (const tier of TIERS) rclone(["size", `${BUCKET}/variants/${tier}`, ...NO_BUCKET_CHECK]);
 }
 
 /** Thrown when stdin ends (Ctrl+D, or piped input running out). */
@@ -209,10 +409,13 @@ async function main() {
 
     try {
         for (;;) {
-            const choice = (await ask("\n  (1) Upload new/changed  (2) Sync one map  (3) Bucket size  (4) Quit: ")).trim();
+            const choice = (await ask(
+                "\n  (1) Upload new/changed  (2) Sync one map  (3) Size variants  (4) Bucket size  (5) Quit: ",
+            )).trim();
             if (choice === "1") return void (await doUpload(ask));
             if (choice === "2") return void (await doSync(ask));
-            if (choice === "3") {
+            if (choice === "3") return void (await doVariants(ask));
+            if (choice === "4") {
                 console.log("");
                 console.log("  img/ (served to readers)");
                 rclone(["size", REMOTE, ...NO_BUCKET_CHECK]);
@@ -220,7 +423,7 @@ async function main() {
                 rclone(["size", ORIGINALS, ...NO_BUCKET_CHECK]);
                 continue;
             }
-            if (choice === "4" || choice.toLowerCase() === "q") return;
+            if (choice === "5" || choice.toLowerCase() === "q") return;
         }
     } catch (err) {
         // Ctrl+D or end of piped input — an ordinary way to leave, not a fault.

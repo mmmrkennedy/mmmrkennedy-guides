@@ -47,3 +47,8 @@ nul
 /src/games/WW2/the_final_reich/pictures/dr_straub/STRAUB SPAWNS FINAL REICH.txt
 /docs/r2-migration-part1-lift-and-shift.md
 /docs/r2-migration-part2-responsive-variants.md
+
+# Encoded size-variants of the guide images (build_scripts/r2.mjs, menu option 3).
+# Derived data: rebuildable from src/ at any time, ~1.5GB, and the copies that
+# matter live in R2 under variants/.
+/.variants/
