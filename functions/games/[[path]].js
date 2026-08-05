@@ -72,7 +72,15 @@ export async function onRequestGet(context) {
     const headers = new Headers();
     headers.set("ETag", object.httpEtag);
     headers.set("Cache-Control", CACHE_CONTROL);
+
+    // src/_headers applies to static assets only, never to a Function response,
+    // so its `/*` security block has to be repeated here or images would be the
+    // one resource on the site serving without it. Keep these in step with that
+    // file. Set before the 304 branch so a revalidated image carries them too.
     headers.set("X-Content-Type-Options", "nosniff");
+    headers.set("X-Frame-Options", "DENY");
+    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 
     // `body` is absent when the conditional request matched.
     if (!("body" in object) || object.body === null) {
