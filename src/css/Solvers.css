@@ -32,6 +32,10 @@
     --solver-cell-bg: #1e1e1e;
     --solver-cell-border: var(--color-border-subtle);
     --solver-cell-border-width: 1px;
+
+    /* Monospace, for anything a reader reads character by character:
+       tapped morse streams, result codes, debug dumps. */
+    --solver-font-mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
 }
 
 /* ------------------------------------------------------------
@@ -808,7 +812,7 @@
 
 .solver-result-list__meta {
     color: var(--color-text-primary);
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-family: var(--solver-font-mono);
     font-size: var(--font-size-base);
 }
 
@@ -860,7 +864,7 @@
     border: 1px dashed var(--color-border-medium);
     border-radius: 4px;
     color: var(--color-text-secondary);
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-family: var(--solver-font-mono);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-normal);
     white-space: pre-wrap;
@@ -1354,4 +1358,358 @@
 
 .solver-container--queens[data-phase="solved"] .queens-cell {
     cursor: default;
+}
+
+/* ------------------------------------------------------------
+   IW Beast From Beyond, Venom-Y/Z Morse Solver
+   Three phases (key / listen / input) sharing one visual kit:
+   a strip of beep glyphs, two tap pads, and a banner for the
+   answer. The strip is the main affordance: it shows where you
+   are in a transmission you can't pause.
+   ------------------------------------------------------------ */
+.solver-container--morse {
+    max-width: 34rem;
+}
+
+/* Phase header. Deliberately not .solver-step-label: that class uppercases,
+   which suits its two-word labels but not a full line of context. */
+.morse-step {
+    margin: 0;
+    color: var(--solver-accent);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.morse-section-label {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+/* Beep strip: one column per letter, so a missed beep stays
+   recoverable by eye even though letters are never typed. */
+.morse-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm) var(--space-smd);
+    padding: var(--space-smd) var(--space-sm);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 30%);
+}
+
+.morse-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.morse-group__syms {
+    display: flex;
+    gap: 3px;
+}
+
+.morse-group__letter {
+    color: var(--color-text-muted);
+    font-family: var(--solver-font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.05em;
+}
+
+.morse-sym {
+    color: var(--color-border-medium);
+    font-size: 0.875rem;
+    line-height: 1;
+    transition: color 0.12s ease;
+}
+
+.morse-sym.is-done {
+    color: var(--solver-accent);
+}
+
+.morse-sym.is-current {
+    color: var(--color-text-primary);
+    animation: morse-blink 1s steps(2, start) infinite;
+}
+
+.morse-sym.is-bad {
+    color: var(--color-no-return-text);
+}
+
+@keyframes morse-blink {
+    to { opacity: 0.35; }
+}
+
+/* Tap pads: thumb-sized, side by side, mirroring the in-game panel layout of
+   left = short and right = long. The row itself is a plain .solver-controls;
+   flex: 1 on the pads is what makes them fill it. */
+.morse-pad {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 4.75rem;
+    padding: var(--space-sm);
+    background: var(--color-bg-tertiary);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 10px;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.morse-pad:hover:not(:disabled) {
+    border-color: var(--solver-accent);
+}
+
+.morse-pad:active:not(:disabled) {
+    background: var(--solver-accent);
+    border-color: var(--solver-accent);
+    color: var(--color-bg-primary);
+}
+
+.morse-pad:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.morse-pad__glyph {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.morse-pad__label {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+
+.morse-pad__hint {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1;
+}
+
+.morse-pad__hint kbd {
+    padding: 0 5px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 3px;
+    font-family: var(--solver-font-mono);
+    font-size: inherit;
+}
+
+.morse-pad:active:not(:disabled) .morse-pad__hint {
+    color: var(--color-bg-primary);
+}
+
+.morse-pad:active:not(:disabled) .morse-pad__hint kbd {
+    background: transparent;
+    border-color: currentcolor;
+}
+
+/* Raw tapped stream, for the stretch past the known opening.
+   Framed as a .solver-output; only the type treatment is local. */
+.morse-taps {
+    padding: var(--space-sm) var(--space-md);
+    color: var(--solver-accent);
+    font-family: var(--solver-font-mono);
+    font-size: var(--font-size-base);
+    letter-spacing: 0.15em;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.morse-taps.is-empty {
+    color: var(--color-text-muted);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    letter-spacing: normal;
+}
+
+.morse-banner {
+    width: 0;
+    min-width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.morse-banner--answer {
+    border-color: var(--color-tip-text);
+    color: var(--color-tip-text);
+    font-size: var(--font-size-md);
+}
+
+.morse-banner--split {
+    border-color: var(--color-danger-text);
+    color: var(--color-danger-text);
+    font-size: var(--font-size-md);
+}
+
+/* Candidate chips: the numbers the taps so far still allow. Eliminated ones
+   are dropped from the row rather than struck through — past the opening,
+   most of the five die at once and a row of corpses reads as noise. */
+.morse-candidates {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+}
+
+/* Prose with inline buttons sitting on the same baseline — the candidate
+   list and the skip-ahead row are the same shape. */
+.morse-candidate-row,
+.morse-skip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-xs);
+}
+
+/* A <button>, so it can be tapped for a preview on a touchscreen as well as
+   hovered on a mouse. Hence the font/background reset. */
+.morse-chip {
+    padding: 1px var(--space-sm);
+    background: none;
+    border: 1px solid var(--solver-accent);
+    border-radius: 999px;
+    color: var(--solver-accent);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.morse-chip:hover,
+.morse-chip.is-peeking {
+    background: var(--solver-accent);
+    color: var(--color-bg-primary);
+}
+
+/* Beep preview for the hovered/tapped candidate. A .solver-output, which is
+   what keeps it in the flow rather than floating: these sequences run to 31
+   beeps, which no tooltip can hold over a panel this narrow without escaping
+   it, and that class's width:0 + min-width:100% keeps the preview out of the
+   container's intrinsic width so hovering can't resize the panel. Child
+   spacing comes from .solver-output > * + *, so no gap here. */
+.morse-peek {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 4.25rem;
+    padding: var(--space-sm);
+}
+
+.morse-peek__label {
+    color: var(--solver-accent);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.morse-peek__hint {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+/* The strip brings its own frame; inside the peek that would double up.
+   Left-aligned rather than centred so a sequence that wraps still reads
+   straight down the left edge. */
+.morse-peek .morse-strip {
+    align-self: stretch;
+    justify-content: flex-start;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+/* Most of a preview is unheard beeps, so the default pending grey (tuned for
+   strips that are mostly lit) is too dark to read here. Scoped to .is-pending:
+   a bare .morse-sym here would tie on specificity with .morse-sym.is-done and,
+   coming later in the file, would win and flatten the lit beeps too. */
+.morse-peek .morse-sym.is-pending {
+    color: var(--color-text-muted);
+}
+
+/* Input phase: one beep at a time, as large as the panel allows */
+.morse-current {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    width: 100%;
+    padding: var(--space-lg);
+    background: var(--color-bg-primary);
+    border: 2px solid var(--solver-accent);
+    border-radius: 12px;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.morse-current:hover {
+    background: var(--color-bg-secondary);
+}
+
+.morse-current:active {
+    background: var(--solver-accent);
+    color: var(--color-bg-primary);
+}
+
+.morse-current__glyph {
+    color: var(--solver-accent);
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.morse-current:active .morse-current__glyph,
+.morse-current:active .morse-current__sub {
+    color: var(--color-bg-primary);
+}
+
+.morse-current__label {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+}
+
+.morse-current__sub {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+/* Skip-ahead row: entry points for readers who already know
+   their key or number and only want the input walkthrough. */
+.morse-skip {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.morse-link {
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--solver-accent);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.morse-link:hover {
+    color: var(--solver-accent-bright);
+}
+
+.solver-container--morse:focus-visible {
+    outline: 2px solid var(--solver-accent);
+    outline-offset: 2px;
 }

@@ -15,11 +15,14 @@ import IWBeastEightQueensSolver from "./components/IWBeastEightQueensSolver";
 import IWBeastFloppySolver from "./components/IWBeastFloppySolver";
 import IWBeastVenomXMazeSolver from "./components/IWBeastVenomXMazeSolver";
 import IWBeastVenomXBoxSolver from "./components/IWBeastVenomXBoxSolver";
+import IWBeastVenomYMorseSolver from "./components/IWBeastVenomYMorseSolver";
 import BO1DialSolver from "./components/BO1DialSolver";
 import BO7TotenreichReactorSolver from "./components/BO7TotenreichReactorSolver";
 
 interface MountOptions {
     title?: string;
+    /* Morse solver only: id of an existing ARCHER/CROSS <select> to adopt. */
+    keySelectId?: string;
 }
 
 type MountFunction = (elementId: string, options?: MountOptions) => void;
@@ -42,6 +45,7 @@ interface ZombiesSolvers {
     mountBeastFloppyDiskSolver: MountFunction;
     mountBeastVenomXMazeSolver: MountFunction;
     mountBeastVenomXBoxSolver: MountFunction;
+    mountBeastVenomYMorseSolver: MountFunction;
     mountDialSolver: MountFunction;
 }
 
@@ -80,6 +84,7 @@ window.ZombiesSolvers = {
     mountBeastFloppyDiskSolver: (id, opts) => mount(id, "BeastFloppyDiskSolver", <IWBeastFloppySolver title={opts?.title} />),
     mountBeastVenomXMazeSolver: (id, opts) => mount(id, "BeastVenomXMazeSolver", <IWBeastVenomXMazeSolver title={opts?.title} />),
     mountBeastVenomXBoxSolver: (id, opts) => mount(id, "BeastVenomXBoxSolver", <IWBeastVenomXBoxSolver title={opts?.title} />),
+    mountBeastVenomYMorseSolver: (id, opts) => mount(id, "BeastVenomYMorseSolver", <IWBeastVenomYMorseSolver title={opts?.title} keySelectId={opts?.keySelectId} />),
 };
 
 // For test page: auto-mount all solvers
@@ -91,6 +96,11 @@ if (devRoot) {
             <BO1DialSolver title="COTD Dials Solver" />
             <IWBeastVenomXMazeSolver title="Beast Venom X Maze Solver" />
             <IWBeastVenomXBoxSolver title="Beast Venom X Box Solver" />
+            <IWBeastVenomYMorseSolver title="Beast Venom Y/Z Morse Solver" />
+            <IWBeastVenomYMorseSolver
+                title="Beast Venom Y/Z Morse Solver (key from dropdown)"
+                keySelectId="venom-y-key-selector"
+            />
             <IWBeastFloppySolver title="Beast Floppy Disk Solver" />
             <IWBeastEightQueensSolver title="Beast Eight Queens Solver" />
             <IWGnSSkull4Solver title="Attack GnS Skull 4 Solver" />

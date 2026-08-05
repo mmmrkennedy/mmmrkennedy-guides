@@ -214,14 +214,14 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
 
     <p class="title-tier-2" id="venom_y">Venom-Y</p>
     <p class="weapon-desc">
-        The Venom-Y will still shoot an egg (same as the Venom-X), but the egg will explode into gas that freezes and kills Zombies. The gas lasts about 5 seconds. The gas doesn’t affect larger cryptids (Phantoms, Rhinos, etc.), but the initial explosion does.
+        The Venom-Y works the same as the Venom-X, but the egg will explode into gas that freezes and kills Zombies. The gas lasts about 5 seconds. The gas doesn’t affect larger cryptids (Phantoms, Rhinos, etc.), but the initial explosion does.
     </p>
     <ol>
         <li>
             Obtain the <a href="#venom_x" class="link-to-page">Venom-X</a>.
         </li>
-        <li>
-            Optional but highly recommended: Disable Voice Volume in the settings. This will help you hear the following morse code messages without your character spewing some garbage voice lines over it.
+        <li class="dummy-li">
+            <p class="tip">Set "Voice Volume" to 0 in the settings. This will help you hear the following morse code messages without your character spewing some garbage voice lines over it.</p>
         </li>
         <li>
             Interact with the <a href="pictures/venom_x/venom_y/key_terminal.webp">terminal right of Bang Bangs</a>. It will play one of the two Morse code messages (morse code is a series of long <span class="morse-code">-</span> (dash) and short <span class="morse-code">.</span> (period) beeps which, when combined, equal letters; see <a href="../../common_images/morse_code.webp">this image</a> or <a href="https://morsecodetranslator.com/" class="external-link">this website</a> for Morse code letter translations). Possible Morse code sequences:
@@ -253,11 +253,14 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
 
             <ul>
                 <li>
-                    The message this terminal produces is encrypted with a Vigenere Cypher using the key obtained from the first terminal. The solver below will automatically decrypt your message with the correct code, so just enter the Morse code as is. You can also use <a href="https://www.cs.du.edu/~snarayan/crypt/vigenere.html" class="external-link">this website</a> to decrypt the code.
+                    The message this terminal produces is encrypted with a Vigenere Cypher using the key obtained from the first terminal. You can use <a href="https://www.cs.du.edu/~snarayan/crypt/vigenere.html" class="external-link">this website</a> to decrypt the code.
                 </li>
-                <!-- <li>
-                    I recommend following along with the "<span class="key_input">KEY</span> - Message Start" below while the Morse code is playing to help track the code, then focus in to listen for the number. As you're listening, enter the morse into the solver below (TEMPORARILY UNAVAILABLE) and it should auto-translate the number.
-                </li> -->
+                <li>
+                    Easiest way is the solver below. Tap along with the beeps and it will name your number, then walk you through the code to input in the next step. No Morse code knowledge needed.
+                </li>
+                <li>
+                    By ear: follow along with the "<span class="key_input">KEY</span> - Message Start" below while the Morse code plays, then listen for the number after it.
+                </li>
                 <li>
                     Numbers in Morse code:
                     <ul id="venom-y-archer">
@@ -332,10 +335,17 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
             </ul>
         </li>
 
-        <li>
-            Once you have your number, go to the control room above Bombstoppers, and input a Morse code sequence on the <a href="pictures/venom_x/venom_y/morse_input_panel.webp">panel at the top of the stairs</a>, based on your number from the previous step. The button on the <b>left</b> will input a short beep (<span class="morse-code">.</span>), and the <b>right</b> will input a long beep (<span class="morse-code">-</span>). If you input the code wrong, end the round to try again; you will hear an error sound. Code based on number:
+        <li class="dummy-li">
+            <div id="beast-venomy-morse-solver-react"></div>
+        </li>
 
+        <li>
+            Once you have your number, go to the control room above Bombstoppers, and input a Morse code sequence on the <a href="pictures/venom_x/venom_y/morse_input_panel.webp">panel at the top of the stairs</a>, based on your number from the previous step. The button on the <b>left</b> will input a short beep (<span class="morse-code">.</span>), and the <b>right</b> will input a long beep (<span class="morse-code">-</span>).
             <ul>
+                <li>If you inputted the code correctly, a pickup sound will play.</li>
+                <li>Otherwise, you'll hear an error sound at the end of the current round, and you'll have to try again.</li>
+                <li>Morse code based on number:
+                    <ul>
                 <li>
                     Fifteen: <span class="morse-code">..-. .. ..-. - . . -. .- .-.</span> (Morse code translates to FIFTEENAR)
                 </li>
@@ -349,9 +359,8 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
                     Thirty: <span class="morse-code">- .... .. .-. - -.--</span>
                 </li>
             </ul>
-        </li>
-        <li>
-            There is <span style="color: red">no indication</span> that you entered the Morse Code correctly, you have to assume you did it correctly and start the next step. If you can't progress the next step, then you need to reenter the code.
+                </li>
+            </ul>
         </li>
         <li>
             Once you input the correct number, you will need to kill that number of Cryptids with the Venom-X. Your progress can be checked on the bottom right of the scoreboard menu. Every time the PAP portal "times-out" after you leave it, three cryptids or a Phantom will spawn. You can do this as many times as needed in a round every 1:30 minutes when the PAP portal reactivates.
@@ -375,6 +384,11 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
         </li>
         <li>
             With your new Key, repeat <strong>Steps <span data-step-ref="venomy-select-key" data-step-ref-to="venomy-morse-terminal"></span></strong> from the <a href="#venom_y" class="link-to-page">Venom-Y</a> quest. These steps are the exact same except the key and the number from the Morse code gives you will change.
+            <ul>
+                <li>
+                    The <a href="#venom_y" class="link-to-page">Venom-Y</a> solver works here too. Just set the key dropdown to your flipped key.
+                </li>
+            </ul>
         </li>
 
         <li>
@@ -1113,6 +1127,7 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
             window.ZombiesSolvers.mountBeastFloppyDiskSolver("beast-floppy-solver-react");
             window.ZombiesSolvers.mountBeastVenomXMazeSolver("beast-venomx-maze-solver-react");
             window.ZombiesSolvers.mountBeastVenomXBoxSolver("beast-venomx-box-solver-react");
+            window.ZombiesSolvers.mountBeastVenomYMorseSolver("beast-venomy-morse-solver-react", { keySelectId: "venom-y-key-selector" });
         } else {
             console.error("ZombiesSolvers not loaded!");
         }

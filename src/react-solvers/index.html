@@ -8,12 +8,47 @@
         <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico" />
         <base target="_blank" />
         <title>All Solvers - Dev</title>
+
+        <!-- Dev preview only. On the real pages the guide layout gives the
+             solvers their width; this page has no layout, so cap the column
+             and centre it here rather than in Solvers.css.
+
+             Centring is left to .solver-only-page's margin-inline:auto (the
+             same rule the real solver pages use). Don't reach for
+             align-items:center: in a column flex container that sizes each
+             solver to its own content instead of to the viewport, so a wide
+             board like the reactor grid drags the whole page into horizontal
+             scroll on a phone. Stretch keeps the width coming from the
+             viewport downwards. -->
+        <style>
+            #root > div {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-lg, 2rem);
+                padding-inline: var(--space-md, 1rem);
+            }
+
+            #root .solver-container {
+                max-width: min(60rem, 100%);
+            }
+        </style>
     </head>
     <body>
         <div>
             <h1 style="text-align: center">All Solvers - Development Preview</h1>
 
-            <div id="root"></div>
+            <!-- Stands in for the guide's own key dropdown, so the morse solver's
+                 adopt-the-select path can be tested here too. -->
+            <p style="text-align: center">
+                <label for="venom-y-key-selector"><b>Select your Key:</b></label>
+                <select id="venom-y-key-selector" name="venom-y-key">
+                    <option value="default" disabled selected>Select a Key</option>
+                    <option value="archer">ARCHER</option>
+                    <option value="cross">CROSS</option>
+                </select>
+            </p>
+
+            <div id="root" class="solver-only-page"></div>
         </div>
 
         <!-- Vite will inject the script here during development -->
