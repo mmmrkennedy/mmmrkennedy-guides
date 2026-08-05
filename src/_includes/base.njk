@@ -86,7 +86,6 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
-    <link rel="dns-prefetch" href="//ko-fi.com">
     <link rel="dns-prefetch" href="//www.youtube.com">
     <link rel="dns-prefetch" href="//discord.com">
     {%- if preloadImages %}
@@ -284,13 +283,6 @@
     </footer>
 </div>
 
-
-<!-- Ko-fi -->
-{% if showKofi %}
-    <div class="kofi-container">
-        <a href="https://ko-fi.com/X8X61TUY37" target="_blank" class="kofi-button"> <img src="/tips_symbol.png" alt="Ko-fi" class="kofi-img"> Tips </a>
-    </div>
-{% endif %}
 
 {%- if site.bundled %}
 <script src="/js/bundle.core.min.js?v={{ site.buildVersion }}" defer></script>

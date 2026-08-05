@@ -46,8 +46,6 @@
         <link rel="stylesheet" type="text/css" href="/css/trending.css?v={{ site.buildVersion }}">
         <!-- Favicon -->
         <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
-        <link rel="dns-prefetch" href="//ko-fi.com">
-        <link rel="preconnect" href="//storage.ko-fi.com">
 
         {#- No REACT_BUNDLE_MODULEPRELOAD here: the index has no solvers, so it
             never loads the React bundle and must not preload it either. #}
@@ -108,13 +106,6 @@
 
             <div class="content-container">
                 {{ content | safe }}
-            </div>
-
-            <div class="kofi-container">
-                <a href="https://ko-fi.com/mmmrkennedy" target="_blank" class="kofi-button">
-                    <img src="https://storage.ko-fi.com/cdn/brandasset/v2/kofi_symbol.png" alt="Ko-fi" class="kofi-img">
-                    Tips (Ko-Fi)
-                </a>
             </div>
 
             <footer class="site-footer">
