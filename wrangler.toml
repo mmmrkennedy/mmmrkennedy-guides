@@ -1,9 +1,17 @@
-# Wrangler config — used for LOCAL development (`wrangler pages dev`) and for the
-# D1 CLI (`wrangler d1 migrations apply`, `wrangler d1 execute`).
+# Wrangler config — the SOURCE OF TRUTH for this project's bindings, plus local
+# development (`wrangler pages dev`) and the D1 CLI (`wrangler d1 migrations
+# apply`, `wrangler d1 execute`).
 #
-# Production bindings are managed in the Cloudflare dashboard
-# (Pages → Settings → Functions → bindings), so this file is primarily a
-# convenience for local testing and migrations. See docs/feedback-runbook.md.
+# Because `pages_build_output_dir` is set, Pages reads its configuration from
+# here and the dashboard's bindings UI goes read-only ("Bindings for this
+# project are being managed through wrangler.toml"). Add or change a binding by
+# editing this file and deploying — there is no dashboard alternative.
+#
+# Bindings declared at the top level apply to BOTH production and preview
+# deployments. An [env.preview] section is only needed to give preview something
+# different, and overriding one binding there means re-declaring all of them.
+#
+# See docs/feedback-runbook.md.
 #
 # IMPORTANT: set `name` to your actual Pages project name, and fill
 # `database_id` after you run `wrangler d1 create guides-feedback`.
@@ -25,3 +33,10 @@ migrations_dir = "migrations"
 [[kv_namespaces]]
 binding = "VIEWS"
 id = "35b6f88678a44910b991fc2d8955e17a"
+
+# Guide screenshots. Served by functions/games/[[path]].js so they no longer
+# ship inside the deployment. `originals/` in the same bucket holds the PNG
+# masters and is never served — it is off-machine backup, not a web path.
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "mmmrkennedy-images"

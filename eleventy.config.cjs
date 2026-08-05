@@ -1248,14 +1248,31 @@ function shouldCopy(src, dest) {
     return fs.statSync(src).mtimeMs > fs.statSync(dest).mtimeMs;
 }
 
+// Images live in R2 and are served by functions/games/[[path]].js, so a
+// production build has no reason to carry 4,555 of them into the deployment.
+// Opt-in via IMAGES_FROM_R2=true (set alongside BUNDLE=true in `bun run build`)
+// rather than on by default, so `eleventy --serve` keeps copying them and local
+// dev works from disk with no bucket, no binding and no network.
+//
+// Only the image formats actually uploaded are skipped. The handful of .webm
+// and .wav files under src/games stay in the deployment — 19MB total, and
+// keeping them out of R2 keeps the Function's route check purely image-based.
+const R2_SERVED = new Set([".webp", ".png", ".jpg", ".jpeg", ".gif"]);
+
 async function smartCopyImages() {
+    const skipImages = process.env.IMAGES_FROM_R2 === "true";
+
     const pairs = [
         // src/games/**/* → dist/games/**/
-        ...walkDir("src/games").map((src) => ({
-            src,
-            dest: path.join("dist", path.relative("src", src)),
-        })),
-        // src root-level assets → dist/
+        ...walkDir("src/games")
+            .filter((src) => !(skipImages && R2_SERVED.has(path.extname(src).toLowerCase())))
+            .map((src) => ({
+                src,
+                dest: path.join("dist", path.relative("src", src)),
+            })),
+        // src root-level assets → dist/. Never skipped: og_image.png and the
+        // favicon are referenced by absolute URL in meta tags and by crawlers
+        // that will not be going through the images Function.
         ...fs.readdirSync("src", { withFileTypes: true })
             .filter((e) => e.isFile() && IMAGE_EXTENSIONS.has(path.extname(e.name).toLowerCase()))
             .map((e) => ({ src: path.join("src", e.name), dest: path.join("dist", e.name) })),

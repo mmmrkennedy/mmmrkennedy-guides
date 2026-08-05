@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "// build": "Production builds — bundled, minified, versioned",
-        "build": "bun run build:scripts && bun run build:react && cross-env BUNDLE=true bun run build:eleventy && cross-env BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/minify-html.js && bun run build:sitemap",
+        "build": "bun run build:scripts && bun run build:react && cross-env BUNDLE=true IMAGES_FROM_R2=true bun run build:eleventy && cross-env BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/minify-html.js && bun run build:sitemap",
         "build:full": "bun run clean && bun run build",
         "// dev": "Development servers — unbundled, hot reload",
         "dev": "eleventy --serve",
