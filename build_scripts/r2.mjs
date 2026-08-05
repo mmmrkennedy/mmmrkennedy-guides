@@ -39,6 +39,12 @@ const ORIGINALS = `${BUCKET}/originals`;
 // .html files sitting in the same tree would be uploaded too.
 const FILTERS = ["--include", "*.webp", "--include", "*.png", "--include", "*.jpg", "--include", "*.jpeg", "--include", "*.gif"];
 
+// The R2 API token is scoped to Object Read & Write, which cannot create
+// buckets. Without this rclone probes for the bucket first and that probe is a
+// CreateBucket call — denied with a 403 that reads like an auth failure. It only
+// surfaces on a prefix rclone has not seen, i.e. the first upload of a new map.
+const NO_BUCKET_CHECK = ["--s3-no-check-bucket"];
+
 function findRclone() {
     const dir = path.join(REPO, "guide_making_utils", "rclone");
     for (const name of ["rclone.exe", "rclone"]) {
@@ -126,7 +132,7 @@ async function doUpload(ask) {
     }
 
     console.log(`\n  source : ${source}\n  remote : ${remote}\n  Dry run first — nothing is sent yet.\n`);
-    if (rclone(["copy", source, remote, ...FILTERS, "--dry-run", "--progress", "--transfers", "8"]) !== 0) {
+    if (rclone(["copy", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--dry-run", "--progress", "--transfers", "8"]) !== 0) {
         console.log("\n  rclone failed. Nothing uploaded.");
         return;
     }
@@ -137,15 +143,15 @@ async function doUpload(ask) {
     }
 
     console.log("");
-    if (rclone(["copy", source, remote, ...FILTERS, "--progress", "--transfers", "8"]) !== 0) {
+    if (rclone(["copy", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"]) !== 0) {
         console.log("\n  Upload failed.");
         return;
     }
 
     console.log("\n  Bucket now holds:");
-    rclone(["size", remote]);
-    console.log("\n  If you replaced an existing image, its URL has not changed, so the edge");
-    console.log("  cache will still be serving the old one. Purge those URLs before checking.");
+    rclone(["size", remote, ...NO_BUCKET_CHECK]);
+    console.log("\n  Replacements go live immediately — no purge needed. Cache-Control: no-cache");
+    console.log("  stops the edge serving a stored copy without checking R2 first.");
 }
 
 async function doSync(ask) {
@@ -158,7 +164,7 @@ async function doSync(ask) {
 
     const useChecksum = await confirm(ask, "Compare by checksum instead of size+time? (slower, catches same-size re-encodes) (y/N):");
 
-    const args = ["sync", source, remote, ...FILTERS, "--progress", "--transfers", "8"];
+    const args = ["sync", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"];
     if (useChecksum) args.push("--checksum");
 
     console.log(`\n  map    : ${map}\n  remote : ${remote}\n  Dry run first — read every 'Deleted' line below.\n`);
@@ -181,9 +187,8 @@ async function doSync(ask) {
     }
 
     console.log("\n  Bucket now holds:");
-    rclone(["size", remote]);
-    console.log("\n  Replaced images keep their URLs, so purge this map's image URLs before");
-    console.log("  checking the live site.");
+    rclone(["size", remote, ...NO_BUCKET_CHECK]);
+    console.log("\n  Replacements go live immediately — no purge needed.");
 }
 
 async function main() {
@@ -210,9 +215,9 @@ async function main() {
             if (choice === "3") {
                 console.log("");
                 console.log("  img/ (served to readers)");
-                rclone(["size", REMOTE]);
+                rclone(["size", REMOTE, ...NO_BUCKET_CHECK]);
                 console.log("  originals/ (PNG masters, never served)");
-                rclone(["size", ORIGINALS]);
+                rclone(["size", ORIGINALS, ...NO_BUCKET_CHECK]);
                 continue;
             }
             if (choice === "4" || choice.toLowerCase() === "q") return;

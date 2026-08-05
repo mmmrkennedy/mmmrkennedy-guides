@@ -16,6 +16,16 @@
 
 import { normalizePath, json } from "./_shared.js";
 
+// Only these hostnames may increment. Preview deployments share this D1 binding
+// with production — top-level bindings in wrangler.toml apply to both
+// environments — so without this guard every page opened on
+// preview.<project>.pages.dev, or on any per-commit preview URL, would inflate
+// the real counter and the "trending this week" ranking built from it.
+//
+// An allowlist rather than a *.pages.dev blocklist: a hostname nobody
+// anticipated should fail closed, not quietly start writing.
+const COUNTING_HOSTS = new Set(["mmmrkennedy.com", "www.mmmrkennedy.com"]);
+
 async function readCount(env, path) {
     const row = await env.DB.prepare("SELECT count FROM views WHERE path = ?1").bind(path).first();
     const n = row && row.count;
@@ -31,8 +41,17 @@ export async function onRequestGet({ request, env }) {
 
 export async function onRequestPost({ request, env }) {
     if (!env.DB) return json({ error: "D1 binding 'DB' is not configured" }, 500);
-    const path = normalizePath(new URL(request.url).searchParams.get("path"));
+    const url = new URL(request.url);
+    const path = normalizePath(url.searchParams.get("path"));
     if (!path) return json({ error: "invalid or missing 'path'" }, 400);
+
+    // Reads are left alone, so a preview still shows the real number — it just
+    // does not add to it. `counted` is advisory; view-counter.ts reads only
+    // `count` and ignores anything else.
+    if (!COUNTING_HOSTS.has(url.hostname)) {
+        return json({ path, count: await readCount(env, path), counted: false });
+    }
+
     const row = await env.DB.prepare(
         "INSERT INTO views (path, count) VALUES (?1, 1) " +
             "ON CONFLICT(path) DO UPDATE SET count = count + 1 " +

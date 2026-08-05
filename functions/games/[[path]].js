@@ -48,8 +48,17 @@ export async function onRequestGet(context) {
     // still in the deployment it gets served, and the page looks normal.
     if (!env.IMAGES) return next();
 
-    // Serve from the edge when we can. A cache hit never calls R2, so it costs
-    // no Class B operation — which is what keeps this inside the free tier.
+    // Inert under the CACHE_CONTROL above, and deliberately so: Cloudflare
+    // honours `no-cache` by not serving a stored copy without checking first, so
+    // put() does not retain one and match() does not hit. Verified against
+    // production — replacing an object in R2 changed the bytes and the ETag on
+    // the very next request, with no purge.
+    //
+    // That costs a Class B operation per request, which at this site's traffic
+    // is a few percent of the 10M/month free tier — cheap in exchange for a
+    // replaced screenshot never being served stale. Kept rather than deleted
+    // because it starts working the moment CACHE_CONTROL grows a real max-age,
+    // which is the trade to revisit if reads ever approach the tier.
     const cache = caches.default;
     const cached = await cache.match(request);
     if (cached) return cached;
