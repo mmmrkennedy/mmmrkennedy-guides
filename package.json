@@ -22,6 +22,8 @@
         "clean": "rimraf dist",
         "// images": "Image conversion utilities",
         "convert:images": "python python_utilities/image_converter.py",
+        "// r2": "Guide images in R2 (upload after adding screenshots, before deploying)",
+        "r2": "node build_scripts/r2.mjs",
         "// lint": "Linting and formatting",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
