@@ -77,7 +77,7 @@ export default function IWBeastFloppySolver({ title }: { title?: string }) {
                             aria-label={`Symbol ${i + 1}`}
                             onClick={() => toggleSymbol(i)}
                         >
-                            <img src={`${imagePath}picture_${i}.webp`} alt="" />
+                            <img loading="lazy" src={`${imagePath}picture_${i}.webp`} alt="" />
                         </button>
                     );
                 })}
@@ -88,7 +88,7 @@ export default function IWBeastFloppySolver({ title }: { title?: string }) {
                 {resultImages.length > 0 && (
                     <div className="solver-image-row" style={{ marginTop: "var(--space-sm)" }}>
                         {resultImages.map((id, idx) => (
-                            <img
+                            <img loading="lazy"
                                 key={`${id}-${idx}`}
                                 src={`${imagePath}picture_${id}.webp`}
                                 alt={`Symbol ${id + 1}, position ${idx + 1}`}

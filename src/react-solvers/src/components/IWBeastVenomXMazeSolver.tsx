@@ -348,14 +348,14 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
                         onClick={() => handleCellClick(row, col)}
                     >
                         {draggable && (
-                            <img
+                            <img loading="lazy"
                                 className="venom-piece"
                                 src={draggable.type === "start" ? IMG_YELLOW_SQUARE : IMG_BLUE_DIAMOND}
                                 alt={draggable.type === "start" ? "Yellow Square" : "Blue Diamond"}
                             />
                         )}
                         {isValidPosition && unplacedDraggable && (
-                            <img
+                            <img loading="lazy"
                                 className="venom-piece is-preview"
                                 src={unplacedDraggable.type === "start" ? IMG_YELLOW_SQUARE : IMG_BLUE_DIAMOND}
                                 alt=""
@@ -385,7 +385,7 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
                             aria-pressed={isSelected}
                             aria-label={d.type === "start" ? "Yellow Square" : "Blue Diamond"}
                         >
-                            <img
+                            <img loading="lazy"
                                 src={d.type === "start" ? IMG_YELLOW_SQUARE : IMG_BLUE_DIAMOND}
                                 alt=""
                             />

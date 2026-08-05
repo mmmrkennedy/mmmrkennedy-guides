@@ -141,7 +141,7 @@ export default function IWMainQuestWordFilter({ title }: { title?: string }) {
                                 aria-label={letter}
                             >
                                 <span className="solver-letter-cell__letter">{letter}</span>
-                                <img
+                                <img loading="lazy"
                                     className="solver-letter-cell__image"
                                     src={`${SYMBOL_PATH}${letter.toLowerCase()}.webp`}
                                     alt=""

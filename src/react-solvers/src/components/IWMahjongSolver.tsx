@@ -102,7 +102,7 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
                             disabled={atLimit || handFull}
                             aria-label={`${value} Dot tile${atLimit ? " (max selected)" : ""}`}
                         >
-                            <img src={tileImages[value]} alt="" />
+                            <img loading="lazy" src={tileImages[value]} alt="" />
                         </button>
                     );
                 })}
@@ -120,7 +120,7 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
                             {handResult.melds.map((meld, mi) => (
                                 <div key={`meld-${mi}`} className="mahjong-meld">
                                     {meld.map((value, ti) => (
-                                        <img
+                                        <img loading="lazy"
                                             key={ti}
                                             className="mahjong-tile"
                                             src={tileImages[value]}
@@ -132,7 +132,7 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
                             {handResult.pair && (
                                 <div className="mahjong-meld is-pair">
                                     {handResult.pair.map((value, ti) => (
-                                        <img
+                                        <img loading="lazy"
                                             key={ti}
                                             className="mahjong-tile"
                                             src={tileImages[value]}
@@ -153,7 +153,7 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
                         <div className="mahjong-progress-row">
                             {Array.from({ length: 14 }, (_, index) =>
                                 selectedValues[index] !== undefined ? (
-                                    <img
+                                    <img loading="lazy"
                                         key={index}
                                         className="mahjong-tile"
                                         src={tileImages[selectedValues[index]]}

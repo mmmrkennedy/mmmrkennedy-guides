@@ -188,7 +188,7 @@ export default function IWGnSSkull4Solver({ title }: { title?: string }) {
                             {filled ? (
                                 <>
                                     <span className="solver-slot__label">{symbol.toUpperCase()}</span>
-                                    <img
+                                    <img loading="lazy"
                                         className="solver-slot__image"
                                         src={`${SYMBOL_PATH}${symbol}.webp`}
                                         alt=""
@@ -216,7 +216,7 @@ export default function IWGnSSkull4Solver({ title }: { title?: string }) {
                             onClick={() => handleSymbolClick(letter)}
                         >
                             <span className="solver-letter-cell__letter">{letter.toUpperCase()}</span>
-                            <img
+                            <img loading="lazy"
                                 className="solver-letter-cell__image"
                                 src={`${SYMBOL_PATH}${letter}.webp`}
                                 alt=""

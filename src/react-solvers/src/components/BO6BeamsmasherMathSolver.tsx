@@ -98,7 +98,7 @@ export default function BO6BeamsmasherMathSolver({ title }: { title?: string }) 
                             aria-label={`Symbol ${value}${owner ? ` (assigned to ${owner})` : ""}`}
                             onClick={() => toggleSymbol(value)}
                         >
-                            <img src={imageFor(value)} alt="" />
+                            <img loading="lazy" src={imageFor(value)} alt="" />
                         </button>
                     );
                 })}
@@ -122,7 +122,7 @@ export default function BO6BeamsmasherMathSolver({ title }: { title?: string }) 
                         >
                             <span className="solver-slot__label">{key}</span>
                             {filled ? (
-                                <img className="solver-slot__image" src={imageFor(value!)} alt="" />
+                                <img loading="lazy" className="solver-slot__image" src={imageFor(value!)} alt="" />
                             ) : (
                                 <span className="solver-slot__placeholder">?</span>
                             )}
