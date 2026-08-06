@@ -6,6 +6,72 @@
 let allTriggers = [];
 let currentIndex = -1;
 const preloadedUrls = new Set();
+// ---------------------------------------------------------------------------
+// Resolution tiers
+//
+// Guide screenshots are 2560px masters served from R2, with downscaled copies at
+// these widths behind ?w= (see functions/games/[[path]].js). A phone paints the
+// lightbox about 390 CSS px wide, so it needs ~1170 real pixels — not 2560, and
+// certainly not the 5MB some masters weigh.
+//
+// Ascending. Must match TIERS in build_scripts/r2.mjs and the Function.
+// ---------------------------------------------------------------------------
+const TIERS = [1280, 1920];
+// The un-tiered URL of the image on screen, and which tier is actually loaded
+// (null means the master). Kept so zoom can ask for the next one up.
+let currentMasterSrc = "";
+let currentTier = null;
+let tierUpgraded = false;
+/** Only guide screenshots go through the images Function; leave anything else alone. */
+function canTier(src) {
+    try {
+        const u = new URL(src, location.href);
+        return u.origin === location.origin && /^\/games\/.+\.webp$/i.test(u.pathname);
+    }
+    catch {
+        return false;
+    }
+}
+/** Same URL with ?w= set, or removed entirely for the master. */
+function withTier(src, tier) {
+    if (!canTier(src))
+        return src;
+    const u = new URL(src, location.href);
+    if (tier === null)
+        u.searchParams.delete("w");
+    else
+        u.searchParams.set("w", String(tier));
+    return u.toString();
+}
+/**
+ * Smallest tier that covers the box the lightbox will paint into, or null for
+ * the master.
+ *
+ * The image is capped at 90vh AND 100vw, so for a 16:9 screenshot the rendered
+ * width is bounded by both — height is usually the binding one on a desktop and
+ * width on a phone. Multiplied by devicePixelRatio, because a 390px-wide phone
+ * at 3x still wants ~1170 real pixels.
+ */
+function tierForViewport() {
+    const dpr = window.devicePixelRatio || 1;
+    const byWidth = window.innerWidth * dpr;
+    const byHeight = window.innerHeight * 0.9 * (16 / 9) * dpr;
+    const needed = Math.min(byWidth, byHeight);
+    return TIERS.find((t) => t >= needed) ?? null;
+}
+/** This viewport's URL for an image — what anything preloading it should fetch. */
+function tieredUrl(src) {
+    return withTier(src, canTier(src) ? tierForViewport() : null);
+}
+/** The next tier up, or undefined when already at the master. */
+function nextTierUp(current) {
+    if (current === null)
+        return undefined;
+    const i = TIERS.indexOf(current);
+    if (i === -1)
+        return undefined;
+    return i + 1 < TIERS.length ? TIERS[i + 1] : null;
+}
 // Open/close fade duration; must match the .lightbox transition in layout.css
 const FADE_MS = 200;
 // How long a load may run before the spinner appears. Adjacent items are
@@ -80,9 +146,47 @@ function updateNavButtons() {
  * Desktop (mouse) click-to-zoom: enlarge the image to its natural pixel size
  * and scroll so the clicked point is centered.
  */
+/**
+ * Fetches the next resolution up and swaps it in underneath the reader.
+ *
+ * Zooming is the one moment more pixels are actually wanted, and it is also the
+ * moment a phone least wants a 5MB master — so this steps up one tier rather
+ * than jumping to the original. On a desktop the tier above 1920 IS the master,
+ * so pixel-peeping still ends up at full resolution.
+ *
+ * The swap never blocks the zoom: the reader gets the current pixels enlarged
+ * immediately and they sharpen a moment later. `regrow` re-applies the new
+ * natural size for the desktop path, where zoom means 1:1 pixels; the pinch path
+ * leaves the box alone because its transform is doing the magnifying.
+ */
+function upgradeTier(img, regrow) {
+    if (tierUpgraded || !currentMasterSrc || !canTier(currentMasterSrc))
+        return;
+    const up = nextTierUp(currentTier);
+    if (up === undefined)
+        return; // already the master
+    tierUpgraded = true;
+    const url = withTier(currentMasterSrc, up);
+    const token = loadToken;
+    const pre = new Image();
+    pre.src = url;
+    pre.onload = () => {
+        // Navigated on while this was in flight — dropping it stops a stale
+        // image painting over whatever replaced it.
+        if (token !== loadToken)
+            return;
+        currentTier = up;
+        img.setAttribute("src", url);
+        if (regrow && pre.naturalWidth) {
+            img.style.width = pre.naturalWidth + "px";
+            img.style.height = pre.naturalHeight + "px";
+        }
+    };
+}
 function zoomInDesktop(lightbox, img, event) {
     if (!img.naturalWidth)
         return;
+    upgradeTier(img, true);
     // Clicked point as a fraction of the current fitted image
     const rect = img.getBoundingClientRect();
     const pctX = (event.clientX - rect.left) / rect.width;
@@ -134,11 +238,18 @@ function preloadAdjacentMedia(index) {
         toPreload.push(allTriggers[index - 1]);
     if (index < allTriggers.length - 1)
         toPreload.push(allTriggers[index + 1]);
+    // Preload the tier this viewport will actually ask for. Fetching the master
+    // here meant a phone speculatively downloading several MB of full-size
+    // screenshots it would never display at that size.
+    const tier = tierForViewport();
     toPreload.forEach((trigger) => {
-        if (trigger.dataset.mediaType === "image" && !preloadedUrls.has(trigger.href)) {
-            preloadedUrls.add(trigger.href);
-            new Image().src = trigger.href;
-        }
+        if (trigger.dataset.mediaType !== "image")
+            return;
+        const url = withTier(trigger.href, tier);
+        if (preloadedUrls.has(url))
+            return;
+        preloadedUrls.add(url);
+        new Image().src = url;
     });
 }
 /** Opens the lightbox with the specified media source. */
@@ -186,13 +297,20 @@ function openLightbox(mediaSrc, captionText, index, mediaType) {
     lightboxCaption.textContent = "Loading...";
     scheduleSpinner(token);
     if (mediaType === "image") {
+        // Ask for the smallest copy that covers this screen. The Function falls
+        // back to the master when no variant exists, so images too small to have
+        // one — and any map not yet generated — still load normally.
+        currentMasterSrc = mediaSrc;
+        currentTier = canTier(mediaSrc) ? tierForViewport() : null;
+        tierUpgraded = false;
+        const tieredSrc = withTier(mediaSrc, currentTier);
         const img = new Image();
-        img.src = mediaSrc;
+        img.src = tieredSrc;
         img.onload = function () {
             if (token !== loadToken)
                 return;
             hideSpinner();
-            lightboxImg.setAttribute("src", mediaSrc);
+            lightboxImg.setAttribute("src", tieredSrc);
             // Upscale small images so they don't render tiny in the lightbox.
             // Threshold: natural dims both under 600px. Scale to fit ~80vh / 90vw, capped at 3x.
             lightboxImg.style.width = "";
@@ -457,6 +575,9 @@ function setupGestures(lightbox, img) {
     const DOUBLE_TAP_MS = 300;
     const MAX_SCALE = 4;
     const DOUBLE_TAP_SCALE = 2.5;
+    // Deliberate enough to mean "I want to see detail", rather than the drift of
+    // a two-finger pan, before spending a request on more pixels.
+    const PINCH_UPGRADE_SCALE = 1.5;
     const center = () => ({ cx: lightbox.clientWidth / 2, cy: lightbox.clientHeight / 2 });
     const focal = (event) => {
         const rect = lightbox.getBoundingClientRect();
@@ -506,6 +627,11 @@ function setupGestures(lightbox, img) {
             imgTransform.ty = mid.y - cy - imgTransform.scale * (ps.P0y - cy);
             clampTranslation();
             applyImageTransform();
+            // Past a deliberate pinch, fetch more pixels. No regrow — the
+            // transform is doing the magnifying, so the box stays put and only
+            // the source sharpens.
+            if (imgTransform.scale > PINCH_UPGRADE_SCALE)
+                upgradeTier(img, false);
         }
         else if (activePointers.size === 1 && imgTransform.scale > 1 && panLast) {
             const pl = panLast;
@@ -558,6 +684,9 @@ function setupGestures(lightbox, img) {
                     imgTransform.ty = last.y - cy - DOUBLE_TAP_SCALE * (last.y - cy);
                     clampTranslation();
                     applyImageTransform();
+                    // Jumps straight past the pinch threshold without ever going
+                    // through pointermove, so it needs its own upgrade.
+                    upgradeTier(img, false);
                 }
                 lastTapTime = 0;
             }
@@ -592,4 +721,8 @@ window.Lightbox = {
     closeLightbox,
     handleLightboxClick,
     initLightbox,
+    // Exposed for the hover-preloader in scripts.ts, which lives in its own IIFE
+    // and would otherwise warm the cache with a full-size master — undoing the
+    // saving the moment anyone hovers a thumbnail.
+    tieredUrl,
 };

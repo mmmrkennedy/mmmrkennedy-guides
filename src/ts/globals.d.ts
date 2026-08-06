@@ -48,6 +48,8 @@ interface LightboxApi {
     closeLightbox(): void;
     handleLightboxClick(this: HTMLAnchorElement): void;
     initLightbox(): void;
+    /** This viewport's URL for an image, with the size-variant ?w= applied. */
+    tieredUrl(src: string): string;
 }
 
 interface AdsApi {

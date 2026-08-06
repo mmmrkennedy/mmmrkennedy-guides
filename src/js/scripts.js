@@ -25,8 +25,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const imageUrl = aTag.getAttribute("href");
             if (!imageUrl)
                 return;
-            aTag.addEventListener("pointerenter", () => loadImage(imageUrl), { once: true });
-            aTag.addEventListener("click", () => loadImage(imageUrl), { once: true });
+            // Warm the copy the lightbox will actually ask for. Fetching the raw
+            // href pulled the full-size master, so a phone paid several MB on the
+            // touch that opens the lightbox and then downloaded the small version
+            // as well — cancelling out the whole point of the size variants.
+            // Resolved per event rather than once, because the answer depends on
+            // viewport and DPR, and a rotate or resize changes it.
+            const warm = () => loadImage(window.Lightbox?.tieredUrl?.(imageUrl) ?? imageUrl);
+            aTag.addEventListener("pointerenter", warm, { once: true });
+            aTag.addEventListener("click", warm, { once: true });
         });
     }
     catch (error) {
