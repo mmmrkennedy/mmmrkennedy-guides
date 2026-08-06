@@ -52,3 +52,14 @@ nul
 # Derived data: rebuildable from src/ at any time, ~1.5GB, and the copies that
 # matter live in R2 under variants/.
 /.variants/
+
+# Guide images live in R2 and are served by functions/games/[[path]].js, so
+# Cloudflare never needs them in the deployment. Kept on disk for local dev
+# (eleventy --serve copies them); `bun run r2` -> (4) restores them on a fresh
+# clone. Only the five formats the Function serves — the .webm/.wav under
+# src/games are NOT in R2 and must stay in git, or they 404 on the live site.
+src/games/**/*.webp
+src/games/**/*.png
+src/games/**/*.jpg
+src/games/**/*.jpeg
+src/games/**/*.gif

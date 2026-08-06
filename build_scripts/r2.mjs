@@ -217,6 +217,40 @@ function dirSize(dir) {
 
 const mb = (n) => `${(n / 1048576).toFixed(0)} MB`;
 
+/**
+ * Pull every image down from R2 into src/games.
+ *
+ * Images are gitignored, so a fresh clone has none and every guide renders with
+ * broken pictures until this runs. R2 is the copy of record for them; this is
+ * how a new machine — or a recovered one — gets a working tree.
+ *
+ * `copy` in this direction only adds and overwrites: it will not delete local
+ * files, so running it on a working tree that is ahead of the bucket cannot
+ * lose anything.
+ */
+async function doRestore(ask) {
+    console.log("\n  Downloads every image from R2 into src/games.");
+    console.log("  For a fresh clone, or a machine that has lost its images.");
+    console.log("  Only adds and overwrites — never deletes local files.\n");
+
+    if (rclone(["copy", REMOTE, SRC, ...FILTERS, ...NO_BUCKET_CHECK, "--dry-run", "--progress", "--transfers", "8"]) !== 0) {
+        console.log("\n  rclone failed.");
+        return;
+    }
+
+    if (!(await confirm(ask, "Download these? (y/N):"))) {
+        console.log("  Cancelled.");
+        return;
+    }
+
+    console.log("");
+    if (rclone(["copy", REMOTE, SRC, ...FILTERS, ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"]) !== 0) {
+        console.log("\n  Download failed.");
+        return;
+    }
+    console.log("\n  Done. `bun run dev` will now show images locally.");
+}
+
 async function doVariants(ask) {
     if (spawnSync("cwebp", ["-version"], { stdio: "ignore" }).error) {
         console.log("\n  cwebp not found on PATH. Install Google's libwebp.");
@@ -410,12 +444,14 @@ async function main() {
     try {
         for (;;) {
             const choice = (await ask(
-                "\n  (1) Upload new/changed  (2) Sync one map  (3) Size variants  (4) Bucket size  (5) Quit: ",
+                "\n  (1) Upload new/changed  (2) Sync one map  (3) Size variants" +
+                    "\n  (4) Restore images from R2  (5) Bucket size  (6) Quit: ",
             )).trim();
             if (choice === "1") return void (await doUpload(ask));
             if (choice === "2") return void (await doSync(ask));
             if (choice === "3") return void (await doVariants(ask));
-            if (choice === "4") {
+            if (choice === "4") return void (await doRestore(ask));
+            if (choice === "5") {
                 console.log("");
                 console.log("  img/ (served to readers)");
                 rclone(["size", REMOTE, ...NO_BUCKET_CHECK]);
@@ -423,7 +459,7 @@ async function main() {
                 rclone(["size", ORIGINALS, ...NO_BUCKET_CHECK]);
                 continue;
             }
-            if (choice === "5" || choice.toLowerCase() === "q") return;
+            if (choice === "6" || choice.toLowerCase() === "q") return;
         }
     } catch (err) {
         // Ctrl+D or end of piped input — an ordinary way to leave, not a fault.
