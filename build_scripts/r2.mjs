@@ -17,7 +17,7 @@
  *   means deleting objects whose local files are gone. Needed after re-shooting
  *   a map, because copy leaves renamed and removed screenshots behind, still
  *   answering at their old URLs. Scoped to one map so the blast radius is one
- *   map — never another, and never the originals/ prefix holding PNG masters.
+ *   map — never another map, and never the variants/ prefix.
  *
  * Both always dry-run first and ask before doing anything.
  */
@@ -33,7 +33,6 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(REPO, "src", "games");
 const BUCKET = "r2:mmmrkennedy-images";
 const REMOTE = `${BUCKET}/img`;
-const ORIGINALS = `${BUCKET}/originals`;
 
 // Downscaled copies for small screens. A phone renders the lightbox about 390
 // CSS px wide, so at 3x DPR it needs ~1170 real pixels — not the 2560 of the
@@ -261,12 +260,20 @@ async function doVariants(ask) {
     console.log("  Masters are untouched; these are extra files under variants/ in the bucket.");
 
     const scope = (await ask("\n  (a)ll maps or (o)ne map? [a/o]: ")).trim().toLowerCase();
-    let root = SRC;
     let mapRel = "";
-    if (scope === "o") {
-        mapRel = await askMap(ask, "generate variants for");
-        root = path.join(SRC, ...mapRel.split("/"));
-    }
+    if (scope === "o") mapRel = await askMap(ask, "generate variants for");
+
+    await runVariants(ask, mapRel);
+}
+
+/**
+ * The variant flow for a known scope. Split out from the menu entry so uploading
+ * or syncing a map can offer it straight afterwards — new images with no
+ * variants do not break anything (the Function falls back to the master), they
+ * just quietly serve full-size to everyone, which is the failure this avoids.
+ */
+async function runVariants(ask, mapRel) {
+    const root = mapRel ? path.join(SRC, ...mapRel.split("/")) : SRC;
 
     console.log("\n  Scanning…");
     const { jobs, skippedSmall, upToDate } = planVariants(root);
@@ -349,9 +356,26 @@ async function askMap(ask, purpose) {
     }
 }
 
-async function confirm(ask, question) {
+async function confirm(ask, question, defaultYes = false) {
     const a = (await ask(`  ${question} `)).trim().toLowerCase();
+    if (!a) return defaultYes;
     return a === "y" || a === "yes";
+}
+
+/**
+ * Offered after an upload or sync, because "changed some images" and "their
+ * variants are stale" are the same event. Defaults to yes: forgetting is
+ * silent — the Function falls back to the master, so the only symptom is every
+ * visitor getting full-size images.
+ */
+async function offerVariants(ask, mapRel) {
+    if (spawnSync("cwebp", ["-version"], { stdio: "ignore" }).error) return;
+    const where = mapRel || "every map";
+    if (!(await confirm(ask, `\n  Generate + upload size variants for ${where} now? (Y/n):`, true))) {
+        console.log("  Skipped. Those images will serve full-size until you run option 3.");
+        return;
+    }
+    await runVariants(ask, mapRel);
 }
 
 async function doUpload(ask) {
@@ -359,8 +383,10 @@ async function doUpload(ask) {
 
     let source = SRC;
     let remote = REMOTE;
+    let mapForVariants = "";
     if (scope === "o") {
         const map = await askMap(ask, "upload");
+        mapForVariants = map;
         source = path.join(SRC, ...map.split("/"));
         remote = toRemote(map);
     }
@@ -386,6 +412,8 @@ async function doUpload(ask) {
     rclone(["size", remote, ...NO_BUCKET_CHECK]);
     console.log("\n  Replacements go live immediately — no purge needed. Cache-Control: no-cache");
     console.log("  stops the edge serving a stored copy without checking R2 first.");
+
+    await offerVariants(ask, scope === "o" ? mapForVariants : "");
 }
 
 async function doSync(ask) {
@@ -423,6 +451,52 @@ async function doSync(ask) {
     console.log("\n  Bucket now holds:");
     rclone(["size", remote, ...NO_BUCKET_CHECK]);
     console.log("\n  Replacements go live immediately — no purge needed.");
+
+    // Sync is the "I re-shot this map" action, so its variants are certainly
+    // stale — this is the pairing that matters most.
+    await offerVariants(ask, map);
+}
+
+function showHelp() {
+    console.log(`
+  Guide images live in an R2 bucket, not in the deployment and not in git.
+  functions/games/[[path]].js serves them at the URLs the guides already use.
+
+  The bucket has two prefixes:
+    img/          one file per image in src/games — the full-size original
+    variants/     downscaled copies at ${TIERS.join("w and ")}w, for small screens
+
+  ---------------------------------------------------------------------------
+  (1) Upload new/changed images
+      Sends anything new or modified from src/games to img/. Never deletes.
+      Use after ADDING screenshots. Offers to build variants afterwards.
+
+  (2) Sync one map
+      Makes the bucket match one map exactly — uploads changes AND DELETES
+      objects whose local file is gone. Use after RE-SHOOTING or renaming,
+      where option 1 would leave the old files behind answering at their old
+      URLs. Deletes for real: dry run first, and you must type the map name.
+
+  (3) Size variants
+      Encodes ${TIERS.join("w and ")}w copies with cwebp and uploads them.
+      Skips anything already smaller than a tier, and anything unchanged since
+      last time (cached in .variants/). Slow on a full run, cheap after.
+      Options 1 and 2 offer this automatically, so you rarely need it here.
+
+  (4) Restore images from R2
+      Downloads every image into src/games. For a fresh clone, which has none
+      because images are gitignored. Only adds — never deletes local files.
+
+  (5) Bucket size
+      How much of the 10GB free tier is used.
+
+  ---------------------------------------------------------------------------
+  Typical: add screenshots -> (1) -> say yes to variants -> commit -> push.
+  Re-shot a map: (2) -> say yes to variants.
+
+  Upload BEFORE deploying. A page that goes live referencing an image the
+  bucket does not have yet will 404 until it is uploaded.
+`);
 }
 
 async function main() {
@@ -444,22 +518,32 @@ async function main() {
     try {
         for (;;) {
             const choice = (await ask(
-                "\n  (1) Upload new/changed  (2) Sync one map  (3) Size variants" +
-                    "\n  (4) Restore images from R2  (5) Bucket size  (6) Quit: ",
-            )).trim();
+                "\n  (1) Upload new/changed images   (2) Sync one map (deletes)" +
+                    "\n  (3) Size variants               (4) Restore images from R2" +
+                    "\n  (5) Bucket size                 (6) Help" +
+                    "\n  (7) Quit" +
+                    "\n  > ",
+            )).trim().toLowerCase();
+
             if (choice === "1") return void (await doUpload(ask));
             if (choice === "2") return void (await doSync(ask));
             if (choice === "3") return void (await doVariants(ask));
             if (choice === "4") return void (await doRestore(ask));
             if (choice === "5") {
-                console.log("");
-                console.log("  img/ (served to readers)");
+                console.log("\n  img/ (full-size, served when no ?w=)");
                 rclone(["size", REMOTE, ...NO_BUCKET_CHECK]);
-                console.log("  originals/ (PNG masters, never served)");
-                rclone(["size", ORIGINALS, ...NO_BUCKET_CHECK]);
+                for (const tier of TIERS) {
+                    console.log(`  variants/${tier}/`);
+                    rclone(["size", `${BUCKET}/variants/${tier}`, ...NO_BUCKET_CHECK]);
+                }
+                console.log("\n  Free tier is 10 GB.");
                 continue;
             }
-            if (choice === "6" || choice.toLowerCase() === "q") return;
+            if (choice === "6" || choice === "h" || choice === "help") {
+                showHelp();
+                continue;
+            }
+            if (choice === "7" || choice === "q") return;
         }
     } catch (err) {
         // Ctrl+D or end of piped input — an ordinary way to leave, not a fault.

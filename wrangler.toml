@@ -35,8 +35,8 @@ binding = "VIEWS"
 id = "35b6f88678a44910b991fc2d8955e17a"
 
 # Guide screenshots. Served by functions/games/[[path]].js so they no longer
-# ship inside the deployment. `originals/` in the same bucket holds the PNG
-# masters and is never served — it is off-machine backup, not a web path.
+# ship inside the deployment. Two prefixes: `img/` holds one full-size file per
+# image in src/games, `variants/<width>/` the downscaled copies picked by ?w=.
 [[r2_buckets]]
 binding = "IMAGES"
 bucket_name = "mmmrkennedy-images"
