@@ -20,6 +20,10 @@
 
 const IMAGE = /\.(webp|png|jpe?g|gif)$/i;
 
+// Downscaled copies, requested as ?w=1280. Must match TIERS in
+// build_scripts/r2.mjs, which is what writes them to variants/<tier>/.
+const TIERS = new Set(["1280", "1920"]);
+
 const CONTENT_TYPES = {
     webp: "image/webp",
     png: "image/png",
@@ -64,12 +68,32 @@ export async function onRequestGet(context) {
     if (cached) return cached;
 
     // pathname is percent-encoded; R2 keys are raw.
-    const key = "img" + decodeURIComponent(url.pathname).slice("/games".length);
+    const rel = decodeURIComponent(url.pathname).slice("/games".length);
+
+    // ?w= picks a downscaled copy. Allowlisted rather than interpolated, so the
+    // parameter cannot be used to reach arbitrary keys in the bucket, and an
+    // unknown value quietly serves the master instead of failing.
+    const asked = url.searchParams.get("w");
+    const tier = asked && TIERS.has(asked) ? asked : null;
 
     // Passing the request headers as `onlyIf` lets R2 evaluate If-None-Match /
     // If-Modified-Since for us. When the condition fails it returns metadata
     // with no body, which is exactly the 304 case.
-    const object = await env.IMAGES.get(key, { onlyIf: request.headers });
+    let object = null;
+    let served = "master";
+
+    if (tier) {
+        object = await env.IMAGES.get(`variants/${tier}${rel}`, { onlyIf: request.headers });
+        if (object) served = tier;
+    }
+
+    // No variant: either the image was already smaller than the tier (151 of
+    // them are) or it has not been generated yet. Either way the master is the
+    // right answer, which is what lets Part 2 roll out a map at a time without
+    // anything 404ing in the meantime.
+    if (!object) {
+        object = await env.IMAGES.get(`img${rel}`, { onlyIf: request.headers });
+    }
 
     if (object === null) {
         return new Response("Image not found", {
@@ -81,6 +105,11 @@ export async function onRequestGet(context) {
     const headers = new Headers();
     headers.set("ETag", object.httpEtag);
     headers.set("Cache-Control", CACHE_CONTROL);
+
+    // Which copy actually answered. The URL cannot show this — that is the whole
+    // point of the design — so without it there is no way to confirm from the
+    // outside that a phone got the small one.
+    headers.set("X-Image-Tier", served);
 
     // src/_headers applies to static assets only, never to a Function response,
     // so its `/*` security block has to be repeated here or images would be the
