@@ -5,6 +5,8 @@ const path = require("path");
 const BUILD_VERSION = Date.now().toString();
 let cachedManifest = null;
 let cachedMountChunks = null;
+let cachedSsrSolvers;
+let ssrWarned = false;
 
 // Git-based last-modified dates, kept fresh by GitHub Actions (refresh-lastmod-cache.cjs).
 // Same source the sitemap uses. Keyed by repo-root-relative path, e.g. "src/index.html".
@@ -952,6 +954,129 @@ function getMountChunkMap(manifest) {
     return cachedMountChunks;
 }
 
+
+/**
+ * Build-time solver prerendering.
+ *
+ * Loads the Node build of the solvers (.solver-ssr/solvers.cjs, produced by
+ * vite.ssr.config.js). Returns null when it is absent, which is the normal case
+ * for `eleventy --serve` on its own: no prerendering, mount divs stay empty, the
+ * browser fills them exactly as it did before. Never fatal.
+ */
+function getSsrSolvers() {
+    if (cachedSsrSolvers !== undefined) return cachedSsrSolvers;
+    try {
+        const mod = require("./.solver-ssr/solvers.cjs");
+        const { render } = require("preact-render-to-string");
+        const { h } = require("preact");
+        cachedSsrSolvers = { solvers: mod.solvers, render, h };
+    } catch {
+        cachedSsrSolvers = null;
+        if (!ssrWarned) {
+            ssrWarned = true;
+            console.warn("\u2139\ufe0f  No .solver-ssr build found - solvers will render client-side (run `bun run build:ssr`).");
+        }
+    }
+    return cachedSsrSolvers;
+}
+
+/* Only these two ever appear in a mount call. Anything else and we decline to
+   prerender rather than guess, because a prop the build cannot see is a prop the
+   client will render differently - which is a hydration mismatch, not a missing
+   optimisation. */
+const SOLVER_PROP_KEYS = new Set(["title", "keySelectId"]);
+
+/**
+ * Parse the options object out of a mountX("id", { ... }) call.
+ * Returns null if it contains anything that is not a plain string literal.
+ */
+function parseSolverProps(raw) {
+    if (!raw || !raw.trim()) return {};
+    const props = {};
+    const body = raw.trim().replace(/^\{/, "").replace(/\}$/, "");
+    if (!body.trim()) return {};
+    for (const part of body.split(",")) {
+        if (!part.trim()) continue;
+        const m = /^\s*([A-Za-z0-9_]+)\s*:\s*"([^"]*)"\s*$/.exec(part);
+        if (!m || !SOLVER_PROP_KEYS.has(m[1])) return null;
+        props[m[1]] = m[2];
+    }
+    return props;
+}
+
+/**
+ * Render each solver a page mounts into its own div, so the markup ships in the
+ * HTML instead of being created by JavaScript several hundred ms after first
+ * paint.
+ *
+ * That gap was worth CLS 1.23 on the five-solver page against 0.000 before the
+ * solvers were split, because five empty divs each grew 0 -> ~550px at different
+ * moments. Reserving heights in CSS would have meant 57 measured pixel values
+ * that rot; this puts the real content there at its real height instead, and
+ * pays for itself again in LCP on pages where the solver IS the largest element.
+ *
+ * Authoring does not change: pages keep an empty <div id="..."> and a
+ * mountX() call, and main.tsx hydrates whatever it finds. Every step here is
+ * fail-safe - unparseable props, an unknown mount name, a component that throws,
+ * a missing SSR build - and each one just leaves that div empty for the client,
+ * which is precisely the old behaviour.
+ */
+function prerenderSolvers(content, outputPath) {
+    if (!outputPath || !outputPath.endsWith(".html")) return content;
+    if (!content.includes("ZombiesSolvers.mount")) return content;
+
+    const ssr = getSsrSolvers();
+    if (!ssr) return content;
+
+    let modified = content;
+
+    const calls = /ZombiesSolvers\.(mount[A-Za-z0-9]+)\s*\(\s*"([^"]+)"\s*(?:,\s*(\{[^}]*\}))?\s*\)/g;
+    for (const [, mountName, elementId, rawProps] of content.matchAll(calls)) {
+        const Solver = ssr.solvers[mountName];
+        if (!Solver) {
+            console.warn(`prerenderSolvers: ${mountName} not in the SSR registry (${outputPath})`);
+            continue;
+        }
+
+        const props = parseSolverProps(rawProps);
+        if (props === null) {
+            console.warn(`prerenderSolvers: ${mountName} has props the build cannot read, skipping (${outputPath})`);
+            continue;
+        }
+
+        let html;
+        try {
+            html = ssr.render(ssr.h(Solver, props));
+        } catch (error) {
+            console.warn(`prerenderSolvers: ${mountName} threw while rendering, skipping (${outputPath}):`, error.message);
+            continue;
+        }
+
+        // Match the div by id and fill it only if it is genuinely empty, so a
+        // second pass can never nest one render inside another.
+        const escaped = elementId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const target = new RegExp(`(<div[^>]*\\bid="${escaped}"[^>]*>)\\s*(</div>)`);
+        if (!target.test(modified)) {
+            console.warn(`prerenderSolvers: no empty <div id="${elementId}"> to fill (${outputPath})`);
+            continue;
+        }
+        // data-solver-root marks the subtree as "Preact is about to hydrate this".
+        // ts/ui/line-flagger.ts skips it at DOMContentLoaded and waits for the
+        // solver:hydrated event instead — decorating it now would mean hydration
+        // reconciling away every ⚑ button a moment later.
+        //
+        // An attribute rather than the [id$="-react"] naming convention the mount
+        // divs happen to share: that convention lives in 19 hand-written templates
+        // and would fail silently the first time someone names one differently.
+        modified = modified.replace(target, (_m, open, close) => {
+            const marked = open.includes("data-solver-root") ? open : open.replace(/>$/, " data-solver-root>");
+            return marked + html + close;
+        });
+    }
+
+    return modified;
+}
+
 function injectReactBundle(content, outputPath) {
     if (!outputPath || !outputPath.endsWith(".html")) return content;
 
@@ -1371,6 +1496,7 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addTransform("classifyLinks", classifyLinks);
     eleventyConfig.addTransform("addVersioning", addVersioning);
     eleventyConfig.addTransform("injectReactBundle", injectReactBundle);
+    eleventyConfig.addTransform("prerenderSolvers", prerenderSolvers);
     eleventyConfig.addTransform("unlinkUnwrittenGuides", unlinkUnwrittenGuides);
 
     // Performance optimization: use passthrough for dev server (faster)

@@ -20,7 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.body.hasAttribute("data-no-flags"))
         return;
     const lines = document.querySelectorAll(".content-container p, .content-container li:not(.dummy-li)");
-    if (lines.length === 0)
+    // A solver page can have NO flaggable lines of its own — on
+    // beamsmasher_solver every paragraph belongs to the solver. Prerendered they
+    // are already here, but without an SSR build (plain `eleventy --serve`) the
+    // mount div is still empty at this point, and bailing now would skip
+    // registering the solver:hydrated listener below, so the page would never get
+    // flags at all. Stay if a solver is going to arrive.
+    //
+    // [id$="-react"] is a hint, not a contract: data-solver-root does not exist
+    // yet in the un-prerendered case, and the only cost of guessing wrong either
+    // way is an unused popover in the DOM.
+    const solverIncoming = document.querySelector("[data-solver-root], [id$='-react']") !== null;
+    if (lines.length === 0 && !solverIncoming)
         return;
     const path = normalizePath(window.location.pathname);
     // ---- Toast ----
@@ -194,13 +205,24 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("scroll", closePop, true);
     // ---- Attach a ⚑ + stable id to each leaf paragraph / bullet ----
     const flaggable = [];
-    lines.forEach((el) => {
+    /**
+     * Line hashes that /api/feedback reported as buggy, or null until it answers.
+     *
+     * Held rather than consumed, because solver lines are decorated after this
+     * fetch may already have resolved (see the deferral below). Either order has
+     * to end up with the same notes: a line decorated first gets its note when
+     * the fetch lands, one decorated later reads the cached set on the way in.
+     */
+    let buggyHashes = null;
+    function decorate(el) {
         // Flaggable when the line has its own text. lineText() excludes any
         // nested list/table/paragraph (each its own flaggable line), so an <li>
         // that introduces a sublist (e.g. "Wait for X to spawn." + <ul>) is still
         // flaggable by its own wording, while a pure grouping <li> is skipped.
         if (!lineText(el))
             return;
+        if (el.classList.contains("gfb-flaggable"))
+            return; // already done
         el.classList.add("gfb-flaggable");
         el.dataset.lineId = lineId(el);
         flaggable.push(el);
@@ -225,6 +247,54 @@ document.addEventListener("DOMContentLoaded", () => {
             el.insertBefore(flag, nested);
         else
             el.appendChild(flag);
+        maybeInjectBuggyNote(el);
+    }
+    function maybeInjectBuggyNote(el) {
+        if (!buggyHashes || !buggyHashes.has(el.dataset.lineId ?? ""))
+            return;
+        if (el.previousElementSibling?.classList.contains("gfb-buggy-note"))
+            return;
+        if (el.firstElementChild?.classList.contains("gfb-buggy-note"))
+            return;
+        injectBuggyNote(el);
+    }
+    /**
+     * Lines inside a prerendered solver are deliberately left alone here.
+     *
+     * The build renders each solver's markup into the page (eleventy's
+     * prerenderSolvers), so those paragraphs exist at DOMContentLoaded and would
+     * decorate happily — and then Preact hydrates that subtree, reconciles it
+     * against a vnode tree containing no ⚑, and removes every button we just
+     * added. The class survived, the button did not, and solver lines silently
+     * stopped being flaggable.
+     *
+     * So skip them now and decorate on solver:hydrated instead, once Preact owns
+     * the DOM and will not touch it again. Hashes are content-based, so nothing
+     * about deferring changes a line's id or orphans a flag already in D1.
+     */
+    for (const el of lines) {
+        if (el.closest("[data-solver-root]"))
+            continue;
+        decorate(el);
+    }
+    /**
+     * Fired once per solver by react-solvers/src/main.tsx, right after hydrate().
+     * Per container rather than per page, so a page mounting five solvers
+     * decorates each as it lands instead of waiting for the slowest.
+     *
+     * If a chunk never loads the event never fires and those lines stay
+     * undecorated — the same outcome as before this existed, never a broken page.
+     */
+    document.addEventListener("solver:hydrated", (e) => {
+        const root = e.detail?.element;
+        if (!root)
+            return;
+        // Same scoping as the selector above: only lines inside a .content-container
+        // are flaggable, and some solver roots are one while others sit inside one.
+        root.querySelectorAll("p, li:not(.dummy-li)").forEach((el) => {
+            if (el.closest(".content-container"))
+                decorate(el);
+        });
     });
     // ---- Auto-note: ask which lines crossed the buggy threshold, warn on them ----
     fetch("/api/feedback?path=" + encodeURIComponent(path))
@@ -235,15 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const buggy = new Set(data.buggy.map((b) => b.line_hash).filter((h) => typeof h === "string"));
         if (buggy.size === 0)
             return;
-        for (const el of flaggable) {
-            if (!buggy.has(el.dataset.lineId ?? ""))
-                continue;
-            if (el.previousElementSibling?.classList.contains("gfb-buggy-note"))
-                continue;
-            if (el.firstElementChild?.classList.contains("gfb-buggy-note"))
-                continue;
-            injectBuggyNote(el);
-        }
+        buggyHashes = buggy;
+        for (const el of flaggable)
+            maybeInjectBuggyNote(el);
     })
         .catch((err) => {
         // Endpoint unreachable (e.g. eleventy dev server) — no notes, no noise.

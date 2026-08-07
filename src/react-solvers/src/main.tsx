@@ -1,4 +1,4 @@
-import { render } from "preact";
+import { hydrate } from "preact";
 import type { ComponentType } from "preact";
 
 // Pulled in for its side effect on chunking, not for anything used here.
@@ -58,16 +58,22 @@ declare global {
 }
 
 /**
- * Fetch a solver's chunk, then render it into `elementId`.
+ * Fetch a solver's chunk, then attach it to `elementId`.
+ *
+ * hydrate(), not render(), because the production build already put this
+ * solver's markup in the page (eleventy.config.cjs `prerenderSolvers`). Preact
+ * then walks the DOM that is already there and only wires up handlers and state,
+ * creating nothing — so the page does not move when a chunk lands, which is what
+ * the split otherwise cost: CLS 1.23 on the five-solver page against 0.000
+ * before it.
+ *
+ * hydrate() into an EMPTY container behaves like render(), which is what keeps
+ * `eleventy --serve` on its own working: no SSR build, empty divs, client builds
+ * the DOM exactly as it used to. One code path covers both.
  *
  * The element lookup happens before the import, not after: a missing id is a
  * page-authoring mistake, and it should be reported straight away rather than
  * after a pointless network round trip.
- *
- * Mounting is now asynchronous. Nothing on a guide page awaits it — the call
- * sites are fire-and-forget inside a DOMContentLoaded handler — so the only
- * visible effect is that the solver paints a moment later than it used to. Give
- * .solver-container a reserved height so that moment cannot shift the page.
  */
 function mount<P extends MountOptions>(
     elementId: string,
@@ -81,7 +87,15 @@ function mount<P extends MountOptions>(
         return;
     }
     load()
-        .then(({ default: Solver }) => render(<Solver {...props} />, element))
+        .then(({ default: Solver }) => {
+            hydrate(<Solver {...props} />, element);
+            // ts/ui/line-flagger.ts deliberately skips prerendered solver markup
+            // at DOMContentLoaded, because hydrating afterwards would reconcile
+            // away every ⚑ it had just injected. This is its cue that the subtree
+            // is settled and safe to decorate. Fired per container, so a page with
+            // five solvers flags each as it lands.
+            document.dispatchEvent(new CustomEvent("solver:hydrated", { detail: { element } }));
+        })
         .catch((error) => console.error(`mount${label}: failed to load solver chunk:`, error));
 }
 
