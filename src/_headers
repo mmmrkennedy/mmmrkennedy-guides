@@ -6,11 +6,30 @@
 # rest are dropped with "No headers specified" (visible in the build log, and in
 # `wrangler pages dev dist`). Repeat the block instead, however verbose it looks.
 
-# Root path - force revalidation for main page
+# Root path. Cached at the edge, never reused by a browser without asking first.
+#
+# Two audiences, two directives: Cloudflare takes its own TTL from `s-maxage`, the
+# browser takes its from `max-age`. So the edge answers from cache
+# (cf-cache-status: HIT, ~35ms TTFB instead of the ~61ms a DYNAMIC miss costs by
+# going to the origin) while every visitor still revalidates on every navigation
+# and can never be shown a homepage older than the request they just made.
+#
+# This was `no-cache, no-store, must-revalidate` until 2026-08-07, which kept the
+# edge out entirely — DYNAMIC on every single hit. It dated from when the trending
+# list was rendered into the HTML per request. Trending is now fetched client-side
+# from /api/trending, and two fetches of this page seconds apart are byte-identical
+# apart from Cloudflare's own injected challenge markup, so nothing here varies by
+# request any more.
+#
+# Pragma/Expires are gone with it: they are HTTP/1.0 no-store relics that would
+# fight the line below in any cache old enough to still read them.
+#
+# Deliberately NOT plain `max-age=300` like the guide rules further down. Those
+# accept a five-minute window where a returning visitor sees the previous build.
+# The homepage is where a new guide first shows up, so it gets the edge speedup
+# without buying into that window.
 /
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-  Expires: 0
+  Cache-Control: public, max-age=0, s-maxage=300, must-revalidate
 
 # Cache HTML files for shorter time to allow updates.
 # In practice this matches nothing: Pages 308-redirects /foo.html to /foo, so
