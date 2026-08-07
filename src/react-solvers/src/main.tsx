@@ -1,6 +1,20 @@
 import { render } from "preact";
 import type { ComponentType } from "preact";
 
+// Pulled in for its side effect on chunking, not for anything used here.
+//
+// Every solver uses preact hooks, but nothing in the entry did, so Rollup hoisted
+// them into a chunk shared between the dynamic chunks — which the browser cannot
+// discover until it has downloaded AND parsed a solver chunk. That made three
+// serial round trips to first render (entry -> solver -> hooks) where the old
+// single bundle needed one, and on a throttled phone the third hop was most of
+// the LCP regression on pages where the solver is the largest element.
+//
+// Statically importing it here puts hooks in the entry instead, so a solver page
+// is entry -> solver and the hooks chunk stops existing. Costs ~2.7kB on the
+// entry, which every page that mounts a solver was going to fetch anyway.
+import "preact/hooks";
+
 // Every solver lives behind its own dynamic import() below, which is what makes
 // Vite emit one chunk per solver instead of a single 28.9kB brotli bundle
 // carrying all 19 to every guide page. Do NOT add a static
