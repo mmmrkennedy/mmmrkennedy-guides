@@ -78,13 +78,25 @@ export default defineConfig({
         // Generate manifest for dynamic bundle resolution
         manifest: true,
 
-        // Make the bundle accessible as a global
         rollupOptions: {
             input: path.resolve(__dirname, "src/react-solvers/index.html"),
             output: {
-                // This ensures our mount functions are available globally
-                format: "iife",
-                name: "ZombiesSolvers",
+                // ES, not IIFE, because IIFE cannot be code-split: Rollup has to
+                // flatten everything reachable from the entry into one file, which
+                // meant all 19 solvers shipped to every guide (28.9kB brotli, ~74%
+                // of it unexecuted on any given page). With `es`, each solver's
+                // dynamic import() in src/main.tsx becomes its own chunk and a page
+                // downloads only the one it mounts.
+                //
+                // The `window.ZombiesSolvers` global that guide pages call is NOT
+                // affected. It never came from Rollup's `name` option (that only
+                // applies to iife/umd) — src/main.tsx assigns it explicitly, and an
+                // ES module can do that just as well. `name` is dropped here because
+                // it is inert for this format, not because the global went away.
+                //
+                // Safe for the injected <script type="module"> tag in
+                // eleventy.config.cjs, which is already a module tag.
+                format: "es",
             },
             // Exclude styles.css from being bundled
             external: ["/css/styles.css", "css/styles.css"],
