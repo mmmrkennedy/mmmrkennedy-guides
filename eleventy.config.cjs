@@ -4,6 +4,7 @@ const path = require("path");
 
 const BUILD_VERSION = Date.now().toString();
 let cachedManifest = null;
+let cachedMountChunks = null;
 
 // Git-based last-modified dates, kept fresh by GitHub Actions (refresh-lastmod-cache.cjs).
 // Same source the sitemap uses. Keyed by repo-root-relative path, e.g. "src/index.html".
@@ -912,6 +913,45 @@ function addVersioning(content, outputPath) {
  * Eleventy transform to inject React bundle references from Vite manifest
  * This replaces the need for post-build scripts to update bundle hashes
  */
+/**
+ * mountX() -> the chunk file that calling it will fetch.
+ *
+ * Preloading these alongside the entry is what lets src/react-solvers/src/main.tsx
+ * batch its renders without a straggler: the chunks arrive together instead of
+ * being discovered one at a time only after the entry has run. Without it the
+ * five-solver page shifts by CLS 1.23; with preload plus batching it matches the
+ * pre-split build.
+ *
+ * Worth knowing before "optimising" this away: an earlier version preloaded a
+ * separate shared preact-hooks chunk too, and that extra request cost ~150ms of
+ * FCP by competing with the render-blocking CSS. Hooks now live in the entry, so
+ * this is one request per solver and FCP measured BETTER with it than without.
+ *
+ * The mount-name -> component mapping is read out of main.tsx rather than
+ * duplicated here, so adding a solver cannot leave this table quietly stale.
+ * Anchored on the `(id, opts) =>` form to skip the `mountX: MountFunction;`
+ * lines in the interface above it, which carry no import to find.
+ */
+function getMountChunkMap(manifest) {
+    if (cachedMountChunks) return cachedMountChunks;
+    cachedMountChunks = new Map();
+    try {
+        const source = fs.readFileSync(path.join(__dirname, "src/react-solvers/src/main.tsx"), "utf8");
+        const entries = /(mount[A-Za-z0-9]+)\s*:\s*\(id, opts\)\s*=>[\s\S]*?import\("\.\/components\/([A-Za-z0-9]+)"\)/g;
+        for (const [, mountName, component] of source.matchAll(entries)) {
+            const chunk = manifest[`src/components/${component}.tsx`];
+            if (chunk) cachedMountChunks.set(mountName, chunk.file);
+        }
+        if (!cachedMountChunks.size) {
+            console.warn("⚠️  No solver chunks resolved from main.tsx - skipping solver modulepreloads");
+        }
+    } catch (error) {
+        // Not fatal: without these the solvers still load, just one hop later.
+        console.warn("⚠️  Could not build solver chunk map:", error.message);
+    }
+    return cachedMountChunks;
+}
+
 function injectReactBundle(content, outputPath) {
     if (!outputPath || !outputPath.endsWith(".html")) return content;
 
@@ -945,10 +985,24 @@ function injectReactBundle(content, outputPath) {
         const bundlePath = `/react-solvers/${indexEntry.file}`;
         let modified = content;
 
-        // Handle modulepreload link
+        // Handle modulepreload links: the entry, then the chunk for every solver
+        // this page mounts, so they all fetch in parallel instead of the page
+        // waiting for the entry to run before it learns what else it needs.
         if (content.includes("<!-- REACT_BUNDLE_MODULEPRELOAD -->")) {
-            const link = `<link rel="modulepreload" href="${bundlePath}" />`;
-            modified = modified.replace("<!-- REACT_BUNDLE_MODULEPRELOAD -->", link);
+            const hrefs = [bundlePath];
+            const mountChunks = getMountChunkMap(manifest);
+            const called = new Set();
+            for (const [, name] of content.matchAll(/ZombiesSolvers\.(mount[A-Za-z0-9]+)\s*\(/g)) {
+                called.add(name);
+            }
+            for (const name of called) {
+                const file = mountChunks.get(name);
+                if (!file) continue;
+                const href = `/react-solvers/${file}`;
+                if (!hrefs.includes(href)) hrefs.push(href);
+            }
+            const links = hrefs.map((href) => `<link rel="modulepreload" href="${href}" />`).join("");
+            modified = modified.replace("<!-- REACT_BUNDLE_MODULEPRELOAD -->", links);
         }
 
         // Handle script tag
