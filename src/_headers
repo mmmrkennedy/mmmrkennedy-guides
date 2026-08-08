@@ -1,126 +1,65 @@
-# Cloudflare Pages Headers Configuration
-# This file provides caching and security headers for the website
+# Cloudflare Pages headers
 #
-# ONE PATH PER BLOCK. Pages does NOT let several path lines share a following
-# block of headers — only the path directly above the headers gets them, and the
-# rest are dropped with "No headers specified" (visible in the build log, and in
-# `wrangler pages dev dist`). Repeat the block instead, however verbose it looks.
+# Rules STACK. Every matching block applies, and a repeated header name is
+# joined with a comma (developers.cloudflare.com/pages/configuration/headers/).
+# A more specific rule does NOT override a general one. So each header name must
+# appear in only one block that can match a given URL. Security headers live in
+# the /* block at the bottom and nowhere else. Do not re-add them above.
+#
+# Only ONE splat (*) is allowed per path. /**/*.html is not a valid pattern.
+#
+# These do NOT apply to Pages Functions responses. If /api/trending is a
+# Function, set its headers in the Function's Response instead.
 
-# Root path. Cached at the edge, never reused by a browser without asking first.
+# Homepage. CDN-Cache-Control is read by the edge, Cache-Control by browsers,
+# so the edge serves 5 min from cache while browsers revalidate every visit.
 #
-# Two audiences, two headers. CDN-Cache-Control is the one Cloudflare reads; per
-# developers.cloudflare.com/cache/concepts/cdn-cache-control/, when it is present
-# "Cache-Control, if also returned by the origin, is proxied as is and does not
-# affect caching decisions". So the edge serves this from cache for five minutes
-# while browsers, which ignore CDN-Cache-Control entirely, obey max-age=0 and
-# revalidate on every navigation. Nobody is ever shown a homepage older than the
-# request they just made.
-#
-# DO NOT "simplify" this to `max-age=0, s-maxage=300`. That is the textbook way to
-# split browser and shared-cache TTLs and it does not work here — deployed to
-# production 2026-08-07 and measured DYNAMIC on every request, TTFB unchanged.
-# Cloudflare's Origin Cache Control table lists `max-age=0` as "Will not cache",
-# and s-maxage does not rescue it on this zone. The guide rules below get HIT only
-# because their max-age is non-zero.
-#
-# Before that it was `no-cache, no-store, must-revalidate`, which kept the edge out
-# by design. That dated from when the trending list was rendered into the HTML per
-# request; trending is now fetched client-side from /api/trending, and two fetches
-# of this page seconds apart are byte-identical apart from Cloudflare's own injected
-# challenge markup, so nothing here varies by request any more.
-#
-# Pragma/Expires went with it: HTTP/1.0 no-store relics that would fight the lines
-# below in any cache old enough to still read them.
-#
-# Deliberately NOT plain `max-age=300` like the guide rules further down. Those
-# accept a five-minute window where a returning visitor sees the previous build.
-# The homepage is where a new guide first shows up, so it gets the edge speedup
-# without buying into that window.
+# DO NOT "simplify" to `max-age=0, s-maxage=300`. Deployed to production
+# 2026-08-07 and measured DYNAMIC on every request, TTFB unchanged. The docs
+# disagree with themselves on whether max-age=0 is cacheable; the measurement
+# on this zone is what counts.
 /
   Cache-Control: public, max-age=0, must-revalidate
   CDN-Cache-Control: public, max-age=300
 
-# Cache HTML files for shorter time to allow updates.
-# In practice this matches nothing: Pages 308-redirects /foo.html to /foo, so
-# pages are requested extensionless and are covered by the suffix rules below.
-/**/*.html
-  Cache-Control: public, max-age=300, must-revalidate
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-
-# Guide and solver pages are served extensionless (/games/BO6/terminus/terminus_guide),
-# so the rule above never matches them — without these they fall through to the
-# Pages default of max-age=0 and revalidate on every visit. Matched by name suffix
-# rather than by path depth: assets sit at the same depth
-# (/games/IW/wyler_language_symbols/a.webp), and a depth-based rule would take
-# them off the image rules below. Every page ends in one of these four suffixes;
-# keep it that way when adding pages.
+# Guide/solver pages are served extensionless (Pages 308-redirects .html), so
+# they are matched by name suffix. Not by path depth, since assets sit at the
+# same depth (/games/IW/wyler_language_symbols/a.webp) and a depth rule would
+# steal them from the image rules below. Every page ends in one of these four
+# suffixes. Keep it that way when adding pages.
 /games/*_guide
   Cache-Control: public, max-age=300, must-revalidate
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 /games/*_solver
   Cache-Control: public, max-age=300, must-revalidate
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 /games/*_solvers
   Cache-Control: public, max-age=300, must-revalidate
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 /games/*_table
   Cache-Control: public, max-age=300, must-revalidate
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
 
-# CSS/JS are content-addressed as of 2026-07-29 — build_scripts/minify-assets.js
-# puts a hash of the bytes in the filename (bundle.a94d3556.min.css), so a given
-# URL's content never changes and 30 days of caching is safe. Before that, the
-# version rode in a query string (?v=<build timestamp>) while the path stayed
-# constant, and an edge entry poisoned during deploy propagation served
-# month-old CSS under a brand-new ?v= for the full max-age below.
+# CSS/JS are content-hashed by build_scripts/minify-assets.js as of 2026-07-29,
+# so a given URL's bytes never change and 30 days is safe.
 #
-# Do NOT add a longer `immutable` rule for the hashed files alongside these.
-# Pages does not let a more specific rule override a general one — per
-# developers.cloudflare.com/pages/configuration/headers/, "if a header is applied
-# twice in the _headers file, the values are joined with a comma separator", so
-# /*.css plus /css/bundle.*.min.css would emit
-# `public, max-age=2592000, must-revalidate, public, max-age=31536000, immutable`.
-# Getting immutable would mean deleting these two rules and marking /css/* and
-# /js/* immutable wholesale — which silently freezes any future *unhashed* file
-# for a year (/css/styles.css is still unhashed today; the react-solvers dev page
-# references it). Not worth trading that trap for one conditional request a month.
+# Do NOT add a separate `immutable` rule for the hashed files alongside these.
+# Rules stack, so /*.css plus /css/bundle.*.min.css would emit both values
+# joined by a comma. Getting immutable would mean deleting these two rules and
+# marking /css/* and /js/* immutable wholesale, which would freeze any future
+# unhashed file for a year (/css/styles.css is still unhashed today).
 /*.css
   Cache-Control: public, max-age=2592000, must-revalidate
 
 /*.js
   Cache-Control: public, max-age=2592000, must-revalidate
 
-# Images: revalidate before every reuse. Filenames are NOT content-hashed, so a
-# changed image keeps the same URL. `no-cache` means "store, but check with the
-# origin before serving from cache" — the browser sends a conditional request
-# (If-None-Match / If-Modified-Since) and Cloudflare answers 304 with no body
-# when unchanged, or sends the new bytes immediately when the image changed.
-# (`no-cache` does NOT mean "don't cache" — that would be `no-store`.)
+# Images are not content-hashed, so a changed image keeps its URL. no-cache
+# means "store, but revalidate before reuse", not "don't cache" (that is
+# no-store). Browser sends a conditional request and gets a 304 when unchanged.
 #
-# This only works while the zone's Browser Cache TTL is "Respect Existing
-# Headers" (Cloudflare dashboard → Caching → Configuration). Set to a duration
-# instead, it overrides any origin TTL shorter than itself, and these become
-# `max-age=<that duration>` — which is what silently happened until 2026-07-24,
-# when a 4-hour setting was serving 4h-stale images. CSS/JS/fonts were unaffected
-# because their TTLs are longer than 4h.
+# Only works while the zone's Browser Cache TTL is "Respect Existing Headers"
+# (dashboard, Caching > Configuration). A duration there overrides any shorter
+# origin TTL, which is what served 4h-stale images until 2026-07-24.
 /*.webp
   Cache-Control: public, no-cache
 
@@ -133,11 +72,10 @@
 /*.gif
   Cache-Control: public, no-cache
 
-# Cache fonts for 1 year
 /*.woff2
   Cache-Control: public, max-age=31536000, immutable
 
-# Security headers for all files (fallback)
+# Security headers for everything. This is the only place they appear.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
