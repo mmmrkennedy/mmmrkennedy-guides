@@ -12,3 +12,4 @@ Check for unused images
 Update frontmatter to be SEO
 Run through the copy-edit skill
 Add the link to streaming for songs
+Run R2 pre commit

@@ -66,6 +66,36 @@ a:hover {
     vertical-align: middle;
 }
 
+/* Video and audio links keep the default link blue — a video, a sound file and
+   a picture are the same kind of thing here (media that opens in the lightbox),
+   so the glyph does the distinguishing rather than more palette colours. Keyed
+   off the data-media-type that the `classifyLinks` transform already stamps on
+   every media link (eleventy.config.cjs), so there's no second place to keep in
+   sync. Images deliberately get no icon: they're the overwhelming majority, and
+   a marker on almost every link marks nothing. */
+a[data-media-type="video"]::after,
+a[data-media-type="audio"]::after {
+    content: "";
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-left: var(--space-xs);
+    background-color: currentcolor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    vertical-align: middle;
+}
+
+/* circle-play, from https://lucide.dev/icons/ */
+a[data-media-type="video"]::after {
+    mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNpcmNsZS1wbGF5LWljb24gbHVjaWRlLWNpcmNsZS1wbGF5Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxwb2x5Z29uIHBvaW50cz0iMTAgOCAxNiAxMiAxMCAxNiAxMCA4Ii8+PC9zdmc+");
+}
+
+/* volume-2, from https://lucide.dev/icons/ */
+a[data-media-type="audio"]::after {
+    mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXZvbHVtZTEtaWNvbiBsdWNpZGUtdm9sdW1lLTEiPjxwYXRoIGQ9Ik0xMSA0LjcwMmEuNzA1LjcwNSAwIDAgMC0xLjIwMy0uNDk4TDYuNDEzIDcuNTg3QTEuNCAxLjQgMCAwIDEgNS40MTYgOEgzYTEgMSAwIDAgMC0xIDF2NmExIDEgMCAwIDAgMSAxaDIuNDE2YTEuNCAxLjQgMCAwIDEgLjk5Ny40MTNsMy4zODMgMy4zODRBLjcwNS43MDUgMCAwIDAgMTEgMTkuMjk4eiIvPjxwYXRoIGQ9Ik0xNiA5YTUgNSAwIDAgMSAwIDYiLz48L3N2Zz4=");
+}
+
 /* Link validation states */
 .incomplete-path {
     color: #d95b43;
@@ -369,6 +399,7 @@ a:hover {
 .disclaimer,
 .boss-fight-phases,
 .notes,
+.stats,
 .weapon-desc,
 .info-list {
     margin: var(--space-md) 0;
@@ -542,6 +573,23 @@ a:hover {
 .notes {
     --accent: var(--color-note-border);
     --accent-bg: var(--color-bg-secondary);
+}
+
+/* The quest's vital signs — difficulty, completion time, RNG rating — on one
+ * line under the tier-1 heading that names the quest. Takes the frame for the
+ * same reason .notes does: it is an aside about the steps below it rather than
+ * the first of them, and bold italic on the page background was not enough to
+ * say so. Note grey rather than tier-2 gold on purpose — a .requirement box
+ * usually follows it immediately, and two gold rules stacked read as one thing.
+ *
+ * Keeps the italic semibold it has always had. The line labels itself ("Stats
+ * (Solo): …") in place of a ::before, and at one line the weight still reads as
+ * emphasis — the length that makes .weapon-desc drop it is five times this. */
+.stats {
+    --accent: var(--color-note-border);
+    --accent-bg: var(--color-bg-secondary);
+
+    font-weight: 600;
 }
 
 /* Wonder-weapon description: what the weapon does, sitting between the heading

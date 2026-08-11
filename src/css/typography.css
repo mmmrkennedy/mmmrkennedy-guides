@@ -135,10 +135,10 @@ li > ol {
 
 /* Special paragraph styles */
 
-/* .weapon-desc is styled with the information boxes in components.css — it takes
- * the same frame, so it lives with the rest of that system. */
+/* .weapon-desc and .stats are styled with the information boxes in
+ * components.css — they take the same frame, so they live with the rest of that
+ * system. */
 
-.stats,
 .song-link {
     font-weight: 600;
     font-style: italic;

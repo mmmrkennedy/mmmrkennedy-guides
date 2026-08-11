@@ -67,3 +67,4 @@ src/games/**/*.gif
 # Node build of the solvers, used only to prerender them at build time
 # (vite.ssr.config.js). Derived, rebuilt by `bun run build:ssr`.
 .solver-ssr/
+/dumped_game_scripts/

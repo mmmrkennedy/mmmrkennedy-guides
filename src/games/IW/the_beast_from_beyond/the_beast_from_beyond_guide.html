@@ -143,16 +143,29 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
                     <li>
                         At the top, we have some variable declarations:
                         <ul>
-                            <li>C = List of available colours (Red, Green, Blue, Black, Yellow, and White)</li>
-                            <li>W = List of the number of each colour (["red", "green", "green"] would be [1, 2, 0, 0, 0, 0])</li>
-                            <li>S = Number of different colours (["red", "green", "green"] would be 2)</li>
-                            <li>B = List of the buttons</li>
-                            <li>X = Number of buttons</li>
+                            <li>C = List of available colours (Red, Green, Blue, Black, Yellow, and White). In the conditions they get shortened to r, g, b, bl, y, and w, so watch out for b (blue) against bl (black).</li>
+                            <li>W = The round you are currently on. The image writes it as [1, 2, 3, 4, 5, ...N] because it is just the round counter.</li>
+                            <li>S = The number of special rounds completed. The image writes this as S = (W) because the game works it out from your round number, so you never have to count them yourself.</li>
+                            <li>B = List of the buttons, where B1 is the top one and BL is the last (bottom) one.</li>
+                            <li>X = Number of buttons.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Colour counts are written as sum(colour), so sum(y) is the number of yellow buttons. BL on its own as an answer means "press the bottom button". BL(r) means "press the bottom-most red button". Also note the X=5 and X=6 boxes write their answers as W1, W2, WL and so on instead of B1, B2, BL. It means exactly the same thing, the buttons are just called wires in those two boxes.
+                    </li>
+                    <li>
+                        Since S comes from your round, you can read it straight off this list:
+                        <ul>
+                            <li>Rounds 1 to 4: S = 0</li>
+                            <li>Rounds 5 to 9: S = 1</li>
+                            <li>Rounds 10 to 14: S = 2</li>
+                            <li>Rounds 15 to 19: S = 3</li>
+                            <li>Round 20 and above: S = 4</li>
                         </ul>
                     </li>
                     <li>So based on your X (the number of buttons) look at that box on the image. Let's say we have ["red", "blue", "black", "green"], so X = 4.</li>
                     <li>
-                        We start with c1 in the X=4 box. This condition is sum(y) &gt; 1 &amp;&amp; S &gt;= 2, which means "The number of yellow buttons greater than 1 and S greater than or equal to 2". If this is true, we take the part after the "?"; if it's false, then we take the part after the ":".
+                        We start with c1 in the X=4 box. This condition is sum(y) &gt; 1 &amp;&amp; S &gt;= 2, which means "The number of yellow buttons is greater than 1 and you have completed at least 2 special rounds". If this is true, we take the part after the "?"; if it's false, then we take the part after the ":".
                     </li>
                     <li>
                         Since in our case c1 is false, we go to c2. c2 is BL(w) &amp;&amp; sum(b) = 0, which translates to "Is the last button white and are there 0 blue buttons". Both conditions are false so we go to c3.
@@ -160,6 +173,7 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
                     <li>c3 is sum(bl) &gt; 1 meaning "The number of black buttons is greater than 1". This is false so we go to c4.</li>
                     <li>c4 is B3 which means press button 3.</li>
                 </ol>
+
             </div>
         </li>
 

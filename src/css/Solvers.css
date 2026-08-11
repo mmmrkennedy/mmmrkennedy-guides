@@ -129,6 +129,25 @@
     word-break: break-word;
 }
 
+/* Site-wide callout boxes (.note, .tip, …) dropped into a solver panel.
+   Three things need undoing: their own vertical margins, which double up
+   against the container's flex gap; their intrinsic width, which would
+   drag the desktop `width: fit-content` panel wider than the board it
+   wraps (same width:0 + min-width:100% trick as .solver-instructions);
+   and their body-copy size, which would otherwise make an aside the
+   largest text in a panel whose prose is all --font-size-sm. */
+.solver-container > .note,
+.solver-container > .no-return,
+.solver-container > .danger,
+.solver-container > .requirement,
+.solver-container > .tip,
+.solver-container > .disclaimer {
+    width: 0;
+    min-width: 100%;
+    margin: 0;
+    font-size: var(--font-size-sm);
+}
+
 .solver-container h3 {
     margin: var(--space-md) 0;
     color: var(--color-text-primary);
