@@ -27,8 +27,14 @@ with open(html_path, encoding="utf-8") as f:
     html = f.read()
 
 # grab anchor hrefs that point into pictures/ and end with a slash (the incomplete ones)
-matches = re.findall(r'<a\s[^>]*href="(pictures/[^"]*/)"', html)
-paths = sorted(set(matches))
+matches_image_links = re.findall(r'<a\s[^>]*href="(pictures/[^"]*/)"', html)
+
+# grab all div ids
+matches_div_ids = re.findall(r'<div\s[^>]*id="([^"]+)"', html)
+for i in range(len(matches_div_ids)):
+    matches_div_ids[i] = "pictures/" + matches_div_ids[i] + "/"
+
+paths = sorted(set(matches_image_links + matches_div_ids))
 
 if not paths:
     print("No incomplete picture paths found.")
