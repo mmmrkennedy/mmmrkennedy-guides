@@ -344,7 +344,7 @@ export default function IWChemicalStepSolverV2({ title }: { title?: string }) {
         <div className="solver-container solver-container--chemical-step">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Fill in each step as you go - the next one appears once the answer above it is settled, and the results update as you type.
+                Fill in each step as you're asked for it. If it was valid, the next step will appear. If it was wrong, you'll be show what is wrong and why.
             </p>
 
             <p className="solver-step-label">Step 1 - Motel Office and Elvira's TV</p>
@@ -450,7 +450,7 @@ export default function IWChemicalStepSolverV2({ title }: { title?: string }) {
 
                 {focus === "no-o" && (
                     <p className="solver-error">
-                        No O Number fits an M Number of {mRaw} against {tvRaw} on the TV. Re-check both numbers - the TV number is the one on the "&lt; ##" line.
+                        No valid "O" Number found for an M Number of <i>{mRaw}</i> and <i>{tvRaw}</i> on the TV. Re-check both numbers.
                     </p>
                 )}
 
@@ -462,7 +462,7 @@ export default function IWChemicalStepSolverV2({ title }: { title?: string }) {
                             </p>
                         )}
                         <p>
-                            Two O Numbers fit: <strong>{oCandidates!.map((c) => c.o).join(" or ")}</strong>. Check the four O board locations for the one that reads "O = #" in all three colours, then enter it above.
+                            Two valid "O" Numbers found: <strong>{oCandidates!.map((c) => c.o).join(" or ")}</strong>.<br />Check the four "O" locations for the one that reads "O = #" in all three colours, then enter it above.
                         </p>
                     </>
                 )}
@@ -481,13 +481,13 @@ export default function IWChemicalStepSolverV2({ title }: { title?: string }) {
 
                 {focus === "diamond-problem" && diamondProblem === "decoy" && (
                     <p className="solver-error">
-                        Those are decoy numbers - the map is in the wrong colour. Set it to the {BAND_LABELS[chosenO!.band].toLowerCase()} from the TV and read the board again.
+                        The map is in the wrong colour filter. Set it to the {BAND_LABELS[chosenO!.band].toLowerCase()} from the TV and read the board again.
                     </p>
                 )}
 
                 {focus === "diamond-problem" && diamondProblem === "unknown" && (
                     <p className="solver-error">
-                        No value set has Insect Repellent at top {insectTopRaw} / left {insectLeftRaw}. Re-check the diamond: top is the red segment, left is the blue one - ignore the yellow and white numbers.
+                        No value set has Insect Repellent at top = <i>{insectTopRaw}</i> and left = <i>{insectLeftRaw}</i>. Re-check the diamond: top is the red segment, left is the blue one.
                     </p>
                 )}
 

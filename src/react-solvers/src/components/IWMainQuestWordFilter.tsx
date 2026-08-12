@@ -180,7 +180,7 @@ export default function IWMainQuestWordFilter({ title }: { title?: string }) {
         <div className="solver-container solver-container--word-filter">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Type your in-game letters to filter the word list. The solver shows matching words and the possible next letters based on your current input automatically. The words are in groups of ten. Once the solver determines your group, it'll highlight those words. The game pickes a group when the step starts, then if you fail, it only selects a new word from that group.
+                Type letters to filter the list and automatically see matches and possible next letters. Words are grouped by ten. The solver highlights your group once identified. If you fail a step, the game just picks a new word from that same highlighted group. If you fail 10 words, a new group is chosen. <i>SAVAGEMADETHIS</i> is a secret bonus word, not in any group.
             </p>
 
             <div className="solver-form-row">

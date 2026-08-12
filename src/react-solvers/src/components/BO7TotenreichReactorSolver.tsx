@@ -310,14 +310,14 @@ Components:
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">{message}</p>
 
-            <label className="solver-toggle">
-                <input
-                    type="checkbox"
-                    checked={debug}
-                    onChange={(e) => setDebug((e.target as HTMLInputElement).checked)}
-                />
-                Debug mode
-            </label>
+            {/*<label className="solver-toggle">*/}
+            {/*    <input*/}
+            {/*        type="checkbox"*/}
+            {/*        checked={debug}*/}
+            {/*        onChange={(e) => setDebug((e.target as HTMLInputElement).checked)}*/}
+            {/*    />*/}
+            {/*    Debug mode*/}
+            {/*</label>*/}
 
             <div className="solver-grid-wrapper">
                 <div className="solver-grid is-framed">{renderGrid()}</div>
