@@ -78,8 +78,10 @@
 .gfb-solver-bar {
     display: flex;
     justify-content: flex-end;
-    margin-top: calc(var(--space-sm) * -1);
-    margin-bottom: var(--space-md);
+
+    /* Last child of .solver-container, which is a flex column with its own gap,
+       so the spacing above is already provided — a margin here would double it. */
+    margin: 0;
 }
 
 .gfb-solver-flag {
@@ -110,6 +112,17 @@
 }
 
 /* Popover */
+
+/* components.css appends a non-breaking space after every <label> so guide-content
+   labels keep a gap before their control, and exempts `.solver-container label`
+   from it. This popover is neither: it's appended to <body>, so it inherited the
+   nbsp — and because its label is a flex column, the ::after became a third flex
+   ITEM, adding a phantom row and a gap under the field. Opt out the same way the
+   solver forms do. */
+.gfb-pop label::after {
+    content: none;
+}
+
 .gfb-pop {
     position: fixed;
     z-index: 1000;

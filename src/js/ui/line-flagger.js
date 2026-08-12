@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
             '<p class="gfb-pop__quote"></p>' +
             '<div class="gfb-pop__reasons"></div>' +
             '<label class="gfb-pop__expected" hidden>' +
-            "<span>What did the game actually want?</span>" +
+            "<span>What would the correct solution?</span>" +
             '<input type="text" autocomplete="off" placeholder="e.g. Button #2 (optional)">' +
             "</label>" +
             "<textarea></textarea>" +
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let reasonBtns = [];
     const MIN_DETAIL = 4; // anti low-effort: must be MORE than 3 characters
     const DEFAULT_HINT = "Pick a reason and add at least a few words so we can act on it.";
-    const SOLVER_HINT = "Your inputs are attached automatically — see below.";
+    const SOLVER_HINT = "Your inputs are attached automatically - see above.";
     function buildReasons(set) {
         reasonsEl.textContent = "";
         reasonBtns = set.map(([reason, label]) => {
@@ -475,14 +475,27 @@ document.addEventListener("DOMContentLoaded", () => {
      * because it's the only way to report the thing solvers actually get wrong
      * and a hidden control gets a shrug and a one-line "it was wrong" instead.
      *
-     * Appended to the mount root as a SIBLING of the hydrated .solver-container,
-     * never inside it. Preact leaves foreign nodes alone on update, but several
-     * solvers force a remount of .solver-output via a changing key= on every
-     * recalculation, and anything parked in the wrong subtree would go with it.
+     * Appended INSIDE .solver-container, as its last child.
+     *
+     * The mount root is full-width while the card inside it is `width:
+     * fit-content` and, on a solver-only page, centred — so a bar parked on the
+     * root right-aligns to the root's edge and lands far from the solver it
+     * belongs to. As a child of the card it inherits the card's width and the
+     * card's position in every layout variant, with nothing to measure.
+     *
+     * Preact tolerates a trailing foreign child here: verified against the live
+     * preview by injecting a probe and forcing repeated real re-renders through
+     * two different solvers' own controls. It survives because Preact only
+     * removes DOM it holds a vnode for, and sweeps unrecognised children solely
+     * while hydrating — which has already finished by the time this runs.
+     *
+     * Never inside .solver-output, though: several solvers force that element to
+     * remount via a changing key= on every recalculation.
      */
     function addSolverReportButton(root) {
-        if (root.querySelector(":scope > .gfb-solver-bar"))
+        if (root.querySelector(".gfb-solver-bar"))
             return; // already done
+        const card = root.querySelector(".solver-container") ?? root;
         const bar = document.createElement("div");
         bar.className = "gfb-solver-bar";
         const btn = document.createElement("button");
@@ -499,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
             openSolverPop(btn, root);
         });
         bar.appendChild(btn);
-        root.appendChild(bar);
+        card.appendChild(bar);
     }
     // ---- Auto-note: ask which lines crossed the buggy threshold, warn on them ----
     fetch("/api/feedback?path=" + encodeURIComponent(path))
