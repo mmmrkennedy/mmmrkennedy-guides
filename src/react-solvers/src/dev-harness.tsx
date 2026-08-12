@@ -47,8 +47,8 @@ if (devRoot) {
             <IWBeastFloppySolver title="Beast Floppy Disk Solver" />
             <IWBeastEightQueensSolver title="Beast Eight Queens Solver" />
             <IWGnSSkull4Solver title="Attack GnS Skull 4 Solver" />
-            <IWChemicalStepSolver title="Attack Chemical Step Solver (current)" />
-            <IWChemicalStepSolverV2 title="Attack Chemical Step Solver (rebuild)" />
+            <IWChemicalStepSolverV2 title="Attack Chemical Step Solver (live)" />
+            <IWChemicalStepSolver title="Attack Chemical Step Solver (old, no longer mounted)" />
             <IWMainQuestWordFilter title="Shaolin Main Quest Word Filter" />
             <IWMahjongSolver title="Mahjong Solver" />
             <WW2HangmanSolver title="Hangman Solver" />

@@ -156,8 +156,13 @@ window.ZombiesSolvers = {
         mount(id, "LetterboardSolver", () => import("./components/BO6LetterboardSolver"), { title: opts?.title }),
     mountMahjongSolver: (id, opts) => mount(id, "MahjongSolver", () => import("./components/IWMahjongSolver"), { title: opts?.title }),
     mountShaolinWordFilter: (id, opts) => mount(id, "ShaolinWordFilter", () => import("./components/IWMainQuestWordFilter"), { title: opts?.title }),
+    // V2 is the live one. The mount name and the label stay as they are: guide
+    // pages call mountChemicalStepSolver by that name, and the label is what a
+    // solver flag is filed under, so changing it would split this solver's report
+    // history across two names for no gain. Which build produced a report is
+    // already recorded in the snapshot's `build` field.
     mountChemicalStepSolver: (id, opts) =>
-        mount(id, "ChemicalStepSolver", () => import("./components/IWChemicalStepSolver"), { title: opts?.title }),
+        mount(id, "ChemicalStepSolver", () => import("./components/IWChemicalStepSolverV2"), { title: opts?.title }),
     mountAttackGnSSkull4Solver: (id, opts) =>
         mount(id, "AttackGnSSkull4Solver", () => import("./components/IWGnSSkull4Solver"), { title: opts?.title }),
     mountBeastGnSEightQueensSolver: (id, opts) =>

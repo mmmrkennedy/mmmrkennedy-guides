@@ -33,7 +33,7 @@ import BO6PeriodicTableSolver from "./components/BO6PeriodicTableSolver";
 import BO6LetterboardSolver from "./components/BO6LetterboardSolver";
 import IWMahjongSolver from "./components/IWMahjongSolver";
 import IWMainQuestWordFilter from "./components/IWMainQuestWordFilter";
-import IWChemicalStepSolver from "./components/IWChemicalStepSolver";
+import IWChemicalStepSolverV2 from "./components/IWChemicalStepSolverV2";
 import IWGnSSkull4Solver from "./components/IWGnSSkull4Solver";
 import IWBeastEightQueensSolver from "./components/IWBeastEightQueensSolver";
 import IWBeastFloppySolver from "./components/IWBeastFloppySolver";
@@ -63,7 +63,7 @@ export const solvers: Record<string, ComponentType<SolverProps>> = {
     mountLetterboardSolver: BO6LetterboardSolver,
     mountMahjongSolver: IWMahjongSolver,
     mountShaolinWordFilter: IWMainQuestWordFilter,
-    mountChemicalStepSolver: IWChemicalStepSolver,
+    mountChemicalStepSolver: IWChemicalStepSolverV2,
     mountAttackGnSSkull4Solver: IWGnSSkull4Solver,
     mountBeastGnSEightQueensSolver: IWBeastEightQueensSolver,
     mountBeastFloppyDiskSolver: IWBeastFloppySolver,
