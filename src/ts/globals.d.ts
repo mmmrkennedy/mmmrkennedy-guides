@@ -85,6 +85,15 @@ interface Window {
     /** Dev-only console output; silent in production. See core/logger.ts. */
     Log: (level: LogLevelInput, ...args: unknown[]) => void;
 
+    /**
+     * Set by the solver bundle (react-solvers/src/main.tsx) so ui/line-flagger.ts
+     * can read a mounted solver's inputs when someone reports it. Optional: it
+     * only exists on pages that mount a solver, which most guide pages don't.
+     */
+    SolverReport?: {
+        read: (root: HTMLElement) => { name: string; inputs: Record<string, unknown> } | null;
+    };
+
     PageUtils: PageUtilsApi;
     ScrollManager: ScrollManagerApi;
     Legend: LegendApi;

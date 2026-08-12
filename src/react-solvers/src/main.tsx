@@ -15,6 +15,12 @@ import type { ComponentType } from "preact";
 // entry, which every page that mounts a solver was going to fetch anyway.
 import "preact/hooks";
 
+// Shared infrastructure, not a solver — and imported statically for the same
+// chunking reason as preact/hooks above. All 19 solvers call useSolverReport, so
+// leaving this to be discovered through the dynamic imports would hoist it into a
+// second shared chunk sitting between the entry and every solver.
+import { SolverReportRoot, readSolverInputs } from "./solver-report";
+
 // Every solver lives behind its own dynamic import() below, which is what makes
 // Vite emit one chunk per solver instead of a single 28.9kB brotli bundle
 // carrying all 19 to every guide page. Do NOT add a static
@@ -54,6 +60,15 @@ interface ZombiesSolvers {
 declare global {
     interface Window {
         ZombiesSolvers: ZombiesSolvers;
+        /**
+         * Bridge to ts/ui/line-flagger.ts, which is a classic script in a
+         * separate bundle and cannot import from this module graph. Optional on
+         * purpose: the flagger runs on every guide page, most of which never load
+         * this entry at all.
+         */
+        SolverReport?: {
+            read: (root: HTMLElement) => { name: string; inputs: Record<string, unknown> } | null;
+        };
     }
 }
 
@@ -88,16 +103,36 @@ function mount<P extends MountOptions>(
     }
     load()
         .then(({ default: Solver }) => {
-            hydrate(<Solver {...props} />, element);
+            // SolverReportRoot renders no DOM, so hydration sees exactly the tree
+            // the SSR build wrote. It only tells the solver inside which element
+            // to publish its inputs against.
+            hydrate(
+                <SolverReportRoot element={element}>
+                    <Solver {...props} />
+                </SolverReportRoot>,
+                element,
+            );
+            // Which solver this is, for ts/ui/line-flagger.ts: it labels the
+            // snapshot a solver flag carries, and a flag is worth little without
+            // it. Set on the DOM as well as the event so a listener that missed
+            // the event (or runs later) can still identify the subtree.
+            element.dataset.solver = label;
             // ts/ui/line-flagger.ts deliberately skips prerendered solver markup
             // at DOMContentLoaded, because hydrating afterwards would reconcile
             // away every ⚑ it had just injected. This is its cue that the subtree
             // is settled and safe to decorate. Fired per container, so a page with
             // five solvers flags each as it lands.
-            document.dispatchEvent(new CustomEvent("solver:hydrated", { detail: { element } }));
+            document.dispatchEvent(
+                new CustomEvent("solver:hydrated", { detail: { element, name: label } }),
+            );
         })
         .catch((error) => console.error(`mount${label}: failed to load solver chunk:`, error));
 }
+
+// How line-flagger.ts reaches a mounted solver's inputs. Assigned here rather
+// than inside solver-report.tsx because that module is also pulled into the Node
+// SSR build, where `window` does not exist.
+window.SolverReport = { read: readSolverInputs };
 
 // Assigned synchronously, on module evaluation. Guide pages call these from a
 // DOMContentLoaded handler that falls back to console.error when the global is

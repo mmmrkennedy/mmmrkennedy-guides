@@ -30,6 +30,10 @@
         <meta name="keywords" content="{{ metaKeywords }}">
     {%- endif %}
     <meta name="author" content="mmmrkennedy">
+    {#- Which deploy produced this page. Read by ts/ui/line-flagger.ts and stored
+        on solver flags, so a report can be told apart from one filed against
+        code that has since been fixed. -#}
+    <meta name="build" content="{{ site.buildVersion }}">
     {%- if unfinished or page.url in unfinishedPages %}
         <meta name="robots" content="noindex, nofollow">
     {%- else %}

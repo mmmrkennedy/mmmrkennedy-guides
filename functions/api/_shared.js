@@ -49,12 +49,17 @@ export async function notifyFlag(env, request, flag) {
 
     // Plain text (no parse_mode) so guide content can't break Markdown/HTML
     // parsing. Telegram auto-links the bare URL.
+    //
+    // For a solver flag the quote is a one-line dump of the inputs and the answer
+    // it gave, so the message alone is usually enough to tell a real bug from a
+    // mis-entered round without opening the admin page.
     const lines = [
-        `🚩 New flag: ${flag.reason}`,
+        flag.solver ? `🧩 New solver flag: ${flag.reason} — ${flag.solver}` : `🚩 New flag: ${flag.reason}`,
         flag.path,
         `"${flag.quote || "(no quote)"}"`,
         `— ${flag.detail}`,
     ];
+    if (flag.expected) lines.push(`Expected: ${flag.expected}`);
     if (adminUrl) lines.push(adminUrl);
 
     try {

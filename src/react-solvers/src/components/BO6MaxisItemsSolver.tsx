@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 interface SamFile {
     file_number: number;
@@ -37,6 +38,13 @@ export default function BO6MaxisItemsSolver({ title }: { title?: string }) {
     // picked[i] = file_number assigned to slot i (the i-th in-game appearance).
     // Length grows from 0 to 4 as user clicks; clicking a slot removes that entry.
     const [picked, setPicked] = useState<number[]>([]);
+
+    // Order is the input here, not just the set, so the array is reported as-is.
+    useSolverReport("MaxisItemsSolver", () => ({
+        "Files picked, in order": picked.map(
+            (n) => `#${n} ${fileByNumber.get(n)?.name ?? "unknown"}`,
+        ),
+    }));
 
     const result = useMemo(() => calculateCode(picked), [picked]);
     const recalcKey = picked.join(",");

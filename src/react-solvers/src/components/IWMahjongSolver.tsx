@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 interface HandResult {
     isWinning: boolean;
@@ -61,6 +62,10 @@ function calculateHand(selectedValues: number[]): HandResult {
 
 export default function IWMahjongSolver({ title }: { title?: string }) {
     const [selectedValues, setSelectedValues] = useState<number[]>([]);
+
+    useSolverReport("MahjongSolver", () => ({
+        "Tiles picked, in order": selectedValues,
+    }));
 
     const getTileCount = (value: number): number => selectedValues.filter((v) => v === value).length;
 

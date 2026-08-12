@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 // Image paths
 const IMG_YELLOW_SQUARE = "/games/IW/the_beast_from_beyond/venom/venom_maze/pictures/yellow_square.webp";
@@ -144,6 +145,14 @@ export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
     const [solutionPath, setSolutionPath] = useState<[number, number][] | null>(null);
     const [selectedPiece, setSelectedPiece] = useState<DraggableType | null>(null);
     const [validPositions, setValidPositions] = useState<[number, number][]>([]);
+
+    // The board is drawn to a <canvas>, so these two coordinates exist nowhere in
+    // the DOM — without this the maze solver could only ever be reported blind.
+    // `selectedPiece` is which piece is held mid-drag, not an input.
+    useSolverReport("BeastVenomXMazeSolver", () => ({
+        "Start piece at [row, col]": draggables.find((d) => d.type === "start")?.position ?? null,
+        "End piece at [row, col]": draggables.find((d) => d.type === "end")?.position ?? null,
+    }));
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const boardRef = useRef<HTMLDivElement>(null);

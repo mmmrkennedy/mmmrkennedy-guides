@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 const possibleWords: string[] = [
     "DAMNATION", // Nuke
@@ -41,6 +42,11 @@ function suggestWords(revealedSequence: string, guessedLetters: string): string[
 export default function WW2HangmanSolver({ title }: { title?: string }) {
     const [revealedLetters, setRevealedLetters] = useState<string>("");
     const [guessedLetters, setGuessedLetters] = useState<string>("");
+
+    useSolverReport("HangmanSolver", () => ({
+        "Correct letters": revealedLetters,
+        "Incorrect letters": guessedLetters,
+    }));
 
     const result = useMemo(
         () => suggestWords(revealedLetters, guessedLetters),

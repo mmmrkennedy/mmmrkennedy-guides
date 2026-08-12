@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import type { JSX } from "preact";
+import { useSolverReport } from "../solver-report";
 
 type CellType = "empty" | "rod";
 type Phase = "setup" | "results";
@@ -157,6 +158,21 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
     const [solutionIndex, setSolutionIndex] = useState<number>(0);
     const [debug, setDebug] = useState<boolean>(false);
     const [message, setMessage] = useState<string | JSX.Element>(defaultMessage);
+
+    // The grid is the whole input. Reported as coordinates (what you'd re-click
+    // to reproduce it) and as a picture of the board (what it looked like), since
+    // a 4x4 of dots and hashes is faster to read than sixteen pairs of numbers.
+    // `phase`, `solutions` and `solutionIndex` are all downstream of these and are
+    // deliberately left out.
+    useSolverReport("TotenreichReactorSolver", () => ({
+        "Control rods placed": grid.flatMap((row, r) =>
+            row.map((cell, c) => (cell === "rod" ? [r, c] : null)).filter(Boolean),
+        ),
+        "Grid (row by row, # = rod)": grid.map((row) =>
+            row.map((cell) => (cell === "rod" ? "#" : ".")).join(""),
+        ),
+        "Debug mode": debug,
+    }));
 
     const toggleCell = (r: number, c: number) => {
         if (phase !== "setup") return;

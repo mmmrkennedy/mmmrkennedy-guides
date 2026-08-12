@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 type Sym = "." | "-";
 type KeyName = "ARCHER" | "CROSS";
@@ -187,6 +188,23 @@ export default function IWBeastVenomYMorseSolver({ title, keySelectId }: Props) 
     const [peekNumber, setPeekNumber] = useState<NumberWord | null>(null);
     const [stage, setStage] = useState(0);
     const [inputIndex, setInputIndex] = useState(0);
+
+    /* This solver is a walkthrough, so "where the reader had got to" is part of
+       the input: the same beeps entered at a different step mean something else.
+       The beeps are joined into the strip the reader sees rather than reported as
+       an array of one-character strings. `peekNumber` is excluded — it's a
+       look-ahead the reader can open and close without changing anything. */
+    useSolverReport("BeastVenomYMorseSolver", () => ({
+        Step: phase,
+        Key: activeKey,
+        "Key came from the page dropdown": keyFromSelect,
+        "First beep": keyTap,
+        "Beeps entered": taps.join(""),
+        "Number locked in": chosenNumber,
+        "Number was ambiguous": numberUncertain,
+        "Input stage": stage,
+        "Position within stage": inputIndex,
+    }));
 
     /* Adopt the guide's own key dropdown when the solver is embedded next to it,
        so the reader doesn't pick the same key twice. */

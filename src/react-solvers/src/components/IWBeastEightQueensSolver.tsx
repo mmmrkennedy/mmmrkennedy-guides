@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 const solution_cords_queens: number[][][] = [
     [[0, 0], [1, 4], [2, 7], [3, 5], [4, 2], [5, 6], [6, 1], [7, 3]],
@@ -87,6 +88,11 @@ export default function IWBeastEightQueensSolver({ title }: { title?: string }) 
     const [queenLocation, setQueenLocation] = useState<[number, number]>([0, 0]);
     const [solution, setSolution] = useState<boolean[][] | null>(null);
     const [phase, setPhase] = useState<Phase>("setup");
+
+    // One placed queen is the entire input; the other seven are the answer.
+    useSolverReport("BeastGnSEightQueensSolver", () => ({
+        "Queen placed at [row, col]": queenLocation,
+    }));
 
     const message =
         phase === "setup"

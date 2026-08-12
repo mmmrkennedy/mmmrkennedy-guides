@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 /*
  * Rebuild of IWChemicalStepSolver.tsx. Both are mounted on the dev page so they
@@ -242,6 +243,18 @@ export default function IWChemicalStepSolverV2({ title }: { title?: string }) {
     const [insectTopRaw, setInsectTopRaw] = useState("");
     const [insectLeftRaw, setInsectLeftRaw] = useState("");
     const [chemId, setChemId] = useState("default");
+
+    // The raw strings, not the parsed numbers: "07" and "7" are the same number
+    // but not the same thing typed, and a parsing bug would be invisible in the
+    // parsed form.
+    useSolverReport("ChemicalStepSolver", () => ({
+        "M number": mRaw,
+        "Top number on TV": tvRaw,
+        "O number": oRaw,
+        "Insect repellent, top (red)": insectTopRaw,
+        "Insect repellent, left (blue)": insectLeftRaw,
+        "Final chemical": chemId,
+    }));
 
     /* Everything below is derived. There is no Calculate button and no
        per-field "is this visible yet" flag: a step appears once the step above

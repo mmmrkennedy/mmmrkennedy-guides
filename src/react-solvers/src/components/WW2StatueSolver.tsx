@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 type WallID = "wall1" | "wall2" | "wall3" | "wall4";
 type StatueIndex = 0 | 1 | 2 | 3;
@@ -154,6 +155,19 @@ function solvePuzzle(directions: RotationList, puzzleID: PuzzleID): string[] {
 export default function WW2StatueSolver({ title }: { title?: string }) {
     const [activeWall, setActiveWall] = useState<WallID>("wall1");
     const [directions, setDirections] = useState<RotationList>(DEFAULT_DIRECTIONS);
+
+    // Wall 1 has three statues, the rest have four, so the list is trimmed to the
+    // wall actually being solved — the fourth slot on wall 1 is stale, not input.
+    useSolverReport("StatueSolver", () => {
+        const count = activeWall === "wall1" ? 3 : 4;
+        return {
+            Wall: activeWall,
+            "Statue directions": directions
+                .slice(0, count)
+                .map((d, i) => `${i + 1}: ${DIRECTION_SYMBOLS[d]}`),
+            "Statue directions (raw 0-3)": directions.slice(0, count),
+        };
+    });
     // Re-solved by every handler below, so the output tracks the statues live.
     // Null only until the first interaction, which is when the nudge shows.
     const [result, setResult] = useState<string[] | null>(null);

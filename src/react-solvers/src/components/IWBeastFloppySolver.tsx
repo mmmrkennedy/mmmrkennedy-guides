@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 const imagePath = "/games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/";
 
@@ -24,6 +25,13 @@ function processSymbols(symbols: number[]): number[] {
 
 export default function IWBeastFloppySolver({ title }: { title?: string }) {
     const [selectedSymbols, setSelectedSymbols] = useState<number[]>([]);
+
+    // The symbols are images with no names, so the grid position the reader
+    // clicked is the only honest identifier for them.
+    useSolverReport("BeastFloppyDiskSolver", () => ({
+        "Symbols selected, in order (grid index, 0-11)": selectedSymbols,
+    }));
+
     const maxSymbols = 4;
     const totalSymbols = 12;
 

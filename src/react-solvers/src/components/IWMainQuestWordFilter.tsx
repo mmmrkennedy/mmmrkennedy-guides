@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 /*
  * The seven word groups from build_word_codex_list() in
@@ -147,6 +148,11 @@ function sortGroupFirst(matchingWords: string[], group: string | null): string[]
 export default function IWMainQuestWordFilter({ title }: { title?: string }) {
     const [inputString, setInputString] = useState<string>("");
     const [group, setGroup] = useState<string | null>(null);
+
+    useSolverReport("ShaolinWordFilter", () => ({
+        "Letters typed": inputString,
+        "Word group selected": group,
+    }));
 
     const { matchingWords, nextLetters } = useMemo(
         () => filterWordsByPrefix(inputString),

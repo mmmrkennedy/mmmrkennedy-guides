@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 type Direction = 0 | 1 | 2 | 3;
 type BlockId = 0 | 1 | 2 | 3;
@@ -84,6 +85,13 @@ function buildSolutionLines(directions: DirectionsArray): string[] {
 
 export default function WW2HammerPuzzleSolver({ title }: { title?: string }) {
     const [directions, setDirections] = useState<DirectionsArray>([0, 0, 0, 0]);
+
+    // Arrows are what the reader sees on each block; the raw 0-3 goes alongside
+    // so a report can be replayed without decoding glyphs.
+    useSolverReport("HammerSolver", () => ({
+        "Block directions (A-D)": directions.map((d, i) => `${LABELS[i]}: ${DIRECTION_SYMBOLS[d]}`),
+        "Block directions (raw 0-3)": [...directions],
+    }));
     const [result, setResult] = useState<string[] | null>(null);
 
     // Solves on every click, so the shot list tracks the blocks live.

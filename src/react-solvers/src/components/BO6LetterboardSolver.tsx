@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 type Word = "CRAB" | "MOTH" | "WORM" | "YETI";
 type BoardId = 0 | 1 | 2 | 3;
@@ -50,6 +51,13 @@ function calculateCode(word: Word | null, boardId: BoardId | null): CalcResult {
 export default function BO6LetterboardSolver({ title }: { title?: string }) {
     const [word, setWord] = useState<Word | null>(null);
     const [boardId, setBoardId] = useState<BoardId | null>(null);
+
+    // The board is picked by its bottom-left letters, so that — not the array
+    // index behind it — is what the reader believes they chose.
+    useSolverReport("LetterboardSolver", () => ({
+        Word: word,
+        "Board (bottom-left letters)": boardId === null ? null : BOARDS[boardId].bottomLeft,
+    }));
 
     const result = useMemo(() => calculateCode(word, boardId), [word, boardId]);
     const recalcKey = `${word}|${boardId}`;

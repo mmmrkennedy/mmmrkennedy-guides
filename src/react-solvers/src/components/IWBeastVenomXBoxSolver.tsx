@@ -1,4 +1,5 @@
 import { useState, useRef } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 // Type definitions
 type Color = "red" | "green" | "blue" | "black" | "yellow" | "white";
@@ -125,6 +126,14 @@ export default function IWBeastVenomXBoxSolver({ title }: { title?: string }) {
     // anyone who doesn't notice the field.
     const [roundNum, setRoundNum] = useState<number>(0);
     const calcKeyRef = useRef(0);
+
+    // 0 is this solver's "field is empty", not a round anyone can be on, so it's
+    // reported as empty rather than as a round of zero.
+    useSolverReport("BeastVenomXBoxSolver", () => ({
+        "Number of buttons": buttonCount,
+        "Button colours (top to bottom)": selectedColors,
+        Round: roundNum >= 1 ? roundNum : null,
+    }));
 
     const handleButtonCountChange = (e: Event) => {
         const newCount = parseInt((e.currentTarget as HTMLSelectElement).value) as ButtonCount;

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 interface ElementObj {
     symbol: string;
@@ -173,6 +174,8 @@ function ElementList({ items }: { items: ElementObj[] }) {
 
 export default function BO6PeriodicTableSolver({ title }: { title?: string }) {
     const [input, setInput] = useState<string>("");
+
+    useSolverReport("PeriodicTableSolver", () => ({ "Element letters typed": input }));
     const result = useMemo(() => filterElements(input), [input]);
 
     const hasResults = result.exact.length + result.possible.length > 0;

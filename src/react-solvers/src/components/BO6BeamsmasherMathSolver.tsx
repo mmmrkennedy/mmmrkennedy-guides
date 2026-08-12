@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 const SYMBOL_VALUES = [0, 10, 11, 20, 21, 22] as const;
 type SymbolValue = (typeof SYMBOL_VALUES)[number];
@@ -45,6 +46,14 @@ function calculate(slots: Slots): CalcResult {
 
 export default function BO6BeamsmasherMathSolver({ title }: { title?: string }) {
     const [slots, setSlots] = useState<Slots>({ X: null, Y: null, Z: null });
+
+    // Null is a genuinely different input from any symbol — it means the reader
+    // never filled that slot — so it's reported rather than skipped.
+    useSolverReport("BeamsmasherSolver", () => ({
+        "Slot X": slots.X,
+        "Slot Y": slots.Y,
+        "Slot Z": slots.Z,
+    }));
 
     const result = useMemo(() => calculate(slots), [slots]);
     const recalcKey = `${slots.X}|${slots.Y}|${slots.Z}`;

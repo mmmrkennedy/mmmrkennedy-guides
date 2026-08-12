@@ -69,11 +69,58 @@
     font-size: var(--font-size-sm);
 }
 
+/* Solver reporting
+ * ----------------
+ * A solver's answer can't be flagged by quoting a line — the bug is in the
+ * inputs. So each hydrated solver gets its own always-visible report button
+ * (injected by line-flagger.ts, never rendered by the component) which attaches
+ * a snapshot of the solver's state to the flag. */
+.gfb-solver-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(var(--space-sm) * -1);
+    margin-bottom: var(--space-md);
+}
+
+.gfb-solver-flag {
+    border: 1px solid var(--color-border-medium);
+    background: transparent;
+    border-radius: 999px;
+    padding: 0.15rem 0.7rem;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.gfb-solver-flag:hover,
+.gfb-solver-flag:focus-visible {
+    opacity: 1;
+    color: var(--color-danger-text);
+    border-color: var(--color-danger-border);
+    outline: none;
+}
+
+.gfb-solver-flagged .gfb-solver-flag {
+    opacity: 1;
+    color: var(--color-danger-text);
+    border-color: var(--color-danger-border);
+}
+
 /* Popover */
 .gfb-pop {
     position: fixed;
     z-index: 1000;
     width: min(20rem, calc(100vw - 1rem));
+
+    /* A solver snapshot can run to a dozen fields; scroll inside the popover
+     * rather than growing it past the viewport. line-flagger.ts exempts scrolls
+     * originating in here from the dismiss-on-scroll handler. */
+    max-height: min(80vh, 34rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-medium);
     border-radius: 10px;
@@ -163,6 +210,71 @@
 .gfb-pop__btn--send[disabled] {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+/* "What did the game actually want?" — solver mode only. For a solver report the
+ * expected answer is worth more than the prose, so it gets its own field. */
+.gfb-pop__expected {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Explicit, because the display above would otherwise beat the hidden attribute
+ * and leave the field showing on a plain line flag. */
+.gfb-pop__expected[hidden] {
+    display: none;
+}
+
+.gfb-pop__expected input {
+    width: 100%;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 6px;
+    padding: var(--space-xs) var(--space-sm);
+    font: inherit;
+    font-size: var(--font-size-sm);
+}
+
+.gfb-pop__expected input:focus {
+    outline: none;
+    border-color: var(--color-link-default);
+}
+
+/* The snapshot, shown before sending — nothing is captured out of sight. */
+.gfb-pop__snap {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+}
+
+.gfb-pop__snap summary {
+    cursor: pointer;
+    color: var(--color-text-muted);
+}
+
+.gfb-pop__snap-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.1rem var(--space-sm);
+    margin: var(--space-xs) 0 0;
+    padding: var(--space-sm);
+    background: var(--color-bg-primary);
+    border-radius: 6px;
+}
+
+.gfb-pop__snap-list dt {
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.gfb-pop__snap-list dd {
+    margin: 0;
+    color: var(--color-text-primary);
+    overflow-wrap: anywhere;
 }
 
 .gfb-pop__hint {

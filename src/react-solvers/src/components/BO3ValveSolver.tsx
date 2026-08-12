@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 type ValveLocation = "department_store" | "supply_depot" | "armory" | "infirmary" | "tank_factory" | "dragon_command";
 
@@ -111,6 +112,11 @@ function getAdjustments(green: ValveLocation, pink: ValveLocation): ValveResult 
 export default function BO3ValveSolver({ title }: { title?: string }) {
     const [greenValve, setGreenValve] = useState<ValveLocation>("department_store");
     const [pinkValve, setPinkValve] = useState<ValveLocation>("supply_depot");
+
+    useSolverReport("ValveSolver", () => ({
+        "Green light valve": LOCATION_NAMES[greenValve],
+        "Pink cylinder valve": LOCATION_NAMES[pinkValve],
+    }));
 
     const result = useMemo(() => getAdjustments(greenValve, pinkValve), [greenValve, pinkValve]);
 

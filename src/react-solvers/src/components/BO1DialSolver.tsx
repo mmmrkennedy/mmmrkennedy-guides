@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 type DialIndex = 0 | 1 | 2 | 3;
 type DialValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
@@ -56,6 +57,13 @@ function formatResult(solution: Solution): string {
 export default function BO1DialSolver({ title }: { title?: string }) {
     const [dials, setDials] = useState<[number, number, number, number]>([0, 0, 0, 0]);
     const [result, setResult] = useState<string>(formatResult(solve([0, 0, 0, 0])));
+
+    useSolverReport("DialSolver", () => ({
+        "Yellow dial": dials[0],
+        "Orange dial": dials[1],
+        "Blue dial": dials[2],
+        "Purple dial": dials[3],
+    }));
 
     function handleDialChange(index: DialIndex, value: string) {
         const parsed = parseInt(value);

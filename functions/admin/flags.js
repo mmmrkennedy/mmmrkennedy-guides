@@ -1,7 +1,13 @@
 // Admin page for reviewing & managing guide-feedback flags.
 //
-//   GET  /admin/flags?status=open|resolved|dismissed|all   → HTML table
-//   POST /admin/flags  (form: action,id,path,line_hash,status) → mutate + redirect
+//   GET  /admin/flags?status=open|resolved|dismissed|all[&src=all|solver|line]
+//                                                          → HTML table
+//   POST /admin/flags  (form: action,id,path,line_hash,status,src) → mutate + redirect
+//
+// Solver flags (solver IS NOT NULL) carry a JSON snapshot of the solver's inputs
+// and the answer it gave; the table renders it as a field list so a report can be
+// reproduced by retyping it into the solver. `src` filters to just those, which is
+// the view worth having when triaging "the solver was wrong".
 //
 // Sign-in happens on /admin/login (an HTML form, so password managers work) and
 // is carried by a signed session cookie; credentials come from the env vars
@@ -13,6 +19,69 @@ import { esc, htmlResponse, originAllowed, redirect, requireSession } from "./_a
 // Keep in sync with THRESHOLD in functions/api/feedback/index.js.
 const BUGGY_THRESHOLD = 5;
 const STATUSES = ["open", "resolved", "dismissed"];
+const SOURCES = ["all", "solver", "line"];
+
+/**
+ * One input value as a line of text. Mirrors formatValue in ts/ui/line-flagger.ts
+ * so the admin table reads the same way as the confirmation the reporter saw:
+ * nested arrays keep their brackets (a board reads "[0, 0], [1, 3]"), top-level
+ * ones don't (a list of colours reads "red, black, white").
+ */
+function formatValue(value) {
+    if (value === null || value === undefined) return "(none)";
+    if (typeof value === "boolean") return value ? "yes" : "no";
+    if (typeof value === "number") return String(value);
+    if (typeof value === "string") return value === "" ? "(blank)" : value;
+    if (Array.isArray(value)) {
+        if (value.length === 0) return "(none)";
+        return value
+            .map((v) => (Array.isArray(v) ? `[${v.map(formatValue).join(", ")}]` : formatValue(v)))
+            .join(", ");
+    }
+    try {
+        return JSON.stringify(value);
+    } catch {
+        return String(value);
+    }
+}
+
+/**
+ * Render a stored snapshot as an escaped definition list. Anything unexpected —
+ * unparseable JSON, a shape from a future schema version — falls back to showing
+ * the raw text rather than swallowing a report we can't pretty-print.
+ *
+ * There is no "solver said" row and never will be: snapshots hold inputs only,
+ * because the answer follows from them. To see what the solver told this reader,
+ * type these values back into it.
+ */
+function renderSnapshot(raw) {
+    let snap;
+    try {
+        snap = JSON.parse(raw);
+    } catch {
+        return `<pre class="snapraw">${esc(raw)}</pre>`;
+    }
+    if (!snap || typeof snap !== "object") return `<pre class="snapraw">${esc(raw)}</pre>`;
+
+    const rows = [];
+    for (const [k, v] of Object.entries(snap.state || {})) {
+        rows.push(`<dt>${esc(k)}</dt><dd>${esc(formatValue(v))}</dd>`);
+    }
+    if (rows.length === 0) rows.push("<dt>(nothing entered)</dt><dd>—</dd>");
+
+    const meta = [];
+    if (snap.build) meta.push(`build ${esc(snap.build)}`);
+    if (snap.vp) meta.push(`viewport ${esc(snap.vp)}`);
+    if (snap.v && snap.v !== 2) meta.push(`snapshot v${esc(String(snap.v))}`);
+    // Worth flagging: these came from scraping the page, not from the solver, so
+    // an input the solver never rendered simply isn't here.
+    if (snap.scraped) meta.push("scraped from the DOM — inputs may be incomplete");
+
+    return (
+        `<dl class="snap">${rows.join("")}</dl>` +
+        (meta.length ? `<div class="snapmeta">${meta.join(" · ")}</div>` : "")
+    );
+}
 
 export async function onRequestGet({ request, env }) {
     const denied = await requireSession(request, env);
@@ -22,12 +91,19 @@ export async function onRequestGet({ request, env }) {
     const url = new URL(request.url);
     let status = url.searchParams.get("status") || "open";
     if (!STATUSES.includes(status) && status !== "all") status = "open";
+    let src = url.searchParams.get("src") || "all";
+    if (!SOURCES.includes(src)) src = "all";
+
+    // Source filter as a SQL fragment, reused by the counts and the list so the
+    // nav badges always describe the rows actually being shown.
+    const srcWhere =
+        src === "solver" ? " AND solver IS NOT NULL" : src === "line" ? " AND solver IS NULL" : "";
 
     // Status counts for the nav.
     const counts = {};
     try {
         const { results } = await env.DB.prepare(
-            "SELECT status, COUNT(*) AS n FROM flags GROUP BY status",
+            "SELECT status, COUNT(*) AS n FROM flags WHERE 1=1" + srcWhere + " GROUP BY status",
         ).all();
         for (const r of results || []) counts[r.status] = r.n;
     } catch {
@@ -52,17 +128,14 @@ export async function onRequestGet({ request, env }) {
     // The flags themselves.
     let rows = [];
     try {
+        const cols =
+            "SELECT id, path, line_hash, quote, reason, detail, status, created_at, ip_hash, " +
+            "solver, snapshot, expected FROM flags WHERE 1=1";
         const stmt =
             status === "all"
-                ? env.DB.prepare(
-                      "SELECT id, path, line_hash, quote, reason, detail, status, created_at, ip_hash " +
-                          "FROM flags ORDER BY created_at DESC LIMIT 500",
-                  )
+                ? env.DB.prepare(cols + srcWhere + " ORDER BY created_at DESC LIMIT 500")
                 : env.DB
-                      .prepare(
-                          "SELECT id, path, line_hash, quote, reason, detail, status, created_at, ip_hash " +
-                              "FROM flags WHERE status = ?1 ORDER BY created_at DESC LIMIT 500",
-                      )
+                      .prepare(cols + " AND status = ?1" + srcWhere + " ORDER BY created_at DESC LIMIT 500")
                       .bind(status);
         const { results } = await stmt.all();
         rows = results || [];
@@ -70,10 +143,18 @@ export async function onRequestGet({ request, env }) {
         return htmlResponse("<h1>Query failed</h1><pre>" + esc(String(e)) + "</pre>", 500);
     }
 
+    const qs = (over) => {
+        const p = { status, src, ...over };
+        return `?status=${encodeURIComponent(p.status)}&src=${encodeURIComponent(p.src)}`;
+    };
     const navLink = (key, label) => {
         const n = key === "all" ? totalAll : counts[key] || 0;
         const active = key === status ? ' class="active"' : "";
-        return `<a${active} href="?status=${key}">${label} <span class="badge">${n}</span></a>`;
+        return `<a${active} href="${qs({ status: key })}">${label} <span class="badge">${n}</span></a>`;
+    };
+    const srcLink = (key, label) => {
+        const active = key === src ? ' class="active"' : "";
+        return `<a${active} href="${qs({ src: key })}">${label}</a>`;
     };
 
     const reasonLabel = {
@@ -81,6 +162,13 @@ export async function onRequestGet({ request, env }) {
         outdated: "Out of date",
         wrong: "Incorrect",
         buggy: "Doesn’t work / buggy",
+    };
+    // Same four reasons, worded as the solver popover worded them to the reporter.
+    const solverReasonLabel = {
+        unclear: "Confusing to use",
+        outdated: "Out of date",
+        wrong: "Gives the wrong answer",
+        buggy: "Broken / errors out",
     };
 
     const rowsHtml = rows
@@ -99,12 +187,25 @@ export async function onRequestGet({ request, env }) {
                     : btn("reopen", "Reopen")) +
                 btn("resolve_line", "Resolve line", ' title="resolve all open flags on this exact line"') +
                 btn("delete", "Delete", ' class="danger" onclick="return confirm(\'Delete this flag permanently?\')"');
+            const isSolver = Boolean(r.solver);
+            const labels = isSolver ? solverReasonLabel : reasonLabel;
+            const solverBadge = isSolver ? `<div class="solvertag">🧩 ${esc(r.solver)}</div>` : "";
+            // For a solver row the quote is a one-line dump of the same state the
+            // snapshot holds, so show the structured version and skip the prose.
+            const stateCell = isSolver
+                ? r.snapshot
+                    ? renderSnapshot(r.snapshot)
+                    : `<span class="dim">${esc(r.quote)}</span>`
+                : esc(r.quote);
+            const expectedHtml = r.expected
+                ? `<div class="expected">wanted: ${esc(r.expected)}</div>`
+                : "";
             return `<tr class="r-${esc(r.status)}">
   <td class="mono">${esc(r.created_at)}</td>
-  <td><a href="${esc(r.path)}" target="_blank" rel="noopener">${esc(r.path)}</a><div class="mono dim">${esc(r.line_hash)}</div></td>
-  <td><span class="reason reason-${esc(r.reason)}">${esc(reasonLabel[r.reason] || r.reason)}</span>${reportBadge}</td>
-  <td class="quote">${esc(r.quote)}</td>
-  <td class="detail">${esc(r.detail)}</td>
+  <td><a href="${esc(r.path)}" target="_blank" rel="noopener">${esc(r.path)}</a><div class="mono dim">${esc(r.line_hash)}</div>${solverBadge}</td>
+  <td><span class="reason reason-${esc(r.reason)}">${esc(labels[r.reason] || r.reason)}</span>${reportBadge}</td>
+  <td class="quote${isSolver ? " has-snap" : ""}">${stateCell}</td>
+  <td class="detail">${esc(r.detail)}${expectedHtml}</td>
   <td><span class="status status-${esc(r.status)}">${esc(r.status)}</span></td>
   <td class="actions">
     <form method="post">
@@ -112,6 +213,7 @@ export async function onRequestGet({ request, env }) {
       <input type="hidden" name="path" value="${esc(r.path)}">
       <input type="hidden" name="line_hash" value="${esc(r.line_hash)}">
       <input type="hidden" name="status" value="${esc(status)}">
+      <input type="hidden" name="src" value="${esc(src)}">
       ${actions}
     </form>
   </td>
@@ -139,12 +241,22 @@ export async function onRequestGet({ request, env }) {
   .summary{padding:.5rem 1.25rem;color:#f1b86b;font-size:.9rem}
   table{border-collapse:collapse;width:100%}
   th,td{padding:.5rem .6rem;border-bottom:1px solid #23272e;vertical-align:top;text-align:left}
-  th{position:sticky;top:5.4rem;background:#191c21;font-weight:600;color:#aeb6c2}
+  th{position:sticky;top:7.6rem;background:#191c21;font-weight:600;color:#aeb6c2}
   tr:hover{background:#1a1d23}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82em}
   .dim{opacity:.5}
   .quote{max-width:22ch;color:#aeb6c2}
+  .quote.has-snap{max-width:40ch}
   .detail{max-width:34ch;white-space:pre-wrap}
+  nav.sub{margin-top:.4rem}
+  nav.sub a{font-size:.85em;padding:.15rem .5rem}
+  .solvertag{margin-top:.25rem;font-size:.82em;color:#9fd8b0}
+  .snap{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.1rem .55rem;font-size:.85em}
+  .snap dt{color:#8f98a5;white-space:nowrap}
+  .snap dd{margin:0;color:#e8e8ea;overflow-wrap:anywhere}
+  .snapmeta{margin-top:.3rem;font-size:.75em;opacity:.5}
+  .snapraw{margin:0;white-space:pre-wrap;font-size:.78em;opacity:.8}
+  .expected{margin-top:.35rem;color:#f1b86b}
   .reason{font-size:.85em;white-space:nowrap}
   .reason-buggy{color:#ff8d8d}.reason-wrong{color:#ffb27a}.reason-outdated{color:#e7c86a}.reason-unclear{color:#9fc6ff}
   .reports{display:inline-block;margin-left:.3rem;padding:0 .4rem;border-radius:999px;background:#2a2e35;font-size:.8em}
@@ -172,13 +284,18 @@ export async function onRequestGet({ request, env }) {
     ${navLink("dismissed", "Dismissed")}
     ${navLink("all", "All")}
   </nav>
+  <nav class="sub">
+    ${srcLink("all", "All sources")}
+    ${srcLink("solver", "🧩 Solvers")}
+    ${srcLink("line", "Guide lines")}
+  </nav>
 </header>
 ${overThreshold ? `<div class="summary">⚠ ${overThreshold} line${overThreshold === 1 ? "" : "s"} currently over the buggy threshold (${BUGGY_THRESHOLD}) — auto-noted to readers.</div>` : ""}
 ${
     rows.length === 0
         ? `<p class="empty">No ${status === "all" ? "" : esc(status) + " "}flags.</p>`
         : `<table>
-<thead><tr><th>When (UTC)</th><th>Page / line</th><th>Reason</th><th>Quote</th><th>Detail</th><th>Status</th><th>Actions</th></tr></thead>
+<thead><tr><th>When (UTC)</th><th>Page / line</th><th>Reason</th><th>Quote / solver state</th><th>Detail</th><th>Status</th><th>Actions</th></tr></thead>
 <tbody>
 ${rowsHtml}
 </tbody></table>`
@@ -201,6 +318,8 @@ export async function onRequestPost({ request, env }) {
     const lineHash = form.get("line_hash");
     let status = form.get("status") || "open";
     if (!STATUSES.includes(status) && status !== "all") status = "open";
+    let src = form.get("src") || "all";
+    if (!SOURCES.includes(src)) src = "all";
 
     try {
         if (action === "resolve" && Number.isFinite(id)) {
@@ -221,5 +340,8 @@ export async function onRequestPost({ request, env }) {
         /* fall through to redirect; the list will reflect reality */
     }
 
-    return redirect(request, "/admin/flags?status=" + encodeURIComponent(status));
+    return redirect(
+        request,
+        "/admin/flags?status=" + encodeURIComponent(status) + "&src=" + encodeURIComponent(src),
+    );
 }

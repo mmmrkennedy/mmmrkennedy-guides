@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 const ingredient_number_data: Record<string, number[]> = {
     "Racing Fuel": [5, 6, 6, 6, 6, 8, 11, 13, 14, 14, 14, 16],
@@ -243,6 +244,17 @@ export default function IWChemicalStepSolver({ title }: { title?: string }) {
     const [showRacingContainer, setShowRacingContainer] = useState<boolean>(false);
     const [showONumContainer, setShowONumContainer] = useState<boolean>(false);
     const [showFinalChemContainer, setShowFinalChemContainer] = useState<boolean>(false);
+
+    // The show* flags are which steps have been revealed, not answers given, so
+    // they're left out; every number below is a value read off something in game.
+    useSolverReport("ChemicalStepSolver", () => ({
+        "M number": mNum,
+        "Top number on TV": lowerBound,
+        "Insect repellent number (top + left)": insectNum,
+        "Racing fuel number (top + left)": racingNum,
+        "O number": oNum,
+        "Final chemical": finalChem,
+    }));
 
     const resetAll = () => {
         setMNum(0);

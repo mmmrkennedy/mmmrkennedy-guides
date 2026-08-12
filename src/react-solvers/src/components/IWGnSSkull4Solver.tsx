@@ -1,4 +1,5 @@
 import { useState, useMemo } from "preact/hooks";
+import { useSolverReport } from "../solver-report";
 
 const ALPHABET: string[] = "abcdefghijklmnopqrstuvwxyz".split("");
 
@@ -121,6 +122,12 @@ function solveCipher(targetWord: string, swingsetLettersArr: string[]): SolveRes
 export default function IWGnSSkull4Solver({ title }: { title?: string }) {
     const [word, setWord] = useState<string>("");
     const [selectedSymbols, setSelectedSymbols] = useState<string[]>(["", "", "", ""]);
+
+    // "" is an unfilled slot; kept in place so slot 3 stays slot 3.
+    useSolverReport("AttackGnSSkull4Solver", () => ({
+        "Target word": word,
+        "Symbols in slots 1-4": selectedSymbols,
+    }));
 
     // Auto-derived from inputs — no useEffect / extra state.
     // The freshness animation is keyed by these inputs so the result
