@@ -193,9 +193,9 @@ function getFormulasForChemical(chemical: ChemicalType): { name: string; ingredi
         case "chem_5":
             return [
                 { name: "Formula 1", ingredients: ["Fat", "Vodka"] },
-                { name: "Formula 2", ingredients: ["Detergent", "Drain Opener"] },
-                { name: "Formula 3", ingredients: ["Ice", "Glycerol", "Mixed Acid Solution"] },
-                { name: "Formula 4", ingredients: ["Mixed Acid Solution", "Baking Soda"] },
+                { name: "Formula 2", ingredients: ["Detergent", "Drain Opener", "Ice"] },
+                { name: "Formula 3", ingredients: ["Glycerol", "Mixed Acid Solution"] },
+                { name: "Formula 4", ingredients: ["Nitrated Glycerol Solution", "Baking Soda"] },
             ];
         default:
             return [];
