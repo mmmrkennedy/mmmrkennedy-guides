@@ -186,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // one was. As a second open field it competed with the box that actually
         // matters, and implied they owed us an answer they don't have.
         '<details class="gfb-pop__expected" hidden>' +
-            "<summary>Do you know what the solution should be?</summary>" +
+            "<summary>Do you know what the solution should be? (optional)</summary>" +
             '<input type="text" autocomplete="off" placeholder="e.g. Button #2">' +
         "</details>" +
         '<details class="gfb-pop__snap" hidden>' +
