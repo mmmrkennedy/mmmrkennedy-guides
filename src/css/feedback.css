@@ -116,9 +116,12 @@
 /* components.css appends a non-breaking space after every <label> so guide-content
    labels keep a gap before their control, and exempts `.solver-container label`
    from it. This popover is neither: it's appended to <body>, so it inherited the
-   nbsp — and because its label is a flex column, the ::after became a third flex
-   ITEM, adding a phantom row and a gap under the field. Opt out the same way the
-   solver forms do. */
+   nbsp, and because the label it used to have was a flex column the ::after
+   became a third flex ITEM, adding a phantom row under the field.
+
+   The popover has no <label> left, so this is a guard rather than a fix. It stays
+   because the trap is invisible from in here: nothing about writing a <label>
+   suggests a global rule will inject content into it. */
 .gfb-pop label::after {
     content: none;
 }
@@ -225,24 +228,23 @@
     cursor: not-allowed;
 }
 
-/* "What did the game actually want?" — solver mode only. For a solver report the
- * expected answer is worth more than the prose, so it gets its own field. */
+/* "Do you know what the solution should be?" — solver mode only, and folded away
+ * by default. Knowing the right answer is the exception, not the rule, so this
+ * sits under the description box as an optional extra rather than beside it as a
+ * second thing to fill in. No display rule here on purpose: that lets the hidden
+ * attribute work on its own for the line-flag case. */
 .gfb-pop__expected {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin-bottom: var(--space-sm);
+    margin-top: var(--space-sm);
     font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
 }
 
-/* Explicit, because the display above would otherwise beat the hidden attribute
- * and leave the field showing on a plain line flag. */
-.gfb-pop__expected[hidden] {
-    display: none;
+.gfb-pop__expected summary {
+    cursor: pointer;
+    color: var(--color-text-muted);
 }
 
 .gfb-pop__expected input {
+    margin-top: var(--space-xs);
     width: 100%;
     background: var(--color-bg-primary);
     color: var(--color-text-primary);
@@ -269,10 +271,11 @@
     color: var(--color-text-muted);
 }
 
+/* Label above value, not beside it. Two columns inside a 320px popover gave the
+   label a nowrap track wide enough to squeeze the value into a sliver, and a
+   board's coordinates then wrapped mid-pair ("[0, 0], [1,\n1]"). Both halves get
+   the full width this way, which is what long labels and long values both need. */
 .gfb-pop__snap-list {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.1rem var(--space-sm);
     margin: var(--space-xs) 0 0;
     padding: var(--space-sm);
     background: var(--color-bg-primary);
@@ -281,7 +284,10 @@
 
 .gfb-pop__snap-list dt {
     color: var(--color-text-muted);
-    white-space: nowrap;
+}
+
+.gfb-pop__snap-list dt:not(:first-of-type) {
+    margin-top: var(--space-xs);
 }
 
 .gfb-pop__snap-list dd {

@@ -67,7 +67,7 @@ function renderSnapshot(raw) {
     for (const [k, v] of Object.entries(snap.state || {})) {
         rows.push(`<dt>${esc(k)}</dt><dd>${esc(formatValue(v))}</dd>`);
     }
-    if (rows.length === 0) rows.push("<dt>(nothing entered)</dt><dd>—</dd>");
+    if (rows.length === 0) rows.push("<dt>(nothing entered)</dt><dd>-</dd>");
 
     const meta = [];
     if (snap.build) meta.push(`build ${esc(snap.build)}`);
@@ -75,7 +75,7 @@ function renderSnapshot(raw) {
     if (snap.v && snap.v !== 2) meta.push(`snapshot v${esc(String(snap.v))}`);
     // Worth flagging: these came from scraping the page, not from the solver, so
     // an input the solver never rendered simply isn't here.
-    if (snap.scraped) meta.push("scraped from the DOM — inputs may be incomplete");
+    if (snap.scraped) meta.push("scraped from the DOM, inputs may be incomplete");
 
     return (
         `<dl class="snap">${rows.join("")}</dl>` +
@@ -272,7 +272,7 @@ export async function onRequestGet({ request, env }) {
 <body>
 <header>
   <div class="titlebar">
-    <h1>Guide feedback — flags</h1>
+    <h1>Guide feedback: flags</h1>
     <form class="signout" method="post" action="/admin/login">
       <input type="hidden" name="action" value="logout">
       <button type="submit">Sign out</button>
@@ -290,7 +290,7 @@ export async function onRequestGet({ request, env }) {
     ${srcLink("line", "Guide lines")}
   </nav>
 </header>
-${overThreshold ? `<div class="summary">⚠ ${overThreshold} line${overThreshold === 1 ? "" : "s"} currently over the buggy threshold (${BUGGY_THRESHOLD}) — auto-noted to readers.</div>` : ""}
+${overThreshold ? `<div class="summary">⚠ ${overThreshold} line${overThreshold === 1 ? "" : "s"} currently over the buggy threshold (${BUGGY_THRESHOLD}), auto-noted to readers.</div>` : ""}
 ${
     rows.length === 0
         ? `<p class="empty">No ${status === "all" ? "" : esc(status) + " "}flags.</p>`

@@ -54,10 +54,10 @@ export async function notifyFlag(env, request, flag) {
     // it gave, so the message alone is usually enough to tell a real bug from a
     // mis-entered round without opening the admin page.
     const lines = [
-        flag.solver ? `🧩 New solver flag: ${flag.reason} — ${flag.solver}` : `🚩 New flag: ${flag.reason}`,
+        flag.solver ? `🧩 New solver flag: ${flag.reason} (${flag.solver})` : `🚩 New flag: ${flag.reason}`,
         flag.path,
         `"${flag.quote || "(no quote)"}"`,
-        `— ${flag.detail}`,
+        `- ${flag.detail}`,
     ];
     if (flag.expected) lines.push(`Expected: ${flag.expected}`);
     if (adminUrl) lines.push(adminUrl);

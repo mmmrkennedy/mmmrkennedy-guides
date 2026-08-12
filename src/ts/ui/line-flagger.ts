@@ -180,13 +180,17 @@ document.addEventListener("DOMContentLoaded", () => {
         '<p class="gfb-pop__title">Flag this line</p>' +
         '<p class="gfb-pop__quote"></p>' +
         '<div class="gfb-pop__reasons"></div>' +
-        '<label class="gfb-pop__expected" hidden>' +
-            "<span>What would the correct solution?</span>" +
-            '<input type="text" autocomplete="off" placeholder="e.g. Button #2 (optional)">' +
-        "</label>" +
         "<textarea></textarea>" +
+        // Behind a disclosure, and below the description box rather than above
+        // it: most people reporting a wrong answer have no idea what the right
+        // one was. As a second open field it competed with the box that actually
+        // matters, and implied they owed us an answer they don't have.
+        '<details class="gfb-pop__expected" hidden>' +
+            "<summary>Do you know what the solution should be?</summary>" +
+            '<input type="text" autocomplete="off" placeholder="e.g. Button #2">' +
+        "</details>" +
         '<details class="gfb-pop__snap" hidden>' +
-            "<summary>What gets sent with this report</summary>" +
+            "<summary>What’s being sent with report (your inputs)</summary>" +
             '<dl class="gfb-pop__snap-list"></dl>' +
         "</details>" +
         '<p class="gfb-pop__hint">Pick a reason and add at least a few words so we can act on it.</p>' +
@@ -199,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const titleEl = pop.querySelector<HTMLElement>(".gfb-pop__title")!;
     const quoteEl = pop.querySelector<HTMLElement>(".gfb-pop__quote")!;
     const reasonsEl = pop.querySelector<HTMLElement>(".gfb-pop__reasons")!;
-    const expectedWrap = pop.querySelector<HTMLElement>(".gfb-pop__expected")!;
+    const expectedWrap = pop.querySelector<HTMLDetailsElement>(".gfb-pop__expected")!;
     const expectedInput = expectedWrap.querySelector<HTMLInputElement>("input")!;
     const textarea = pop.querySelector<HTMLTextAreaElement>("textarea")!;
     const snapEl = pop.querySelector<HTMLDetailsElement>(".gfb-pop__snap")!;
@@ -222,7 +226,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const MIN_DETAIL = 4; // anti low-effort: must be MORE than 3 characters
     const DEFAULT_HINT = "Pick a reason and add at least a few words so we can act on it.";
-    const SOLVER_HINT = "Your inputs are attached automatically - see above.";
+
+    /**
+     * Show an error in the hint line. Solver mode hides that line (the disclosure
+     * above it already says what's attached), so anything reporting a problem has
+     * to bring it back or the message would be written into a hidden element.
+     */
+    function showHintError(message: string): void {
+        hintEl.textContent = message;
+        hintEl.classList.add("is-error");
+        hintEl.hidden = false;
+    }
 
     function buildReasons(set: ReadonlyArray<readonly [FeedbackReason, string]>): void {
         reasonsEl.textContent = "";
@@ -267,8 +281,10 @@ document.addEventListener("DOMContentLoaded", () => {
         for (const o of reasonBtns) o.setAttribute("aria-pressed", "false");
         textarea.value = "";
         expectedInput.value = "";
+        expectedWrap.open = false;
         hintEl.textContent = DEFAULT_HINT;
         hintEl.classList.remove("is-error");
+        hintEl.hidden = false;
         sending = false;
         sendBtn.disabled = true;
         sendBtn.textContent = "Send";
@@ -332,9 +348,14 @@ document.addEventListener("DOMContentLoaded", () => {
         buildReasons(SOLVER_REASONS);
         resetForm();
         titleEl.textContent = "Report a solver problem";
-        textarea.placeholder = "What happened? What did you expect? (required)";
+        // "What did you expect?" moved out to the optional disclosure below, so
+        // asking it here too would be the same question twice.
+        textarea.placeholder = "What happened? (required)";
         expectedWrap.hidden = false;
-        hintEl.textContent = SOLVER_HINT;
+        // No standing hint in solver mode: the disclosure below already announces
+        // what's attached, so a line repeating it is just noise. It comes back if
+        // there's an error to report.
+        hintEl.hidden = true;
         activeQuote = snapshotSummary(activeSnapshot);
         // The summary is already rendered field-by-field in the disclosure below,
         // so repeating it as a quote is noise.
@@ -366,8 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sendBtn.addEventListener("click", () => {
         const reason = selectedReason();
         if (sending || reason === null || !detailOk()) {
-            hintEl.textContent = "Please pick a reason and add at least 4 meaningful characters.";
-            hintEl.classList.add("is-error");
+            showHintError("Please pick a reason and add at least 4 meaningful characters.");
             return;
         }
         void sendFlag(reason);
@@ -427,21 +447,20 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!res.ok) throw new Error("HTTP " + res.status);
             markSent();
             closePop();
-            showToast("🚩 Thanks — flagged for review");
+            showToast("🚩 Thanks, flagged for review");
         } catch (err) {
             if (isLocalHost()) {
                 // No Functions on the eleventy dev server: behave like the demo.
                 window.Log("warn", "[line-flagger] no backend on localhost; would POST", payload);
                 markSent();
                 closePop();
-                showToast("🚩 Thanks — flagged for review (local demo)");
+                showToast("🚩 Thanks, flagged for review (local demo)");
             } else {
                 window.Log("warn", "Flag submission failed:", err);
                 sending = false;
                 sendBtn.textContent = "Send";
                 sendBtn.disabled = false;
-                hintEl.textContent = "Couldn’t send — please try again.";
-                hintEl.classList.add("is-error");
+                showHintError("Couldn’t send, please try again.");
             }
         }
     }
@@ -876,7 +895,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // read from the DOM at all, and a solver drawing to one that reaches this
         // fallback has reported nothing about its board.
         if (container.querySelector("canvas")) {
-            put("(canvas)", "this solver draws to a canvas — its board was not captured");
+            put("(canvas)", "this solver draws to a canvas, so its board was not captured");
         }
 
         return state;
