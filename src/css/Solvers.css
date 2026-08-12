@@ -17,6 +17,13 @@
     --solver-accent-dim: #b89a5a;
     --solver-accent-glow: rgb(201 169 97 / 40%);
 
+    /* Secondary highlight. A cool counterpoint to the gold accent, for marking
+       a subset of results without claiming they are the answer. Deliberately
+       not the gold: gold means "this is your result", this means "these are
+       worth looking at first". */
+    --solver-hint: #78a8e8;
+    --solver-hint-bg: rgb(120 168 232 / 10%);
+
     /* Grid layout — solvers override these */
     --solver-cols: 4;
     --solver-rows: 4;
@@ -295,6 +302,7 @@
     border-radius: 4px;
     font-size: var(--font-size-base);
     transition: border-color 0.15s ease, background-color 0.15s ease;
+    margin: inherit 4px;
 }
 
 .solver-container select {
@@ -762,8 +770,18 @@
    Scrollable when long; scrollbar hidden for cleanliness. */
 .solver-word-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+
+    /* Every cell is one word wide, so nothing wraps and every row is the same
+       height. The longest entry measures 15.3ch in the body stack, so a 16ch
+       floor plus the cells' own padding holds any of them on one line. ch
+       resolves against this element's font, which is why the size clamp lives
+       here and the cells inherit it. min(100%, ...) lets a panel too narrow
+       for even one cell fall back to a single column instead of overflowing.
+       auto-fill rather than a fixed count: the column count is whatever the
+       panel can hold, so it steps down on its own as the panel narrows. */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--word-ch, 16) * 1ch + 2 * var(--space-sm))), 1fr));
     gap: var(--space-xs);
+    font-size: clamp(0.6875rem, 3.4vw, var(--font-size-sm));
     max-height: 18.75rem;
     margin: 0;
     padding: 0;
@@ -781,14 +799,95 @@
     background: var(--color-bg-tertiary);
     border-radius: 4px;
     color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
     text-align: center;
+
+    /* The track floor above is sized to the longest word, so nothing needs a
+       second line. */
+    white-space: nowrap;
 }
 
 .solver-word-list--empty {
     color: var(--color-text-muted);
     font-style: italic;
     text-align: center;
+}
+
+/* Group hint. The Shaolin word filter tints the words belonging to the group
+   the puzzle is currently drawing from, and sorts them to the front. Purely a
+   reading aid: every prefix match is still listed, the tinted ones are just
+   the likely ones. */
+.solver-word-list li.is-group-match {
+    background: var(--solver-hint-bg);
+}
+
+/* Sits with the results, not with the inputs: it is something the solver
+   worked out, not something you told it. */
+.solver-group-label {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+
+    /* Half the browser default for a paragraph. The container's flex gap
+       already separates it from the panel below. */
+    margin: 0.5em 0;
+    color: var(--solver-hint);
+    font-size: var(--font-size-sm);
+}
+
+.solver-group-label__clear {
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------
+   Shaolin word filter — the panel is sized to four words across.
+
+   Every other solver leaves the panel on its 22.5rem floor: .solver-output is
+   width:0/min-width:100% so results never drive the panel's width, and the
+   container's fit-content therefore lands on min-width. That floor is not wide
+   enough for even two of these words, so this panel takes its width from the
+   grid instead. min() hands the rest back to the viewport, so when four cells
+   will not fit, the panel is simply as wide as it can be and the auto-fill
+   above steps down to three, two, one. Nothing ever wraps at any width.
+
+   Everything is in ch so it tracks whatever font the platform serves. The one
+   number to watch is the 0.875: the list renders at --font-size-sm while the
+   panel inherits --font-size-base, and ch scales with font-size, so a word
+   that is --word-ch wide in the list is --word-ch * 0.875 wide in the panel's
+   own ch. That factor is --font-size-sm / --font-size-base; if either token
+   moves, move it too.
+   ------------------------------------------------------------ */
+.solver-container--word-filter {
+    /* Cell width in list-ch. SAVAGEMADETHIS, the longest entry, is 15.34ch. */
+    --word-ch: 16;
+}
+
+@media (width >= 48.0625em) {
+    .solver-container--word-filter {
+        width: min(
+            100%,
+            calc(
+                4 * (var(--word-ch) * 0.875ch + 2 * var(--space-sm)) /* four cells */
+                + 3 * var(--space-xs) /* the gaps between them */
+                + 2 * var(--space-md) + 2px /* .solver-output padding + border */
+                + 2 * var(--space-lg) + 4px /* panel padding + border */
+            )
+        );
+
+        /* The shared 22.5rem floor would out-rank the min() above and force an
+           overflow on narrow desktop windows. */
+        min-width: 0;
+    }
+}
+
+.solver-group-label__clear:hover {
+    color: var(--color-text-primary);
 }
 
 /* ------------------------------------------------------------
