@@ -26,7 +26,7 @@
   "src/games/BO3/zetsubou_no_shima/zetsubou_no_shima_guide.html": 8,
   "src/games/BO4/alpha_omega/alpha_omega_guide.html": 18,
   "src/games/BO4/ancient_evil/ancient_evil_guide.html": 20,
-  "src/games/BO4/blood_of_the_dead/blood_of_the_dead_guide.html": 21,
+  "src/games/BO4/blood_of_the_dead/blood_of_the_dead_guide.html": 22,
   "src/games/BO4/classified/classified_guide.html": 14,
   "src/games/BO4/dead_of_the_night/dead_of_the_night_guide.html": 21,
   "src/games/BO4/ix/ix_guide.html": 20,
@@ -82,5 +82,5 @@
   "src/games/WW2/the_tortured_path/the_tortured_path_guide.html": 19,
   "src/index.html": 39,
   "src/react-solvers/index.html": 10,
-  "src/stats.html": 1
+  "src/stats.html": 2
 }

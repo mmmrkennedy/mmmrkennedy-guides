@@ -110,17 +110,32 @@ function countWords(html) {
     return words ? words.length : 0;
 }
 
-const PICTURE_EXTENSIONS = new Set([".webp", ".png", ".jpg", ".jpeg", ".gif"]);
+const PICTURE_REF = /(?:href|src)\s*=\s*["']([^"']+?\.(?:webp|png|jpe?g|gif))["']/gi;
 
-/** Every file under `dir` (recursively) whose name passes `keep`. */
-function walkFiles(dir, keep, results = []) {
-    if (!fs.existsSync(dir)) return results;
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) walkFiles(full, keep, results);
-        else if (keep(entry.name)) results.push(full);
+/**
+ * Distinct screenshots a guide shows, counted from the links and <img>s in its
+ * own HTML.
+ *
+ * This used to count image *files* in the guide's folder, which stopped working
+ * when the images moved to R2: they're git-ignored now (see .gitignore), so a
+ * Cloudflare checkout has none of them on disk and every guide measured zero.
+ * Reading the references instead measures the same thing from something that
+ * ships with the guide, and fixes two counting bugs the file walk had: it no
+ * longer counts screenshots that no guide links any more, and a guide with
+ * sub-guides under it (the Tortured Path survival maps) no longer counts its
+ * children's folders as its own — that walk was recursive, so the three maps
+ * and their parent were each claiming all four sets.
+ *
+ * Repeats collapse: linking one screenshot from two steps is still one
+ * screenshot. Off-site images aren't ours to count.
+ */
+function countPictures(html) {
+    const seen = new Set();
+    for (const [, url] of String(html).matchAll(PICTURE_REF)) {
+        if (/^(?:[a-z]+:)?\/\//i.test(url)) continue;
+        seen.add(url.split(/[?#]/)[0].toLowerCase());
     }
-    return results;
+    return seen.size;
 }
 
 /**
@@ -193,10 +208,7 @@ function siteStats() {
                 const words = countWords(body);
                 if (words < WORDCOUNT_FLOOR) { measured.set(href, false); continue; } // a stub
 
-                const pictures = walkFiles(
-                    path.dirname(file),
-                    (n) => PICTURE_EXTENSIONS.has(path.extname(n).toLowerCase()),
-                ).length;
+                const pictures = countPictures(body);
                 const cacheKey = "src/" + href + ".html";
                 const steps = (body.match(/<li[\s>]/g) || []).length;
 
@@ -1144,7 +1156,18 @@ function injectReactBundle(content, outputPath) {
     }
 }
 
-function wrapTables(content, outputPath) {
+/**
+ * Gives every <table> its horizontal-scroll wrapper, and — where the table can
+ * take it — stamps each body cell with the heading of its column so the mobile
+ * stylesheet can restack the row as a card (see "Mobile: one card per row" in
+ * components.css).
+ *
+ * The labels are baked in here rather than read off the header row at runtime
+ * because `td::before` can only print a string the CSS already holds, and the
+ * only other source of one is a script that walks every table on every page
+ * load to write the same attributes this loop writes once.
+ */
+function prepareTables(content, outputPath) {
     if (!outputPath?.endsWith(".html")) return content;
     try {
         const dom = new JSDOM(content);
@@ -1153,18 +1176,68 @@ function wrapTables(content, outputPath) {
         if (!tables.length) return content;
         let modified = false;
         for (const table of tables) {
-            if (table.parentElement?.classList.contains("table-scroll")) continue;
-            const wrapper = document.createElement("div");
-            wrapper.className = "table-scroll";
-            table.parentNode.insertBefore(wrapper, table);
-            wrapper.appendChild(table);
-            modified = true;
+            let wrapper = table.parentElement;
+            if (!wrapper?.classList.contains("table-scroll")) {
+                wrapper = document.createElement("div");
+                wrapper.className = "table-scroll";
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+                modified = true;
+            }
+            if (labelTableCells(table)) {
+                wrapper.classList.add("table-scroll--cards");
+                modified = true;
+            }
         }
         return modified ? dom.serialize() : content;
     } catch (e) {
-        console.error(`Error wrapping tables in ${outputPath}:`, e.message);
+        console.error(`Error preparing tables in ${outputPath}:`, e.message);
         return content;
     }
+}
+
+/**
+ * Marks up one table for card mode: `data-label` on every body cell, an opt-in
+ * `data-cards` on the table, and a marker on the header row so the stylesheet
+ * can drop it once its text lives on the cells. Returns whether the table took
+ * it — two shapes deliberately don't:
+ *
+ *   - anything carrying rowspan/colspan. A spanned cell belongs to several
+ *     rows, and stacked into cards it can only appear in the first of them, so
+ *     the rest would quietly lose content the table gave them. These keep the
+ *     scrolling table, which still shows the span.
+ *   - [data-sortable]. table-sort.ts puts its controls in the header row, and
+ *     card mode hides that row.
+ */
+function labelTableCells(table) {
+    if (table.hasAttribute("data-cards")) return true;
+    if (table.hasAttribute("data-sortable")) return false;
+    if (table.querySelector("[rowspan], [colspan]")) return false;
+
+    // Guides write the headings either in a <thead> or as a first row of <th>
+    // inside the <tbody>; both are the same row for this purpose.
+    const headRow = table.tHead?.rows[0] ?? table.rows[0];
+    if (!headRow?.cells.length) return false;
+    const headings = Array.from(headRow.cells);
+    if (!headings.every((cell) => cell.tagName === "TH")) return false;
+
+    // .table-key's first column is the row's subject, and card mode promotes it
+    // to the card's title — a "Item" label sitting above it would only restate
+    // the column it already is.
+    const titleColumn = table.classList.contains("table-key") ? 0 : -1;
+
+    for (const row of table.rows) {
+        if (row === headRow) continue;
+        for (const cell of row.cells) {
+            if (cell.tagName !== "TD" || cell.cellIndex === titleColumn) continue;
+            const label = headings[cell.cellIndex]?.textContent.replace(/\s+/g, " ").trim();
+            if (label) cell.setAttribute("data-label", label);
+        }
+    }
+
+    headRow.setAttribute("data-card-head", "");
+    table.setAttribute("data-cards", "");
+    return true;
 }
 
 function preRenderRevealButtons(content, outputPath) {
@@ -1488,7 +1561,7 @@ async function smartCopyImages() {
 
 module.exports = function(eleventyConfig) {
     // Add transforms for quick links generation, link classification, versioning, and React bundle injection
-    eleventyConfig.addTransform("wrapTables", wrapTables);
+    eleventyConfig.addTransform("prepareTables", prepareTables);
     eleventyConfig.addTransform("resolveStepRefs", resolveStepRefs);
     eleventyConfig.addTransform("preRenderRevealButtons", preRenderRevealButtons);
     eleventyConfig.addTransform("preRenderPathTabs", preRenderPathTabs);

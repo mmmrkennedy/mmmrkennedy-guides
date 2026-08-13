@@ -122,7 +122,7 @@ const CELL_ON_SEL =
  * Blocks nested inside a line that are lines of their own: they're excluded from
  * the line's text, and the ⚑ goes before the first of them rather than after the
  * whole subtree. `.table-scroll` is the wrapper the build puts around every
- * <table> (wrapTables in eleventy.config.cjs), so a bare `table` never actually
+ * <table> (prepareTables in eleventy.config.cjs), so a bare `table` never actually
  * appears as a child here — without the wrapper in this list a list item that
  * introduces a table swallowed the entire table's text into its hash and quote,
  * and parked its flag below the table.

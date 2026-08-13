@@ -713,6 +713,8 @@ a[data-media-type="audio"]::after {
 /* Tables */
 .table-scroll {
     margin: var(--space-lg) calc(-1 * var(--space-md)) var(--space-lg) calc(-1 * var(--space-md));
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-sm);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     background-color: var(--color-bg-secondary);
@@ -754,16 +756,144 @@ td {
 /* Left-column-key table: first col shrinks to content, last col fills */
 .table-key th:first-child,
 .table-key td:first-child {
-    width: fit-content;
-    white-space: nowrap;
+    width: 20%;
+    min-width: min-content;
     font-weight: 600;
 }
 
-/* .table-key th:last-child,
-.table-key td:last-child {
-    width: 90%;
-}
+/* Mobile: one card per row.
+ *
+ * Under --bp-md a three-column table gets ~110px per column, which breaks every
+ * cell into a stack of one-word lines, and the wrapper's horizontal scroll only
+ * trades that for columns parked off-screen. So each body row becomes a card:
+ * the cells stack, and each one is introduced by its column's heading, printed
+ * from the data-label the build stamps on it (labelTableCells in
+ * eleventy.config.cjs). That makes the header row a duplicate, so it comes off.
+ *
+ * Only tables the build marked [data-cards] switch — tables with rowspan, or
+ * with sort controls in the header, keep the scrolling table (see
+ * labelTableCells for why). Desktop is untouched: every rule here is inside the
+ * narrow query, and the markup the build adds is inert without it.
+ *
+ * The stacked cells lose their table roles in the accessibility tree, as they
+ * would under any display:block restyle of a table. The ::before labels are
+ * what carries the column meaning in that state, which is the reason they're
+ * real text on the cell rather than a background image or a ::before on the row.
  */
+@media (width < 48.0625em) { /* --bp-md */
+    .table-scroll--cards {
+        /* Not a scroll port any more: cards wrap, so instead of running
+           full-bleed they sit in the text column with the prose around them. */
+        margin-inline: 0;
+        overflow-x: visible;
+        background-color: transparent;
+    }
+
+    table[data-cards] {
+        display: block;
+        min-width: 0;
+        width: 100%;
+        padding: 0;
+    }
+
+    /* Free-standing heading above the cards. The band it wears in table form is
+       there to cap the grid below it, and there's no grid left to cap. */
+    table[data-cards] > caption {
+        display: block;
+        padding: 0 0 var(--space-sm);
+        border-bottom: none;
+        background-color: transparent;
+    }
+
+    table[data-cards] > thead,
+    table[data-cards] [data-card-head] {
+        display: none;
+    }
+
+    table[data-cards] > tbody {
+        display: block;
+    }
+
+    table[data-cards] > tbody > tr {
+        display: block;
+        margin-bottom: var(--space-sm);
+        border: 1px solid var(--color-border-medium);
+        border-radius: 4px;
+        background-color: var(--color-bg-secondary);
+    }
+
+    table[data-cards] > tbody > tr:last-child {
+        margin-bottom: 0;
+    }
+
+    table[data-cards] > tbody > tr > td {
+        display: block;
+        padding: var(--space-smd) var(--space-md);
+        border: none;
+    }
+
+    /* A blank cell would otherwise print its heading over nothing. */
+    table[data-cards] > tbody > tr > td:empty {
+        display: none;
+    }
+
+    /* Inside a card the cell divider is a hairline, not the full table grid. */
+    table[data-cards] > tbody > tr > td + td {
+        border-top: 1px solid var(--color-border-subtle);
+    }
+
+    td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: var(--space-xs);
+        color: var(--color-text-muted);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    /* .table-key rows read "subject, then detail", so the subject takes the top
+       of the card as its title instead of being a labelled cell like the rest.
+       Width comes off the 20% the desktop column takes; the card is one column
+       wide and the rule would squeeze the title into a 20% ribbon. */
+    table[data-cards].table-key > tbody > tr > td:first-child {
+        width: auto;
+        min-width: 0;
+        border-radius: 4px 4px 0 0;
+        background-color: var(--color-bg-tertiary);
+        color: var(--color-tier-2);
+    }
+
+    /* The divider under a title band carries the same weight as the frame. */
+    table[data-cards].table-key > tbody > tr > td:first-child + td {
+        border-top-color: var(--color-border-medium);
+    }
+
+    /* Two-column key table: the one remaining heading only ever restates the
+       title above it ("Flyer" over "Locations"), so it comes off. Key tables
+       with a third column keep their headings, which do still carry meaning. */
+    table[data-cards].table-key > tbody > tr:not(:has(> td:nth-child(3))) > td:nth-child(2)::before {
+        content: none;
+    }
+
+    /* Lists are the usual cell content. Without the table's own indentation to
+       sit in, they need only enough padding to hang their markers on. */
+    table[data-cards] td > ul,
+    table[data-cards] td > ol {
+        margin: 0;
+        padding-inline-start: var(--space-md);
+    }
+
+    /* The cell's padding is the card's spacing; its content shouldn't add to it. */
+    table[data-cards] td > :first-child {
+        margin-top: 0;
+    }
+
+    table[data-cards] td > :last-child {
+        margin-bottom: 0;
+    }
+}
 
 /* Forms */
 

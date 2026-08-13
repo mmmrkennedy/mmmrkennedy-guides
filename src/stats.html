@@ -31,7 +31,7 @@ statsPage: true
         <li class="stat-tile">
             <span class="stat-tile__label">Screenshots</span>
             <span class="stat-tile__value">{{ t.pictures | thousands }}</span>
-            <span class="stat-tile__note">images shipped with the guides</span>
+            <span class="stat-tile__note">images the guides link to</span>
         </li>
         <li class="stat-tile">
             <span class="stat-tile__label">Average guide</span>
@@ -118,7 +118,7 @@ statsPage: true
 
 <div class="content-container">
     <h2 class="title-tier-1">Most screenshots</h2>
-    <p class="chart-note">Images stored alongside each guide, {{ t.pictures | thousands }} in total.</p>
+    <p class="chart-note">Distinct images each guide shows, {{ t.pictures | thousands }} in total.</p>
     {%- set maxPics = stats.byPictures[0].pictures %}
     <ol class="chart">
         {%- for g in stats.byPictures %}
