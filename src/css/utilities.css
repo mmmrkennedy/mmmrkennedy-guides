@@ -30,6 +30,37 @@ one of which is ever on screen. Built by the `preRenderPathTabs` transform.
     margin: var(--space-md) var(--space-sm);
 }
 
+/* Mobile: the switcher fills the block it's written in instead of hanging off
+   the list markers it's nested behind. It's the fork in the guide, not an aside
+   to the list item, and its tabs are stacked full-width buttons down here — two
+   list levels in, there's little room left to name a path. Same treatment the
+   table cards get, level by level, so the two line up: see "Mobile: one card per
+   row" in components.css. */
+@media (width < 48.0625em) { /* --bp-md */
+    .path-tabs {
+        /* Room to grow into: the 100% would clamp the negative margins below
+           back to the width the list left it. */
+        max-width: none;
+        margin-inline: 0;
+    }
+
+    :where(li) > .path-tabs {
+        margin-inline-start: calc(-1 * var(--list-indent));
+    }
+
+    :where(li li) > .path-tabs {
+        margin-inline-start: calc(-2 * var(--list-indent));
+    }
+
+    :where(.path-tabs__panel li) > .path-tabs {
+        margin-inline-start: calc(-1 * var(--list-indent));
+    }
+
+    :where(.dummy-li-no-indent) > .path-tabs {
+        margin-inline-start: 0;
+    }
+}
+
 /* Mobile-first: full-width stacked buttons. Widened into a real tab strip at
    --bp-md in responsive.css. */
 .path-tabs__bar {

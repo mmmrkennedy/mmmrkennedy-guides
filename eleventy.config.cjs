@@ -1197,22 +1197,63 @@ function prepareTables(content, outputPath) {
 }
 
 /**
+ * Walks a table into a grid, so every cell is known by the row and column it
+ * actually occupies rather than by its position in the markup. With a rowspan
+ * above it, a row's second `<td>` can be the third column, and labelling it off
+ * `cellIndex` would give it the wrong heading.
+ *
+ * Returns one entry per cell: the element, its top-left grid position, and its
+ * span.
+ */
+function mapTableGrid(table) {
+    const taken = [];
+    const cells = [];
+    let row = 0;
+
+    for (const rowEl of table.rows) {
+        taken[row] ??= [];
+        let col = 0;
+        for (const cell of rowEl.cells) {
+            while (taken[row][col]) col += 1;
+            const rowSpan = cell.rowSpan || 1;
+            const colSpan = cell.colSpan || 1;
+            cells.push({ cell, rowEl, row, col, rowSpan, colSpan });
+            for (let r = row; r < row + rowSpan; r += 1) {
+                taken[r] ??= [];
+                for (let c = col; c < col + colSpan; c += 1) taken[r][c] = true;
+            }
+            col += colSpan;
+        }
+        row += 1;
+    }
+
+    return cells;
+}
+
+/**
  * Marks up one table for card mode: `data-label` on every body cell, an opt-in
  * `data-cards` on the table, and a marker on the header row so the stylesheet
  * can drop it once its text lives on the cells. Returns whether the table took
- * it — two shapes deliberately don't:
+ * it — two shapes still don't:
  *
- *   - anything carrying rowspan/colspan. A spanned cell belongs to several
- *     rows, and stacked into cards it can only appear in the first of them, so
- *     the rest would quietly lose content the table gave them. These keep the
- *     scrolling table, which still shows the span.
+ *   - anything carrying colspan. One cell spanning several columns has no
+ *     single heading to be labelled with, and splitting it would invent a
+ *     division the author didn't write. These keep the scrolling table.
  *   - [data-sortable]. table-sort.ts puts its controls in the header row, and
  *     card mode hides that row.
+ *
+ * rowspan is handled rather than refused. A spanned cell sits in the markup of
+ * the first row it covers, so stacked into cards the rows underneath would
+ * silently lose it — the strategy note shared by three challenges would appear
+ * on one card and vanish from the other two. So each covered row gets its own
+ * copy, marked `data-card-copy`, which the stylesheet shows in card mode and
+ * hides everywhere else. The table on desktop is untouched: a display:none cell
+ * occupies no column, so the original span still draws exactly as authored.
  */
 function labelTableCells(table) {
     if (table.hasAttribute("data-cards")) return true;
     if (table.hasAttribute("data-sortable")) return false;
-    if (table.querySelector("[rowspan], [colspan]")) return false;
+    if (table.querySelector("[colspan]")) return false;
 
     // Guides write the headings either in a <thead> or as a first row of <th>
     // inside the <tbody>; both are the same row for this purpose.
@@ -1225,13 +1266,33 @@ function labelTableCells(table) {
     // to the card's title — a "Item" label sitting above it would only restate
     // the column it already is.
     const titleColumn = table.classList.contains("table-key") ? 0 : -1;
+    const labelFor = (col) => headings[col]?.textContent.replace(/\s+/g, " ").trim();
 
-    for (const row of table.rows) {
-        if (row === headRow) continue;
-        for (const cell of row.cells) {
-            if (cell.tagName !== "TD" || cell.cellIndex === titleColumn) continue;
-            const label = headings[cell.cellIndex]?.textContent.replace(/\s+/g, " ").trim();
-            if (label) cell.setAttribute("data-label", label);
+    const grid = mapTableGrid(table);
+    const bodyCells = grid.filter((entry) => entry.rowEl !== headRow && entry.cell.tagName === "TD");
+
+    for (const { cell, col } of bodyCells) {
+        if (col === titleColumn) continue;
+        const label = labelFor(col);
+        if (label) cell.setAttribute("data-label", label);
+    }
+
+    // Copies are inserted after the labelling pass, so they never shift the grid
+    // the labels were read off.
+    const rows = Array.from(table.rows);
+    for (const { cell, col, row, rowSpan } of bodyCells) {
+        if (rowSpan < 2) continue;
+        for (let r = row + 1; r < row + rowSpan && r < rows.length; r += 1) {
+            const copy = cell.cloneNode(true);
+            copy.removeAttribute("rowspan");
+            copy.removeAttribute("id");
+            copy.setAttribute("data-card-copy", "");
+            if (col === titleColumn) copy.removeAttribute("data-label");
+
+            // Put it where the column says it belongs, so the card stacks its
+            // cells in the order the table reads them.
+            const after = grid.find((e) => e.rowEl === rows[r] && e.col > col);
+            rows[r].insertBefore(copy, after?.cell ?? null);
         }
     }
 

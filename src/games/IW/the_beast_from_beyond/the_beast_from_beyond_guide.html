@@ -177,7 +177,7 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
             </div>
         </li>
 
-        <li class="dummy-li">
+        <li class="dummy-li dummy-li-no-indent">
             <div id="beast-venomx-box-solver-react"></div>
         </li>
 
@@ -210,7 +210,7 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
             </ul>
         </li>
 
-        <li class="dummy-li">
+        <li class="dummy-li dummy-li-no-indent">
             <div id="beast-venomx-maze-solver-react"></div>
         </li>
 
@@ -261,7 +261,7 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
         </li>
     </ol>
 
-    <ol start="6" id="venom-y-main-container" style="display: none">
+    <ol start="6" id="venom-y-main-container" hidden>
         <li data-step-id="venomy-morse-terminal">
             Interact with the <a href="pictures/venom_x/venom_y/code_terminal.webp">terminal at the bottom of the stairs</a> near Bang Bangs. This will play a long morse code message. The message will start with the following code (based on the key from the previous step). After this opening code, you will need to listen to one of the options below. This will tell you a number you'll need later.
 
@@ -276,80 +276,86 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
                     By ear: follow along with the "<span class="key_input">KEY</span> - Message Start" below while the Morse code plays, then listen for the number after it.
                 </li>
                 <li>
-                    Numbers in Morse code:
-                    <ul id="venom-y-archer">
-                        <li>
-                            Archer - Message start: <span class="morse-code">-.- --.. -. ... ... -- . ..</span>
-
-                            <ul>
-                                <li>
-                                    Fifteen: <span class="morse-code">.... .--.</span>
-                                </li>
-                                <li>
-                                    Eighteen: <span class="morse-code">--. .--.</span>
-                                </li>
-                                <li>
-                                    Twenty or Twenty-Five: <span class="morse-code">...- -..</span>
-
-                                    <ul>
-                                        <li>
-                                            If you want to be sure, and you don't mind listening to more Morse code, you can listen after the two initial letters for the full word:
-                                            <ul>
-                                                <li>
-                                                    Twenty: <span class="morse-code">...- -.. .. . - .--.</span>
-                                                </li>
-                                                <li>
-                                                    Twenty-Five: <span class="morse-code">...- -.. .. . - .--. .... .--. --.. ...-</span>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    Thirty: <span class="morse-code">...- ---</span>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                    <ul id="venom-y-cross">
-                        <li>
-                            Cross - Message start: <span class="morse-code">-- --.. --.. -.. --. -..- ...- ..-.</span>
-
-                            <ul>
-                                <li>
-                                    Fifteen: <span class="morse-code">-..- .-</span>
-                                </li>
-                                <li>
-                                    Eighteen: <span class="morse-code">.-- .-</span>
-                                </li>
-                                <li>
-                                    Twenty or Twenty-Five: <span class="morse-code">.-.. ---</span>
-
-                                    <ul>
-                                        <li>
-                                            If you want to be sure, and you don't mind listening to more Morse code, you can listen after the two initial letters for the full word:
-                                            <ul>
-                                                <li>
-                                                    Twenty: <span class="morse-code">.-.. --- --. . .... --.-</span>
-                                                </li>
-                                                <li>
-                                                    Twenty-Five: <span class="morse-code">.-.. --- --. . .... --.- -..- -.- -- ...</span>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    Thirty: <span class="morse-code">.-.. --..</span>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
+                    Numbers in Morse code. The first two letters name the number on their own, except for Twenty and Twenty-Five, which open the same way: if you hear that pair, keep listening for the full word.
+                    <div class="table-scroll" id="venom-y-archer" hidden>
+                        <table class="table-key">
+                            <caption>Archer - Message start: <span class="morse-code">-.- --.. -. ... ... -- . ..</span></caption>
+                            <thead>
+                            <tr>
+                                <th scope="col">Number</th>
+                                <th scope="col">Morse code</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Fifteen</td>
+                                <td><span class="morse-code">.... .--.</span></td>
+                            </tr>
+                            <tr>
+                                <td>Eighteen</td>
+                                <td><span class="morse-code">--. .--.</span></td>
+                            </tr>
+                            <tr>
+                                <td>Twenty or Twenty-Five</td>
+                                <td><span class="morse-code">...- -..</span></td>
+                            </tr>
+                            <tr>
+                                <td>Twenty (full word)</td>
+                                <td><span class="morse-code">...- -.. .. . - .--.</span></td>
+                            </tr>
+                            <tr>
+                                <td>Twenty-Five (full word)</td>
+                                <td><span class="morse-code">...- -.. .. . - .--. .... .--. --.. ...-</span></td>
+                            </tr>
+                            <tr>
+                                <td>Thirty</td>
+                                <td><span class="morse-code">...- ---</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-scroll" id="venom-y-cross" hidden>
+                        <table class="table-key">
+                            <caption>Cross - Message start: <span class="morse-code">-- --.. --.. -.. --. -..- ...- ..-.</span></caption>
+                            <thead>
+                            <tr>
+                                <th scope="col">Number</th>
+                                <th scope="col">Morse code</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Fifteen</td>
+                                <td><span class="morse-code">-..- .-</span></td>
+                            </tr>
+                            <tr>
+                                <td>Eighteen</td>
+                                <td><span class="morse-code">.-- .-</span></td>
+                            </tr>
+                            <tr>
+                                <td>Twenty or Twenty-Five</td>
+                                <td><span class="morse-code">.-.. ---</span></td>
+                            </tr>
+                            <tr>
+                                <td>Twenty (full word)</td>
+                                <td><span class="morse-code">.-.. --- --. . .... --.-</span></td>
+                            </tr>
+                            <tr>
+                                <td>Twenty-Five (full word)</td>
+                                <td><span class="morse-code">.-.. --- --. . .... --.- -..- -.- -- ...</span></td>
+                            </tr>
+                            <tr>
+                                <td>Thirty</td>
+                                <td><span class="morse-code">.-.. --..</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </li>
             </ul>
         </li>
 
-        <li class="dummy-li">
+        <li class="dummy-li dummy-li-no-indent">
             <div id="beast-venomy-morse-solver-react"></div>
         </li>
 
@@ -549,7 +555,7 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
             Once you have access to all four Floppy Disks, you must insert them into slots in front of N31L in the correct order based on the symbols on them. Use <a href="pictures/main_ee/floppy_cheat.webp">this image</a> or the solver below to find the correct order. There are four slots in front of N31L that the disks can be placed in. To use the image, find the row with all your disk symbols, then order your disks in that row's order from left to right.
         </li>
 
-        <li class="dummy-li">
+        <li class="dummy-li dummy-li-no-indent">
             <div id="beast-floppy-solver-react"></div>
         </li>
 
@@ -1117,20 +1123,20 @@ description: Complete Infinite Warfare Zombies "The Beast From Beyond" map guide
 </div>
 
 <script>
+    // Shown and hidden with the `hidden` attribute rather than an inline
+    // display: the blocks being toggled are a table wrapper and an <ol>, which
+    // want different display values, and a card-mode table wants a third.
     function toggleKeyText(key_value) {
         const venom_y_main_block = document.getElementById("venom-y-main-container");
         const venom_y_archer_block = document.getElementById("venom-y-archer");
         const venom_y_cross_block = document.getElementById("venom-y-cross");
 
-        if (key_value.toUpperCase() === "ARCHER") {
-            venom_y_main_block.style.display = "block";
-            venom_y_cross_block.style.display = "none";
-            venom_y_archer_block.style.display = "block";
-        } else if (key_value.toUpperCase() === "CROSS") {
-            venom_y_main_block.style.display = "block";
-            venom_y_cross_block.style.display = "block";
-            venom_y_archer_block.style.display = "none";
-        }
+        const key = key_value.toUpperCase();
+        if (key !== "ARCHER" && key !== "CROSS") return;
+
+        venom_y_main_block.hidden = false;
+        venom_y_archer_block.hidden = key !== "ARCHER";
+        venom_y_cross_block.hidden = key !== "CROSS";
     }
 </script>
 

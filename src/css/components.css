@@ -753,6 +753,14 @@ td {
     border: 1px solid var(--color-border-medium);
 }
 
+/* A copy of a rowspan cell, stamped by labelTableCells for the rows the span
+   covers so card mode can give each of them the content. The table itself still
+   has the real spanned cell, and a display:none cell takes up no column, so this
+   draws exactly as authored until the cards take over below --bp-md. */
+td[data-card-copy] {
+    display: none;
+}
+
 /* Left-column-key table: first col shrinks to content, last col fills */
 .table-key th:first-child,
 .table-key td:first-child {
@@ -782,11 +790,38 @@ td {
  */
 @media (width < 48.0625em) { /* --bp-md */
     .table-scroll--cards {
-        /* Not a scroll port any more: cards wrap, so instead of running
-           full-bleed they sit in the text column with the prose around them. */
+        /* Not a scroll port any more: cards wrap, so nothing has to slide. */
         margin-inline: 0;
         overflow-x: visible;
         background-color: transparent;
+    }
+
+    /* Cards take the full width of the block their list sits in rather than
+       hanging off its markers: two list levels cost a card a fifth of a phone
+       screen, and unlike the prose beside it a card has a frame that shows
+       exactly how much it lost. One rule per list level, each cancelling that
+       level's padding-inline-start, so the pull always stops at whatever the
+       list is in and never escapes it — see .dummy-li-no-indent in
+       typography.css for the same move made by an item rather than its content.
+       All four rules weigh the same (the ancestor part is :where()), so the last
+       one that matches wins: the deeper the list, the further back it pulls. */
+    :where(li) > .table-scroll--cards {
+        margin-inline-start: calc(-1 * var(--list-indent));
+    }
+
+    :where(li li) > .table-scroll--cards {
+        margin-inline-start: calc(-2 * var(--list-indent));
+    }
+
+    /* A path panel is its own column, so only the lists inside it are the
+       table's to cancel. */
+    :where(.path-tabs__panel li) > .table-scroll--cards {
+        margin-inline-start: calc(-1 * var(--list-indent));
+    }
+
+    /* The item has already moved; a table in one is where it needs to be. */
+    :where(.dummy-li-no-indent) > .table-scroll--cards {
+        margin-inline-start: 0;
     }
 
     table[data-cards] {
@@ -826,7 +861,8 @@ td {
         margin-bottom: 0;
     }
 
-    table[data-cards] > tbody > tr > td {
+    table[data-cards] > tbody > tr > td,
+    table[data-cards] > tbody > tr > td[data-card-copy] {
         display: block;
         padding: var(--space-smd) var(--space-md);
         border: none;
@@ -842,14 +878,20 @@ td {
         border-top: 1px solid var(--color-border-subtle);
     }
 
+    /* The label is the only thing naming what a cell holds once the header row
+       is gone, so it reads as a heading rather than a watermark: secondary text
+       at 8:1 on the card, not muted grey at 4.4:1, and set at the small end of
+       the body scale instead of below it. Uppercase and tracked keeps it
+       distinct from the value beneath without borrowing the tier colours, which
+       belong to the card's own title. */
     td[data-label]::before {
         content: attr(data-label);
         display: block;
         margin-bottom: var(--space-xs);
-        color: var(--color-text-muted);
-        font-size: 0.6875rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
+        color: var(--color-text-secondary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
     }
 

@@ -77,7 +77,7 @@ h4 {
 ul,
 ol {
     margin: var(--space-md) 0;
-    padding-inline-start: var(--space-md);
+    padding-inline-start: var(--list-indent);
 }
 
 li {
@@ -97,6 +97,24 @@ li > ol {
 .dummy-li {
     list-style: none;
     counter-increment: list-item 0;
+}
+
+/* A dummy-li carries no marker and no step of its own — it exists to hang a
+ * block off a list without numbering it. This variant says the list's
+ * indentation shouldn't apply to that block either, so it fills whatever the
+ * list is sitting in: a solver in one spans its path panel, not the panel minus
+ * a phantom marker's worth of space. Written on the item because the block
+ * inside is usually a mount point (`<div id="…-solver-react">`) that CSS has no
+ * stable handle on; blocks that do have one un-indent themselves instead (the
+ * card-table and .path-tabs rules).
+ *
+ * Mobile only: at --bp-md the indent is affordable, and lining the block up
+ * with the steps around it is worth more than the width.
+ */
+@media (width < 48.0625em) { /* --bp-md */
+    .dummy-li-no-indent {
+        margin-inline-start: calc(-1 * var(--list-indent));
+    }
 }
 
 /*

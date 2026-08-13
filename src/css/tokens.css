@@ -87,6 +87,13 @@ Neutral dark theme with subtle warmth for character without being overbearing.
     --space-xl: 2rem;
     --space-2xl: 2.5rem;
 
+    /* What one level of <ul>/<ol> indents its items by. A token because blocks
+       that fill their container on mobile (table cards, path switchers, the
+       solvers under .dummy-li-no-indent) cancel it by exactly this much, and a
+       guessed number there would drift the moment the list padding changed.
+       Widened at --bp-md in responsive.css. */
+    --list-indent: var(--space-md);
+
     /* Typography Scale (mobile-first defaults) */
     --font-size-base: 0.9375rem;
     --font-size-sm: 0.875rem;

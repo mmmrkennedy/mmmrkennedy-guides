@@ -54,6 +54,7 @@ Desktop-specific upgrades. Base styles are mobile-first.
         --font-size-base: 1rem;
         --font-size-xl: 1.75rem;
         --font-size-lg: 1.375rem;
+        --list-indent: var(--space-xl);
     }
 
     .quick-links-container,
@@ -64,10 +65,6 @@ Desktop-specific upgrades. Base styles are mobile-first.
         max-width: var(--content-max-width);
     }
 
-    ol,
-    ul {
-        padding-inline-start: var(--space-xl);
-    }
 
     .table-scroll {
         margin: var(--space-lg) 0;
