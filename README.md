@@ -10,7 +10,7 @@ The plan is to also include solvers for steps that require them (such as Attack 
 
 Next:
 
-- Mob of the Dead (BO2)
+- Descent (AW)
 
 Finished:
 
@@ -33,6 +33,7 @@ Finished:
 - Shangri-La (BO1)
 - Carrier (AW)
 - Der Eisendrache (BO3)
+- Mob of the Dead (BO2)
 
 Planned:
 
