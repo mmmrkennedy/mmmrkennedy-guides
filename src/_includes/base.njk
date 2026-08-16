@@ -22,10 +22,17 @@
     {%- set pageTitle = (pageHeading + ' | ' + titleSuffix) if mapName else pageHeading %}
     <title>{{ pageTitle }}</title>
 
+    {#- These fallbacks fire for any page with no `description` of its own, and
+        they used to run 177-183 chars once a real map name and game were
+        substituted in, which is past the ~155 Google will show. The three
+        Tortured Path survival maps shipped truncated for exactly that reason.
+        Kept short enough that even the longest name and game on the site
+        ("Attack of the Radioactive Thing", "Black Ops Cold War Zombies") lands
+        inside the budget, so a new page can never inherit a clipped one. -#}
     {%- if mapName and solverTitle %}
-        {%- set metaDescription = description or 'Interactive ' + solverTitle + ' for the ' + mapName + ' Easter Egg in ' + titleSuffix + '. Auto-solve this Call of Duty Zombies main quest step with a step-by-step walkthrough tool.' %}
+        {%- set metaDescription = description or 'Interactive ' + solverTitle + ' for ' + mapName + ' in ' + titleSuffix + '. Solve this main quest step in seconds.' %}
     {%- elif mapName %}
-        {%- set metaDescription = description or 'Complete ' + mapName + ' Easter Egg guide for ' + titleSuffix + '. Full main quest (main Easter Egg) walkthrough with step-by-step instructions, pictures, and videos, for solo and co-op.' %}
+        {%- set metaDescription = description or 'Complete ' + mapName + ' Easter Egg guide for ' + titleSuffix + '. Step-by-step main quest walkthrough with pictures and video.' %}
     {%- else %}
         {%- set metaDescription = description or 'Complete Call of Duty Zombies Easter Egg guide. Step-by-step main quest walkthrough with pictures, videos, and detailed instructions.' %}
     {%- endif %}
