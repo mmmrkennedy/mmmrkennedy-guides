@@ -9,6 +9,15 @@
         <base target="_blank" />
         <title>All Solvers - Dev</title>
 
+        <!-- Vite's entry HTML ships to dist/react-solvers/index.html and is live at
+             https://mmmrkennedy.com/react-solvers/, so it is crawlable even though
+             nothing links to it. It is a bench for the solver components, not a page
+             for readers: no canonical, no description, and a <base target="_blank">
+             that would make every indexed link behave oddly. Keep it out of the index.
+             The hashed JS under assets/ is what the real guide pages load and is
+             unaffected by this tag. -->
+        <meta name="robots" content="noindex, nofollow" />
+
         <!-- Dev preview only. On the real pages the guide layout gives the
              solvers their width; this page has no layout, so cap the column
              and centre it here rather than in Solvers.css.

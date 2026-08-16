@@ -36,6 +36,94 @@ Page structure and containers.
     line-height: 1.6;
 }
 
+/* More <game> maps: the sibling links that turn 63 unconnected guides into a
+   crawlable cluster. Quiet on purpose — it sits between the guide and the
+   footer, so it reads as a way out of the page rather than a second navigation.
+   Uses --color-link-page, the token already reserved for internal page
+   navigation, so these match the cross-references inside the guide body. */
+.related-maps {
+    max-width: 75ch;
+    margin: var(--space-md) auto var(--space-md);
+    padding: var(--space-md) var(--space-sm) 0;
+    border-top: 1px solid var(--color-border-subtle);
+    text-align: center;
+    font-size: var(--font-size-sm);
+}
+
+.related-maps__title {
+    margin: 0 0 var(--space-md);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+}
+
+/* Groups own their spacing through gap, so a label can sit tight against its
+   own list while the games stay clearly apart. Done with margins the label
+   floated equidistant between the list above it and the one below, and read as
+   a stray line of prose rather than a heading for the links under it. */
+.related-maps__groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.related-maps__group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+/* One tier below .related-maps__title: same muted colour, but lighter and
+   wider-tracked so the two never read as the same level of heading. */
+.related-maps__group-label {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: var(--line-height-tight);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+    opacity: 0.75;
+}
+
+.related-maps__list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm) var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    line-height: var(--line-height-tight);
+}
+
+/* These are chips on a wrapped row, not steps in a walkthrough. Both `li` and
+   `.prose li` give every item 4px top and 12px bottom for reading rhythm, which
+   here just fought the flex gap and pushed a wrapped second row ~38px from the
+   first, far enough that one group looked like two. Same specificity as
+   `.prose li`, and layout.css is imported after typography.css, so this wins on
+   source order. */
+.related-maps__list li {
+    margin: 0;
+}
+
+.related-maps__all {
+    margin: var(--space-md) 0 0;
+    color: var(--color-text-muted);
+}
+
+.related-maps__link {
+    color: var(--color-link-page);
+    text-decoration: none;
+}
+
+.related-maps__link:hover,
+.related-maps__link:focus-visible {
+    text-decoration: underline;
+}
+
 /* Site Footer: copyright + last-updated date + edit count */
 .site-footer {
     position: relative;

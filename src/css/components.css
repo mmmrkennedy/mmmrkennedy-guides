@@ -150,6 +150,23 @@ a[data-media-type="audio"]::after {
     border-color: var(--color-text-muted);
 }
 
+/* Anchors wearing the button look. Used where a control was a <button onclick>
+ * that only navigated — a crawler cannot follow those, so Home is now a real
+ * link. Restores the three things a <button> gets from the UA and an <a> does
+ * not: centred content inside a fixed height, no underline, and the button's
+ * own font rather than inherited link styling. */
+.btn--link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.btn--link:hover {
+    text-decoration: none;
+}
+
 .btn--accent {
     border-color: var(--color-link-external);
     color: var(--color-link-external);

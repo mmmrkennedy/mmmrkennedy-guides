@@ -29,6 +29,83 @@ function readCache() {
     }
 }
 
+// Google caps an <image:image> list at 1000 per URL. No page is near it (the
+// biggest guide has ~105 screenshots), but slice anyway so a future one cannot
+// silently invalidate the whole entry.
+const MAX_IMAGES_PER_URL = 1000;
+const SITEMAP_IMAGE_EXT = /\.(webp|png|jpg|jpeg|gif)$/i;
+
+// Point Google at the downscaled copy rather than the master. Measured over a
+// sample of eight live screenshots, masters averaged ~694KB against ~133KB at
+// this tier, so across the 4,916 listed here the crawl is roughly 3.4GB of
+// masters or 650MB of variants. The spread is wide (the largest master sampled
+// was 3.0MB and came back 164KB, an 18x cut), which is the case this exists for.
+// 1280px is ample for Google Images, and nothing on the page references these
+// files as <img>, so there is no second URL for the same screenshot to disagree
+// with.
+//
+// Safe on every entry regardless of whether the variant exists. The tier is
+// allowlisted in functions/games/[[path]].js and an image with no variant in the
+// bucket (the 151 already smaller than 1280, plus any map Part 2 has not reached)
+// quietly falls back to the master, so the URL resolves either way.
+const SITEMAP_IMAGE_TIER = "?w=1280";
+
+/**
+ * Every screenshot in a guide is a lightbox <a href="…webp">, never an <img>, so
+ * none of them exist in the DOM Google crawls: a 4,850-word illustrated
+ * walkthrough currently offers Google Images nothing. Listing them here is the
+ * supported way to surface media a crawler cannot see in the markup, and unlike
+ * adding real <img> tags it costs the page zero bytes and zero requests.
+ *
+ * Read from dist, not src: the page shipped is the one whose links must resolve.
+ * The files themselves are usually absent from dist (IMAGES_FROM_R2 skips the
+ * copy and functions/games/[[path]].js serves them from the bucket), so there is
+ * nothing on disk to verify against — the URL is the deliverable, not the file.
+ */
+function imagesFor(link) {
+    const built = path.resolve("./dist", `${link}.html`);
+    if (!fs.existsSync(built)) return [];
+
+    // Pages are served extensionless, so a relative href resolves against the
+    // directory the page sits in: /games/AW/carrier/carrier_guide + pictures/x.webp
+    // → /games/AW/carrier/pictures/x.webp. Let URL do that resolution rather than
+    // joining strings, so ../ and query strings behave.
+    const pageUrl = `${SITE_URL}/${link}`;
+    const doc = new JSDOM(fs.readFileSync(built, "utf8")).window.document;
+    const found = new Map();
+
+    const add = (href, caption) => {
+        if (!href) return;
+        let url;
+        try {
+            url = new URL(href, pageUrl);
+        } catch {
+            return;
+        }
+        // Same-origin guide media only. Site chrome (og_image, favicon,
+        // tips_symbol) is not content and does not belong in an image sitemap.
+        if (url.origin !== SITE_URL) return;
+        if (!url.pathname.startsWith("/games/")) return;
+        if (!SITEMAP_IMAGE_EXT.test(url.pathname)) return;
+
+        // Keyed on the bare path, emitted with the tier: two hrefs to the same
+        // screenshot still collapse to one entry whatever query each carried.
+        const clean = SITE_URL + url.pathname;
+        if (found.has(clean)) return;
+
+        const text = (caption || "").replace(/\s+/g, " ").trim();
+        found.set(clean, { url: clean + SITEMAP_IMAGE_TIER, ...(text && text.length <= 200 && { caption: text }) });
+    };
+
+    // The anchor's own text is the caption the author already wrote for the
+    // screenshot ("Teleport Grenades from the wallbuy"), so it doubles as the
+    // alt text these images have never had.
+    for (const a of doc.querySelectorAll("a[href]")) add(a.getAttribute("href"), a.textContent);
+    for (const img of doc.querySelectorAll("img[src]")) add(img.getAttribute("src"), img.getAttribute("alt"));
+
+    return [...found.values()].slice(0, MAX_IMAGES_PER_URL);
+}
+
 async function buildSitemap() {
     if (!fs.existsSync(INDEX_FILE)) {
         console.error(`Index file not found: ${INDEX_FILE}`);
@@ -72,6 +149,7 @@ async function buildSitemap() {
 
     let written = 0;
     let missingCache = 0;
+    let imagesWritten = 0;
 
     for (const link of uniqueLinks) {
         const candidates = [
@@ -83,7 +161,9 @@ async function buildSitemap() {
         if (filePath) {
             const lastmod = lastmodFor(filePath);
             if (!lastmod) missingCache++;
-            sitemap.write({ url: `/${link}`, ...(lastmod && { lastmod }) });
+            const img = imagesFor(link);
+            imagesWritten += img.length;
+            sitemap.write({ url: `/${link}`, ...(lastmod && { lastmod }), ...(img.length && { img }) });
             written++;
         }
     }
@@ -93,7 +173,7 @@ async function buildSitemap() {
     fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
     fs.writeFileSync(OUTPUT_FILE, data.toString());
 
-    console.log(`sitemap.xml generated with ${written + 1} pages (homepage + ${written} linked).`);
+    console.log(`sitemap.xml generated with ${written + 1} pages (homepage + ${written} linked) and ${imagesWritten} images.`);
     if (missingCache > 0) {
         console.warn(`${missingCache} pages had no cache entry — lastmod omitted. Run refresh-lastmod-cache.cjs via GitHub Actions.`);
     }

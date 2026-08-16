@@ -5,13 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO Meta Tags -->
+    {#- Two strings, one source. `pageHeading` is what the page is called
+        ("Mob of the Dead Easter Egg Guide"); `pageTitle` is that plus the game,
+        which exists to disambiguate one search result from another. The suffix
+        belongs in <title> and nowhere else: in the <h1> it dilutes the heading
+        Google reads as a content signal, and it eats room in the sticky top bar
+        between the Home and legend buttons on a phone. Deriving one from the
+        other keeps them from drifting apart the way two literals would. #}
     {%- if mapName and solverTitle %}
-        {%- set pageTitle = mapName + ' ' + solverTitle + ' | ' + titleSuffix %}
+        {%- set pageHeading = mapName + ' ' + solverTitle %}
     {%- elif mapName %}
-        {%- set pageTitle = mapName + ' Easter Egg Guide | ' + titleSuffix %}
+        {%- set pageHeading = mapName + ' Easter Egg Guide' %}
     {%- else %}
-        {%- set pageTitle = title %}
+        {%- set pageHeading = title %}
     {%- endif %}
+    {%- set pageTitle = (pageHeading + ' | ' + titleSuffix) if mapName else pageHeading %}
     <title>{{ pageTitle }}</title>
 
     {%- if mapName and solverTitle %}
@@ -21,9 +29,14 @@
     {%- else %}
         {%- set metaDescription = description or 'Complete Call of Duty Zombies Easter Egg guide. Step-by-step main quest walkthrough with pictures, videos, and detailed instructions.' %}
     {%- endif %}
-    {%- if aliases %}
-        {%- set metaDescription = metaDescription + ' Also known as ' + (aliases | join(', ')) + '.' %}
-    {%- endif %}
+    {#- `aliases` used to be appended here as " Also known as X, Y." Two reasons
+        it is gone: it landed at the very end of the string, which is the first
+        thing Google truncates, so on the long descriptions it never reached the
+        snippet at all; and a meta description is not a ranking input, so the
+        terms earned nothing there. Aliases now go two better places instead:
+        woven into the hand-written `description` early enough to survive the
+        cut, and rendered in full into the About This Map copy below, which is
+        indexable body text. -#}
     <meta name="description" content="{{ metaDescription }}">
     {%- if mapName %}
         {%- set metaKeywords = mapName + ' Easter Egg, ' + mapName + ' Easter Egg guide, ' + mapName + ' main quest, ' + mapName + ' main Easter Egg, ' + mapName + ' walkthrough, ' + mapName + ' guide, ' + mapName + ' steps, ' + mapName + ' tutorial, ' + mapName + ' solo Easter Egg, ' + titleSuffix + ', Call of Duty Zombies, COD Zombies, Zombies Easter Egg guide, main quest walkthrough' %}
@@ -110,18 +123,42 @@
     {%- endif %}
 
     <!-- JSON-LD Structured Data -->
+    {#- Article, not HowTo. This was HowTo until 2026-08-15, which earned nothing:
+        Google retired HowTo rich results entirely, and the block never carried the
+        `step` array HowTo requires anyway, so it validated as a bare entity with no
+        eligible treatment. Article is the type these pages actually are, and it is
+        the one Google still reads dates and author from. The BreadcrumbList below
+        is untouched — that one does still produce a rich result.
+
+        datePublished/dateModified come from the same filters the footer prints, so
+        the date in the SERP and the date on the page can never disagree. #}
+    {%- set articlePublished = page.inputPath | releasedISO %}
+    {%- set articleModified = page.inputPath | lastmodISO %}
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
-            "@type": "HowTo",
-            "name": "{{ pageTitle }}",
+            "@type": "Article",
+            {#- Heading, not title: the game name is already in `publisher` and
+                `about`, so the suffix would just repeat it a third time. #}
+            "name": "{{ pageHeading }}",
+            "headline": "{{ pageHeading }}",
             {%- if mapName %}
             "alternateName": [{% for alias in aliases %}"{{ alias }} Easter Egg Guide", {% endfor %}"{{ mapName }} Easter Egg Guide"],
             "keywords": "{{ metaKeywords }}",
             {%- endif %}
             "description": "{{ metaDescription }}",
             "url": "https://mmmrkennedy.com{{ page.url | cleanUrl }}",
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": "https://mmmrkennedy.com{{ page.url | cleanUrl }}"
+            },
             "image": "{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}",
+            {%- if articlePublished %}
+            "datePublished": "{{ articlePublished }}",
+            {%- endif %}
+            {%- if articleModified %}
+            "dateModified": "{{ articleModified }}",
+            {%- endif %}
             "author": {
                 "@type": "Person",
                 "name": "mmmrkennedy",
@@ -190,7 +227,7 @@
 <body{% if skipTOC %} data-skip-toc="true"{% endif %}{% if noFlags %} data-no-flags{% endif %}{% if statsPage %} data-stats-live{% endif %}>
 <div class="top-buttons-background-box">
     <!-- Title at the top of the page -->
-    <h1 class="title-text">{{ pageTitle }}</h1>
+    <h1 class="title-text">{{ pageHeading }}</h1>
     {%- if not noLegend %}
     <button type="button" id="legendLauncher" class="btn legend-launcher"
             aria-haspopup="dialog" aria-expanded="false" aria-controls="legendOverlay"
@@ -206,13 +243,18 @@
 
     <!-- Mobile devices content -->
     <div id="mobile-content">
-        <button type="button" class="btn btn--fixed top-left" onclick="navigateToIndex()" aria-label="Home">
+        {#- An anchor, not a button. `navigateToIndex()` only ever set
+            location.href = "/", so the behaviour is identical, but a <button
+            onclick> is invisible to a crawler: it left every guide page with no
+            followable link back to the index, and the site with a link graph
+            that ran one way and stopped. #}
+        <a class="btn btn--link btn--fixed top-left" href="/" aria-label="Home">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-arrow-left-icon lucide-circle-arrow-left" aria-hidden="true">
                 <circle cx="12" cy="12" r="10" />
                 <path d="m12 8-4 4 4 4" />
                 <path d="M16 12H8" />
             </svg>
-        </button>
+        </a>
         <button type="button" class="btn btn--fixed bottom-right" onclick="window.ScrollManager.scrollToTop()" aria-label="Back to Top">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-to-line-icon lucide-arrow-up-to-line" aria-hidden="true">
                 <path d="M5 3h14" />
@@ -224,7 +266,7 @@
 
     <!-- Non-mobile devices content -->
     <div id="non-mobile-content">
-        <button type="button" class="btn btn--fixed top-left" onclick="navigateToIndex()">Home</button>
+        <a class="btn btn--link btn--fixed top-left" href="/">Home</a>
         <button type="button" class="btn btn--fixed bottom-right" onclick="window.ScrollManager.scrollToTop()">Back to Top</button>
     </div>
 
@@ -247,8 +289,40 @@
         {%- if about %}
         <section class="about-map">
             <h2 class="about-map__title">About This Map</h2>
-            <p class="about-map__text">{{ about }}</p>
+            {#- The community shorthand for a map is often the only name people
+                search by, and until now `aliases` reached the meta description
+                and JSON-LD alternateName and nothing else. Neither is a ranking
+                input, so "MOTD" appeared nowhere Google could weigh it: not once
+                on the whole Mob of the Dead page. Rendering the same front
+                matter here puts it in indexable body copy, and keeps the visible
+                names and the meta names from drifting apart. -#}
+            <p class="about-map__text">{{ about }}{% if aliases %} Also known as {{ aliases | join(', ') }}.{% endif %}</p>
         </section>
+        {%- endif %}
+        {#- Sibling maps from the same game, from src/_data/relatedMaps.js. The
+            one link every guide had to another page was /stats in the footer,
+            which meant no guide passed any authority to another and nothing
+            grouped a map with the rest of its game. Unfinished maps are absent
+            by construction: they are noindex stubs, so linking them would only
+            spend crawl budget on a placeholder. #}
+        {%- set related = relatedMaps[page.url | cleanUrl] %}
+        {%- if related %}
+        <nav class="related-maps" aria-labelledby="related-maps-title">
+            <h2 class="related-maps__title" id="related-maps-title">More Zombies guides</h2>
+            <div class="related-maps__groups">
+                {%- for group in related.groups %}
+                <div class="related-maps__group">
+                    <p class="related-maps__group-label">{{ group.gameName }}</p>
+                    <ul class="related-maps__list">
+                        {%- for map in group.maps %}
+                        <li><a class="related-maps__link" href="{{ map.url }}">{{ map.title }}</a></li>
+                        {%- endfor %}
+                    </ul>
+                </div>
+                {%- endfor %}
+            </div>
+            <p class="related-maps__all"><a class="related-maps__link" href="/">All Call of Duty Zombies map guides</a></p>
+        </nav>
         {%- endif %}
     {%- endif %}
 
