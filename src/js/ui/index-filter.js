@@ -22,21 +22,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.querySelector(".content-container");
     if (!nav || !input || !chipsBox || !container)
         return;
-    // Friendly, compact chip labels keyed by the <h2> id. Falls back to the id.
-    const LABELS = {
-        BO7: "BO7", BO6: "BO6", VG: "Vanguard", BO_CW: "Cold War",
-        BO4: "BO4", WW2: "WW2", IW: "IW", BO3: "BO3",
-        AW: "AW", BO2: "BO2", BO1: "BO1", WAW: "WAW",
-    };
-    function buildChip(id, label) {
+    /**
+     * The chips ship in the HTML — preRenderIndexNav in eleventy.config.cjs
+     * builds them, and owns the friendly labels, so the bar has its full height
+     * at first paint instead of growing when this script runs. Building one
+     * here is the fallback for markup that predates that step; it can only fall
+     * back to the raw id for a label, which is why the map lives in the build.
+     */
+    function adoptChip(id) {
+        const existing = chipsBox.querySelector(`.index-nav__chip[data-target="${id}"]`);
+        if (existing)
+            return existing;
         const a = document.createElement("a");
         a.className = "index-nav__chip";
         a.href = "#" + id;
-        a.textContent = label;
+        a.textContent = id;
         a.dataset.target = id;
+        chipsBox.appendChild(a);
         return a;
     }
-    // Pair each game <h2 id> with the <ul> that follows it, and build its chip.
+    // Pair each game <h2 id> with the <ul> that follows it, and claim its chip.
     const groups = [];
     container.querySelectorAll("h2[id]").forEach((heading) => {
         let list = heading.nextElementSibling;
@@ -45,9 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!list)
             return;
         const items = Array.from(list.children).filter((c) => c.tagName === "LI");
-        const chip = buildChip(heading.id, LABELS[heading.id] ?? heading.id);
-        chipsBox.appendChild(chip);
-        groups.push({ heading, list, items, chip });
+        groups.push({ heading, list, items, chip: adoptChip(heading.id) });
     });
     if (groups.length === 0)
         return;
