@@ -291,6 +291,16 @@ Page structure and containers.
     transform: translateY(-50%);
 }
 
+/* The generic hover lift (.btn--fixed:hover, components.css) is a bare
+ * translateY(-1px), which would wipe out the -50% centring above — and at equal
+ * specificity this file wins anyway, so top-left simply never lifted. Restate
+ * the lift with the centring folded in. */
+@media (hover: hover) {
+    .btn--fixed.top-left:hover {
+        transform: translateY(calc(-50% - 1px));
+    }
+}
+
 .title-wrapper {
     display: flex;
     flex-direction: column;

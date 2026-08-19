@@ -128,9 +128,16 @@ a[data-media-type="audio"]::after {
 }
 
 /* Buttons */
+/* font-family and line-height are set here, not left to the UA. A <button>
+ * gets Arial at line-height: normal from the UA stylesheet while an <a> wearing
+ * the same classes inherits the body font at line-height: 1.75, so the two
+ * rendered at different heights (46px vs 36px for the header Home control).
+ * Stating both makes every .btn match, whatever element it is on. */
 .btn {
     padding: var(--space-sm) var(--space-md);
+    font-family: inherit;
     font-size: var(--font-size-sm);
+    line-height: normal;
     cursor: pointer;
     border: 1.5px solid var(--color-border-medium);
     color: var(--color-text-secondary);
@@ -152,15 +159,14 @@ a[data-media-type="audio"]::after {
 
 /* Anchors wearing the button look. Used where a control was a <button onclick>
  * that only navigated — a crawler cannot follow those, so Home is now a real
- * link. Restores the three things a <button> gets from the UA and an <a> does
- * not: centred content inside a fixed height, no underline, and the button's
- * own font rather than inherited link styling. */
+ * link. Restores what a <button> gets from the UA and an <a> does not: centred
+ * content inside a fixed height, and no underline. Font and line box are
+ * normalised on .btn itself. */
 .btn--link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    font-family: inherit;
 }
 
 .btn--link:hover {
