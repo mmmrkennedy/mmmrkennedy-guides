@@ -287,6 +287,10 @@
 </div>
 
 <div class="content-window{% if not statsPage %} prose{% endif %}">
+    {#- The guide body, and nothing that repeats from page to page. The footer
+        stays outside: a <footer> inside <main> loses its contentinfo landmark
+        role, so nesting it would trade one landmark for another. #}
+    <main>
     {%- if unfinished or page.url in unfinishedPages %}
         <div class="content-container">
             <h2>Sorry, this page is not ready yet!</h2>
@@ -333,6 +337,7 @@
         </nav>
         {%- endif %}
     {%- endif %}
+    </main>
 
     <footer class="site-footer">
         {%- set updated = page.inputPath | lastmod %}
