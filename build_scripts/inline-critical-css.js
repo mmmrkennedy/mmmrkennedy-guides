@@ -71,22 +71,25 @@ const OWNED = [
 const SKIP_PAGES = [/^react-solvers[/\\]/];
 
 /**
- * Runtime features a page has switched off, and the class prefixes that become
- * unreachable when it does.
+ * Scripts a page has switched off, so nothing they add can be styled there.
  *
- * The JS safelist is global — it cannot tell that the flag UI never runs on the
+ * The safelist is global — it cannot tell that the flag UI never runs on the
  * homepage — so without this the index carries every gfb-* rule for a feature
  * its own <body data-no-flags> disables. That was ~7KB of the index's inlined
  * CSS, all of it in front of the LCP element.
  *
- * Each gate must correspond to an early return in the script that owns the
- * classes, so the CSS cannot be wanted after all: data-no-flags is
- * line-flagger.ts:140, data-skip-toc is quick-links.ts:129 (and the Eleventy
- * transform that pre-renders the same markup).
+ * Gates name a script, not a class prefix, and a class survives if ANY enabled
+ * script can add it. The first cut of this gated on the "gfb-" prefix and broke
+ * the homepage's "not written yet" toast, which is index-filter.ts borrowing
+ * .gfb-toast from the flag UI's stylesheet (index-filter.ts:108). Per-script
+ * attribution gets that right without a special case.
+ *
+ * Each gate must correspond to an early return in the script it names:
+ * data-no-flags is line-flagger.ts:140, data-skip-toc is quick-links.ts:129.
  */
 const FEATURE_GATES = [
-    { disabled: (body) => body.hasAttribute("data-no-flags"), prefixes: ["gfb-"] },
-    { disabled: (body) => body.dataset.skipToc === "true", prefixes: ["sidebar-toc", "quick-links"] },
+    { disabled: (body) => body.hasAttribute("data-no-flags"), scripts: [/ui[/\\]line-flagger\.js$/] },
+    { disabled: (body) => body.dataset.skipToc === "true", scripts: [/content[/\\]quick-links\.js$/] },
 ];
 
 function findFiles(dir, ext) {
@@ -120,9 +123,10 @@ const SAFELIST = ["ads-full", "ads-hidden", "ads-minimal"];
  * until the solver has rendered.
  */
 function harvestJsTokens() {
-    const tokens = new Set(SAFELIST);
+    const byFile = new Map([["(safelist)", new Set(SAFELIST)]]);
     const classish = /^-?[a-zA-Z_][a-zA-Z0-9_-]*$/;
 
+    let tokens;
     const add = (value) => {
         if (!value) return;
         for (const part of value.split(/\s+/)) {
@@ -130,8 +134,11 @@ function harvestJsTokens() {
         }
     };
 
+    // The bundles are concatenations of the per-file sources sitting beside
+    // them, so reading both would attribute every class to the bundle as well
+    // and leave FEATURE_GATES nothing to switch off.
     const sources = [
-        ...findFiles(path.join(distDir, "js"), ".js"),
+        ...findFiles(path.join(distDir, "js"), ".js").filter((f) => !/[/\\]bundle\./.test(f)),
         ...(fs.existsSync(path.join(distDir, "react-solvers"))
             ? findFiles(path.join(distDir, "react-solvers"), ".js")
             : []),
@@ -150,6 +157,7 @@ function harvestJsTokens() {
 
     for (const file of sources) {
         const code = fs.readFileSync(file, "utf8");
+        tokens = new Set();
         let m;
 
         while ((m = classListCall.exec(code)) !== null) {
@@ -161,9 +169,11 @@ function harvestJsTokens() {
         while ((m = selectorish.exec(code)) !== null) {
             for (const t of selectorTokens(m[1])) tokens.add(t);
         }
+
+        byFile.set(path.relative(distDir, file).replace(/\\/g, "/"), tokens);
     }
 
-    return tokens;
+    return byFile;
 }
 
 /** Classes and ids present in the built markup. */
@@ -235,17 +245,14 @@ for (const file of findFiles(distDir, ".html")) {
     );
     if (links.length === 0) continue;
 
-    // Page markup wins over every gate below: if the class is really on the
-    // page, the rule stays whatever the feature flags say.
-    const pageTokens = harvestPageTokens(doc);
-    const tokens = new Set([...pageTokens, ...jsTokens]);
+    // Page markup always counts; a script's classes count unless this page has
+    // switched that script off.
+    const tokens = harvestPageTokens(doc);
+    const off = FEATURE_GATES.filter((g) => g.disabled(doc.body)).flatMap((g) => g.scripts);
 
-    for (const gate of FEATURE_GATES) {
-        if (!gate.disabled(doc.body)) continue;
-        for (const token of tokens) {
-            if (pageTokens.has(token)) continue;
-            if (gate.prefixes.some((p) => token.startsWith(p))) tokens.delete(token);
-        }
+    for (const [file, fileTokens] of jsTokens) {
+        if (off.some((rx) => rx.test(file))) continue;
+        for (const token of fileTokens) tokens.add(token);
     }
 
     // Concatenated in document order so the cascade the templates set up
