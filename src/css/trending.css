@@ -4,19 +4,31 @@
  * the home page by src/ts/ui/trending.ts. Kept understated: small, gentle pulse,
  * and no motion for users who prefer reduced motion. */
 
-/* Super-subtle warm highlight behind the trending link. */
+/* Super-subtle warm highlight behind the trending link.
+ *
+ * Nothing here may change the size of the line box. The decoration arrives when
+ * /api/trending answers, which is after first paint, so any width it added
+ * pushed the rest of the line along and re-wrapped the list — 0.092 CLS on the
+ * homepage, blamed on the <ul> that moved. Hence box-shadow rather than the
+ * padding this used to have, and an absolutely positioned flame rather than an
+ * appended inline-block. */
 .trending-link {
+    position: relative;
     background: rgb(232 150 62 / 4%);
     border-radius: 4px;
-    padding: 0.05em 0.3em;
+    box-shadow: 0 0 0 0.25em rgb(232 150 62 / 4%);
 }
 
+/* Sits as a badge off the link's top-right corner rather than beside it. Out of
+ * flow it would otherwise land on the "&nbsp;|&nbsp;" that separates a map from
+ * its solver, and hide the separator behind the emoji. */
 .trending-flame {
-    display: inline-block;
-    margin-left: 0.35em;
-    font-size: 0.8em;
+    position: absolute;
+    left: 100%;
+    top: -0.5em;
+    margin-left: -0.5em;
+    font-size: 0.7em;
     line-height: 1;
-    vertical-align: baseline;
     cursor: default;
     animation: trending-pulse 2.4s ease-in-out infinite;
 }
