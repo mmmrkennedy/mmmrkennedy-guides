@@ -2,7 +2,6 @@ const { JSDOM } = require("jsdom");
 const fs = require("fs");
 const path = require("path");
 
-const BUILD_VERSION = Date.now().toString();
 let cachedManifest = null;
 let cachedMountChunks = null;
 let cachedSsrSolvers;
@@ -110,6 +109,14 @@ function countWords(html) {
     return words ? words.length : 0;
 }
 
+// Link targets classifyLinks understands. Anything with an extension outside
+// VALID_EXTS is a typo worth warning about; the LIGHTBOX_* sets decide which
+// ones open in the lightbox and as what.
+const VALID_EXTS = [".webp", ".html", ".webm", ".gif", ".jpg", ".jpeg", ".png", ".mp4", ".mov", ".flac", ".mp3", ".ogg", ".wav", ".m4a"];
+const LIGHTBOX_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".gif", ".webm", ".mp4", ".mov", ".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
+const LIGHTBOX_VIDEO_EXTS = new Set([".webm", ".mp4", ".mov"]);
+const LIGHTBOX_AUDIO_EXTS = new Set([".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
+
 const PICTURE_REF = /(?:href|src)\s*=\s*["']([^"']+?\.(?:webp|png|jpe?g|gif))["']/gi;
 
 /**
@@ -160,13 +167,14 @@ function siteStats() {
     const guides = [];
     let solverCount = 0;
 
-    let doc;
+    // Without the index there is no roster to measure. Rather than hand-copy the
+    // result shape into a second literal that drifts, fall through with no games:
+    // every aggregate below is already defined over empty arrays.
+    let doc = null;
     try {
         doc = new JSDOM(fs.readFileSync(path.join(srcDir, "index.html"), "utf8")).window.document;
     } catch (e) {
         console.warn("Couldn't read src/index.html, stats will be empty:", e.message);
-        statsCache = emptyStats();
-        return statsCache;
     }
 
     // A remastered map (Nacht, Kino, Origins…) is listed under both the game it
@@ -181,7 +189,7 @@ function siteStats() {
     const measured = new Map();
     const allMaps = new Set();
 
-    for (const heading of [...doc.querySelectorAll("h2[id]")].reverse()) {
+    for (const heading of doc ? [...doc.querySelectorAll("h2[id]")].reverse() : []) {
         const game = { key: heading.id, label: heading.textContent.trim(), planned: 0, written: 0, words: 0, pictures: 0 };
         // The maps of a game are the links between this <h2> and the next one.
         for (let el = heading.nextElementSibling; el && el.tagName !== "H2"; el = el.nextElementSibling) {
@@ -310,58 +318,111 @@ function releasesByYear(guides) {
     return out;
 }
 
-function emptyStats() {
-    return {
-        totals: { words: 0, guides: 0, planned: 0, solvers: 0, steps: 0, pictures: 0, videos: 0, tables: 0, sections: 0, edits: 0, games: 0, avgWords: 0, firstRelease: "" },
-        guides: [], byWords: [], byPictures: [], byGame: [], byYear: [], byYearMax: 0, coverage: [],
-        extremes: { longest: null, shortest: null, mostSteps: null, mostPictures: null, mostEdited: null, densest: null },
-    };
-}
-
 // ========================================
 // TRANSFORM FUNCTIONS
 // ========================================
 
 /**
+ * The DOM-rewriting half of the build, run as a single pass.
+ *
+ * Each step below used to be its own Eleventy transform, which meant a page was
+ * parsed into a JSDOM document and serialized back out up to five times over.
+ * Eleventy's own benchmark put those five at 77% of build time, and most of the
+ * parses bought nothing: preRenderRevealButtons parsed all 82 pages to serve the
+ * 3 that carry a data-reveal-label, and prepareTables parsed all 82 to serve 33.
+ * One parse, one serialize, same steps in the same order.
+ *
+ * A step takes the shared document and returns whether it changed anything. The
+ * page is re-serialized only if some step did, so pages no step touches (the
+ * index, /stats, 404) come out byte-identical to their input instead of being
+ * round-tripped through JSDOM's serializer.
+ *
+ * Order is load-bearing:
+ *   - resolveStepRefs counts the <li> children of each <ol> before
+ *     preRenderRevealButtons can re-parent any of them into a
+ *     .button-activated-div and change what "direct child" means.
+ *   - generateQuickLinks reads the finished page, so it goes last.
+ *
+ * classifyLinks deliberately runs BEFORE this pass rather than inside it. It is
+ * a regex over the HTML string, and the two tables of contents this pass builds
+ * are full of anchors it must not touch (they would pick up .link-to-page and
+ * render italic). Running it first means those anchors do not exist yet, which
+ * is what the 40-line cutElement() surgery used to arrange by hand.
+ *
+ * A step that throws is logged and skipped; the rest of the pass still runs, so
+ * one bad page loses one feature rather than the whole build. Note the step may
+ * have mutated the document before throwing, and that partial edit does ship —
+ * the alternative is discarding four good steps to undo half of a fifth.
+ */
+const DOM_STEPS = [
+    ["prepareTables", prepareTables],
+    ["resolveStepRefs", resolveStepRefs],
+    ["preRenderRevealButtons", preRenderRevealButtons],
+    ["preRenderPathTabs", preRenderPathTabs],
+    ["generateQuickLinks", generateQuickLinks],
+];
+
+// Cheap string tests standing in for the selectors the steps run. If a page
+// matches none of them, parsing it could only ever find nothing to do.
+const DOM_PASS_TRIGGERS = [
+    "<table",
+    "data-step-ref",
+    "data-reveal-label",
+    "data-path-group",
+    "content-container",
+];
+
+function domPass(content, outputPath) {
+    if (!outputPath?.endsWith(".html")) return content;
+    if (!DOM_PASS_TRIGGERS.some((trigger) => content.includes(trigger))) return content;
+
+    let dom;
+    try {
+        dom = new JSDOM(content);
+    } catch (error) {
+        console.error(`Error parsing ${outputPath}:`, error.message);
+        return content;
+    }
+
+    let touched = false;
+    for (const [name, step] of DOM_STEPS) {
+        try {
+            if (step(dom.window.document, outputPath)) touched = true;
+        } catch (error) {
+            console.error(`Error in ${name} for ${outputPath}:`, error.message);
+        }
+    }
+
+    return touched ? dom.serialize() : content;
+}
+
+/**
  * Eleventy transform to auto-generate quick links navigation
  * Scans page content and builds table of contents in .quick-links-container
  */
-function generateQuickLinks(content, outputPath) {
-    if (!outputPath || !outputPath.endsWith(".html")) return content;
+function generateQuickLinks(document) {
+    // Skip TOC generation if the page opts out
+    if (document.body?.dataset?.skipToc === "true") return false;
 
-    // const t0 = Date.now();
-    try {
-        const dom = new JSDOM(content);
-        const document = dom.window.document;
-
-        // Skip TOC generation if the page opts out
-        if (document.body?.dataset?.skipToc === "true") return content;
-
-        let container = document.querySelector(".quick-links-container");
-        if (!container) {
-            // Create the container and insert it before the first .content-container
-            container = document.createElement("div");
-            container.className = "quick-links-container";
-            const firstSection = document.querySelector(".content-container");
-            if (!firstSection) return content;
-            firstSection.parentNode.insertBefore(container, firstSection);
-        }
-
-        // Clear existing manual content
-        container.innerHTML = "";
-
-        // Build navigation from page structure
-        const navStructure = buildNavStructure(document);
-        renderNavigation(container, navStructure, outputPath);
-        renderSidebarToc(document, container);
-
-        const result = dom.serialize();
-        // console.log(`[generateQuickLinks] ${outputPath} in ${Date.now() - t0}ms`);
-        return result;
-    } catch (error) {
-        console.error(`Error generating quick links for ${outputPath}:`, error.message);
-        return content;
+    let container = document.querySelector(".quick-links-container");
+    if (!container) {
+        // Create the container and insert it before the first .content-container
+        container = document.createElement("div");
+        container.className = "quick-links-container";
+        const firstSection = document.querySelector(".content-container");
+        if (!firstSection) return false;
+        firstSection.parentNode.insertBefore(container, firstSection);
     }
+
+    // Clear existing manual content
+    container.innerHTML = "";
+
+    // Build navigation from page structure
+    const navStructure = buildNavStructure(document);
+    renderNavigation(container, navStructure);
+    renderSidebarToc(document, container);
+
+    return true;
 }
 
 /**
@@ -449,7 +510,7 @@ function buildNavStructure(document) {
 /**
  * Renders navigation structure to DOM
  */
-function renderNavigation(container, structure, outputPath) {
+function renderNavigation(container, structure) {
     const document = container.ownerDocument;
 
     for (const section of structure) {
@@ -472,7 +533,7 @@ function renderNavigation(container, structure, outputPath) {
         const listStack = [rootList];
 
         for (const item of section.items) {
-            const link = createNavLink(document, item.element, item.customName, outputPath);
+            const link = createNavLink(document, item.element, item.customName);
             if (!link) continue;
 
             // Adjust nesting level based on indent
@@ -584,11 +645,8 @@ function addSidebarSubToggles(document, container) {
 /**
  * Creates a navigation link element
  */
-function createNavLink(document, element, customName = null, _outputPath = "") {
-    if (!element.id) {
-        // console.warn(`[${outputPath}] Quick link element missing ID: ${element.textContent?.substring(0, 50)}`);
-        return null;
-    }
+function createNavLink(document, element, customName = null) {
+    if (!element.id) return null;
 
     const li = document.createElement("li");
     const a = document.createElement("a");
@@ -597,8 +655,6 @@ function createNavLink(document, element, customName = null, _outputPath = "") {
     // Determine link text
     if (customName) {
         a.textContent = customName;
-    } else if (element.dataset.customTitle) {
-        a.textContent = element.dataset.customTitle;
     } else if (element.children.length > 0) {
         a.textContent = element.children[0].textContent;
     } else {
@@ -613,16 +669,12 @@ function createNavLink(document, element, customName = null, _outputPath = "") {
  * Checks if element should be excluded from navigation
  */
 function shouldExcludeFromNav(element) {
-    const excludedClasses = [
-        "solver-container",
-        "stats",
-        "weapon-desc",
-        "warning",
-        "solver-output",
-        "solver-symbol-select",
-        "aligned-buttons",
-        "aligned-label",
-    ];
+    // The solver components' own classes (solver-container, solver-output,
+    // solver-symbol-select) are deliberately not here: this transform runs
+    // before prerenderSolvers, so a page's solver markup does not exist yet
+    // when the nav is built. Adding them back would only take effect if that
+    // order changed.
+    const excludedClasses = ["stats", "weapon-desc"];
 
     // Check element and all ancestors for excluded classes
     let current = element;
@@ -639,76 +691,16 @@ function shouldExcludeFromNav(element) {
 }
 
 /**
- * Cuts one element out of an HTML string, leaving a placeholder in its place.
- *
- * Lets a regex pass run over everything except that element. `marker` is any
- * substring inside the element's opening tag; `tag` is that element's name,
- * matched with depth counting so nested tags of the same name don't end it
- * early. Returns null when the marker isn't in the document.
- */
-function cutElement(content, marker, tag, placeholder) {
-    const markerIdx = content.indexOf(marker);
-    if (markerIdx === -1) return null;
-
-    const openTag = `<${tag}`;
-    const closeTag = `</${tag}>`;
-    const start = content.lastIndexOf(openTag, markerIdx);
-    if (start === -1) return null;
-
-    let depth = 0, pos = start;
-    while (pos < content.length) {
-        if (content[pos] !== "<") {
-            pos++;
-        } else if (content.startsWith(openTag, pos) && /[\s>]/.test(content[pos + openTag.length])) {
-            depth++;
-            pos += openTag.length;
-        } else if (content.startsWith(closeTag, pos)) {
-            if (--depth === 0) {
-                return {
-                    section: content.slice(start, pos + closeTag.length),
-                    rest: content.slice(0, start) + placeholder + content.slice(pos + closeTag.length),
-                };
-            }
-            pos += closeTag.length;
-        } else {
-            pos++;
-        }
-    }
-
-    return null;
-}
-
-/**
  * Eleventy transform to classify links and add appropriate CSS classes
  * Runs on all HTML output files
  */
 function classifyLinks(content, outputPath) {
     if (!outputPath || !outputPath.endsWith(".html")) return content;
 
-    // const t0 = Date.now();
     try {
-        // Lift both tables of contents out first, so their internal anchor links
-        // are not reclassified (they'd pick up .link-to-page and render italic).
-        let processable = content;
-        const cutouts = [];
-
-        for (const [marker, tag, placeholder] of [
-            ["class=\"quick-links-container\"", "div", "\x00QL\x00"],
-            ["class=\"sidebar-toc\"", "nav", "\x00SB\x00"],
-        ]) {
-            const cut = cutElement(processable, marker, tag, placeholder);
-            if (!cut) continue;
-            processable = cut.rest;
-            cutouts.push([placeholder, cut.section]);
-        }
-
-        const VALID_EXTS = [".webp", ".html", ".webm", ".gif", ".jpg", ".jpeg", ".png", ".mp4", ".flac", ".mp3", ".ogg", ".wav", ".m4a"];
-        const LIGHTBOX_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".gif", ".webm", ".mp4", ".mov", ".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
-        const LIGHTBOX_VIDEO_EXTS = new Set([".webm", ".mp4", ".mov"]);
-        const LIGHTBOX_AUDIO_EXTS = new Set([".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
         let modified = false;
 
-        const result = processable.replace(/<a(\s[^>]*)>/gi, (match, attrs) => {
+        const result = content.replace(/<a(\s[^>]*)>/gi, (match, attrs) => {
             const hrefMatch = /href=["']([^"']*)["']/i.exec(attrs);
             if (!hrefMatch) return match;
             const href = hrefMatch[1];
@@ -726,10 +718,9 @@ function classifyLinks(content, outputPath) {
                 }
             }
 
-            const isExternal =
-                href.includes("youtu.be") || href.includes("youtube") ||
-                href.includes("discord.com") || href.startsWith("http://") ||
-                href.startsWith("https://") ||
+            // Anything with a scheme, or protocol-relative, plus the bare
+            // hostnames ("example.com/foo") authors write without one.
+            const isExternal = /^(?:[a-z]+:)?\/\//i.test(href) ||
                 (href.includes(".com") && !href.startsWith("/"));
 
             if (isExternal) existing.add("external-link");
@@ -765,7 +756,6 @@ function classifyLinks(content, outputPath) {
                     const hasUnknownExt = /\.[a-z0-9]+$/i.test(pathWithoutQuery);
                     const hasKnownExt = VALID_EXTS.some((ext) => pathWithoutQuery.toLowerCase().endsWith(ext));
                     if (hasUnknownExt && !hasKnownExt) {
-                        existing.add("wrong_file_type");
                         console.warn(`Invalid file type in ${outputPath}: ${href}`);
                     }
                 }
@@ -815,14 +805,7 @@ function classifyLinks(content, outputPath) {
             return `<a${newAttrs}>`;
         });
 
-        // Function replacements, not strings: a heading containing `$&` or `$1`
-        // would otherwise be mangled on the way back in.
-        let final = result;
-        for (const [placeholder, section] of cutouts) {
-            final = final.replace(placeholder, () => section);
-        }
-        // console.log(`[classifyLinks] ${outputPath} in ${Date.now() - t0}ms`);
-        return modified ? final : content;
+        return modified ? result : content;
     } catch (error) {
         console.error(`Error classifying links in ${outputPath}:`, error.message);
         return content;
@@ -840,7 +823,7 @@ function classifyLinks(content, outputPath) {
  * can style hover on the name itself (see `.disabled` in components.css)
  * instead of blocking pointer events wholesale.
  *
- * Runs last, so classifyLinks and addVersioning still see the real href.
+ * Runs last, so classifyLinks still sees the real href.
  */
 function unlinkUnwrittenGuides(content, outputPath) {
     if (!outputPath?.endsWith(".html")) return content;
@@ -858,69 +841,6 @@ function unlinkUnwrittenGuides(content, outputPath) {
         return tag.replace(/(\s)href=/i, "$1data-href=");
     });
     return modified ? result : content;
-}
-
-/**
- * Eleventy transform to add version parameters to CSS and JS links
- * and add version display component
- */
-function addVersioning(content, outputPath) {
-    // Only process HTML files
-    if (!outputPath || !outputPath.endsWith(".html")) {
-        return content;
-    }
-
-    // const t0 = Date.now();
-    try {
-        let modified = content;
-        const buildVersion = BUILD_VERSION;
-
-        // Add ?v= parameter to CSS links without version
-        modified = modified.replace(
-            /<link([^>]*)href=["']([^"']+\.css)["']([^>]*)>/gi,
-            (match, before, href, after) => {
-                if (!href.includes("?v=")) {
-                    return `<link${before}href="${href}?v=${buildVersion}"${after}>`;
-                }
-                return match;
-            },
-        );
-
-        // Add ?v= parameter to JS script tags without version
-        modified = modified.replace(/<script([^>]*)src=["']([^"']+\.js)["']([^>]*)>/gi, (match, before, src, after) => {
-            if (!src.includes("?v=")) {
-                // Also add defer if not present and not a module script
-                if (!match.includes("defer") && !match.includes("type=\"module\"")) {
-                    return `<script${before}src="${src}?v=${buildVersion}"${after} defer>`;
-                }
-                return `<script${before}src="${src}?v=${buildVersion}"${after}>`;
-            }
-            return match;
-        });
-
-        // Add version display component to index.html and guide pages (but not solvers)
-        const fileName = outputPath.split(/[/\\]/).pop();
-        const isIndexOrGuide = fileName === "index.html" || outputPath.includes("games");
-        const isSolverOrTemplate = outputPath.includes("solver") || outputPath.includes("_template");
-
-        if (isIndexOrGuide && !isSolverOrTemplate && !modified.includes("version-display")) {
-            const versionDisplayComponent = `<!-- Version display component -->
-<div class="version-display" data-version="${buildVersion}">
-    v.<span id="version-number">${buildVersion}</span>
-</div>`;
-
-            // Insert after opening <body> tag
-            if (modified.includes("<body>")) {
-                modified = modified.replace("<body>", `<body>\n${versionDisplayComponent}\n`);
-            }
-        }
-
-        // console.log(`[addVersioning] ${outputPath} in ${Date.now() - t0}ms`);
-        return modified;
-    } catch (error) {
-        console.error(`Error adding versioning to ${outputPath}:`, error.message);
-        return content;
-    }
 }
 
 /**
@@ -1100,7 +1020,6 @@ function injectReactBundle(content, outputPath) {
         return content;
     }
 
-    // const t0 = Date.now();
     try {
         if (!cachedManifest) {
             const manifestPath = path.join(__dirname, "dist/react-solvers/.vite/manifest.json");
@@ -1148,7 +1067,6 @@ function injectReactBundle(content, outputPath) {
             modified = modified.replace("<!-- REACT_BUNDLE_PLACEHOLDER -->", scriptTag);
         }
 
-        // console.log(`[injectReactBundle] ${outputPath} in ${Date.now() - t0}ms`);
         return modified;
     } catch (error) {
         console.error(`❌ Error injecting React bundle in ${outputPath}:`, error.message);
@@ -1167,33 +1085,25 @@ function injectReactBundle(content, outputPath) {
  * only other source of one is a script that walks every table on every page
  * load to write the same attributes this loop writes once.
  */
-function prepareTables(content, outputPath) {
-    if (!outputPath?.endsWith(".html")) return content;
-    try {
-        const dom = new JSDOM(content);
-        const document = dom.window.document;
-        const tables = document.querySelectorAll("table");
-        if (!tables.length) return content;
-        let modified = false;
-        for (const table of tables) {
-            let wrapper = table.parentElement;
-            if (!wrapper?.classList.contains("table-scroll")) {
-                wrapper = document.createElement("div");
-                wrapper.className = "table-scroll";
-                table.parentNode.insertBefore(wrapper, table);
-                wrapper.appendChild(table);
-                modified = true;
-            }
-            if (labelTableCells(table)) {
-                wrapper.classList.add("table-scroll--cards");
-                modified = true;
-            }
+function prepareTables(document) {
+    const tables = document.querySelectorAll("table");
+    if (!tables.length) return false;
+    let modified = false;
+    for (const table of tables) {
+        let wrapper = table.parentElement;
+        if (!wrapper?.classList.contains("table-scroll")) {
+            wrapper = document.createElement("div");
+            wrapper.className = "table-scroll";
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+            modified = true;
         }
-        return modified ? dom.serialize() : content;
-    } catch (e) {
-        console.error(`Error preparing tables in ${outputPath}:`, e.message);
-        return content;
+        if (labelTableCells(table)) {
+            wrapper.classList.add("table-scroll--cards");
+            modified = true;
+        }
     }
+    return modified;
 }
 
 /**
@@ -1301,22 +1211,17 @@ function labelTableCells(table) {
     return true;
 }
 
-function preRenderRevealButtons(content, outputPath) {
-    if (!outputPath?.endsWith(".html"))
-        return content;
-
-    const dom = new JSDOM(content);
-    const elements = dom.window.document.querySelectorAll("[data-reveal-label]");
-    if (!elements.length) return content;
+function preRenderRevealButtons(document) {
+    const elements = document.querySelectorAll("[data-reveal-label]");
+    if (!elements.length) return false;
 
     for (const el of elements) {
-        const label =
-            el.getAttribute("data-reveal-label");
+        const label = el.getAttribute("data-reveal-label");
         const inner = el.innerHTML;
         el.innerHTML = `<button type="button" class="btn--reveal">${label}</button>
 <div class="button-activated-div" style="display: none;">${inner}</div>`;
     }
-    return dom.serialize();
+    return true;
 }
 
 /**
@@ -1334,88 +1239,81 @@ function preRenderRevealButtons(content, outputPath) {
  * so any `id` on them stays a valid anchor target. Interaction lives in
  * src/ts/content/path-tabs.ts.
  */
-function preRenderPathTabs(content, outputPath) {
-    if (!outputPath?.endsWith(".html")) return content;
-    if (!content.includes("data-path-group")) return content;
+function preRenderPathTabs(document, outputPath) {
+    const groups = document.querySelectorAll("[data-path-group]");
+    if (!groups.length) return false;
 
-    try {
-        const dom = new JSDOM(content);
-        const document = dom.window.document;
-        const groups = document.querySelectorAll("[data-path-group]");
-        if (!groups.length) return content;
+    let modified = false;
 
-        for (const group of groups) {
-            const groupName = group.getAttribute("data-path-group");
-            const paths = Array.from(group.children).filter((el) => el.hasAttribute("data-path-label"));
+    for (const group of groups) {
+        const groupName = group.getAttribute("data-path-group");
+        const paths = Array.from(group.children).filter((el) => el.hasAttribute("data-path-label"));
 
-            // A switcher needs something to switch between.
-            if (paths.length < 2) {
-                console.warn(
-                    `[preRenderPathTabs] "${groupName}" in ${outputPath} has ${paths.length} path(s); skipping.`,
-                );
-                continue;
-            }
-
-            const defaultIndex = Math.max(
-                0,
-                paths.findIndex((el) => el.hasAttribute("data-path-default")),
+        // A switcher needs something to switch between.
+        if (paths.length < 2) {
+            console.warn(
+                `[preRenderPathTabs] "${groupName}" in ${outputPath} has ${paths.length} path(s); skipping.`,
             );
-
-            group.classList.add("path-tabs");
-
-            const bar = document.createElement("div");
-            bar.className = "path-tabs__bar";
-            bar.setAttribute("role", "tablist");
-
-            const panels = document.createElement("div");
-            panels.className = "path-tabs__panels";
-
-            paths.forEach((path, index) => {
-                const isDefault = index === defaultIndex;
-                const tabId = `path-${groupName}-tab-${index}`;
-                const panelId = `path-${groupName}-panel-${index}`;
-                const label = path.getAttribute("data-path-label");
-                const note = path.getAttribute("data-path-note");
-
-                const tab = document.createElement("button");
-                tab.type = "button";
-                tab.id = tabId;
-                tab.className = `path-tabs__tab${isDefault ? " is-active" : ""}`;
-                tab.setAttribute("role", "tab");
-                tab.setAttribute("aria-controls", panelId);
-                tab.setAttribute("aria-selected", String(isDefault));
-                tab.tabIndex = isDefault ? 0 : -1;
-                tab.innerHTML =
-                    `<span class="path-tabs__label">${label}</span>` +
-                    (note ? `<span class="path-tabs__note">${note}</span>` : "");
-                bar.appendChild(tab);
-
-                path.classList.add("path-tabs__panel");
-                path.setAttribute("role", "tabpanel");
-                path.setAttribute("aria-labelledby", tabId);
-
-                // Deep links to a panel should land on the tab bar, not on the
-                // panel's first line — otherwise the tabs sit off-screen and the
-                // reader can't tell there's another route. See resolveScrollTarget
-                // in src/ts/navigation/scroll-manager.ts.
-                path.setAttribute("data-scroll-with", ".path-tabs");
-                if (!path.id) path.id = panelId;
-                if (!isDefault) path.setAttribute("hidden", "");
-                path.removeAttribute("data-path-label");
-                path.removeAttribute("data-path-note");
-                path.removeAttribute("data-path-default");
-                panels.appendChild(path);
-            });
-
-            group.prepend(bar);
-            bar.after(panels);
+            continue;
         }
+        modified = true;
 
-        return dom.serialize();
-    } catch (e) {
-        console.error(`Error building path tabs in ${outputPath}:`, e.message);
-        return content;
+        const defaultIndex = Math.max(
+            0,
+            paths.findIndex((el) => el.hasAttribute("data-path-default")),
+        );
+
+        group.classList.add("path-tabs");
+
+        const bar = document.createElement("div");
+        bar.className = "path-tabs__bar";
+        bar.setAttribute("role", "tablist");
+
+        const panels = document.createElement("div");
+        panels.className = "path-tabs__panels";
+
+        paths.forEach((path, index) => {
+            const isDefault = index === defaultIndex;
+            const tabId = `path-${groupName}-tab-${index}`;
+            const panelId = `path-${groupName}-panel-${index}`;
+            const label = path.getAttribute("data-path-label");
+            const note = path.getAttribute("data-path-note");
+
+            const tab = document.createElement("button");
+            tab.type = "button";
+            tab.id = tabId;
+            tab.className = `path-tabs__tab${isDefault ? " is-active" : ""}`;
+            tab.setAttribute("role", "tab");
+            tab.setAttribute("aria-controls", panelId);
+            tab.setAttribute("aria-selected", String(isDefault));
+            tab.tabIndex = isDefault ? 0 : -1;
+            tab.innerHTML =
+                `<span class="path-tabs__label">${label}</span>` +
+                (note ? `<span class="path-tabs__note">${note}</span>` : "");
+            bar.appendChild(tab);
+
+            path.classList.add("path-tabs__panel");
+            path.setAttribute("role", "tabpanel");
+            path.setAttribute("aria-labelledby", tabId);
+
+            // Deep links to a panel should land on the tab bar, not on the
+            // panel's first line — otherwise the tabs sit off-screen and the
+            // reader can't tell there's another route. See resolveScrollTarget
+            // in src/ts/navigation/scroll-manager.ts.
+            path.setAttribute("data-scroll-with", ".path-tabs");
+            if (!path.id) path.id = panelId;
+            if (!isDefault) path.setAttribute("hidden", "");
+            path.removeAttribute("data-path-label");
+            path.removeAttribute("data-path-note");
+            path.removeAttribute("data-path-default");
+            panels.appendChild(path);
+        });
+
+        group.prepend(bar);
+        bar.after(panels);
     }
+
+    return modified;
 }
 
 /**
@@ -1482,54 +1380,44 @@ function collectStepNumbers(document, outputPath) {
  * file. An unresolved name warns and renders as the name itself, which is ugly
  * on purpose — it surfaces in the dev preview instead of shipping a silent "?".
  */
-function resolveStepRefs(content, outputPath) {
-    if (!outputPath?.endsWith(".html")) return content;
-    if (!content.includes("data-step-ref")) return content;
+function resolveStepRefs(document, outputPath) {
+    const refs = document.querySelectorAll("[data-step-ref]");
+    if (!refs.length) return false;
 
-    try {
-        const dom = new JSDOM(content);
-        const document = dom.window.document;
-        const refs = document.querySelectorAll("[data-step-ref]");
-        if (!refs.length) return content;
+    const numbers = collectStepNumbers(document, outputPath);
 
-        const numbers = collectStepNumbers(document, outputPath);
+    for (const ref of refs) {
+        const from = ref.getAttribute("data-step-ref");
+        const to = ref.getAttribute("data-step-ref-to");
 
-        for (const ref of refs) {
-            const from = ref.getAttribute("data-step-ref");
-            const to = ref.getAttribute("data-step-ref-to");
-
-            for (const [attr, name] of [["data-step-ref", from], ["data-step-ref-to", to]]) {
-                if (name && !numbers.has(name)) {
-                    console.warn(
-                        `[resolveStepRefs] ${attr}="${name}" in ${outputPath} matches no data-step-id.`,
-                    );
-                }
-            }
-
-            const start = numbers.get(from);
-            const end = to ? numbers.get(to) : start;
-            const sep = ref.getAttribute("data-step-ref-sep") || "-";
-
-            let text;
-            if (start === undefined || end === undefined) {
-                text = to ? `${from}${sep}${to}` : from;
-            } else if (end < start) {
+        for (const [attr, name] of [["data-step-ref", from], ["data-step-ref-to", to]]) {
+            if (name && !numbers.has(name)) {
                 console.warn(
-                    `[resolveStepRefs] range "${from}"→"${to}" in ${outputPath} runs backwards (${start}${sep}${end}).`,
+                    `[resolveStepRefs] ${attr}="${name}" in ${outputPath} matches no data-step-id.`,
                 );
-                text = `${start}${sep}${end}`;
-            } else {
-                text = start === end ? `${start}` : `${start}${sep}${end}`;
             }
-
-            ref.replaceWith(document.createTextNode(text));
         }
 
-        return dom.serialize();
-    } catch (e) {
-        console.error(`Error resolving step references in ${outputPath}:`, e.message);
-        return content;
+        const start = numbers.get(from);
+        const end = to ? numbers.get(to) : start;
+        const sep = ref.getAttribute("data-step-ref-sep") || "-";
+
+        let text;
+        if (start === undefined || end === undefined) {
+            text = to ? `${from}${sep}${to}` : from;
+        } else if (end < start) {
+            console.warn(
+                `[resolveStepRefs] range "${from}"→"${to}" in ${outputPath} runs backwards (${start}${sep}${end}).`,
+            );
+            text = `${start}${sep}${end}`;
+        } else {
+            text = start === end ? `${start}` : `${start}${sep}${end}`;
+        }
+
+        ref.replaceWith(document.createTextNode(text));
     }
+
+    return true;
 }
 
 // ========================================
@@ -1622,13 +1510,9 @@ async function smartCopyImages() {
 
 module.exports = function(eleventyConfig) {
     // Add transforms for quick links generation, link classification, versioning, and React bundle injection
-    eleventyConfig.addTransform("prepareTables", prepareTables);
-    eleventyConfig.addTransform("resolveStepRefs", resolveStepRefs);
-    eleventyConfig.addTransform("preRenderRevealButtons", preRenderRevealButtons);
-    eleventyConfig.addTransform("preRenderPathTabs", preRenderPathTabs);
-    eleventyConfig.addTransform("generateQuickLinks", generateQuickLinks);
+    // classifyLinks first: it must not see the tables of contents domPass builds.
     eleventyConfig.addTransform("classifyLinks", classifyLinks);
-    eleventyConfig.addTransform("addVersioning", addVersioning);
+    eleventyConfig.addTransform("domPass", domPass);
     eleventyConfig.addTransform("injectReactBundle", injectReactBundle);
     eleventyConfig.addTransform("prerenderSolvers", prerenderSolvers);
     eleventyConfig.addTransform("unlinkUnwrittenGuides", unlinkUnwrittenGuides);
@@ -1638,6 +1522,11 @@ module.exports = function(eleventyConfig) {
 
     // Smart image copy: only copies new or changed files
     eleventyConfig.on("eleventy.before", smartCopyImages);
+
+    // Re-measure every build. Without this the cache is filled once and never
+    // again, so under `eleventy --serve` the stats page and the index footer
+    // freeze at whatever the numbers were when the server started.
+    eleventyConfig.on("eleventy.before", () => { statsCache = null; });
 
     // Passthrough copy static assets (non-image)
     eleventyConfig.addPassthroughCopy("src/css/*");
@@ -1666,11 +1555,6 @@ module.exports = function(eleventyConfig) {
 
     // Strip .html extension from URLs so canonicals match Cloudflare Pretty URLs
     eleventyConfig.addFilter("cleanUrl", (url) => url ? url.replace(/\.html$/, "") : url);
-
-    // Add a filter to format dates
-    eleventyConfig.addFilter("dateFormat", function(date) {
-        return new Date(date).toLocaleDateString();
-    });
 
     // Add a shortcode for the current year (useful for copyright)
     eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`);
@@ -1742,14 +1626,6 @@ module.exports = function(eleventyConfig) {
     // Per-guide and site-wide measurements, for the index footer and /stats.
     eleventyConfig.addGlobalData("siteWords", () => siteStats().totals);
     eleventyConfig.addGlobalData("stats", siteStats);
-
-    // Compact big numbers for tight spots: 149438 -> "149.4K".
-    eleventyConfig.addFilter("compact", (n) => {
-        if (typeof n !== "number") return n;
-        if (n < 1000) return String(n);
-        if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0).replace(/\.0$/, "") + "K";
-        return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-    });
 
     // Bar length as a percentage of the largest value in its chart.
     eleventyConfig.addFilter("pct", (value, max) => (max > 0 ? Math.max(1.5, (value / max) * 100).toFixed(2) : "0"));
