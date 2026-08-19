@@ -66,6 +66,19 @@ a:hover {
     vertical-align: middle;
 }
 
+/* Image links carry no icon (see the note below), which left colour as their
+   only cue: #78a8e8 against #e5e5e5 body copy is 1.95:1, well under the 3:1
+   WCAG asks for when colour is the sole distinguishing feature. A dotted
+   underline is the non-colour cue, and being dotted it stays visibly a
+   different kind of link from the solid-underlined page and external links.
+   Keyed off data-media-type rather than .lightbox-trigger so it is present in
+   the HTML rather than arriving with the script. */
+a[data-media-type="image"] {
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+}
+
 /* Video and audio links keep the default link blue — a video, a sound file and
    a picture are the same kind of thing here (media that opens in the lightbox),
    so the glyph does the distinguishing rather than more palette colours. Keyed
