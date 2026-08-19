@@ -70,6 +70,25 @@ const OWNED = [
 
 const SKIP_PAGES = [/^react-solvers[/\\]/];
 
+/**
+ * Runtime features a page has switched off, and the class prefixes that become
+ * unreachable when it does.
+ *
+ * The JS safelist is global — it cannot tell that the flag UI never runs on the
+ * homepage — so without this the index carries every gfb-* rule for a feature
+ * its own <body data-no-flags> disables. That was ~7KB of the index's inlined
+ * CSS, all of it in front of the LCP element.
+ *
+ * Each gate must correspond to an early return in the script that owns the
+ * classes, so the CSS cannot be wanted after all: data-no-flags is
+ * line-flagger.ts:140, data-skip-toc is quick-links.ts:129 (and the Eleventy
+ * transform that pre-renders the same markup).
+ */
+const FEATURE_GATES = [
+    { disabled: (body) => body.hasAttribute("data-no-flags"), prefixes: ["gfb-"] },
+    { disabled: (body) => body.dataset.skipToc === "true", prefixes: ["sidebar-toc", "quick-links"] },
+];
+
 function findFiles(dir, ext) {
     const out = [];
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -216,7 +235,18 @@ for (const file of findFiles(distDir, ".html")) {
     );
     if (links.length === 0) continue;
 
-    const tokens = new Set([...harvestPageTokens(doc), ...jsTokens]);
+    // Page markup wins over every gate below: if the class is really on the
+    // page, the rule stays whatever the feature flags say.
+    const pageTokens = harvestPageTokens(doc);
+    const tokens = new Set([...pageTokens, ...jsTokens]);
+
+    for (const gate of FEATURE_GATES) {
+        if (!gate.disabled(doc.body)) continue;
+        for (const token of tokens) {
+            if (pageTokens.has(token)) continue;
+            if (gate.prefixes.some((p) => token.startsWith(p))) tokens.delete(token);
+        }
+    }
 
     // Concatenated in document order so the cascade the templates set up
     // survives: index-nav.css and trending.css are written to sit after the
