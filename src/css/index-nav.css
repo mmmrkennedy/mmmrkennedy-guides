@@ -106,7 +106,7 @@
     margin-left: auto;
     font-size: var(--font-size-sm);
     font-variant-numeric: tabular-nums;
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     white-space: nowrap;
 }
 

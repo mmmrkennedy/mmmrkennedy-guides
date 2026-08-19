@@ -1154,8 +1154,13 @@ details.spacing > ul {
  * the header on narrow screens and told readers nothing. What is left is the
  * ad-mode toggle, which ads.ts hides outright while ads are disabled site-wide,
  * so this renders nothing today. Kept so re-enabling ads brings the control
- * back in a sane spot: right-aligned in flow on the index, pinned to the header
- * strip on guides and stats (rule below). */
+ * back in a sane spot: pinned to the top-right corner, on the header strip for
+ * guides and stats and on the content window for the index (rules below).
+ *
+ * Both are out of flow, and that is the point. In flow this reserved 22px on
+ * the index that the async ads bundle then took back the moment it ran, moving
+ * the whole page up after paint — the entire 0.110 CLS Lighthouse reported on
+ * the homepage. Nothing can shift if showing or hiding it costs no space. */
 .version-display {
     display: flex;
     justify-content: flex-end;
@@ -1168,7 +1173,8 @@ details.spacing > ul {
     white-space: nowrap;
 }
 
-.top-buttons-background-box .version-display {
+.top-buttons-background-box .version-display,
+.content-window > .version-display {
     position: absolute;
     top: var(--space-xs);
     bottom: unset;
