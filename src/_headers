@@ -76,8 +76,31 @@
   Cache-Control: public, max-age=31536000, immutable
 
 # Security headers for everything. This is the only place they appear.
+#
+# HSTS is a one-year commitment per visitor: once a browser has seen this it
+# refuses plain HTTP for the domain until it expires. Safe here because Pages
+# only ever serves HTTPS. Deliberately without `includeSubDomains` (it would
+# cover subdomains this repo knows nothing about) and without `preload` (that
+# one is hard to walk back — it needs a removal request and a browser release).
+#
+# The CSP covers only what a static header can cover without a nonce. It is not
+# an XSS defence and Lighthouse will still say so: script-src is absent on
+# purpose, because the pages carry inline handlers (the Back to Top buttons, the
+# media=print stylesheet swap) and load AdSense, so the only script-src that
+# would work is one with 'unsafe-inline', which buys nothing. What is here does
+# work: object-src kills plugin embeds, base-uri stops an injected <base> from
+# re-pointing every relative URL, and form-action stops an injected form from
+# posting off-site. The site has no <form>, <base>, <object> or <embed>, so none
+# of it can break anything today.
+#
+# Not set: require-trusted-types-for. It would break the site outright — ads.ts,
+# line-flagger.ts and the quick-links builder all assign innerHTML, as does
+# AdSense itself.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Content-Security-Policy: base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'
