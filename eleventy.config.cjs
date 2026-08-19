@@ -1378,7 +1378,6 @@ function preRenderPathTabs(document, outputPath) {
             tab.id = tabId;
             tab.className = `path-tabs__tab${isDefault ? " is-active" : ""}`;
             tab.setAttribute("role", "tab");
-            tab.setAttribute("aria-controls", panelId);
             tab.setAttribute("aria-selected", String(isDefault));
             tab.tabIndex = isDefault ? 0 : -1;
             tab.innerHTML =
@@ -1395,7 +1394,13 @@ function preRenderPathTabs(document, outputPath) {
             // reader can't tell there's another route. See resolveScrollTarget
             // in src/ts/navigation/scroll-manager.ts.
             path.setAttribute("data-scroll-with", ".path-tabs");
+            // A panel that already carries an id keeps it — guides deep-link to
+            // these sections by name. aria-controls has to name whatever id the
+            // panel ends up with, not the one generated here: pointing it at an
+            // id nothing has is an invalid ARIA reference, which is what
+            // Lighthouse caught on attack_of_the_radioactive_thing.
             if (!path.id) path.id = panelId;
+            tab.setAttribute("aria-controls", path.id);
             if (!isDefault) path.setAttribute("hidden", "");
             path.removeAttribute("data-path-label");
             path.removeAttribute("data-path-note");
