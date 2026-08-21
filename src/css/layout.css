@@ -92,7 +92,7 @@ Page structure and containers.
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -109,19 +109,63 @@ Page structure and containers.
     margin: 0;
 }
 
+/* Not a chip. As one it was the widest pill in the block and read as the
+   primary action, when it is the fallback for a reader none of the named maps
+   suited. A plain underlined link keeps it clearly a link while leaving the
+   chips as the only things competing for the eye. */
 .related-maps__all {
-    margin: var(--space-md) 0 0;
+    margin: var(--space-lg) 0 0;
     color: var(--color-text-muted);
 }
 
-.related-maps__link {
-    color: var(--color-link-page);
-    text-decoration: none;
+.related-maps__all .related-maps__link {
+    color: var(--color-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
 }
 
-.related-maps__link:hover,
-.related-maps__link:focus-visible {
-    text-decoration: underline;
+.related-maps__all .related-maps__link:hover,
+.related-maps__all .related-maps__link:focus-visible {
+    color: var(--color-link-page);
+}
+
+/* Chips, not bare words on a line.
+   These were text-coloured-copper and nothing else, which broke down three
+   ways: with no underline, border or background, colour alone said "link" —
+   the same WCAG 1.4.1 problem the image links had, and copper on the page
+   background is nowhere near the 3:1 a sole cue needs against the muted labels
+   beside it. Nothing marked where one link stopped and the next began either,
+   so a centred wrapped row read as one run-on line ("Shangri-La "Five" Call of
+   the Dead"), with whitespace as the only separator. And a bare word is a
+   word-sized tap target on the screen where this block matters most.
+   The pill shape is the site's existing chip, borrowed from .index-nav__chip on
+   the home page, so this reads as a control the reader has already met rather
+   than a new invention. Copper text is kept: --color-link-page is the token for
+   internal page navigation, which is exactly what these are. */
+.related-maps__list .related-maps__link {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    color: var(--color-link-page);
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 999px;
+    text-decoration: none;
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+/* The global `a:hover` fades to 0.8 and underlines. On a chip the underline
+   fights the border and the fade dims the whole pill, so both are replaced by
+   the chip's own state: brighter text, copper edge. */
+.related-maps__list .related-maps__link:hover,
+.related-maps__list .related-maps__link:focus-visible {
+    opacity: 1;
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-tertiary);
+    border-color: var(--color-link-page);
+    text-decoration: none;
 }
 
 /* Site Footer: copyright + last-updated date + edit count */
