@@ -9,5 +9,33 @@ solverIsPrimary: true
 skipTOC: true
 ---
 <div class="solver-only-page">
+{#- A solver page is nearly always an arrival, not a step: readers land on
+    "Terminus Beamsmasher Solver" straight from search, solve their one puzzle
+    and leave, because nothing on the page points at the guide the solver
+    belongs to. The return pill can't cover this — it only appears for someone
+    who clicked through from the guide in the first place. This link is always
+    there, which also gives every solver page a crawlable edge back into its
+    parent guide instead of dead-ending the link graph.
+
+    Outside any .content-container and not a <p>, so line-flagger.ts leaves it
+    alone: this is chrome, not a line of the guide anyone would report. -#}
+{#- Four solver pages point at a guide that is still an "unfinished" stub
+    (Totenreich, Shattered Veil, Reckoning, Gorod Krovi as of writing), and
+    those render a "Sorry, this page is not ready yet!" placeholder. Sending a
+    reader there is worse than sending them nowhere, so the link waits until the
+    guide is live. `unfinishedPages` is the index's own `a.disabled` registry,
+    so the link appears the moment that class comes off — no second list to
+    remember to update. -#}
+{%- set guideClean = guideUrl | cleanUrl %}
+{%- if mapName and guideUrl and guideClean not in unfinishedPages %}
+{#- "Full Terminus Map Guide" reads fine; "Full The Frozen Dawn Map Guide" does
+    not, and three maps carry a leading article. Those put the name first
+    instead — same words, both orders grammatical, and the map name still opens
+    the anchor text on the pages where it matters most. -#}
+{%- set guideLabel = (mapName + ' Full Map Guide') if mapName.startsWith('The ') else ('Full ' + mapName + ' Map Guide') %}
+<nav class="solver-guide-link" aria-label="Related guide">
+    <a class="solver-guide-link__anchor internal-link" href="{{ guideClean }}">{{ guideLabel }}</a>
+</nav>
+{%- endif %}
 {{ content | safe }}
 </div>

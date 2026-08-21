@@ -108,6 +108,51 @@
 }
 
 /* ------------------------------------------------------------
+   Link back to the map's full guide.
+   Sits above the solver on solver-only pages, where most readers
+   arrive from search and would otherwise have no route to the
+   guide the puzzle belongs to. Sized and coloured as a quiet
+   signpost — it must not compete with the solver for the eye.
+   .internal-link supplies the copper colour, the italic and the
+   leave-this-page glyph, so this rule only does the pill.
+   ------------------------------------------------------------ */
+.solver-guide-link {
+    padding: var(--space-md) var(--space-md) 0;
+    text-align: center;
+}
+
+.solver-guide-link__anchor {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 999px;
+    font-size: var(--font-size-sm);
+
+    /* .internal-link's italic and underline are for a link sitting in a
+       sentence, where the pill's own edge isn't there to mark it. Here they
+       just fight the border, and they made this read as a different kind of
+       control from the identically-shaped map chips in "More Zombies guides"
+       further down the same page. The trailing leave-this-page glyph stays —
+       that one still says something the shape doesn't. */
+    font-style: normal;
+    text-decoration: none;
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.solver-guide-link__anchor:hover,
+.solver-guide-link__anchor:focus-visible {
+    opacity: 1;
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-tertiary);
+    border-color: var(--color-link-page);
+    text-decoration: none;
+}
+
+/* ------------------------------------------------------------
    Typography
    ------------------------------------------------------------ */
 .solver-title {
