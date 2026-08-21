@@ -54,7 +54,23 @@
         on solver flags, so a report can be told apart from one filed against
         code that has since been fixed. -#}
     <meta name="build" content="{{ site.buildVersion }}">
-    {%- if unfinished or page.url in unfinishedPages %}
+    {#- One switch decides whether a map is live: `class="disabled"` on its link
+        in src/index.html, which _data/unfinishedPages.js reads. That is already
+        what stops the sitemap listing a page, what keeps it out of the related-
+        maps blocks, and what hides the "Full X Map Guide" link on a solver page,
+        so it decides the noindex and the placeholder body below too. Launching a
+        guide is removing that one class.
+
+        This used to read `unfinished or page.url in unfinishedPages`, and the
+        second half could never be true: page.url carries the .html the index
+        hrefs leave off, so no page path ever equalled a registry entry (and
+        before the fix in unfinishedPages.js the entries were "//games/..."
+        besides). Every stub was held up by the `unfinished: true` in its own
+        front matter alone, which meant two lists that had to agree and no
+        warning if they ever stopped. `| cleanUrl` normalises both sides the same
+        way the canonical URL below does, and the front-matter flag is gone from
+        all 17 guides that carried it. -#}
+    {%- if page.url | cleanUrl in unfinishedPages %}
         <meta name="robots" content="noindex, nofollow">
     {%- else %}
         <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -291,7 +307,7 @@
         stays outside: a <footer> inside <main> loses its contentinfo landmark
         role, so nesting it would trade one landmark for another. #}
     <main>
-    {%- if unfinished or page.url in unfinishedPages %}
+    {%- if page.url | cleanUrl in unfinishedPages %}
         <div class="content-container">
             <h2>Sorry, this page is not ready yet!</h2>
             <p>Please check back later.</p>
@@ -348,9 +364,10 @@
         {%- set releasedRel = page.inputPath | releasedRelative %}
         {%- set edits = page.inputPath | editcount %}
         {%- set editorList = editors | formatEditors %}
-        {#- An unfinished page shows the placeholder above instead of `content`,
-            so it must not advertise the word count of a body nobody can read. #}
-        {%- set words = null if (unfinished or noWordCount or page.url in unfinishedPages) else (content | wordcount) %}
+        {#- A page the index still marks disabled shows the placeholder above
+            instead of `content`, so it must not advertise the word count of a
+            body nobody can read. #}
+        {%- set words = null if (noWordCount or page.url | cleanUrl in unfinishedPages) else (content | wordcount) %}
         <p class="site-footer__meta">
             <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
             {%- if editorList %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
