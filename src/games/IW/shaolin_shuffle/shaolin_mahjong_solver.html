@@ -1,0 +1,28 @@
+---
+layout: solver-only.njk
+mapName: 'Shaolin Shuffle'
+solverTitle: 'Mahjong Solver'
+guideUrl: '/games/IW/shaolin_shuffle/shaolin_shuffle_guide.html'
+description: Shaolin Shuffle Mahjong solver for Infinite Warfare Zombies. Enter the 14 tiles from the Disco roof to get a winning hand of four sets and a pair.
+preloadImages:
+  - /games/IW/shaolin_shuffle/mahjong_solver/dot_1.webp
+  - /games/IW/shaolin_shuffle/mahjong_solver/dot_2.webp
+  - /games/IW/shaolin_shuffle/mahjong_solver/dot_3.webp
+  - /games/IW/shaolin_shuffle/mahjong_solver/dot_4.webp
+  - /games/IW/shaolin_shuffle/mahjong_solver/dot_5.webp
+---
+<div class="content-container">
+    <h2 class="solver-title">Mahjong Solver</h2>
+    <p class="solver-intro">Skull 2 of the Skullbuster quest puts a row of Mahjong tiles on the Disco roof, with tiles missing. Enter the 14 you end up with to get a winning hand of four sets of three and a pair.</p>
+    <div id="mahjong-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountMahjongSolver("mahjong-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

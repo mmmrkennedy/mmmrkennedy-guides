@@ -1,52 +1,18 @@
 ---
 layout: solver-only.njk
 mapName: 'Attack of the Radioactive Thing'
+aliases: ['AOTRT', 'Radioactive Thing', 'Attack']
 solverTitle: 'Solvers'
 guideUrl: '/games/IW/attack_of_the_radioactive_thing/attack_of_the_radioactive_thing_guide.html'
-description: Attack of the Radioactive Thing solvers for Infinite Warfare Zombies. Work the chemical step one prompt at a time, and crack the GnS skull 4 code.
-preloadImages:
-  - /games/IW/wyler_language_symbols/a.webp
-  - /games/IW/wyler_language_symbols/b.webp
-  - /games/IW/wyler_language_symbols/c.webp
-  - /games/IW/wyler_language_symbols/d.webp
-  - /games/IW/wyler_language_symbols/e.webp
-  - /games/IW/wyler_language_symbols/f.webp
-  - /games/IW/wyler_language_symbols/g.webp
-  - /games/IW/wyler_language_symbols/h.webp
-  - /games/IW/wyler_language_symbols/i.webp
-  - /games/IW/wyler_language_symbols/j.webp
-  - /games/IW/wyler_language_symbols/k.webp
-  - /games/IW/wyler_language_symbols/l.webp
-  - /games/IW/wyler_language_symbols/m.webp
-  - /games/IW/wyler_language_symbols/n.webp
-  - /games/IW/wyler_language_symbols/o.webp
-  - /games/IW/wyler_language_symbols/p.webp
-  - /games/IW/wyler_language_symbols/q.webp
-  - /games/IW/wyler_language_symbols/r.webp
-  - /games/IW/wyler_language_symbols/s.webp
-  - /games/IW/wyler_language_symbols/t.webp
-  - /games/IW/wyler_language_symbols/u.webp
-  - /games/IW/wyler_language_symbols/v.webp
-  - /games/IW/wyler_language_symbols/w.webp
-  - /games/IW/wyler_language_symbols/x.webp
-  - /games/IW/wyler_language_symbols/y.webp
-  - /games/IW/wyler_language_symbols/z.webp
+description: Every solver for Attack of the Radioactive Thing (AOTRT) in Infinite Warfare Zombies. The Soul-Less chemical step, and the Skull 4 word puzzle.
 ---
+{#- Each solver has its own page, so each one can carry the title, heading and
+    description for the puzzle people actually search for. This page keeps the
+    URL those pages were split out of and points at all of them, rather than
+    hosting the same tools on a second URL and competing with them. -#}
 <div class="content-container">
-    <div id="chemical-solver-react"></div>
+    <ul>
+        <li><a data-prefetchable href="/games/IW/attack_of_the_radioactive_thing/attack_chemical_step_solver" class="solver-link">Chemical Step Solver</a> - which chemicals to craft, and the keypad number for each, on the 'Soul-Less' main quest.</li>
+        <li><a data-prefetchable href="/games/IW/attack_of_the_radioactive_thing/attack_skull_4_solver" class="solver-link">Skull 4 Word Puzzle Solver</a> - the swingset symbol combinations that spell the Ice Cream Parlour wall word.</li>
+    </ul>
 </div>
-
-<div class="content-container">
-    <div id="gns-skull4-solver-react"></div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountAttackGnSSkull4Solver("gns-skull4-solver-react", { title: "GnS Skull 4 Solver" });
-            window.ZombiesSolvers.mountChemicalStepSolver("chemical-solver-react", { title: "Chemical Step Solver" });
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

@@ -1,0 +1,23 @@
+---
+layout: solver-only.njk
+mapName: 'The Beast From Beyond'
+aliases: ['TBFB', 'Beast']
+solverTitle: 'Venom-X Button Box Solver'
+guideUrl: '/games/IW/the_beast_from_beyond/the_beast_from_beyond_guide.html'
+description: The Beast From Beyond (TBFB) Venom-X button box solver for Infinite Warfare Zombies. Enter the colours in the Ops Center box and get the one to press.
+---
+<div class="content-container">
+    <h2 class="solver-title">Venom-X Button Box Solver</h2>
+    <p class="solver-intro">The box on the wall by the 'Ops Center' stairs opens with three to six coloured buttons inside. Enter the colours you see and the round you are on to get the one button to interact with.</p>
+    <div id="beast-venomx-box-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountBeastVenomXBoxSolver("beast-venomx-box-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

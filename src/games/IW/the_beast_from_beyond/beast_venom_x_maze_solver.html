@@ -1,0 +1,26 @@
+---
+layout: solver-only.njk
+mapName: 'The Beast From Beyond'
+aliases: ['TBFB', 'Beast']
+solverTitle: 'Venom-X Invisible Maze Solver'
+guideUrl: '/games/IW/the_beast_from_beyond/the_beast_from_beyond_guide.html'
+description: The Beast From Beyond (TBFB) Venom-X maze solver for Infinite Warfare Zombies. Enter the console board and get the path past the invisible walls.
+preloadImages:
+  - /games/IW/the_beast_from_beyond/venom/venom_maze/pictures/yellow_square.webp
+  - /games/IW/the_beast_from_beyond/venom/venom_maze/pictures/blue_diamond.webp
+---
+<div class="content-container">
+    <h2 class="solver-title">Venom-X Invisible Maze Solver</h2>
+    <p class="solver-intro">The two consoles above 'Bombstoppers' ask you to move the red square to the blue diamond past walls you cannot see. Enter the board you are looking at to get the path through it.</p>
+    <div id="beast-venomx-maze-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountBeastVenomXMazeSolver("beast-venomx-maze-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

@@ -1,56 +1,21 @@
 ---
 layout: solver-only.njk
 mapName: 'The Beast From Beyond'
+aliases: ['TBFB', 'Beast']
 solverTitle: 'Solvers'
 guideUrl: '/games/IW/the_beast_from_beyond/the_beast_from_beyond_guide.html'
-description: Interactive solvers for The Beast From Beyond in Infinite Warfare Zombies. Venom-X maze and buttons, Morse code, Floppy Disk, and Eight Queens.
-preloadImages:
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_0.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_1.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_2.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_3.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_4.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_5.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_6.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_7.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_8.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_9.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_10.webp
-  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_11.webp
-  - /games/IW/the_beast_from_beyond/venom/venom_maze/pictures/yellow_square.webp
-  - /games/IW/the_beast_from_beyond/venom/venom_maze/pictures/blue_diamond.webp
+description: Every solver for The Beast From Beyond (TBFB) in Infinite Warfare Zombies. Venom-X buttons and maze, Venom-Y Morse, N31L disks, and Eight Queens.
 ---
-
+{#- Each solver has its own page, so each one can carry the title, heading and
+    description for the puzzle people actually search for. This page keeps the
+    URL those pages were split out of and points at all of them, rather than
+    hosting the same tools on a second URL and competing with them. -#}
 <div class="content-container">
-    <div id="beast-venomx-box-solver-react"></div>
+    <ul>
+        <li><a data-prefetchable href="/games/IW/the_beast_from_beyond/beast_venom_x_box_solver" class="solver-link">Venom-X Button Box Solver</a> - the coloured buttons in the box by the 'Ops Center' stairs.</li>
+        <li><a data-prefetchable href="/games/IW/the_beast_from_beyond/beast_venom_x_maze_solver" class="solver-link">Venom-X Invisible Maze Solver</a> - the path past the invisible walls on the consoles above 'Bombstoppers'.</li>
+        <li><a data-prefetchable href="/games/IW/the_beast_from_beyond/beast_venom_y_morse_solver" class="solver-link">Venom-Y Morse Code Solver</a> - the Archer or Cross key from the terminal right of Bang Bangs.</li>
+        <li><a data-prefetchable href="/games/IW/the_beast_from_beyond/beast_floppy_disk_solver" class="solver-link">N31L Floppy Disk Order Solver</a> - the order the four disks go into the slots in front of N31L.</li>
+        <li><a data-prefetchable href="/games/IW/the_beast_from_beyond/beast_eight_queens_solver" class="solver-link">Eight Queens Puzzle Solver</a> - the seven remaining Queens on the 'Cafeteria' chessboard, Skull 5 of Skull Breaker.</li>
+    </ul>
 </div>
-
-<div class="content-container">
-    <div id="beast-venomx-maze-solver-react"></div>
-</div>
-
-<div class="content-container">
-    <div id="beast-venomy-morse-solver-react"></div>
-</div>
-
-<div class="content-container">
-    <div id="beast-floppy-solver-react"></div>
-</div>
-
-<div class="content-container">
-    <div id="beast-eight-queens-react"></div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountBeastGnSEightQueensSolver("beast-eight-queens-react", { title: "Eight Queens Solver" });
-            window.ZombiesSolvers.mountBeastFloppyDiskSolver("beast-floppy-solver-react", { title: "Floppy Disk Solver" });
-            window.ZombiesSolvers.mountBeastVenomXMazeSolver("beast-venomx-maze-solver-react", { title: "Venom X Maze Solver" });
-            window.ZombiesSolvers.mountBeastVenomXBoxSolver("beast-venomx-box-solver-react", { title: "Venom X Box Solver" });
-            window.ZombiesSolvers.mountBeastVenomYMorseSolver("beast-venomy-morse-solver-react", { title: "Venom Y/Z Morse Solver" });
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

@@ -126,7 +126,41 @@ async function buildSitemap() {
         .map((href) => href.replace(/\?.*$/, ""))
         .map((href) => href.replace(/\.html$/, ""));
 
-    const uniqueLinks = [...new Set(links)];
+    /* One level deeper than the index.
+     *
+     * The index links one entry per map, and a map with several solvers points
+     * at a hub page that links to one page per puzzle. Those puzzle pages are
+     * real, indexable destinations, but they are not on the index and never
+     * will be: putting all eleven of them in the homepage list is exactly the
+     * clutter the hub exists to avoid. So the crawl goes one hop further and
+     * picks up what the index-linked pages link to.
+     *
+     * Deliberately one hop, not a full crawl: the index plus its children is
+     * the whole site, and an unbounded walk would start pulling in whatever a
+     * guide happens to link. `noindex` is the stop sign — an unfinished guide
+     * stub, /stats and 404 all carry it, so a page that does not want to be in
+     * the index cannot arrive here by being linked from one that is.
+     */
+    const deeper = [];
+    for (const link of new Set(links)) {
+        const child = path.resolve("./dist", `${link}.html`);
+        if (!fs.existsSync(child)) continue;
+        const childHtml = fs.readFileSync(child, "utf8");
+        const childDom = new JSDOM(childHtml);
+        for (const a of childDom.window.document.querySelectorAll("a")) {
+            const href = a.getAttribute("href");
+            if (!href || href.startsWith("http") || href.startsWith("#")) continue;
+            if (!href.startsWith("/")) continue;
+            if (IMAGE_EXTENSIONS.test(href)) continue;
+            const clean = href.replace(/\?.*$/, "").replace(/\.html$/, "").replace(/^\//, "");
+            const target = path.resolve("./dist", `${clean}.html`);
+            if (!fs.existsSync(target)) continue;
+            if (/<meta name="robots" content="[^"]*noindex/.test(fs.readFileSync(target, "utf8"))) continue;
+            deeper.push(clean);
+        }
+    }
+
+    const uniqueLinks = [...new Set([...links, ...deeper])];
 
     if (uniqueLinks.length === 0) {
         console.error("No valid links found in index.html");

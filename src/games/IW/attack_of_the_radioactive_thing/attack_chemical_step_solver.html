@@ -1,0 +1,23 @@
+---
+layout: solver-only.njk
+mapName: 'Attack of the Radioactive Thing'
+aliases: ['AOTRT', 'Radioactive Thing', 'Attack']
+solverTitle: 'Chemical Step Solver'
+guideUrl: '/games/IW/attack_of_the_radioactive_thing/attack_of_the_radioactive_thing_guide.html'
+description: Attack of the Radioactive Thing (AOTRT) chemical step solver for Infinite Warfare Zombies. Enter your numbers and radio chemical to get what to craft.
+---
+<div class="content-container">
+    <h2 class="solver-title">Chemical Step Solver</h2>
+    <p class="solver-intro">The last step of the 'Soul-Less' main quest has you craft one chemical at the garage chemistry set. Give it your M number, TV number, insect repellent and racing fuel numbers, and the chemical named on the radio, and it returns every chemical and keypad number you need.</p>
+    <div id="chemical-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountChemicalStepSolver("chemical-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

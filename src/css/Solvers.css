@@ -163,6 +163,26 @@
     text-align: center;
 }
 
+/* One authored line of context above a solver, saying what the puzzle is and
+   where it is on the map.
+
+   The heading beside it is authored in the page too, rather than passed to the
+   component as its `title` prop. Same rendered look, but the only words naming
+   the puzzle no longer live inside a hydrated subtree: they ship in the HTML
+   source, and line-flagger can decorate this paragraph because it sits outside
+   the solver root, so a wrong location is reportable like any other line.
+
+   .solver-title carries `margin: 0` for its normal home inside the container's
+   flex gap, so the spacing either side of the pair is supplied here. */
+.solver-intro {
+    max-width: 62ch;
+    margin: var(--space-xs) auto var(--space-md);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    text-align: center;
+}
+
 .solver-instructions {
     /* width:0 + min-width:100% removes this paragraph from the
        container's intrinsic width calculation. The container

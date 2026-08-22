@@ -1,9 +1,9 @@
 ---
 layout: solver-only.njk
 mapName: 'Terminus'
-solverTitle: 'Beamsmasher Solver'
+solverTitle: 'DRI-11 Beamsmasher Code Solver'
 guideUrl: '/games/BO6/terminus/terminus_guide.html'
-description: Terminus DRI-11 Beamsmasher puzzle solver for Black Ops 6 Zombies. Enter the symbols from the in-game sticky notes and get the X, Y, Z answer instantly.
+description: Terminus DRI-11 Beamsmasher code solver for Black Ops 6 Zombies. Enter the three computer symbols and get the numbers for the Research Office computer.
 preloadImages:
   - /games/BO6/terminus/pictures/beamsmasher/0.webp
   - /games/BO6/terminus/pictures/beamsmasher/10.webp
@@ -12,12 +12,16 @@ preloadImages:
   - /games/BO6/terminus/pictures/beamsmasher/21.webp
   - /games/BO6/terminus/pictures/beamsmasher/22.webp
 ---
-<div class="content-container" id="beamsmasher-solver-react"></div>
+<div class="content-container">
+    <h2 class="solver-title">DRI-11 Beamsmasher Code Solver</h2>
+    <p class="solver-intro">Each of the three computers around the map shows a symbol with an X, Y or Z beside it. Enter those symbols to get the three numbers for the 'Research Office' computer, without working through the whiteboard equations.</p>
+    <div id="beamsmasher-solver-react"></div>
+</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountBeamsmasherSolver("beamsmasher-solver-react", { title: "Beamsmasher Solver" });
+            window.ZombiesSolvers.mountBeamsmasherSolver("beamsmasher-solver-react");
         } else {
             console.error("ZombiesSolvers not loaded!");
         }

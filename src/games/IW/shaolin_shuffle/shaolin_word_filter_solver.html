@@ -1,0 +1,22 @@
+---
+layout: solver-only.njk
+mapName: 'Shaolin Shuffle'
+solverTitle: 'Main Quest Word Filter'
+guideUrl: '/games/IW/shaolin_shuffle/shaolin_shuffle_guide.html'
+description: Shaolin Shuffle main quest word filter for Infinite Warfare Zombies. Enter the letters you can see on the roof to find which words still fit.
+---
+<div class="content-container">
+    <h2 class="solver-title">Main Quest Word Filter</h2>
+    <p class="solver-intro">After the Ninja fight, a letter appears on the wall and six symbols spawn around the roof, and you have to spell one of the possible words. Enter the letters you can see to find which words still fit.</p>
+    <div id="main-ee-word-filter-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountShaolinWordFilter("main-ee-word-filter-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

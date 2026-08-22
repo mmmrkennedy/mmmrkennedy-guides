@@ -1,0 +1,23 @@
+---
+layout: solver-only.njk
+mapName: 'The Beast From Beyond'
+aliases: ['TBFB', 'Beast']
+solverTitle: 'Venom-Y Morse Code Solver'
+guideUrl: '/games/IW/the_beast_from_beyond/the_beast_from_beyond_guide.html'
+description: The Beast From Beyond (TBFB) Venom-Y Morse code solver for Infinite Warfare Zombies. Pick the key you heard, Archer or Cross, and carry on.
+---
+<div class="content-container">
+    <h2 class="solver-title">Venom-Y Morse Code Solver</h2>
+    <p class="solver-intro">The terminal right of Bang Bangs plays one of two Morse code keys, Archer or Cross. Pick the one you heard to carry on with the Venom-Y upgrade.</p>
+    <div id="beast-venomy-morse-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountBeastVenomYMorseSolver("beast-venomy-morse-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

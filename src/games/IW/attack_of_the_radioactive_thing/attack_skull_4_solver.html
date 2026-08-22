@@ -1,0 +1,50 @@
+---
+layout: solver-only.njk
+mapName: 'Attack of the Radioactive Thing'
+aliases: ['AOTRT', 'Radioactive Thing', 'Attack']
+solverTitle: 'Skull 4 Word Puzzle Solver'
+guideUrl: '/games/IW/attack_of_the_radioactive_thing/attack_of_the_radioactive_thing_guide.html'
+description: Attack of the Radioactive Thing (AOTRT) Skull 4 word puzzle solver for Infinite Warfare Zombies. Enter the wall word to get the symbols to shoot.
+preloadImages:
+  - /games/IW/wyler_language_symbols/a.webp
+  - /games/IW/wyler_language_symbols/b.webp
+  - /games/IW/wyler_language_symbols/c.webp
+  - /games/IW/wyler_language_symbols/d.webp
+  - /games/IW/wyler_language_symbols/e.webp
+  - /games/IW/wyler_language_symbols/f.webp
+  - /games/IW/wyler_language_symbols/g.webp
+  - /games/IW/wyler_language_symbols/h.webp
+  - /games/IW/wyler_language_symbols/i.webp
+  - /games/IW/wyler_language_symbols/j.webp
+  - /games/IW/wyler_language_symbols/k.webp
+  - /games/IW/wyler_language_symbols/l.webp
+  - /games/IW/wyler_language_symbols/m.webp
+  - /games/IW/wyler_language_symbols/n.webp
+  - /games/IW/wyler_language_symbols/o.webp
+  - /games/IW/wyler_language_symbols/p.webp
+  - /games/IW/wyler_language_symbols/q.webp
+  - /games/IW/wyler_language_symbols/r.webp
+  - /games/IW/wyler_language_symbols/s.webp
+  - /games/IW/wyler_language_symbols/t.webp
+  - /games/IW/wyler_language_symbols/u.webp
+  - /games/IW/wyler_language_symbols/v.webp
+  - /games/IW/wyler_language_symbols/w.webp
+  - /games/IW/wyler_language_symbols/x.webp
+  - /games/IW/wyler_language_symbols/y.webp
+  - /games/IW/wyler_language_symbols/z.webp
+---
+<div class="content-container">
+    <h2 class="solver-title">Skull 4 Word Puzzle Solver</h2>
+    <p class="solver-intro">Skull 4 of the Skull Hop quest asks you to spell the word on the Ice Cream Parlour wall using the four symbols at the swingset. Enter the word to get the combinations to shoot.</p>
+    <div id="gns-skull4-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountAttackGnSSkull4Solver("gns-skull4-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

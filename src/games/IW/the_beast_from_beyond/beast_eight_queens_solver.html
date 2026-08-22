@@ -1,0 +1,23 @@
+---
+layout: solver-only.njk
+mapName: 'The Beast From Beyond'
+aliases: ['TBFB', 'Beast']
+solverTitle: 'Eight Queens Puzzle Solver'
+guideUrl: '/games/IW/the_beast_from_beyond/the_beast_from_beyond_guide.html'
+description: The Beast From Beyond (TBFB) Eight Queens solver for Infinite Warfare Zombies. Enter the Queen already on the Cafeteria board to place the other seven.
+---
+<div class="content-container">
+    <h2 class="solver-title">Eight Queens Puzzle Solver</h2>
+    <p class="solver-intro">Skull 5 of the Skull Breaker quest is a chessboard in the 'Cafeteria' that starts with one Queen already placed. Enter where it sits to get where the other seven go without any of them attacking another.</p>
+    <div id="beast-eight-queens-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountBeastGnSEightQueensSolver("beast-eight-queens-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

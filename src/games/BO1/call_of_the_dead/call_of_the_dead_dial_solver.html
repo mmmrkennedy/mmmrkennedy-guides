@@ -1,18 +1,21 @@
 ---
 layout: solver-only.njk
 mapName: 'Call of the Dead'
-solverTitle: 'Dials Solver'
+aliases: ['COTD']
+solverTitle: 'Lighthouse Dials Solver'
 guideUrl: '/games/BO1/call_of_the_dead/call_of_the_dead_guide.html'
-description: Call of the Dead lighthouse dials solver for Black Ops Zombies. Enter your four current dial values and get the fewest turns needed to reach 2-7-4-6.
+description: Call of the Dead (COTD) lighthouse dials solver for Black Ops Zombies. Enter your four dial numbers and get the fewest turns needed to reach 2-7-4-6.
 ---
 <div class="content-container">
+    <h2 class="solver-title">Lighthouse Dials Solver</h2>
+    <p class="solver-intro">A coloured dial sits on each of the four Lighthouse floors, and turning one also turns the dials above and below it. Enter the numbers you have to get the fewest turns to Yellow 2, Orange 7, Blue 4, Purple 6.</p>
     <div id="dial-solver-react"></div>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountDialSolver("dial-solver-react", { title: "Lighthouse Dials Solver" });
+            window.ZombiesSolvers.mountDialSolver("dial-solver-react");
         } else {
             console.error("ZombiesSolvers not loaded!");
         }

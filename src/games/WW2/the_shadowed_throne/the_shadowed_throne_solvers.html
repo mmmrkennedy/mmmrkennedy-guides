@@ -1,25 +1,18 @@
 ---
 layout: solver-only.njk
 mapName: 'The Shadowed Throne'
-solverTitle: 'Statue Solver'
+aliases: ['TST']
+solverTitle: 'Solvers'
 guideUrl: '/games/WW2/the_shadowed_throne/the_shadowed_throne_guide.html'
-description: The Shadowed Throne solvers for WW2 Zombies. Turn the rotating statues to match your walls, and filter the hangman words down from your letter guesses.
+description: Every solver for The Shadowed Throne (TST) in WW2 Zombies. The rotating statues in Barbarossa's Refuge, and the Cabaret sign hangman word.
 ---
+{#- Each solver has its own page, so each one can carry the title, heading and
+    description for the puzzle people actually search for. This page keeps the
+    URL those pages were split out of and points at all of them, rather than
+    hosting the same tools on a second URL and competing with them. -#}
 <div class="content-container">
-    <div id="statue-solver-react"></div>
+    <ul>
+        <li><a data-prefetchable href="/games/WW2/the_shadowed_throne/the_shadowed_throne_statue_solver" class="solver-link">Rotating Statues Solver</a> - the shots that leave a wall of statues in 'Barbarossa's Refuge' facing forward.</li>
+        <li><a data-prefetchable href="/games/WW2/the_shadowed_throne/the_shadowed_throne_hangman_solver" class="solver-link">Cabaret Sign Hangman Solver</a> - which of the seven words still fits the letters you have revealed.</li>
+    </ul>
 </div>
-
-<div class="content-container">
-    <div id="hangman-solver-react"></div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountStatueSolver("statue-solver-react", { title: "Rotating Statues Solver" });
-            window.ZombiesSolvers.mountHangmanSolver("hangman-solver-react", { title: "Hangman Solver" });
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

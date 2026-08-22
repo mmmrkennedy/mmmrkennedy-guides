@@ -1,0 +1,36 @@
+---
+layout: solver-only.njk
+mapName: 'The Beast From Beyond'
+aliases: ['TBFB', 'Beast']
+solverTitle: 'N31L Floppy Disk Order Solver'
+guideUrl: '/games/IW/the_beast_from_beyond/the_beast_from_beyond_guide.html'
+description: The Beast From Beyond (TBFB) floppy disk solver for Infinite Warfare Zombies. Enter your four disk symbols to get the order they go into N31L.
+preloadImages:
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_0.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_1.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_2.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_3.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_4.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_5.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_6.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_7.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_8.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_9.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_10.webp
+  - /games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/picture_11.webp
+---
+<div class="content-container">
+    <h2 class="solver-title">N31L Floppy Disk Order Solver</h2>
+    <p class="solver-intro">The four floppy disks go into the slots in front of N31L in one correct order, set by the symbols on them. Enter your four symbols to get that order.</p>
+    <div id="beast-floppy-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountBeastFloppyDiskSolver("beast-floppy-solver-react");
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

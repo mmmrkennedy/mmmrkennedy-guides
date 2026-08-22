@@ -166,7 +166,13 @@
             "name": "{{ pageHeading }}",
             "headline": "{{ pageHeading }}",
             {%- if mapName %}
-            "alternateName": [{% for alias in aliases %}"{{ alias }} Easter Egg Guide", {% endfor %}"{{ mapName }} Easter Egg Guide"],
+            {#- On a solver page the alias belongs to the solver, not the guide:
+                "COTD Easter Egg Guide" names a different page from the one this
+                schema describes. `solverTitle` is exactly the words that follow
+                the map name in the heading, so it yields the alternate name a
+                reader would actually type. -#}
+            {%- set altSuffix = solverTitle if solverTitle else 'Easter Egg Guide' %}
+            "alternateName": [{% for alias in aliases %}"{{ alias }} {{ altSuffix }}", {% endfor %}"{{ mapName }} {{ altSuffix }}"],
             "keywords": "{{ metaKeywords }}",
             {%- endif %}
             "description": "{{ metaDescription }}",
