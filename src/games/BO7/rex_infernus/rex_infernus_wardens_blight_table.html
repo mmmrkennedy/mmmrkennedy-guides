@@ -1,0 +1,90 @@
+---
+layout: guide.njk
+mapName: 'Rex Infernus'
+solverTitle: "Warden's Blight Quote Table"
+guideUrl: '/games/BO7/rex_infernus/rex_infernus_guide.html'
+description: Rex Infernus Warden's Blight Wonder Weapon quote table for Black Ops 7 Zombies. Every riddle Dravakar speaks matched to the levers to interact with.
+---
+
+<style>
+    /* Two columns of very different natural width: the quote is a full sentence
+       of prose, the levers are three short list items. Auto layout gives the
+       prose nearly the whole table and squeezes the lever column down to one
+       word per line, so the split is pinned at half each.
+
+       Desktop only. Below --bp-md every row becomes a card and the cells are
+       display: block (see table[data-cards] in components.css), where a column
+       width means nothing and 50% would just halve the card. */
+    @media (width >= 48.0625em) { /* --bp-md */
+        #wardens_blight table {
+            table-layout: fixed;
+        }
+
+        #wardens_blight th {
+            width: 50%;
+        }
+    }
+</style>
+
+<!-- Warden's Blight -->
+<div class="content-container" data-bool-quick-link="false" id="wardens_blight">
+    <h2>Warden's Blight Quotes and Lever Combinations</h2>
+    <p>The Warden's Blight Quote step in Rex Infernus has Dravakar speak one of four riddles. Each quote tells you how many times to interact with the left, middle, and right levers. Match the line you heard to the table below, then interact with each lever the number of times listed beside it.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Text</th>
+                <th>Levers to Interact with</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <p>"I drift to the <strong>runner</strong> that travels <strong>moons</strong>, who borrow from <strong>galaxies</strong> when <strong>stars</strong> stay true."</p>
+                </td>
+                <td>
+                    <ul>
+                        <li>Left Lever - 3 times</li>
+                        <li>Middle Lever - 2 times</li>
+                        <li>Right Lever - 1 time</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>"I remember the <strong>runner</strong> that travels to <strong>stars</strong>, while <strong>moons</strong> and <strong>galaxies</strong> stay true."</p>
+                </td>
+                <td>
+                    <ul>
+                        <li>Middle Lever - 2 times</li>
+                        <li>Right Lever - 3 times</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>"I drift to <strong>stars</strong> that remember <strong>moons</strong>, who borrow the <strong>runner</strong> that travels <strong>galaxies</strong>."</p>
+                </td>
+                <td>
+                    <ul>
+                        <li>Left Lever - 1 time</li>
+                        <li>Middle Lever - 2 times</li>
+                        <li>Right Lever - 2 times</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>"I remember <strong>galaxies</strong> that drift to <strong>moons</strong>, who borrow the <strong>runner</strong> that travels the <strong>stars</strong>."</p>
+                </td>
+                <td>
+                    <ul>
+                        <li>Left Lever - 2 times</li>
+                        <li>Right Lever - 2 times</li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

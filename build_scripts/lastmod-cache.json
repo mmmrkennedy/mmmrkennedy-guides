@@ -47,6 +47,7 @@
   "src/games/BO7/kowakujo/kowakujo_guide.html": "2026-08-21T15:59:26-04:00",
   "src/games/BO7/paradox_junction/paradox_junction_guide.html": "2026-08-21T15:59:26-04:00",
   "src/games/BO7/rex_infernus/rex_infernus_guide.html": "2026-08-21T15:59:26-04:00",
+  "src/games/BO7/rex_infernus/rex_infernus_wardens_blight_table.html": "2026-08-22T16:41:44-04:00",
   "src/games/BO7/totenreich/totenreich_guide.html": "2026-08-21T15:59:26-04:00",
   "src/games/BO7/totenreich/totenreich_solver.html": "2026-08-16T17:19:46-04:00",
   "src/games/BO_CW/die_maschine/die_maschine_guide.html": "2026-08-16T17:19:46-04:00",
@@ -56,8 +57,8 @@
   "src/games/BO_CW/outbreak/outbreak_CW_guide.html": "2026-08-16T17:19:46-04:00",
   "src/games/IW/attack_of_the_radioactive_thing/attack_of_the_radioactive_thing_guide.html": "2026-08-19T13:57:49-04:00",
   "src/games/IW/attack_of_the_radioactive_thing/attack_solvers.html": "2026-08-16T17:19:46-04:00",
-  "src/games/IW/rave_in_the_redwoods/rave_in_the_redwoods_guide.html": "2026-08-21T16:54:11-04:00",
-  "src/games/IW/shaolin_shuffle/shaolin_shuffle_guide.html": "2026-08-21T16:54:11-04:00",
+  "src/games/IW/rave_in_the_redwoods/rave_in_the_redwoods_guide.html": "2026-08-21T16:54:03-04:00",
+  "src/games/IW/shaolin_shuffle/shaolin_shuffle_guide.html": "2026-08-21T16:54:03-04:00",
   "src/games/IW/shaolin_shuffle/shaolin_shuffle_solvers.html": "2026-05-05T15:41:06-04:00",
   "src/games/IW/the_beast_from_beyond/beast_solvers.html": "2026-08-16T17:19:46-04:00",
   "src/games/IW/the_beast_from_beyond/the_beast_from_beyond_guide.html": "2026-08-16T17:19:46-04:00",
@@ -80,7 +81,7 @@
   "src/games/WW2/the_tortured_path/survival_maps/bodega_cervantes_guide.html": "2026-08-16T17:35:58-04:00",
   "src/games/WW2/the_tortured_path/survival_maps/uss_mount_olympus_guide.html": "2026-08-16T17:35:58-04:00",
   "src/games/WW2/the_tortured_path/the_tortured_path_guide.html": "2026-08-16T17:19:46-04:00",
-  "src/index.html": "2026-08-19T18:40:27-04:00",
+  "src/index.html": "2026-08-22T16:41:44-04:00",
   "src/react-solvers/index.html": "2026-08-16T17:19:46-04:00",
   "src/stats.html": "2026-08-12T22:48:56-04:00"
 }
