@@ -196,7 +196,10 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
-    line-height: var(--line-height-loose);
+    /* Was --line-height-loose, which is not a token: the declaration was
+       invalid, so this inherited body's --line-height-relaxed instead. Naming
+       that value keeps the rendering identical and makes the intent explicit. */
+    line-height: var(--line-height-relaxed);
     overflow-wrap: break-word;
     word-break: break-word;
 }
