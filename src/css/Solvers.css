@@ -174,6 +174,69 @@
 
    .solver-title carries `margin: 0` for its normal home inside the container's
    flex gap, so the spacing either side of the pair is supplied here. */
+
+/* Solver hub: one row per solver page, the whole row a link.
+   Left-aligned on purpose, against the centred rhythm of the rest of these
+   pages: every name starting at the same x is what makes a list of five
+   scannable, and this page is a list, not a tool.
+
+   The name is a real <h2> inside the anchor, so the puzzle names stay in the
+   document outline. The line beside it is a <span> and not a <p> on purpose:
+   line-flagger decorates `.content-container p`, and a flag button inside an
+   anchor would navigate the moment it was clicked. The same sentence is
+   flaggable on the solver's own page, where it is a paragraph. */
+.solver-hub {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-width: 46rem;
+    margin-inline: auto;
+}
+
+.solver-hub__card {
+    display: block;
+    padding: var(--space-smd) var(--space-md);
+    background-color: var(--color-bg-secondary);
+    border-left: 3px solid var(--color-link-solver);
+    border-radius: 0 8px 8px 0;
+    text-decoration: none;
+    transition: background-image 0.15s ease;
+}
+
+/* Quiet on purpose. The violet edge and violet name already say "link", so
+   hover only has to confirm which row the pointer is on. The first version
+   swapped the background to --color-bg-tertiary, a jump from #252525 to #333
+   that read as a button being pressed. A 3% white wash over the same token
+   lands near #2c2c2c, roughly a third of that step. Focus is not toned down:
+   a keyboard user has no pointer to tell them where they are. */
+.solver-hub__card:hover {
+    /* components.css `a:hover` adds an underline and drops opacity to 0.8. On a
+       row-sized link that underlines the description too and dims the whole
+       card, which is louder than the wash it sits on top of. */
+    opacity: 1;
+    background-image: linear-gradient(rgb(255 255 255 / 3%), rgb(255 255 255 / 3%));
+    text-decoration: none;
+}
+
+.solver-hub__card:focus-visible {
+    outline: 2px solid var(--color-link-solver);
+    outline-offset: 2px;
+}
+
+.solver-hub__name {
+    margin: 0;
+    color: var(--color-link-solver);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+}
+
+.solver-hub__line {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+}
+
 .solver-intro {
     max-width: 62ch;
     margin: var(--space-xs) auto var(--space-md);
@@ -196,6 +259,7 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
+
     /* Was --line-height-loose, which is not a token: the declaration was
        invalid, so this inherited body's --line-height-relaxed instead. Naming
        that value keeps the rendering identical and makes the intent explicit. */
