@@ -50,6 +50,7 @@ export interface SolverProps {
     keySelectId?: string;
     colours?: string[];
     names?: string[];
+    canArrange?: boolean;
 }
 
 /* Keys are the window.ZombiesSolvers method names, so eleventy can look a

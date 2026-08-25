@@ -34,9 +34,13 @@ interface MountOptions {
     /* Simon says solver only: the pads, as hex colours, one per entry, and
        optionally what to call each one (by position; blank keeps the colour's
        own name). How long the flashed sequence runs is not configured - it is
-       recorded as it happens, however long that turns out to be. */
+       recorded as it happens, however long that turns out to be.
+       `canArrange` (default true) offers the reader the Arrange button, which
+       reorders the pads to match a layout the game randomises; pass false where
+       the map always lays them out the same way. */
     colours?: string[];
     names?: string[];
+    canArrange?: boolean;
 }
 
 type MountFunction = (elementId: string, options?: MountOptions) => void;
@@ -192,6 +196,7 @@ window.ZombiesSolvers = {
             title: opts?.title,
             colours: opts?.colours,
             names: opts?.names,
+            canArrange: opts?.canArrange,
         }),
 };
 

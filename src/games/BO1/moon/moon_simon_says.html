@@ -15,6 +15,7 @@ description: Moon Simon Says helper for Black Ops Zombies. Click a coloured squa
         if (window.ZombiesSolvers) {
             window.ZombiesSolvers.mountSimonSaysSolver("simon-says-solver-react", {
                 colours: ["#ff0000", "#00ff00", "#0000ff", "#ffd400"],
+                canArrange: false,
             });
         } else {
             console.error("ZombiesSolvers not loaded!");

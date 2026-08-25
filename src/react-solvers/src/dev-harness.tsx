@@ -48,6 +48,12 @@ if (devRoot) {
                 title="Simon Says Solver (7 colours)"
                 colours={["#e74c3c", "#e87500", "#f1c40f", "#2ecc71", "#5dade2", "#8b2fc9", "#ecf0f1"]}
             />
+            {/* Fixed layout: no Arrange button, and no move arrows to reach. */}
+            <SimonSaysSolver
+                title="Simon Says Solver (fixed layout)"
+                colours={["#e74c3c", "#2ecc71", "#5dade2", "#f1c40f"]}
+                canArrange={false}
+            />
             {/* Named pads, including one left blank to fall back to its colour. */}
             <SimonSaysSolver
                 title="Simon Says Solver (named pads)"

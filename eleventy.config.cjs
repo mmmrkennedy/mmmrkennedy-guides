@@ -918,14 +918,14 @@ function getSsrSolvers() {
    prerender rather than guess, because a prop the build cannot see is a prop the
    client will render differently - which is a hydration mismatch, not a missing
    optimisation. */
-const SOLVER_PROP_KEYS = new Set(["title", "keySelectId", "colours", "names"]);
+const SOLVER_PROP_KEYS = new Set(["title", "keySelectId", "colours", "names", "canArrange"]);
 
 /* One `key: value` pair, anchored at the start of whatever is left of the
-   object body. A value is a double-quoted string, a number, or a flat array of
-   those - the simon says solver takes its palette as an array, which is why
-   this is no longer a split on commas: a comma inside the brackets is not a
-   separator. */
-const SOLVER_PROP_PAIR = /^\s*([A-Za-z0-9_]+)\s*:\s*("(?:[^"\\]|\\.)*"|\[[^\]]*\]|-?\d+(?:\.\d+)?)\s*(?:,|$)/;
+   object body. A value is a double-quoted string, a number, a boolean, or a
+   flat array of strings and numbers - the simon says solver takes its palette
+   as an array, which is why this is no longer a split on commas: a comma inside
+   the brackets is not a separator. */
+const SOLVER_PROP_PAIR = /^\s*([A-Za-z0-9_]+)\s*:\s*("(?:[^"\\]|\\.)*"|\[[^\]]*\]|true|false|-?\d+(?:\.\d+)?)\s*(?:,|$)/;
 
 /** One prop value, or undefined if it is anything JSON cannot read. */
 function parseSolverValue(literal) {

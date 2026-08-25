@@ -35,6 +35,12 @@ import { useSolverReport } from "../solver-report";
  * arrangement is deliberately temporary: it lives in component state, is gone
  * on reload, and is purely where a pad sits. Which pad a tap recorded is held
  * as the pad's own index, so rearranging never rewrites a recorded sequence.
+ *
+ * `canArrange` turns that off. It defaults to true, because a randomised layout
+ * is the usual case, and a page passing `canArrange: false` is saying the pads
+ * sit where the map puts them every game - Moon's four computers, say - so the
+ * Arrange button would only be an invitation to shuffle a layout that already
+ * matches. With it off, the button and the move arrows are never rendered.
  */
 
 /** Used when a page mounts this with no palette, or with an unreadable one. */
@@ -166,9 +172,10 @@ interface SimonSaysSolverProps {
     title?: string;
     colours?: string[];
     names?: string[];
+    canArrange?: boolean;
 }
 
-export default function SimonSaysSolver({ title, colours, names }: SimonSaysSolverProps) {
+export default function SimonSaysSolver({ title, colours, names, canArrange = true }: SimonSaysSolverProps) {
     /** Indices into `pads`, in the order the reader tapped them. */
     const [sequence, setSequence] = useState<number[]>([]);
     /**
@@ -178,7 +185,11 @@ export default function SimonSaysSolver({ title, colours, names }: SimonSaysSolv
      * the first client render identical.
      */
     const [customOrder, setCustomOrder] = useState<number[] | null>(null);
-    /** Rearranging the pads instead of recording taps. */
+    /**
+     * Rearranging the pads instead of recording taps. Only ever true when
+     * `canArrange` is on, because the Arrange button is the only way in and it
+     * is not rendered otherwise - so nothing below needs to check both.
+     */
     const [arranging, setArranging] = useState(false);
     const calcKeyRef = useRef(0);
 
@@ -226,8 +237,13 @@ export default function SimonSaysSolver({ title, colours, names }: SimonSaysSolv
             <p className="solver-instructions">
                 Tap each colour as it flashes, in the order it flashes, for as long as the sequence
                 runs. The order you tapped is listed underneath. Tap <strong>Undo</strong> if you
-                mistime one, <strong>Reset</strong> to start the sequence again, or{" "}
-                <strong>Arrange</strong> to shuffle the pads into the order they sit in game.
+                mistime one, or <strong>Reset</strong> to start the sequence again.
+                {canArrange && (
+                    <>
+                        {" "}Tap <strong>Arrange</strong> to shuffle the pads into the order they
+                        sit in game.
+                    </>
+                )}
             </p>
 
             <div className={`simon-pads${arranging ? " is-arranging" : ""}`}>
@@ -313,13 +329,15 @@ export default function SimonSaysSolver({ title, colours, names }: SimonSaysSolv
                         >
                             Reset
                         </button>
-                        <button
-                            type="button"
-                            className="btn btn--solver"
-                            onClick={() => setArranging(true)}
-                        >
-                            Arrange
-                        </button>
+                        {canArrange && (
+                            <button
+                                type="button"
+                                className="btn btn--solver"
+                                onClick={() => setArranging(true)}
+                            >
+                                Arrange
+                            </button>
+                        )}
                     </>
                 )}
             </div>
