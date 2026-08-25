@@ -14,17 +14,10 @@
 // The response contract is unchanged from the KV version, so the front-end
 // (src/ts/ui/view-counter.ts) needs no changes.
 
-import { normalizePath, json } from "./_shared.js";
-
-// Only these hostnames may increment. Preview deployments share this D1 binding
-// with production — top-level bindings in wrangler.toml apply to both
-// environments — so without this guard every page opened on
-// preview.<project>.pages.dev, or on any per-commit preview URL, would inflate
-// the real counter and the "trending this week" ranking built from it.
-//
-// An allowlist rather than a *.pages.dev blocklist: a hostname nobody
-// anticipated should fail closed, not quietly start writing.
-const COUNTING_HOSTS = new Set(["mmmrkennedy.com", "www.mmmrkennedy.com"]);
+// isProductionHost is the guard on the increment below: only real traffic may
+// move the counter. It lives in _shared.js because reading analytics needs the
+// same hostname split (see functions/api/reading.js).
+import { normalizePath, json, isProductionHost } from "./_shared.js";
 
 async function readCount(env, path) {
     const row = await env.DB.prepare("SELECT count FROM views WHERE path = ?1").bind(path).first();
@@ -48,7 +41,7 @@ export async function onRequestPost({ request, env }) {
     // Reads are left alone, so a preview still shows the real number — it just
     // does not add to it. `counted` is advisory; view-counter.ts reads only
     // `count` and ignores anything else.
-    if (!COUNTING_HOSTS.has(url.hostname)) {
+    if (!isProductionHost(url)) {
         return json({ path, count: await readCount(env, path), counted: false });
     }
 

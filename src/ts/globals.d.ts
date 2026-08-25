@@ -81,6 +81,14 @@ interface QuickLinksUtilsApi {
     getQuickLinkElements(doc: Document): QuickLinkItem[];
 }
 
+interface Navigator {
+    /**
+     * Global Privacy Control, set by the browser or a privacy extension. Not in
+     * lib.dom yet. Read by ui/reading.ts, which collects nothing when it is on.
+     */
+    globalPrivacyControl?: boolean;
+}
+
 interface Window {
     /** Dev-only console output; silent in production. See core/logger.ts. */
     Log: (level: LogLevelInput, ...args: unknown[]) => void;
