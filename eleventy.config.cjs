@@ -914,26 +914,50 @@ function getSsrSolvers() {
     return cachedSsrSolvers;
 }
 
-/* Only these two ever appear in a mount call. Anything else and we decline to
+/* Only these ever appear in a mount call. Anything else and we decline to
    prerender rather than guess, because a prop the build cannot see is a prop the
    client will render differently - which is a hydration mismatch, not a missing
    optimisation. */
-const SOLVER_PROP_KEYS = new Set(["title", "keySelectId"]);
+const SOLVER_PROP_KEYS = new Set(["title", "keySelectId", "colours", "names"]);
+
+/* One `key: value` pair, anchored at the start of whatever is left of the
+   object body. A value is a double-quoted string, a number, or a flat array of
+   those - the simon says solver takes its palette as an array, which is why
+   this is no longer a split on commas: a comma inside the brackets is not a
+   separator. */
+const SOLVER_PROP_PAIR = /^\s*([A-Za-z0-9_]+)\s*:\s*("(?:[^"\\]|\\.)*"|\[[^\]]*\]|-?\d+(?:\.\d+)?)\s*(?:,|$)/;
+
+/** One prop value, or undefined if it is anything JSON cannot read. */
+function parseSolverValue(literal) {
+    let value;
+    try {
+        value = JSON.parse(literal);
+    } catch {
+        return undefined;
+    }
+    if (Array.isArray(value)) {
+        const flat = value.every((item) => typeof item === "string" || typeof item === "number");
+        return flat ? value : undefined;
+    }
+    return value;
+}
 
 /**
  * Parse the options object out of a mountX("id", { ... }) call.
- * Returns null if it contains anything that is not a plain string literal.
+ * Returns null if it contains anything that is not a plain literal, which
+ * leaves that solver to render client-side exactly as it did before.
  */
 function parseSolverProps(raw) {
     if (!raw || !raw.trim()) return {};
     const props = {};
-    const body = raw.trim().replace(/^\{/, "").replace(/\}$/, "");
-    if (!body.trim()) return {};
-    for (const part of body.split(",")) {
-        if (!part.trim()) continue;
-        const m = /^\s*([A-Za-z0-9_]+)\s*:\s*"([^"]*)"\s*$/.exec(part);
+    let body = raw.trim().replace(/^\{/, "").replace(/\}$/, "").trim();
+    while (body) {
+        const m = SOLVER_PROP_PAIR.exec(body);
         if (!m || !SOLVER_PROP_KEYS.has(m[1])) return null;
-        props[m[1]] = m[2];
+        const value = parseSolverValue(m[2]);
+        if (value === undefined) return null;
+        props[m[1]] = value;
+        body = body.slice(m[0].length).trim();
     }
     return props;
 }

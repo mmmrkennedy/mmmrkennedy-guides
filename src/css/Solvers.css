@@ -1980,3 +1980,167 @@
     outline: 2px solid var(--solver-accent);
     outline-offset: 2px;
 }
+
+/* ------------------------------------------------------------
+   Simon says — colour pads and the order they were tapped.
+   Generic: the palette and the number of pads come from the
+   page's mount call, so nothing here may assume either. Both
+   rows wrap, and --pad-color / --pad-ink are set per element
+   by the component.
+   ------------------------------------------------------------ */
+.simon-pads {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+/* Arrange mode: the pads are being put into the order they sit
+   in game, and are not recording taps. The dashed ring is the
+   only thing saying so, since the pads keep their colours. */
+.simon-pads.is-arranging {
+    outline: 1px dashed var(--solver-accent);
+    outline-offset: var(--space-xs);
+    border-radius: 8px;
+}
+
+/* One pad plus, in arrange mode, its move arrows. */
+.simon-pad-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.simon-pad-move {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.simon-move {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 4px;
+    color: var(--solver-accent);
+    font-size: var(--font-size-md);
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.simon-move:hover:not(:disabled) {
+    border-color: var(--solver-accent);
+}
+
+/* At either end of the row, so there is nowhere to move to. */
+.simon-move:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.simon-move:focus-visible {
+    outline: 2px solid var(--solver-accent);
+    outline-offset: 2px;
+}
+
+/* Sized to be hit reliably with a thumb while the sequence is
+   still flashing on screen — this is tapped under time pressure,
+   which is the whole reason the solver exists. */
+.simon-pad {
+    position: relative;
+    width: clamp(4rem, 19vw, 6rem);
+    aspect-ratio: 1;
+    padding: 0;
+    background: var(--pad-color, var(--color-bg-tertiary));
+    border: 2px solid rgb(0 0 0 / 35%);
+    border-radius: 10px;
+    box-shadow: inset 0 -4px 0 rgb(0 0 0 / 22%), 0 2px 6px rgb(0 0 0 / 35%);
+    color: var(--pad-ink, #fff);
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.simon-pad:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.simon-pad:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 6px rgb(0 0 0 / 35%);
+}
+
+.simon-pad:focus-visible {
+    outline: 2px solid var(--solver-accent);
+    outline-offset: 3px;
+}
+
+/* Only in arrange mode. Left at full colour rather than dimmed:
+   the reader is matching these squares against the screen, which
+   is the one moment the colours have to be exact. */
+.simon-pad:disabled {
+    cursor: default;
+}
+
+/* How many times this pad has been tapped. A tally rather than the
+   positions it holds, because the sequence has no known length and
+   the list of positions would outgrow the square. */
+.simon-pad__badge {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
+
+.simon-sequence {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.simon-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 3rem;
+}
+
+.simon-slot__chip {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: var(--pad-color, transparent);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 6px;
+    color: var(--pad-ink, var(--color-text-muted));
+    font-weight: 700;
+}
+
+.simon-slot__name {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .simon-pad,
+    .simon-pad:hover:not(:disabled),
+    .simon-pad:active:not(:disabled) {
+        transform: none;
+        transition: none;
+    }
+}

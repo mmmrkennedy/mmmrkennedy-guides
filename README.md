@@ -10,7 +10,7 @@ The plan is to also include solvers for steps that require them (such as Attack 
 
 Next:
 
-- Descent (AW)
+- Moon (BO1)
 
 Finished:
 
@@ -18,8 +18,6 @@ Finished:
 - All Of Vanguard
 - All Of Black Ops 4
 - All of Infinite Warfare
-- Outbreak (AW)
-- Infection (AW)
 - All of World at War
 - All of WW2
 - Liberty Falls (BO6)
@@ -31,13 +29,8 @@ Finished:
 - Astra Malorum (BO7)
 - Call of the Dead (BO1)
 - Shangri-La (BO1)
-- Carrier (AW)
 - Der Eisendrache (BO3)
 - Mob of the Dead (BO2)
-
-Planned:
-
-- Black Ops 3
-- The rest of Advanced Warfare
+- All of Advanced Warfare
 
 If you have any suggestions or feedback, or you'd even like to contribute, join the Discord (https://discord.com/invite/hQng3Yz48A).

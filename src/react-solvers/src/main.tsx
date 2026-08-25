@@ -16,14 +16,14 @@ import type { ComponentType } from "preact";
 import "preact/hooks";
 
 // Shared infrastructure, not a solver — and imported statically for the same
-// chunking reason as preact/hooks above. All 19 solvers call useSolverReport, so
+// chunking reason as preact/hooks above. All 20 solvers call useSolverReport, so
 // leaving this to be discovered through the dynamic imports would hoist it into a
 // second shared chunk sitting between the entry and every solver.
 import { SolverReportRoot, readSolverInputs } from "./solver-report";
 
 // Every solver lives behind its own dynamic import() below, which is what makes
 // Vite emit one chunk per solver instead of a single 28.9kB brotli bundle
-// carrying all 19 to every guide page. Do NOT add a static
+// carrying all 20 to every guide page. Do NOT add a static
 // `import X from "./components/X"` here — one is enough to pull that component
 // back into the entry chunk and quietly undo the split for that solver.
 
@@ -31,6 +31,12 @@ interface MountOptions {
     title?: string;
     /* Morse solver only: id of an existing ARCHER/CROSS <select> to adopt. */
     keySelectId?: string;
+    /* Simon says solver only: the pads, as hex colours, one per entry, and
+       optionally what to call each one (by position; blank keeps the colour's
+       own name). How long the flashed sequence runs is not configured - it is
+       recorded as it happens, however long that turns out to be. */
+    colours?: string[];
+    names?: string[];
 }
 
 type MountFunction = (elementId: string, options?: MountOptions) => void;
@@ -55,6 +61,7 @@ interface ZombiesSolvers {
     mountBeastVenomXBoxSolver: MountFunction;
     mountBeastVenomYMorseSolver: MountFunction;
     mountDialSolver: MountFunction;
+    mountSimonSaysSolver: MountFunction;
 }
 
 declare global {
@@ -178,9 +185,17 @@ window.ZombiesSolvers = {
             title: opts?.title,
             keySelectId: opts?.keySelectId,
         }),
+    // Not tied to one map: the page supplies the palette, so a single component
+    // serves every flash-the-order puzzle.
+    mountSimonSaysSolver: (id, opts) =>
+        mount(id, "SimonSaysSolver", () => import("./components/SimonSaysSolver"), {
+            title: opts?.title,
+            colours: opts?.colours,
+            names: opts?.names,
+        }),
 };
 
-// Dev preview only (src/react-solvers/index.html), which renders all 19 at once.
+// Dev preview only (src/react-solvers/index.html), which renders all 20 at once.
 // Behind its own dynamic import so the static imports it needs land in a chunk
 // nobody but that page ever downloads — importing it here directly would drag
 // every solver back into the entry.

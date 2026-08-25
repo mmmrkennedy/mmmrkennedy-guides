@@ -1,0 +1,23 @@
+---
+layout: solver-only.njk
+mapName: 'Moon'
+solverTitle: 'Simon Says Computer Helper'
+guideUrl: '/games/BO1/moon/moon_guide.html'
+description: Moon Simon Says helper for Black Ops Zombies. Click a coloured square as they appear in game to help keep track of the order.
+---
+<div class="content-container">
+    <p class="solver-intro">Four computers can be found outside the spawn room. They will be flashing the colours, Red, Green, Blue, and Yellow. Interact with the colours as they appear, clicking them on the helper to help you keep track of them.</p>
+    <div id="simon-says-solver-react"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.ZombiesSolvers) {
+            window.ZombiesSolvers.mountSimonSaysSolver("simon-says-solver-react", {
+                colours: ["#ff0000", "#00ff00", "#0000ff", "#ffd400"],
+            });
+        } else {
+            console.error("ZombiesSolvers not loaded!");
+        }
+    });
+</script>

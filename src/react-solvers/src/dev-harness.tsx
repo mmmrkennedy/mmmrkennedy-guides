@@ -2,7 +2,7 @@
 //
 // Split out of main.tsx when the build moved to per-solver chunks. main.tsx now
 // reaches every component through dynamic import(); this file is the one place
-// that still imports them statically, because it genuinely does render all 19 at
+// that still imports them statically, because it genuinely does render all 20 at
 // once. Keeping it here rather than in main.tsx means those static imports end up
 // in a chunk that only the dev page loads, instead of in the entry that every
 // guide on the site downloads.
@@ -30,12 +30,30 @@ import IWBeastVenomXBoxSolver from "./components/IWBeastVenomXBoxSolver";
 import IWBeastVenomYMorseSolver from "./components/IWBeastVenomYMorseSolver";
 import BO1DialSolver from "./components/BO1DialSolver";
 import BO7TotenreichReactorSolver from "./components/BO7TotenreichReactorSolver";
+import SimonSaysSolver from "./components/SimonSaysSolver";
 
 const devRoot = document.getElementById("root");
 if (devRoot) {
     render(
         <div>
             <BO7TotenreichReactorSolver title="Totenreich Reactor Solver" />
+            {/* Configured per page rather than per map, so two are shown: the
+                four-pad case every simon-says puzzle starts from, and a wider
+                palette to check the pads and the slots still wrap. */}
+            <SimonSaysSolver
+                title="Simon Says Solver (4 colours)"
+                colours={["#e74c3c", "#2ecc71", "#5dade2", "#f1c40f"]}
+            />
+            <SimonSaysSolver
+                title="Simon Says Solver (7 colours)"
+                colours={["#e74c3c", "#e87500", "#f1c40f", "#2ecc71", "#5dade2", "#8b2fc9", "#ecf0f1"]}
+            />
+            {/* Named pads, including one left blank to fall back to its colour. */}
+            <SimonSaysSolver
+                title="Simon Says Solver (named pads)"
+                colours={["#daf7f7", "#aafcff", "#f8eec5", "#ed9bf7"]}
+                names={["Bar", "Atrium", "", "Vault"]}
+            />
             <BO1DialSolver title="COTD Dials Solver" />
             <IWBeastVenomXMazeSolver title="Beast Venom X Maze Solver" />
             <IWBeastVenomXBoxSolver title="Beast Venom X Box Solver" />

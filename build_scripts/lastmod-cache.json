@@ -1,8 +1,8 @@
 {
   "og-image.html": "2026-04-17T11:28:09-04:00",
   "src/404.html": "2026-08-04T16:24:11-04:00",
-  "src/games/AW/carrier/carrier_guide.html": "2026-08-16T17:19:46-04:00",
-  "src/games/AW/descent/descent_guide.html": "2026-08-21T15:59:26-04:00",
+  "src/games/AW/carrier/carrier_guide.html": "2026-08-25T13:21:57-04:00",
+  "src/games/AW/descent/descent_guide.html": "2026-08-25T13:21:57-04:00",
   "src/games/AW/infection/infection_guide.html": "2026-08-16T17:19:46-04:00",
   "src/games/AW/outbreak_AW/outbreak_AW_guide.html": "2026-08-16T17:19:46-04:00",
   "src/games/BO1/ascension/ascension_guide.html": "2026-08-16T17:19:46-04:00",
@@ -11,6 +11,7 @@
   "src/games/BO1/five/five_guide.html": "2026-08-16T17:19:46-04:00",
   "src/games/BO1/kino_der_toten/kino_der_toten_guide.html": "2026-08-16T17:19:46-04:00",
   "src/games/BO1/moon/moon_guide.html": "2026-08-21T15:59:26-04:00",
+  "src/games/BO1/moon/moon_simon_says.html": "2026-08-25T13:21:57-04:00",
   "src/games/BO1/shangri_la/shangri_la_guide.html": "2026-08-16T17:19:46-04:00",
   "src/games/BO2/buried/buried_guide.html": "2026-08-21T15:59:26-04:00",
   "src/games/BO2/die_rise/die_rise_guide.html": "2026-08-21T15:59:26-04:00",
@@ -92,7 +93,7 @@
   "src/games/WW2/the_tortured_path/survival_maps/bodega_cervantes_guide.html": "2026-08-16T17:35:58-04:00",
   "src/games/WW2/the_tortured_path/survival_maps/uss_mount_olympus_guide.html": "2026-08-16T17:35:58-04:00",
   "src/games/WW2/the_tortured_path/the_tortured_path_guide.html": "2026-08-16T17:19:46-04:00",
-  "src/index.html": "2026-08-22T19:42:52-04:00",
+  "src/index.html": "2026-08-25T13:21:57-04:00",
   "src/react-solvers/index.html": "2026-08-16T17:19:46-04:00",
   "src/stats.html": "2026-08-12T22:48:56-04:00"
 }

@@ -14,9 +14,10 @@
 // so adding a solver to one and forgetting the other cannot ship.
 //
 // EVERY COMPONENT HERE MUST RENDER DETERMINISTICALLY. Same output in Node as in
-// the browser on first render, or hydration mismatches. Audited 2026-08-07: no
+// the browser on first render, or hydration mismatches. Audited 2026-08-07, and
+// again for each solver added since: no
 // Math.random, Date.now, new Date, toLocale, crypto or performance.now anywhere
-// in the 19, every useState initialiser is a static literal, and the only two
+// in the 20, every useState initialiser is a static literal, and the only two
 // browser globals used (window.addEventListener in the maze solver,
 // document.getElementById in the morse solver) are inside useEffect, which does
 // not run during server rendering. Keep it that way.
@@ -42,10 +43,13 @@ import IWBeastVenomXBoxSolver from "./components/IWBeastVenomXBoxSolver";
 import IWBeastVenomYMorseSolver from "./components/IWBeastVenomYMorseSolver";
 import BO1DialSolver from "./components/BO1DialSolver";
 import BO7TotenreichReactorSolver from "./components/BO7TotenreichReactorSolver";
+import SimonSaysSolver from "./components/SimonSaysSolver";
 
 export interface SolverProps {
     title?: string;
     keySelectId?: string;
+    colours?: string[];
+    names?: string[];
 }
 
 /* Keys are the window.ZombiesSolvers method names, so eleventy can look a
@@ -70,4 +74,5 @@ export const solvers: Record<string, ComponentType<SolverProps>> = {
     mountBeastVenomXMazeSolver: IWBeastVenomXMazeSolver,
     mountBeastVenomXBoxSolver: IWBeastVenomXBoxSolver,
     mountBeastVenomYMorseSolver: IWBeastVenomYMorseSolver,
+    mountSimonSaysSolver: SimonSaysSolver,
 };
