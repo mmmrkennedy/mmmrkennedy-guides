@@ -116,7 +116,7 @@ export default function BO6MaxisItemsSolver({ title }: { title?: string }) {
                                     : `Position ${slotIndex + 1}: empty`
                             }
                         >
-                            <span className="solver-slot__label">{slotIndex + 1}.</span>
+                            <span className="solver-slot__label">{slotIndex + 1}</span>
                             {filled ? (
                                 <span className="solver-slot__text">{file.name} - #{file.file_number}</span>
                             ) : (
