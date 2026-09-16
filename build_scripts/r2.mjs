@@ -26,6 +26,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -216,6 +217,76 @@ function dirSize(dir) {
 
 const mb = (n) => `${(n / 1048576).toFixed(0)} MB`;
 
+function fmtSize(n) {
+    if (n >= 1048576) return `${(n / 1048576).toFixed(1)} MB`;
+    return `${Math.max(1, Math.round(n / 1024))} KB`;
+}
+
+/**
+ * Dry-run a copy and sort what rclone would do into three piles.
+ *
+ * rclone's own dry-run output does not say new vs changed, and it mixes in
+ * "Skipped update modification time" lines that look like uploads but are not:
+ * those are files whose content (md5) already matches and only the stored
+ * timestamp differs. So run it with -vv --use-json-log, capture it, and read:
+ *
+ *   debug  "Need to transfer - File not found at Destination"  -> new
+ *   notice skipped: "copy"                                     -> new or changed
+ *   notice skipped: "update modification time"                 -> timestamp only
+ */
+function planCopy(source, remote) {
+    return new Promise((resolve) => {
+        const args = ["copy", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--dry-run", "-vv", "--use-json-log", "--transfers", "8"];
+        const p = spawn(RCLONE, args, { stdio: ["ignore", "ignore", "pipe"] });
+
+        const notFound = new Set();
+        const plan = { added: [], changed: [], touched: [], errors: [] };
+        let checked = 0;
+
+        const lines = createInterface({ input: p.stderr });
+        lines.on("line", (line) => {
+            let e;
+            try {
+                e = JSON.parse(line);
+            } catch {
+                if (line.trim()) plan.errors.push(line);
+                return;
+            }
+            if (e.level === "error" || e.level === "critical") {
+                plan.errors.push(e.object ? `${e.object}: ${e.msg}` : e.msg);
+                return;
+            }
+            if (!e.object) return;
+
+            if (e.msg === "Need to transfer - File not found at Destination") notFound.add(e.object);
+            else if (e.msg === "Unchanged skipping") checked++;
+            else if (e.skipped === "copy") {
+                (notFound.has(e.object) ? plan.added : plan.changed).push({ path: e.object, size: e.size });
+                checked++;
+            } else if (e.skipped === "update modification time") {
+                plan.touched.push({ path: e.object, size: e.size });
+            } else return;
+
+            if (checked % 100 === 0) stdout.write(`\r  checked ${checked} files…   `);
+        });
+
+        p.on("error", (err) => resolve({ ...plan, code: 1, errors: [...plan.errors, err.message] }));
+        p.on("close", (code) => {
+            stdout.write(`\r  checked ${checked} files.        \n`);
+            for (const k of ["added", "changed", "touched"]) plan[k].sort((a, b) => a.path.localeCompare(b.path));
+            resolve({ ...plan, code: code ?? 1 });
+        });
+    });
+}
+
+function printGroup(title, items, prefix, limit = Infinity) {
+    if (!items.length) return;
+    const total = items.reduce((s, f) => s + f.size, 0);
+    console.log(`\n  ${title} (${items.length}, ${fmtSize(total)})`);
+    for (const f of items.slice(0, limit)) console.log(`    ${prefix}${f.path}  ${fmtSize(f.size)}`);
+    if (items.length > limit) console.log(`    … and ${items.length - limit} more`);
+}
+
 /**
  * Pull every image down from R2 into src/games.
  *
@@ -391,19 +462,44 @@ async function doUpload(ask) {
         remote = toRemote(map);
     }
 
-    console.log(`\n  source : ${source}\n  remote : ${remote}\n  Dry run first — nothing is sent yet.\n`);
-    if (rclone(["copy", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--dry-run", "--progress", "--transfers", "8"]) !== 0) {
+    console.log(`\n  source : ${source}\n  remote : ${remote}\n  Comparing against R2 — nothing is sent yet.\n`);
+    const plan = await planCopy(source, remote);
+    if (plan.code !== 0) {
+        for (const err of plan.errors.slice(0, 20)) console.log(`  ${err}`);
         console.log("\n  rclone failed. Nothing uploaded.");
         return;
     }
 
-    if (!(await confirm(ask, "Upload these? (y/N):"))) {
+    const prefix = scope === "o" ? `${mapForVariants}/` : "";
+    printGroup("New", plan.added, prefix);
+    printGroup("Changed", plan.changed, prefix);
+    // Same md5, different stored timestamp: no bytes go up, rclone only rewrites
+    // the metadata. Listed so they stop reappearing on every run.
+    printGroup("Timestamp only, content identical (metadata update, no upload)", plan.touched, prefix, 10);
+
+    const uploads = plan.added.length + plan.changed.length;
+    if (!uploads && !plan.touched.length) {
+        console.log("\n  Everything is already up to date.");
+        return;
+    }
+
+    const question = uploads
+        ? `\n  Upload ${uploads} file${uploads === 1 ? "" : "s"}${plan.touched.length ? ` and fix ${plan.touched.length} timestamps` : ""}? (y/N):`
+        : `\n  Nothing to upload. Fix ${plan.touched.length} timestamps? (y/N):`;
+    if (!(await confirm(ask, question))) {
         console.log("  Cancelled.");
         return;
     }
 
+    // Hand rclone the exact list instead of re-scanning the whole tree, which
+    // is most of the minute a full dry run takes.
+    const listFile = path.join(os.tmpdir(), `r2-upload-${process.pid}.txt`);
+    fs.writeFileSync(listFile, [...plan.added, ...plan.changed, ...plan.touched].map((f) => f.path).join("\n") + "\n");
+
     console.log("");
-    if (rclone(["copy", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"]) !== 0) {
+    const status = rclone(["copy", source, remote, "--files-from", listFile, "--no-traverse", ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"]);
+    fs.rmSync(listFile, { force: true });
+    if (status !== 0) {
         console.log("\n  Upload failed.");
         return;
     }
