@@ -223,7 +223,7 @@ function fmtSize(n) {
 }
 
 /**
- * Dry-run a copy and sort what rclone would do into three piles.
+ * Dry-run a copy or sync and sort what rclone would do into piles.
  *
  * rclone's own dry-run output does not say new vs changed, and it mixes in
  * "Skipped update modification time" lines that look like uploads but are not:
@@ -233,14 +233,17 @@ function fmtSize(n) {
  *   debug  "Need to transfer - File not found at Destination"  -> new
  *   notice skipped: "copy"                                     -> new or changed
  *   notice skipped: "update modification time"                 -> timestamp only
+ *   notice skipped: "delete"                                   -> deleted (sync only)
+ *
+ * `extra` is appended to the rclone args, e.g. --checksum.
  */
-function planCopy(source, remote) {
+function planTransfer(mode, source, remote, extra = []) {
     return new Promise((resolve) => {
-        const args = ["copy", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--dry-run", "-vv", "--use-json-log", "--transfers", "8"];
+        const args = [mode, source, remote, ...FILTERS, ...NO_BUCKET_CHECK, ...extra, "--dry-run", "-vv", "--use-json-log", "--transfers", "8"];
         const p = spawn(RCLONE, args, { stdio: ["ignore", "ignore", "pipe"] });
 
         const notFound = new Set();
-        const plan = { added: [], changed: [], touched: [], errors: [] };
+        const plan = { added: [], changed: [], touched: [], deleted: [], errors: [] };
         let checked = 0;
 
         const lines = createInterface({ input: p.stderr });
@@ -265,6 +268,8 @@ function planCopy(source, remote) {
                 checked++;
             } else if (e.skipped === "update modification time") {
                 plan.touched.push({ path: e.object, size: e.size });
+            } else if (e.skipped === "delete") {
+                plan.deleted.push({ path: e.object, size: e.size });
             } else return;
 
             if (checked % 100 === 0) stdout.write(`\r  checked ${checked} files…   `);
@@ -273,7 +278,7 @@ function planCopy(source, remote) {
         p.on("error", (err) => resolve({ ...plan, code: 1, errors: [...plan.errors, err.message] }));
         p.on("close", (code) => {
             stdout.write(`\r  checked ${checked} files.        \n`);
-            for (const k of ["added", "changed", "touched"]) plan[k].sort((a, b) => a.path.localeCompare(b.path));
+            for (const k of ["added", "changed", "touched", "deleted"]) plan[k].sort((a, b) => a.path.localeCompare(b.path));
             resolve({ ...plan, code: code ?? 1 });
         });
     });
@@ -285,6 +290,66 @@ function printGroup(title, items, prefix, limit = Infinity) {
     console.log(`\n  ${title} (${items.length}, ${fmtSize(total)})`);
     for (const f of items.slice(0, limit)) console.log(`    ${prefix}${f.path}  ${fmtSize(f.size)}`);
     if (items.length > limit) console.log(`    … and ${items.length - limit} more`);
+}
+
+/** Print a plan, or its errors if the dry run failed. Returns false on failure. */
+function printPlan(plan, prefix) {
+    if (plan.code !== 0) {
+        for (const err of plan.errors.slice(0, 20)) console.log(`  ${err}`);
+        return false;
+    }
+    printGroup("New", plan.added, prefix);
+    printGroup("Changed", plan.changed, prefix);
+    // Same md5, different stored timestamp: no bytes go up, rclone only rewrites
+    // the metadata. Listed so they stop reappearing on every run.
+    printGroup("Timestamp only, content identical (metadata update, no upload)", plan.touched, prefix, 10);
+    // Never truncated: every one of these is permanent.
+    printGroup("DELETED from R2", plan.deleted, prefix);
+    return true;
+}
+
+/** rclone reads one path per line from a temp file; cleaned up afterwards. */
+function withListFile(items, fn) {
+    const file = path.join(os.tmpdir(), `r2-list-${process.pid}-${Date.now()}.txt`);
+    fs.writeFileSync(file, items.map((f) => f.path).join("\n") + "\n");
+    try {
+        return fn(file);
+    } finally {
+        fs.rmSync(file, { force: true });
+    }
+}
+
+/**
+ * Carry out exactly the plan that was shown, rather than re-running copy/sync.
+ * Skips the second full scan (most of the time a dry run takes), and it means
+ * nothing is uploaded or deleted that was not on the list the user confirmed,
+ * even if files change in between. Deletes run last, as rclone sync does, so a
+ * failed upload never leaves a map with files already removed.
+ *
+ * --files-from-raw rather than --files-from: no comment or whitespace parsing,
+ * so every filename is taken literally.
+ */
+function applyPlan(source, remote, plan, extra = []) {
+    const uploads = [...plan.added, ...plan.changed, ...plan.touched];
+    if (uploads.length) {
+        const status = withListFile(uploads, (list) =>
+            rclone(["copy", source, remote, "--files-from-raw", list, "--no-traverse", ...NO_BUCKET_CHECK, ...extra, "--progress", "--transfers", "8"]),
+        );
+        if (status !== 0) {
+            console.log("\n  Upload failed.");
+            return false;
+        }
+    }
+    if (plan.deleted.length) {
+        const status = withListFile(plan.deleted, (list) =>
+            rclone(["delete", remote, "--files-from-raw", list, ...NO_BUCKET_CHECK, "--progress"]),
+        );
+        if (status !== 0) {
+            console.log("\n  Delete failed.");
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -463,19 +528,11 @@ async function doUpload(ask) {
     }
 
     console.log(`\n  source : ${source}\n  remote : ${remote}\n  Comparing against R2 — nothing is sent yet.\n`);
-    const plan = await planCopy(source, remote);
-    if (plan.code !== 0) {
-        for (const err of plan.errors.slice(0, 20)) console.log(`  ${err}`);
+    const plan = await planTransfer("copy", source, remote);
+    if (!printPlan(plan, scope === "o" ? `${mapForVariants}/` : "")) {
         console.log("\n  rclone failed. Nothing uploaded.");
         return;
     }
-
-    const prefix = scope === "o" ? `${mapForVariants}/` : "";
-    printGroup("New", plan.added, prefix);
-    printGroup("Changed", plan.changed, prefix);
-    // Same md5, different stored timestamp: no bytes go up, rclone only rewrites
-    // the metadata. Listed so they stop reappearing on every run.
-    printGroup("Timestamp only, content identical (metadata update, no upload)", plan.touched, prefix, 10);
 
     const uploads = plan.added.length + plan.changed.length;
     if (!uploads && !plan.touched.length) {
@@ -491,18 +548,8 @@ async function doUpload(ask) {
         return;
     }
 
-    // Hand rclone the exact list instead of re-scanning the whole tree, which
-    // is most of the minute a full dry run takes.
-    const listFile = path.join(os.tmpdir(), `r2-upload-${process.pid}.txt`);
-    fs.writeFileSync(listFile, [...plan.added, ...plan.changed, ...plan.touched].map((f) => f.path).join("\n") + "\n");
-
     console.log("");
-    const status = rclone(["copy", source, remote, "--files-from", listFile, "--no-traverse", ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"]);
-    fs.rmSync(listFile, { force: true });
-    if (status !== 0) {
-        console.log("\n  Upload failed.");
-        return;
-    }
+    if (!applyPlan(source, remote, plan)) return;
 
     console.log("\n  Bucket now holds:");
     rclone(["size", remote, ...NO_BUCKET_CHECK]);
@@ -522,27 +569,43 @@ async function doSync(ask) {
 
     const useChecksum = await confirm(ask, "Compare by checksum instead of size+time? (slower, catches same-size re-encodes) (y/N):");
 
-    const args = ["sync", source, remote, ...FILTERS, ...NO_BUCKET_CHECK, "--progress", "--transfers", "8"];
-    if (useChecksum) args.push("--checksum");
+    const extra = useChecksum ? ["--checksum"] : [];
 
-    console.log(`\n  map    : ${map}\n  remote : ${remote}\n  Dry run first — read every 'Deleted' line below.\n`);
-    if (rclone([...args, "--dry-run"]) !== 0) {
+    console.log(`\n  map    : ${map}\n  remote : ${remote}\n  Comparing against R2 — nothing is changed yet.\n`);
+    const plan = await planTransfer("sync", source, remote, extra);
+    if (!printPlan(plan, `${map}/`)) {
         console.log("\n  rclone failed. Nothing changed.");
         return;
     }
 
-    // Deliberate friction: typing the map name is harder to do by reflex than y.
-    const typed = (await ask(`\n  This DELETES. Type the map name to confirm (${map}): `)).trim();
-    if (typed !== map) {
-        console.log("  Did not match. Cancelled.");
+    const uploads = plan.added.length + plan.changed.length;
+    if (!uploads && !plan.touched.length && !plan.deleted.length) {
+        console.log("\n  Bucket already matches this map.");
+        return;
+    }
+
+    const parts = [];
+    if (uploads) parts.push(`upload ${uploads}`);
+    if (plan.touched.length) parts.push(`fix ${plan.touched.length} timestamps`);
+    if (plan.deleted.length) parts.push(`DELETE ${plan.deleted.length}`);
+    const summary = parts.join(", ");
+
+    if (plan.deleted.length) {
+        // Deliberate friction: typing the map name is harder to do by reflex than y.
+        const typed = (await ask(`\n  ${summary}. This DELETES. Type the map name to confirm (${map}): `)).trim();
+        if (typed !== map) {
+            console.log("  Did not match. Cancelled.");
+            return;
+        }
+    } else if (!(await confirm(ask, `\n  Nothing to delete. ${summary[0].toUpperCase()}${summary.slice(1)}? (y/N):`))) {
+        console.log("  Cancelled.");
         return;
     }
 
     console.log("");
-    if (rclone(args) !== 0) {
-        console.log("\n  Sync failed.");
-        return;
-    }
+    // --checksum carries through: without it a same-size, same-mtime re-encode
+    // the dry run flagged would be skipped again by the size+time comparison.
+    if (!applyPlan(source, remote, plan, extra)) return;
 
     console.log("\n  Bucket now holds:");
     rclone(["size", remote, ...NO_BUCKET_CHECK]);

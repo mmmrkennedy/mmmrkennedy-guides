@@ -4,6 +4,18 @@ Convert images to/from WebP using cwebp/dwebp.
 Originals are backed up to a sibling '_img_backup' folder next to 'src'
 before conversion, mirroring the path structure under 'src'.
 e.g. src/games/BO4/foo.png -> _img_backup/games/BO4/foo.png
+
+The default is lossy q95, not lossless. Measured over the 1,678 lossless
+guide images that were on the site in Sept 2026: re-encoding them at q95 cut
+4.97GB to 1.07GB, a 78% saving, and the worst PSNR against the lossless
+original across the whole set was 45.4dB (median 47.6). Above roughly 45dB the
+difference is not visible on a game screenshot, so lossless was paying about 5x
+the bytes for nothing anyone could see. Lossless is still one prompt away for
+the cases that need it, such as flat UI art with hard edges.
+
+Never re-encode an already-lossy WebP with this. Lossy to lossy adds a second
+generation of artifacts and usually grows the file. 'Include existing webp
+files' is there for converting a LOSSLESS webp down to q95, and defaults to no.
 """
 
 import os
@@ -14,6 +26,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 DEFAULT_DIR = Path(r"D:\programming_projects\mmmrkennedy-guides\src\games")
+# Visual quality for lossy mode. See the module docstring for why 95.
+DEFAULT_QUALITY = 95
+# Compression effort for lossless mode, where -q is not a quality knob.
+DEFAULT_EFFORT = 90
 SOURCE_EXTS = {".png", ".jpg", ".jpeg", ".bmp"}
 BACKUP_FOLDER_NAME = "_img_backup"
 SRC_SEGMENT = "src"
@@ -76,7 +92,7 @@ def backup_original(input_path: Path) -> tuple[bool, str, Path | None]:
 
 
 def convert_to_webp(input_path: Path, quality: int,
-                    lossless: bool = True) -> tuple[Path, bool, str]:
+                    lossless: bool = False) -> tuple[Path, bool, str]:
     """Returns (path, success, message). Original is deleted only on success."""
     backup_ok, backup_msg, _ = backup_original(input_path)
     if not backup_ok:
@@ -287,7 +303,7 @@ def warn_if_no_src(root: Path) -> bool:
 
 
 def convert_dir_to_webp(root: Path, quality: int, include_webp: bool,
-                        lossless: bool = True) -> None:
+                        lossless: bool = False) -> None:
     _check_tool("cwebp")
     if not warn_if_no_src(root):
         return
@@ -344,16 +360,21 @@ def main() -> None:
 
         if choice == "1":
             if input("Default config? (y/n): ").lower() != "n":
-                convert_dir_to_webp(DEFAULT_DIR, 90, include_webp=False, lossless=True)
+                convert_dir_to_webp(DEFAULT_DIR, DEFAULT_QUALITY, include_webp=False,
+                                    lossless=False)
                 image_dir = DEFAULT_DIR
             else:
                 image_dir = prompt_dir(image_dir)
                 if not image_dir.is_dir():
                     print(f"Not a directory: {image_dir}")
                     continue
-                lossless = input("Lossless? (y/n) [y]: ").lower() != "n"
-                label = "Effort 1-100 [90]: " if lossless else "Quality 1-100 [90]: "
-                quality = prompt_int(label, 90, 1, 100)
+                lossless = input("Lossless? (y/n) [n]: ").lower() == "y"
+                # -q means compression effort in lossless mode and visual
+                # quality in lossy mode, so the sensible default differs.
+                default = DEFAULT_EFFORT if lossless else DEFAULT_QUALITY
+                label = (f"Effort 1-100 [{default}]: " if lossless
+                         else f"Quality 1-100 [{default}]: ")
+                quality = prompt_int(label, default, 1, 100)
                 include = input("Include existing webp files? (y/n) [n]: ").lower() == "y"
                 convert_dir_to_webp(image_dir, quality, include, lossless)
             break

@@ -48,6 +48,16 @@ nul
 /docs/r2-migration-part1-lift-and-shift.md
 /docs/r2-migration-part2-responsive-variants.md
 
+# Scratch: side-by-side encode comparisons for eyeballing a quality setting.
+# Sits at the repo root rather than under src/ so eleventy never builds it.
+/q95_compare/
+
+# Full-quality guide images recovered from git history (this repo and the
+# pre-2024 zombiesGuides repo). An archive, not an input: the masters that
+# actually get re-encoded are copied into /_img_backup/, and everything here is
+# re-extractable from history at any time. Several GB.
+/recovered/
+
 # Encoded size-variants of the guide images (build_scripts/r2.mjs, menu option 3).
 # Derived data: rebuildable from src/ at any time, ~1.5GB, and the copies that
 # matter live in R2 under variants/.
