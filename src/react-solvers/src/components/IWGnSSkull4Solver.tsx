@@ -107,12 +107,12 @@ function solveCipher(targetWord: string, swingsetLettersArr: string[]): SolveRes
             }
         }
 
-        const code = shortestSequences
-            .filter((seq) => seq !== Infinity)
-            .map((seq) => String(seq))
-            .join(" - ");
+        // Any letter with no reachable sequence means the word can't be spelled.
+        if (shortestSequences.some((seq) => seq === Infinity)) {
+            return { kind: "error", reason: "Unable to complete puzzle with these symbols." };
+        }
 
-        if (!code) return { kind: "error", reason: "No valid sequence found." };
+        const code = shortestSequences.map((seq) => String(seq)).join(" - ");
         return { kind: "ok", code };
     } catch {
         return { kind: "error", reason: "Input contains invalid characters." };
@@ -136,7 +136,6 @@ export default function IWGnSSkull4Solver({ title }: { title?: string }) {
     const recalcKey = `${word}|${selectedSymbols.join(",")}`;
 
     const handleSymbolClick = (letter: string) => {
-        if (selectedSymbols.includes(letter)) return;
         const emptyIndex = selectedSymbols.findIndex((s) => s === "");
         if (emptyIndex !== -1) {
             const next = [...selectedSymbols];
@@ -212,13 +211,12 @@ export default function IWGnSSkull4Solver({ title }: { title?: string }) {
             <div className="solver-letter-grid" role="group" aria-label="Symbol picker">
                 {ALPHABET.map((letter) => {
                     const isSelected = selectedSymbols.includes(letter);
-                    const isDisabled = !isSelected && isFull;
                     return (
                         <button
                             key={letter}
                             type="button"
                             className={`solver-letter-cell${isSelected ? " is-selected" : ""}`}
-                            disabled={isSelected || isDisabled}
+                            disabled={isFull}
                             aria-pressed={isSelected}
                             onClick={() => handleSymbolClick(letter)}
                         >
