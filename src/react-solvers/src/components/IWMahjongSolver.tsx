@@ -62,6 +62,21 @@ function calculateHand(selectedValues: number[]): HandResult | null {
     return { melds, pair, unused };
 }
 
+function Tile({ value }: { value: number }) {
+    return <img loading="lazy" className="mahjong-tile" src={tileImages[value]} alt={`${value} Dot`} />;
+}
+
+function TileGroup({ label, values, variant }: { label: string; values: number[]; variant?: "pair" | "decoy" }) {
+    return (
+        <div className={`mahjong-group${variant ? ` is-${variant}` : ""}`}>
+            <span className="mahjong-group__label">{label}</span>
+            <div className="mahjong-group__tiles">
+                {values.map((value, ti) => <Tile key={ti} value={value} />)}
+            </div>
+        </div>
+    );
+}
+
 export default function IWMahjongSolver({ title }: { title?: string }) {
     const [selectedValues, setSelectedValues] = useState<number[]>([]);
 
@@ -87,29 +102,58 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
     const isComplete = selectedValues.length >= 14;
     const handResult = isComplete ? calculateHand(selectedValues) : null;
     const slotCount = Math.max(14, selectedValues.length);
+    const handFull = selectedValues.length >= MAX_TILES;
+    const tilesLeft = 14 - selectedValues.length;
 
     return (
         <div className="solver-container solver-container--mahjong">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click every tile you can see in-game, including the ones lying around the map. A valid hand is 4 melds + 1 pair (14 tiles total). A meld is three of a kind or three consecutive (e.g. 3-3-3 or 3-4-5). Some pick-up tiles are decoys, so if you enter more than 14 the solver tells you which to leave out. Click a placed tile to remove it.
+                Tap each tile you find, including the pick-ups around the map. Some pick-ups are decoys, so enter them all and the solver tells you which to leave out. Tap a placed tile to remove it.
             </p>
 
             <div className="solver-symbol-select" role="group" aria-label="Mahjong tile picker">
                 {TILE_VALUES.map((value) => {
-                    const handFull = selectedValues.length >= MAX_TILES;
+                    const count = selectedValues.filter((v) => v === value).length;
                     return (
                         <button
                             key={value}
                             type="button"
                             onClick={() => handleTileClick(value)}
                             disabled={handFull}
-                            aria-label={`${value} Dot tile`}
+                            aria-label={`Add ${value} Dot tile${count ? `, ${count} entered` : ""}`}
                         >
                             <img loading="lazy" src={tileImages[value]} alt="" />
+                            {count > 0 && <span className="mahjong-picker-count" aria-hidden="true">{count}</span>}
                         </button>
                     );
                 })}
+            </div>
+
+            <div className="mahjong-entered">
+                <div className="mahjong-entered__header">
+                    <span>Your tiles</span>
+                    <span className="mahjong-entered__count">
+                        {selectedValues.length}/14{selectedValues.length > 14 && ` (+${selectedValues.length - 14} extra)`}
+                    </span>
+                </div>
+                <div className="mahjong-slots">
+                    {Array.from({ length: slotCount }, (_, index) =>
+                        selectedValues[index] !== undefined ? (
+                            <button
+                                key={index}
+                                type="button"
+                                className="mahjong-slot-btn"
+                                onClick={() => handleTileRemove(index)}
+                                aria-label={`${selectedValues[index]} Dot, tap to remove`}
+                            >
+                                <img loading="lazy" className="mahjong-tile" src={tileImages[selectedValues[index]]} alt="" />
+                            </button>
+                        ) : (
+                            <div key={index} className="mahjong-tile-empty" aria-hidden="true" />
+                        ),
+                    )}
+                </div>
             </div>
 
             <div className="solver-controls">
@@ -119,70 +163,25 @@ export default function IWMahjongSolver({ title }: { title?: string }) {
             <div className="solver-output" aria-live="polite">
                 {handResult ? (
                     <>
-                        <p><strong>Winning hand</strong> - arrange your tiles in this order:</p>
+                        <p><strong>Winning hand.</strong> Place your tiles in this order:</p>
                         <div className="mahjong-hand">
                             {handResult.melds.map((meld, mi) => (
-                                <div key={`meld-${mi}`} className="mahjong-meld">
-                                    {meld.map((value, ti) => (
-                                        <img loading="lazy"
-                                            key={ti}
-                                            className="mahjong-tile"
-                                            src={tileImages[value]}
-                                            alt={`${value} Dot`}
-                                        />
-                                    ))}
-                                </div>
+                                <TileGroup key={mi} label={`Set ${mi + 1}`} values={meld} />
                             ))}
-                            <div className="mahjong-meld is-pair">
-                                {handResult.pair.map((value, ti) => (
-                                    <img loading="lazy"
-                                        key={ti}
-                                        className="mahjong-tile"
-                                        src={tileImages[value]}
-                                        alt={`${value} Dot`}
-                                    />
-                                ))}
-                            </div>
+                            <TileGroup label="Pair" values={handResult.pair} variant="pair" />
                         </div>
                         {handResult.unused.length > 0 && (
-                            <>
-                                <p>Leave these out:</p>
-                                <div className="mahjong-progress-row">
-                                    {handResult.unused.map((value, ti) => (
-                                        <img loading="lazy"
-                                            key={ti}
-                                            className="mahjong-tile"
-                                            src={tileImages[value]}
-                                            alt={`${value} Dot`}
-                                        />
-                                    ))}
-                                </div>
-                            </>
+                            <div className="mahjong-hand">
+                                <TileGroup label="Decoys, leave these out" values={handResult.unused} variant="decoy" />
+                            </div>
                         )}
                     </>
+                ) : isComplete ? (
+                    <p><strong className="solver-error">No winning hand in these tiles.</strong> Check for a mis-tapped tile, or add any pick-ups you haven't entered yet.</p>
                 ) : (
-                    <>
-                        <p>
-                            {isComplete
-                                ? <strong className="solver-error">No valid arrangement of 4 melds + 1 pair in these tiles.</strong>
-                                : <>Selected tiles ({selectedValues.length}/14):</>}
-                        </p>
-                        <div className="mahjong-progress-row">
-                            {Array.from({ length: slotCount }, (_, index) =>
-                                selectedValues[index] !== undefined ? (
-                                    <img loading="lazy"
-                                        key={index}
-                                        className="mahjong-tile"
-                                        src={tileImages[selectedValues[index]]}
-                                        alt={`${selectedValues[index]} Dot, click to remove`}
-                                        onClick={() => handleTileRemove(index)}
-                                    />
-                                ) : (
-                                    <div key={index} className="mahjong-tile-empty" aria-hidden="true" />
-                                ),
-                            )}
-                        </div>
-                    </>
+                    <p className="mahjong-waiting">
+                        A winning hand is four sets of three (like 3-3-3 or 3-4-5) plus a pair. Add {tilesLeft} more tile{tilesLeft === 1 ? "" : "s"} to solve.
+                    </p>
                 )}
             </div>
         </div>
