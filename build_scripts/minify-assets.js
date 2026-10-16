@@ -28,6 +28,7 @@ const JS_CORE_ORDER = [
     "ui/view-counter.js",
     "ui/relative-time.js",
     "ui/line-flagger.js",
+    "ui/reading.js",
     "ui/trending.js",
     "ui/stats-live.js",
     "ui/table-sort.js",

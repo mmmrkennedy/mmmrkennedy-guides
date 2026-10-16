@@ -283,6 +283,7 @@ export async function onRequestGet({ request, env }) {
     ${navLink("resolved", "Resolved")}
     ${navLink("dismissed", "Dismissed")}
     ${navLink("all", "All")}
+    <a href="/admin/analytics">Analytics &rarr;</a>
   </nav>
   <nav class="sub">
     ${srcLink("all", "All sources")}

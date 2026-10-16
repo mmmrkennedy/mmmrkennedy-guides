@@ -10,11 +10,6 @@
 # Bindings declared at the top level apply to BOTH production and preview
 # deployments. An [env.preview] section is only needed to give preview something
 # different, and overriding one binding there means re-declaring all of them.
-#
-# See docs/feedback-runbook.md.
-#
-# IMPORTANT: set `name` to your actual Pages project name, and fill
-# `database_id` after you run `wrangler d1 create guides-feedback`.
 
 name = "mmmrkennedyzombiesguides"
 pages_build_output_dir = "dist"
@@ -26,13 +21,6 @@ binding = "DB"
 database_name = "guides-feedback"
 database_id = "48528733-1919-4fb7-9954-abf886bae318"
 migrations_dir = "migrations"
-
-# View counter previously lived in this KV namespace. Kept here only so the
-# one-time backfill (build_scripts/migrate-kv-to-d1.mjs) can read the old counts.
-# Safe to remove this binding once views are confirmed live on D1.
-[[kv_namespaces]]
-binding = "VIEWS"
-id = "35b6f88678a44910b991fc2d8955e17a"
 
 # Guide screenshots. Served by functions/games/[[path]].js so they no longer
 # ship inside the deployment. Two prefixes: `img/` holds one full-size file per

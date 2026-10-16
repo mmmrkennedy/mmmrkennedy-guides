@@ -19,6 +19,35 @@ export function normalizePath(raw) {
     return p;
 }
 
+// Hostnames whose traffic is the real thing. Preview deployments share every
+// binding with production — top-level bindings in wrangler.toml apply to both
+// environments — so without this split every page opened on
+// preview.<project>.pages.dev, or on any per-commit preview URL, would inflate
+// the real view counter and the "trending this week" ranking built from it.
+//
+// An allowlist rather than a *.pages.dev blocklist: a hostname nobody
+// anticipated should fail closed, not quietly start writing.
+const PRODUCTION_HOSTS = new Set(["mmmrkennedy.com", "www.mmmrkennedy.com"]);
+
+export function isProductionHost(url) {
+    return PRODUCTION_HOSTS.has(url.hostname);
+}
+
+// Preview deploys, plus `wrangler pages dev`. The two writers treat these
+// differently on purpose: the view counter refuses them outright (there is one
+// public number and a test must not move it), while reading analytics stores
+// them tagged `prev = 1`, so the whole pipeline can be exercised on a preview
+// URL or locally, and the dashboard still hides the test traffic by default.
+//
+// localhost is safe to include: a deployed Function only ever sees the zone's
+// hostname, so the only way to hit this branch in production is to spoof the
+// Host header, and the reward for that is a row nobody looks at.
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
+
+export function isPreviewHost(url) {
+    return url.hostname.endsWith(".pages.dev") || LOCAL_HOSTS.has(url.hostname);
+}
+
 export function json(body, status = 200, extraHeaders = {}) {
     return new Response(JSON.stringify(body), {
         status,

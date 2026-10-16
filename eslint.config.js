@@ -7,15 +7,12 @@ import globals from "globals";
 export default [
     {
         ignores: [
-            "build/**",
             "dist/**",
-            "react-solvers/dist/**",
-            "src/react-solvers/dist/**",
-            "old_solvers/**",
-            "public/static/js/**",
-            "**/*.bundle.js",
-            "**/*.chunk.js",
-            "**/*.min.js",
+            ".solver-ssr/**",
+            "dumped_game_scripts/**",
+            ".variants/**",
+            "venv/**",
+            ".venv/**",
         ],
     },
     js.configs.recommended,

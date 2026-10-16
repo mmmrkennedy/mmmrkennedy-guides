@@ -1261,91 +1261,170 @@
 
 /* ------------------------------------------------------------
    IW Shaolin Shuffle — Mahjong Solver
-   5 dot-tile types (1-5), max 4 of each, 14 tiles per hand.
-   Winning hand: 4 melds + 1 pair, displayed as a row where
-   gaps communicate structure (tight within meld, wider between
-   melds, widest before the pair).
+   5 dot-tile types (1-5). The player enters every tile they find
+   (14-tile hand plus up to 5 decoys); the result shows 4 sets and
+   a pair as labelled groups, two sets per row, pair on its own row.
+   Tile art is portrait (136x180), so every tile box keeps that
+   aspect ratio instead of letterboxing into a square.
    ------------------------------------------------------------ */
 .solver-container--mahjong {
-    --mahjong-tile-size: clamp(2.25rem, 9vw, 3rem);
-    --mahjong-tile-gap: 2px;
-    --mahjong-meld-gap: var(--space-md);
-    --mahjong-pair-gap: var(--space-xl);
+    --mahjong-tile-w: clamp(1.875rem, 9vw, 2.375rem);
+    --mahjong-picker-w: clamp(2.5rem, 11vw, 3rem);
+    --mahjong-tile-gap: 4px;
+    --mahjong-tile-edge: #b3a27a;
 }
 
-/* Tile picker — 5 buttons in a row, each shows one dot tile */
+.mahjong-tile {
+    display: block;
+    width: var(--mahjong-tile-w);
+    height: auto;
+    aspect-ratio: 136 / 180;
+    object-fit: cover;
+    border-radius: 3px;
+
+    /* Bottom edge reads as the tile's thickness */
+    box-shadow: 0 2px 0 var(--mahjong-tile-edge), 0 3px 5px rgb(0 0 0 / 45%);
+}
+
+/* Tile picker — 5 buttons, each with a running count badge */
 .solver-container--mahjong .solver-symbol-select {
     justify-content: center;
     gap: var(--space-sm);
 }
 
 .solver-container--mahjong .solver-symbol-select button {
+    position: relative;
     padding: var(--space-xs);
 }
 
 .solver-container--mahjong .solver-symbol-select img {
-    width: var(--mahjong-tile-size);
-    height: var(--mahjong-tile-size);
+    width: var(--mahjong-picker-w);
+    height: auto;
+    aspect-ratio: 136 / 180;
+    object-fit: cover;
+    border-radius: 3px;
 }
 
-/* In-progress hand: 14 slots, fills as user clicks */
-.mahjong-progress-row {
+.mahjong-picker-count {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    min-width: 1.375rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--solver-accent);
+    color: #1a1a1a;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    line-height: 1.375rem;
+    text-align: center;
+}
+
+/* Entered tiles — a 7-wide grid, so the 14-tile hand is exactly two rows
+   and any decoys start a third */
+.mahjong-entered {
     display: flex;
-    flex-wrap: wrap;
+    align-self: center;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.mahjong-entered__header {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.mahjong-entered__count {
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.mahjong-slots {
+    display: grid;
+    grid-template-columns: repeat(7, var(--mahjong-tile-w));
+    gap: calc(var(--mahjong-tile-gap) + 2px) var(--mahjong-tile-gap);
     justify-content: center;
-    gap: var(--mahjong-tile-gap);
 }
 
-.mahjong-tile {
-    width: var(--mahjong-tile-size);
-    height: var(--mahjong-tile-size);
-    object-fit: contain;
-    border-radius: 4px;
-    background: var(--color-bg-secondary);
+.mahjong-slot-btn {
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 3px;
     cursor: pointer;
-    transition: opacity 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
-.mahjong-tile:hover {
-    box-shadow: 0 0 0 1px var(--solver-accent);
+.mahjong-slot-btn:hover {
+    opacity: 0.6;
+    transform: translateY(-2px);
+}
+
+.mahjong-slot-btn:focus-visible {
+    outline: 2px solid var(--solver-accent);
+    outline-offset: 2px;
 }
 
 .mahjong-tile-empty {
-    width: var(--mahjong-tile-size);
-    height: var(--mahjong-tile-size);
+    width: var(--mahjong-tile-w);
+    aspect-ratio: 136 / 180;
     border: 1.5px dashed var(--color-border-medium);
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
-/* Winning hand — gaps communicate grouping.
-   Outer flex wraps between melds (never within) thanks to the
-   nested structure: meld groups are atomic flex children. */
+/* Result — labelled groups. Sets wrap two to a row; the pair takes a
+   full row so it never shares a line with a set. */
 .mahjong-hand {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
-    gap: var(--mahjong-meld-gap);
+    gap: var(--space-sm) var(--space-md);
 }
 
-.mahjong-meld {
+.mahjong-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.mahjong-group.is-pair {
+    flex-basis: 100%;
+}
+
+.mahjong-group__label {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.mahjong-group__tiles {
     display: flex;
     gap: var(--mahjong-tile-gap);
+    padding: var(--space-xs) var(--space-xs) calc(var(--space-xs) + 2px);
+    background: rgb(255 255 255 / 4%);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 6px;
 }
 
-/* The pair gets a structural pause before it — nudge with margin
-   so it visually separates from the melds without disrupting the
-   wrap behavior of the outer flex. */
-.mahjong-meld.is-pair {
-    margin-left: calc(var(--mahjong-pair-gap) - var(--mahjong-meld-gap));
+.mahjong-group.is-pair .mahjong-group__tiles {
+    border-color: var(--solver-accent-dim);
 }
 
-.mahjong-meld .mahjong-tile {
-    cursor: default;
+.mahjong-group.is-decoy .mahjong-group__tiles {
+    border-style: dashed;
 }
 
-.mahjong-meld .mahjong-tile:hover {
-    box-shadow: none;
+.mahjong-group.is-decoy .mahjong-tile {
+    opacity: 0.55;
+}
+
+.mahjong-waiting {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
 }
 
 /* ------------------------------------------------------------

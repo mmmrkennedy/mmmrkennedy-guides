@@ -2,9 +2,6 @@ import { useMemo, useState } from "preact/hooks";
 import { useSolverReport } from "../solver-report";
 
 /*
- * Rebuild of IWChemicalStepSolver.tsx. Both are mounted on the dev page so they
- * can be driven side by side; the original is untouched.
- *
  * Every table below is generated from the shipped game tables instead of being
  * transcribed from gameplay:
  *   cp/zombies/elements.csv    - heat/pressure per value set (cols 8-19)
@@ -97,6 +94,10 @@ interface FinalChemical {
     id: string;
     label: string;
     parts: string[];
+    /** setup_final_compound() draws randomintrange(0, size - 1), and the upper
+        bound is exclusive, so the last final compound in compounds.csv (nitro)
+        is never the radio's answer. Kept selectable, but marked. */
+    neverChosen?: boolean;
 }
 
 const FINAL_CHEMICALS: FinalChemical[] = [
@@ -104,7 +105,7 @@ const FINAL_CHEMICALS: FinalChemical[] = [
     { id: "chem_2", label: "1,3,5 tera-nitro-phenol", parts: ["Phenolsulfonic Acid", "Detergent"] },
     { id: "chem_3", label: "Octa-hydro-2,5-nitro-3,4,7-para-zokine", parts: ["Hexamine", "Plant Food", "Vinegar", "Detergent"] },
     { id: "chem_4", label: "3-methyl-2,4-di-nitrobenzene", parts: ["Dinitro", "Racing Fuel"] },
-    { id: "chem_5", label: "2,4-propane-3,5-tetra-nitrite", parts: ["Nitrated Glycerol Solution", "Baking Soda"] },
+    { id: "chem_5", label: "2,4-propane-3,5-tetra-nitrite", parts: ["Nitrated Glycerol Solution", "Baking Soda"], neverChosen: true },
 ];
 
 /* diapi_table.csv. Column 1 is the O Number; the rest of the row is every M
@@ -430,7 +431,9 @@ export default function IWChemicalStepSolverV2({ title }: { title?: string }) {
                         >
                             <option value="default" disabled>Select Chemical</option>
                             {FINAL_CHEMICALS.map((c) => (
-                                <option key={c.id} value={c.id}>{c.label}</option>
+                                <option key={c.id} value={c.id}>
+                                    {c.neverChosen ? `${c.label} (shouldn't appear)` : c.label}
+                                </option>
                             ))}
                         </select>
                     </div>

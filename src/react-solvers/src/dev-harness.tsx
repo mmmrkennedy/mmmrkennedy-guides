@@ -20,7 +20,6 @@ import BO6PeriodicTableSolver from "./components/BO6PeriodicTableSolver";
 import BO6LetterboardSolver from "./components/BO6LetterboardSolver";
 import IWMahjongSolver from "./components/IWMahjongSolver";
 import IWMainQuestWordFilter from "./components/IWMainQuestWordFilter";
-import IWChemicalStepSolver from "./components/IWChemicalStepSolver";
 import IWChemicalStepSolverV2 from "./components/IWChemicalStepSolverV2";
 import IWGnSSkull4Solver from "./components/IWGnSSkull4Solver";
 import IWBeastEightQueensSolver from "./components/IWBeastEightQueensSolver";
@@ -71,8 +70,7 @@ if (devRoot) {
             <IWBeastFloppySolver title="Beast Floppy Disk Solver" />
             <IWBeastEightQueensSolver title="Beast Eight Queens Solver" />
             <IWGnSSkull4Solver title="Attack GnS Skull 4 Solver" />
-            <IWChemicalStepSolverV2 title="Attack Chemical Step Solver (live)" />
-            <IWChemicalStepSolver title="Attack Chemical Step Solver (old, no longer mounted)" />
+            <IWChemicalStepSolverV2 title="Attack Chemical Step Solver" />
             <IWMainQuestWordFilter title="Shaolin Main Quest Word Filter" />
             <IWMahjongSolver title="Mahjong Solver" />
             <WW2HangmanSolver title="Hangman Solver" />
