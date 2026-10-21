@@ -141,6 +141,7 @@ a[data-media-type="audio"]::after {
 }
 
 /* Buttons */
+
 /* font-family and line-height are set here, not left to the UA. A <button>
  * gets Arial at line-height: normal from the UA stylesheet while an <a> wearing
  * the same classes inherits the body font at line-height: 1.75, so the two
@@ -748,9 +749,7 @@ a[data-media-type="audio"]::after {
 
 /* Tables */
 .table-scroll {
-    margin: var(--space-lg) calc(-1 * var(--space-md)) var(--space-lg) calc(-1 * var(--space-md));
-    margin-top: var(--space-sm);
-    margin-bottom: var(--space-sm);
+    margin: var(--space-md) calc(-1 * var(--space-md));
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     background-color: var(--color-bg-secondary);
@@ -787,6 +786,22 @@ th {
 td {
     padding: var(--space-md);
     border: 1px solid var(--color-border-medium);
+}
+
+/* The cell's padding is its spacing; its content shouldn't add to it. A cell
+   is its own formatting context, so a list's margins (and its first and last
+   items') would otherwise sit inside the padding and leave a list-bearing cell
+   with far more space above and below its text than a plain one. */
+td > :first-child,
+td > :is(ul, ol):first-child > li:first-child {
+    margin-top: 0;
+}
+
+td > :last-child,
+td > :is(ul, ol):last-child > li:last-child,
+td > :is(ul, ol):last-child > li:last-child > :is(ul, ol):last-child,
+td > :is(ul, ol):last-child > li:last-child > :is(ul, ol):last-child > li:last-child {
+    margin-bottom: 0;
 }
 
 /* A copy of a rowspan cell, stamped by labelTableCells for the rows the span
@@ -963,14 +978,6 @@ td[data-card-copy] {
         padding-inline-start: var(--space-md);
     }
 
-    /* The cell's padding is the card's spacing; its content shouldn't add to it. */
-    table[data-cards] td > :first-child {
-        margin-top: 0;
-    }
-
-    table[data-cards] td > :last-child {
-        margin-bottom: 0;
-    }
 }
 
 /* Forms */
@@ -1096,6 +1103,17 @@ input.spacing {
     letter-spacing: 0.1em;
 }
 
+/* Stacks symbols top to bottom, for readings shown vertically in-game */
+.morse-code.vertical {
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    vertical-align: middle;
+    padding: 4px 2px;
+    /* Each dot takes a full em of height; pull them together */
+    letter-spacing: -0.4em;
+    line-height: 1;
+}
+
 details.spacing {
     margin: var(--space-lg) 0;
     border: 1px solid var(--color-border-medium);
@@ -1196,13 +1214,6 @@ details.spacing > ul {
     z-index: 9999;
 }
 
-@media (width >= 48.0625em) {
-    /*.top-buttons-background-box .version-display {
-        top: unset;
-        bottom: 0;
-    }*/
-}
-
 .version-and-toggle {
     display: flex;
     flex-direction: column;
@@ -1276,10 +1287,16 @@ body.ads-hidden .ad-inline,
 body.ads-hidden .ad-multiplex,
 body.ads-hidden .ad-infeed,
 body.ads-hidden .ad-right-sidebar,
-body.ads-hidden .ad-left-sidebar { display: none !important; }
+body.ads-hidden .ad-left-sidebar {
+    display: none !important;
+}
 
 /* Hide left sidebar on solver-only pages when in minimal mode */
-body.ads-minimal:has(.solver-only-page) .ad-left-sidebar { display: none !important; }
+body.ads-minimal:has(.solver-only-page) .ad-left-sidebar {
+    display: none !important;
+}
 
 /* Minimal mode: sidebars + multiplex only — hide all inline ads */
-body.ads-minimal .ad-inline { display: none !important; }
+body.ads-minimal .ad-inline {
+    display: none !important;
+}

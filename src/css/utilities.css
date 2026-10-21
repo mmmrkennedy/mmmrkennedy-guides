@@ -24,10 +24,11 @@ Helper classes and special cases.
 /*
 Path switcher — two or more mutually exclusive routes through one step, only
 one of which is ever on screen. Built by the `preRenderPathTabs` transform.
+No inline margin, so the panel lines up with the step text it sits under.
 */
 .path-tabs {
     max-width: 100%;
-    margin: var(--space-md) var(--space-sm);
+    margin: var(--space-md) 0;
 }
 
 /* Mobile: the switcher fills the block it's written in instead of hanging off
@@ -41,7 +42,6 @@ one of which is ever on screen. Built by the `preRenderPathTabs` transform.
         /* Room to grow into: the 100% would clamp the negative margins below
            back to the width the list left it. */
         max-width: none;
-        margin-inline: 0;
     }
 
     :where(li) > .path-tabs {
@@ -122,6 +122,22 @@ one of which is ever on screen. Built by the `preRenderPathTabs` transform.
     border-top: 2px solid var(--color-tier-1);
     border-radius: 4px;
     padding: var(--space-md);
+}
+
+/* The panel's padding is its spacing, as in a table cell: a leading or trailing
+   list would otherwise stack its margins on top of it. */
+.path-tabs__panel > :first-child,
+.path-tabs__panel > :is(ul, ol):first-child > li:first-child {
+    margin-top: 0;
+}
+
+/* Two levels deep, because a sub-list closing the last step pushes its margin
+   out through that step's own. */
+.path-tabs__panel > :last-child,
+.path-tabs__panel > :is(ul, ol):last-child > li:last-child,
+.path-tabs__panel > :is(ul, ol):last-child > li:last-child > :is(ul, ol):last-child,
+.path-tabs__panel > :is(ul, ol):last-child > li:last-child > :is(ul, ol):last-child > li:last-child {
+    margin-bottom: 0;
 }
 
 .path-tabs__panel[hidden] {

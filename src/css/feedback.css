@@ -13,6 +13,7 @@
 .gfb-flag {
     display: inline-block;
     margin-left: var(--space-xs);
+
     /* Collapse the flag's layout footprint: without this, a line that exactly
      * fills the available width pushes the ⚑ onto a new (empty) line. The
      * negative right margin removes the width it reserves for line-breaking

@@ -54,6 +54,7 @@
     gap: var(--space-md);
     width: 100%;
     max-width: 100%;
+    margin: var(--space-md) 0;
     padding: var(--space-md);
     background: rgb(255 255 255 / 3%);
     border: 2px solid var(--color-border-medium);
@@ -81,7 +82,6 @@
         width: fit-content;
         min-width: 22.5rem;
         padding: var(--space-lg);
-        margin: var(--space-md) 0;
     }
 }
 
@@ -163,18 +163,6 @@
     text-align: center;
 }
 
-/* One authored line of context above a solver, saying what the puzzle is and
-   where it is on the map.
-
-   The heading beside it is authored in the page too, rather than passed to the
-   component as its `title` prop. Same rendered look, but the only words naming
-   the puzzle no longer live inside a hydrated subtree: they ship in the HTML
-   source, and line-flagger can decorate this paragraph because it sits outside
-   the solver root, so a wrong location is reportable like any other line.
-
-   .solver-title carries `margin: 0` for its normal home inside the container's
-   flex gap, so the spacing either side of the pair is supplied here. */
-
 /* Solver hub: one row per solver page, the whole row a link.
    Left-aligned on purpose, against the centred rhythm of the rest of these
    pages: every name starting at the same x is what makes a list of five
@@ -237,6 +225,17 @@
     line-height: var(--line-height-relaxed);
 }
 
+/* One authored line of context above a solver, saying what the puzzle is and
+   where it is on the map.
+
+   The heading beside it is authored in the page too, rather than passed to the
+   component as its `title` prop. Same rendered look, but the only words naming
+   the puzzle no longer live inside a hydrated subtree: they ship in the HTML
+   source, and line-flagger can decorate this paragraph because it sits outside
+   the solver root, so a wrong location is reportable like any other line.
+
+   .solver-title carries `margin: 0` for its normal home inside the container's
+   flex gap, so the spacing either side of the pair is supplied here. */
 .solver-intro {
     max-width: 62ch;
     margin: var(--space-xs) auto var(--space-md);
@@ -264,8 +263,7 @@
        invalid, so this inherited body's --line-height-relaxed instead. Naming
        that value keeps the rendering identical and makes the intent explicit. */
     line-height: var(--line-height-relaxed);
-    overflow-wrap: break-word;
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 /* Site-wide callout boxes (.note, .tip, …) dropped into a solver panel.
@@ -413,7 +411,7 @@
     border-radius: 50%;
     margin-right: 0.4em;
     vertical-align: middle;
-    background: var(--dot-color, currentColor);
+    background: var(--dot-color, currentcolor);
 }
 
 /* Inline text color utilities — for labels and inline spans
@@ -434,7 +432,6 @@
     border-radius: 4px;
     font-size: var(--font-size-base);
     transition: border-color 0.15s ease, background-color 0.15s ease;
-    margin: inherit 4px;
 }
 
 .solver-container select {
@@ -475,6 +472,7 @@
    Driven by --solver-cols / --solver-rows / --solver-cell-size
    set on the container.
    ------------------------------------------------------------ */
+
 /* Grid wrapper allows horizontal scroll by default — needed for
    solvers with boards larger than mobile width (e.g. 8-queens).
    Solvers whose grids shrink to fit can opt out with .is-fit. */
@@ -851,8 +849,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: 8px;
     box-shadow: inset 0 2px 4px rgb(0 0 0 / 30%);
-    overflow-wrap: break-word;
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 /* Stack of paragraphs/sections inside the output panel.
@@ -977,6 +974,10 @@
     cursor: pointer;
 }
 
+.solver-group-label__clear:hover {
+    color: var(--color-text-primary);
+}
+
 /* ------------------------------------------------------------
    Shaolin word filter — the panel is sized to four words across.
 
@@ -1016,10 +1017,6 @@
            overflow on narrow desktop windows. */
         min-width: 0;
     }
-}
-
-.solver-group-label__clear:hover {
-    color: var(--color-text-primary);
 }
 
 /* ------------------------------------------------------------
@@ -1090,8 +1087,7 @@
     min-width: 100%;
     color: var(--color-danger-text);
     font-size: var(--font-size-sm);
-    overflow-wrap: break-word;
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 @keyframes solver-recalc {
@@ -1254,6 +1250,7 @@
     width: 100%;
     height: auto;
     aspect-ratio: 1;
+
     /* Cap so they don't grow huge on wide screens */
     max-width: var(--solver-cell-size);
     justify-self: center;
