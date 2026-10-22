@@ -1096,6 +1096,17 @@ input.spacing {
     letter-spacing: 0.1em;
 }
 
+/* Stacks symbols top to bottom, for readings shown vertically in-game */
+.morse-code.vertical {
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    vertical-align: middle;
+    padding: 4px 2px;
+    /* Each dot takes a full em of height; pull them together */
+    letter-spacing: -0.4em;
+    line-height: 1;
+}
+
 details.spacing {
     margin: var(--space-lg) 0;
     border: 1px solid var(--color-border-medium);
