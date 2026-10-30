@@ -19,6 +19,8 @@ function initializeQuickLinks(): void {
             return;
         }
 
+        parentElement.addEventListener("click", toggleContentsSubList);
+
         // Exit early if navigation already exists (built at build-time)
         if (parentElement.children.length > 0) return;
 
@@ -29,6 +31,18 @@ function initializeQuickLinks(): void {
     } catch (e) {
         window.Log("error", "Error initializing quick links:", e);
     }
+}
+
+/**
+ * Opens or closes a section of the phone contents list.
+ */
+function toggleContentsSubList(event: Event): void {
+    const btn = (event.target as Element).closest(".quick-links-sub-toggle");
+    if (!btn) return;
+
+    const open = btn.parentElement?.classList.toggle("is-open") ?? false;
+    btn.setAttribute("aria-expanded", String(open));
+    btn.textContent = open ? "▾" : "▸";
 }
 
 /**

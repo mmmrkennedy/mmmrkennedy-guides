@@ -31,6 +31,33 @@ Desktop-specific upgrades. Base styles are mobile-first.
         padding: 0;
     }
 
+    /* Only the top-level entries show until opened, so the guide starts sooner.
+       The button sits where the list marker would be. */
+    .quick-links-container li:has(> .quick-links-sub-toggle) {
+        position: relative;
+        list-style: none;
+    }
+
+    .quick-links-container li:has(> .quick-links-sub-toggle):not(.is-open) > ul {
+        display: none;
+    }
+
+    .quick-links-sub-toggle {
+        display: block;
+        position: absolute;
+        top: -0.25rem;
+        left: -2rem;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border: none;
+        background: none;
+        color: var(--color-text-secondary);
+        font-size: 1.125rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
     .legend-launcher {
         position: absolute;
         inset-block: 0;

@@ -643,6 +643,18 @@ a[data-media-type="audio"]::after {
     border-bottom-right-radius: 0;
 }
 
+/* A list of short names whose order doesn't matter. Added by hand per list, since
+   a sequence of steps or directions has to stay one read top to bottom. */
+.list-columns {
+    columns: 8.5rem 3;
+    column-gap: var(--space-xl);
+}
+
+.list-columns > li {
+    margin-top: 0;
+    break-inside: avoid;
+}
+
 /* Tables */
 .table-scroll {
     margin: var(--space-md) calc(-1 * var(--space-md));

@@ -423,6 +423,7 @@ function generateQuickLinks(document) {
     const navStructure = buildNavStructure(document);
     renderNavigation(container, navStructure);
     renderSidebarToc(document, container);
+    addContentsSubToggles(document, container);
 
     return true;
 }
@@ -638,6 +639,27 @@ function addSidebarSubToggles(document, container) {
         btn.type = "button";
         btn.className = "sidebar-toc-sub-toggle";
         btn.setAttribute("aria-label", "Toggle sub-items");
+        btn.textContent = "▸";
+
+        li.insertBefore(btn, li.firstChild);
+    }
+}
+
+/**
+ * Emits the phone contents list's expand buttons. Runs after the sidebar is
+ * cloned from this list, because the sidebar has toggles of its own. Stylesheet
+ * shows them and hides the sub-lists on phones only, so wider screens are
+ * untouched; quick-links.ts attaches the click handler.
+ */
+function addContentsSubToggles(document, container) {
+    for (const li of container.querySelectorAll("li")) {
+        if (!li.querySelector(":scope > ul")) continue;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "quick-links-sub-toggle";
+        btn.setAttribute("aria-label", "Toggle sub-items");
+        btn.setAttribute("aria-expanded", "false");
         btn.textContent = "▸";
 
         li.insertBefore(btn, li.firstChild);
@@ -1190,6 +1212,7 @@ function labelTableCells(table) {
     if (table.hasAttribute("data-cards")) return true;
     if (table.hasAttribute("data-sortable")) return false;
     if (table.querySelector("[colspan]")) return false;
+    if (fitsOnPhoneAsTable(table)) return false;
 
     // Guides write the headings either in a <thead> or as a first row of <th>
     // inside the <tbody>; both are the same row for this purpose.
@@ -1235,6 +1258,28 @@ function labelTableCells(table) {
     headRow.setAttribute("data-card-head", "");
     table.setAttribute("data-cards", "");
     return true;
+}
+
+/**
+ * Whether a table's values are short enough to read as columns on a phone. Cards
+ * give every value its own labelled row, which only earns its height when the
+ * values are long: a two-column list of short names otherwise runs thousands of
+ * pixels. Measured in characters, summing each column's longest value.
+ */
+function fitsOnPhoneAsTable(table) {
+    if (table.querySelector("td :is(ul, ol, table, img, button, div)")) return false;
+
+    const columns = [];
+    for (const row of table.rows) {
+        for (const [col, cell] of Array.from(row.cells).entries()) {
+            if (cell.tagName !== "TD") continue;
+            const length = cell.textContent.replace(/\s+/g, " ").trim().length;
+            columns[col] = Math.max(columns[col] ?? 0, length);
+        }
+    }
+
+    if (!columns.length || columns.length > 3) return false;
+    return columns.reduce((sum, length) => sum + length, 0) <= 62;
 }
 
 function preRenderRevealButtons(document) {

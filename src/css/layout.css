@@ -331,6 +331,10 @@ Page structure and containers.
     border-bottom: 2px solid var(--color-border-medium);
 }
 
+.quick-links-sub-toggle {
+    display: none;
+}
+
 /* A page with no sections to list (the single-table pages) would otherwise draw
    an empty band under the header. */
 .quick-links-container:empty {
