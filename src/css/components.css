@@ -441,7 +441,6 @@ a[data-media-type="audio"]::after {
 .requirement,
 .tip,
 .disclaimer,
-.boss-fight-phases,
 .stats,
 .weapon-desc {
     margin: var(--space-md) 0;
@@ -533,6 +532,17 @@ a[data-media-type="audio"]::after {
     content: "❓ Disclaimer";
 }
 
+/* Boxes in a row read as one block, with only a hairline between them. */
+:is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc):has(+ :is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc)) {
+    margin-bottom: 2px;
+    border-bottom-right-radius: 0;
+}
+
+:is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc) + :is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc) {
+    margin-top: 0;
+    border-top-right-radius: 0;
+}
+
 /* Inline variants — the same types for a line that belongs inside a list.
  * No rule and no line of its own: the item keeps its bullet and stays level
  * with its siblings, with the tint behind the text and the label run into the
@@ -594,13 +604,12 @@ a[data-media-type="audio"]::after {
     content: "Disclaimer: ";
 }
 
-/* Labels itself in its own text ("Phase 1"), so it takes the frame without a label. */
+/* Names the steps below it ("Phase 1"), so it's a plain label, not a box. */
 .boss-fight-phases {
-    --accent: var(--color-tier-2);
-    --accent-bg: var(--color-bg-secondary);
-
+    margin: var(--space-md) 0 var(--space-xs);
     color: var(--color-tier-2);
     font-size: var(--font-size-md);
+    font-weight: 600;
 }
 
 /* The quest's vital signs — difficulty, completion time, RNG rating — on one
@@ -703,6 +712,7 @@ th {
 td {
     padding: var(--space-md);
     border: 1px solid var(--color-border-medium);
+    vertical-align: top;
 }
 
 /* The cell's padding is its spacing; its content shouldn't add to it. A cell
