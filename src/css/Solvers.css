@@ -177,8 +177,39 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    max-width: 46rem;
+    /* max-width: 46rem; */
     margin-inline: auto;
+}
+
+/* Game and map headings on the site-wide /solvers hub. The tier margins are
+   sized for prose, and in a flex column they stack on the gap instead of
+   collapsing, so the rows read as scattered. Trimmed to let each heading sit
+   on the cards it names. */
+.solver-hub > .title-tier-1 {
+    margin: var(--space-md) 0 0;
+}
+
+.solver-hub .title-tier-2 {
+    margin: var(--space-xs) 0 0;
+}
+
+/* The list is only there because index-filter.ts pairs each game's <h2 id> with
+   a <ul> and filters its <li>s. It should look like the same column of rows. */
+.solver-hub > ul,
+.solver-hub > ul > li {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin: 0;
+}
+
+.solver-hub > ul {
+    padding: 0;
+    list-style: none;
+}
+
+.solver-hub > :first-child {
+    margin-top: 0;
 }
 
 .solver-hub__card {

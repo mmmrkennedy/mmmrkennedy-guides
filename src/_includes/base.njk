@@ -103,6 +103,10 @@
     {%- if statsPage %}
         <link rel="stylesheet" type="text/css" href="/css/stats.css?v={{ site.buildVersion }}">
     {%- endif %}
+    {#- The homepage's filter and game chips, reused on /solvers. #}
+    {%- if useIndexNav %}
+        <link rel="stylesheet" type="text/css" href="/css/index-nav.css?v={{ site.buildVersion }}">
+    {%- endif %}
     {#- On a solver-only page the solver IS the content, so its stylesheet blocks
         first paint like any other. In a guide the solver sits thousands of words
         below the fold, and blocking paint on 20KB that styles nothing visible
@@ -400,6 +404,9 @@
 
 {%- if site.bundled %}
 <script src="/js/bundle.core.min.js?v={{ site.buildVersion }}" defer></script>
+{%- if useIndexNav %}
+<script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
+{%- endif %}
 <script src="/js/bundle.ads.min.js?v={{ site.buildVersion }}" async></script>
 {%- else %}
 <script src="/js/core/logger.js?v={{ site.buildVersion }}" defer></script>
@@ -418,6 +425,9 @@
 <script src="/js/ui/line-flagger.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/reading.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/return-pill.js?v={{ site.buildVersion }}" defer></script>
+{%- if useIndexNav %}
+<script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
+{%- endif %}
 {%- if statsPage %}
 <script src="/js/ui/stats-live.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/table-sort.js?v={{ site.buildVersion }}" defer></script>

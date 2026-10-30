@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const el = document.getElementById(id);
         if (!el || !contentWindow) return;
         const offset = nav!.getBoundingClientRect().height + 8;
-        const top = el.getBoundingClientRect().top + contentWindow.scrollTop - offset;
+        const top = el.getBoundingClientRect().top - contentWindow.getBoundingClientRect().top + contentWindow.scrollTop - offset;
         contentWindow.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
         history.pushState({ anchor: id }, "", "#" + id);
     }
