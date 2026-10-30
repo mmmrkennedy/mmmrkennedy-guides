@@ -6,13 +6,14 @@ guideUrl: '/games/BO3/gorod_krovi/gorod_krovi_guide'
 description: Gorod Krovi valve step calculator and solver for Black Ops 3 Zombies. Pick where your Green Light and Pink Cylinder valves are and get every valve position to set.
 ---
 <div class="content-container">
+    <p class="solver-intro">Get every valve position to set, based on where your Green Light and Pink Cylinder valves are.</p>
     <div id="valve-solver-react"></div>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountValveSolver("valve-solver-react", { title: "Valve Solver" });
+            window.ZombiesSolvers.mountValveSolver("valve-solver-react");
         } else {
             console.error("ZombiesSolvers not loaded!");
         }

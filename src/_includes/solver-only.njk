@@ -28,11 +28,9 @@ skipTOC: true
     remember to update. -#}
 {%- set guideClean = guideUrl | cleanUrl %}
 {%- if mapName and guideUrl and guideClean not in unfinishedPages %}
-{#- "Full Terminus Map Guide" reads fine; "Full The Frozen Dawn Map Guide" does
-    not, and three maps carry a leading article. Those put the name first
-    instead — same words, both orders grammatical, and the map name still opens
-    the anchor text on the pages where it matters most. -#}
-{%- set guideLabel = (mapName + ' Full Map Guide') if mapName.startsWith('The ') else ('Full ' + mapName + ' Map Guide') %}
+{#- Name first on every map: "Full The Frozen Dawn Map Guide" doesn't read, and
+    the map name opening the anchor text is what matters most here. -#}
+{%- set guideLabel = mapName + ' Full Map Guide' %}
 <nav class="solver-guide-link" aria-label="Related guide">
     <a class="solver-guide-link__anchor internal-link" href="{{ guideClean }}">{{ guideLabel }}</a>
 </nav>

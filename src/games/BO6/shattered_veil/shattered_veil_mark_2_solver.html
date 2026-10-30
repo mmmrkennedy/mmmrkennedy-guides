@@ -5,12 +5,15 @@ solverTitle: 'Mark II Code Solver'
 guideUrl: '/games/BO6/shattered_veil/shattered_veil_guide'
 description: Shattered Veil Ray Gun Mark 2 code solver for Black Ops 6 Zombies. Pick your fax machine word and chalkboard letters to get the code straight away.
 ---
-<div class="content-container" id="letterboard-solver-react"></div>
+<div class="content-container">
+    <p class="solver-intro">Get the Ray Gun Mark 2 code from your fax machine word and chalkboard letters.</p>
+    <div id="letterboard-solver-react"></div>
+</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountLetterboardSolver("letterboard-solver-react", { title: "Ray Gun Mark 2 Code Solver" });
+            window.ZombiesSolvers.mountLetterboardSolver("letterboard-solver-react");
         } else {
             console.error("ZombiesSolvers not loaded!");
         }

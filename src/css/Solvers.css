@@ -259,14 +259,13 @@
 /* One authored line of context above a solver, saying what the puzzle is and
    where it is on the map.
 
-   The heading beside it is authored in the page too, rather than passed to the
-   component as its `title` prop. Same rendered look, but the only words naming
-   the puzzle no longer live inside a hydrated subtree: they ship in the HTML
-   source, and line-flagger can decorate this paragraph because it sits outside
-   the solver root, so a wrong location is reportable like any other line.
+   The puzzle's name is the page's H1 in the top bar, so a single-solver page
+   doesn't repeat it here. This paragraph ships in the HTML source, and
+   line-flagger can decorate it because it sits outside the solver root, so a
+   wrong location is reportable like any other line.
 
    .solver-title carries `margin: 0` for its normal home inside the container's
-   flex gap, so the spacing either side of the pair is supplied here. */
+   flex gap, so on a multi-solver page the spacing is supplied here. */
 .solver-intro {
     max-width: 62ch;
     margin: var(--space-xs) auto var(--space-md);
@@ -377,7 +376,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
-    justify-content: space-around;
+    justify-content: center;
 }
 
 .solver-controls.is-left {
@@ -390,8 +389,8 @@
 
 /* Each button gets equal space on both sides — with N buttons,
    the row divides into N equal segments and one button is
-   centered within each. This is the default; .is-left or
-   .is-centered to override. */
+   centered within each. The default keeps a row's buttons
+   together in the middle. */
 .solver-controls.is-distributed {
     justify-content: space-around;
 }

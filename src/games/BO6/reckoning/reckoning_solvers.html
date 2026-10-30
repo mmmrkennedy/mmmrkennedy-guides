@@ -6,18 +6,22 @@ guideUrl: '/games/BO6/reckoning/reckoning_guide'
 description: Reckoning solvers for Black Ops 6 Zombies. Search the periodic table code from the monitor letters, and sort the four S.A.M. files into the right order.
 ---
 <div class="content-container">
+    <h2 class="solver-title">Periodic Table Solver</h2>
+    <p class="solver-intro">Search the periodic table code from the monitor letters.</p>
     <div id="periodic-solver-react"></div>
 </div>
 
 <div class="content-container">
+    <h2 class="solver-title">Maxis Items Solver</h2>
+    <p class="solver-intro">Sort the four S.A.M. files into the right order.</p>
     <div id="maxis-solver-react"></div>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountMaxisItemsSolver("maxis-solver-react", { title: "Maxis Items Solver" });
-            window.ZombiesSolvers.mountPeriodicTableSolver("periodic-solver-react", { title: "Periodic Table Solver" });
+            window.ZombiesSolvers.mountMaxisItemsSolver("maxis-solver-react");
+            window.ZombiesSolvers.mountPeriodicTableSolver("periodic-solver-react");
         } else {
             console.error("ZombiesSolvers not loaded!");
         }
