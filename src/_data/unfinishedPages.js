@@ -22,8 +22,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * map is listed under both its original game and the collection that reissued
  * it (Moon, Origins), and normalised the way cleanUrl normalises a page URL so
  * the two can be compared directly.
+ *
+ * Empty under `eleventy --serve` (dev, dev:watch) so a stub guide renders its
+ * real body while it's being written, instead of the "not ready yet"
+ * placeholder. Builds (`eleventy`, `eleventy --incremental`) run in "build"
+ * mode and still get the full list, so production is unchanged.
  */
 export default function () {
+    if (process.env.ELEVENTY_RUN_MODE === "serve") {
+        return [];
+    }
+
     const indexPath = join(__dirname, "../index.html");
     const html = readFileSync(indexPath, "utf8");
     const dom = new JSDOM(html);

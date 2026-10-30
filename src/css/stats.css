@@ -41,7 +41,10 @@
        two even rows rather than a row of five and an orphan. */
     grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
     gap: var(--space-md);
-    margin: 0;
+
+    /* Bottom margin matches a list's, so the section divider below sits as
+       far from the tiles as it does from the end of every other section. */
+    margin: 0 0 var(--space-md);
     padding: 0;
     list-style: none;
 }
@@ -50,6 +53,10 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
+
+    /* The global li margins would add to the grid gap and space the rows
+       further apart than the columns. */
+    margin: 0;
     padding: var(--space-md);
     background-color: var(--color-bg-secondary);
     border: 1px solid var(--color-border-subtle);
@@ -93,7 +100,7 @@
 
     /* The 2px surface gap that separates neighbouring marks. */
     gap: 2px;
-    margin: var(--space-lg) 0 0;
+    margin: var(--space-lg) 0 var(--space-md);
     padding: 0;
     list-style: none;
 }
@@ -169,7 +176,7 @@ a.chart__label:focus-visible {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     gap: var(--space-md);
-    margin: var(--space-lg) 0 0;
+    margin: var(--space-lg) 0 var(--space-md);
     padding: 0;
     list-style: none;
 }
@@ -178,6 +185,7 @@ a.chart__label:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
+    margin: 0;
     padding-left: var(--space-md);
     border-left: 3px solid var(--color-chart-bar);
 }
