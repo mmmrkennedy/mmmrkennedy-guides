@@ -98,6 +98,12 @@ Desktop-specific upgrades. Base styles are mobile-first.
         max-width: var(--content-max-width);
     }
 
+    .about-map,
+    .related-maps {
+        max-width: var(--content-max-width);
+        padding-inline: var(--space-lg);
+    }
+
     .table-scroll {
         margin: var(--space-md) 0;
     }

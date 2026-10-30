@@ -107,6 +107,12 @@
     margin-inline: auto;
 }
 
+/* Everything above it is centered here, so the block sits under the card rather
+   than out at the guide column's left edge. */
+main:has(.solver-only-page) .related-maps {
+    max-width: 40rem;
+}
+
 /* ------------------------------------------------------------
    Link back to the map's full guide.
    Sits above the solver on solver-only pages, where most readers
