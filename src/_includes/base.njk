@@ -28,7 +28,12 @@
         Tortured Path survival maps shipped truncated for exactly that reason.
         Kept short enough that even the longest name and game on the site
         ("Attack of the Radioactive Thing", "Black Ops Cold War Zombies") lands
-        inside the budget, so a new page can never inherit a clipped one. -#}
+        inside the budget, so a new page can never inherit a clipped one.
+
+        A disabled guide's own `description` is still the "CHANGE ME" from the
+        template, and it reaches search snippets and link previews even though
+        the body is the placeholder, so it is ignored until the guide launches. -#}
+    {%- set description = null if (page.url | cleanUrl in unfinishedPages) else description %}
     {%- if mapName and solverTitle %}
         {%- set metaDescription = description or 'Interactive ' + solverTitle + ' for ' + mapName + ' in ' + titleSuffix + '. Solve this main quest step in seconds.' %}
     {%- elif mapName %}

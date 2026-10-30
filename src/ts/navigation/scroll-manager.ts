@@ -206,6 +206,25 @@ function initHistoryManagement(): void {
     });
 }
 
+/** Shows the Back to Top button only once the reader has scrolled away from the top. */
+function initBackToTopVisibility(): void {
+    const contentWindow = document.querySelector(".content-window");
+    if (!contentWindow) return;
+
+    const buttons = document.querySelectorAll(".btn--fixed.bottom-right");
+    const update = (): void => {
+        const scrolled = contentWindow.scrollTop > 200;
+        buttons.forEach((button) => button.classList.toggle("is-visible", scrolled));
+    };
+
+    // Also covers the restored position on a reload or Back, since restoring it
+    // fires a scroll event of its own.
+    contentWindow.addEventListener("scroll", update, { passive: true });
+    update();
+}
+
+initBackToTopVisibility();
+
 // Make functions available globally
 window.ScrollManager = {
     scrollToTop,
