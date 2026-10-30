@@ -189,9 +189,21 @@ function initBackToTopVisibility() {
     if (!contentWindow)
         return;
     const buttons = document.querySelectorAll(".btn--fixed.bottom-right");
+    let lastTop = contentWindow.scrollTop;
+    let scrollingUp = false;
     const update = () => {
-        const scrolled = contentWindow.scrollTop > 200;
-        buttons.forEach((button) => button.classList.toggle("is-visible", scrolled));
+        const top = contentWindow.scrollTop;
+        // Ignores the small jitter a touch scroll makes when it settles.
+        if (Math.abs(top - lastTop) > 8) {
+            scrollingUp = top < lastTop;
+            lastTop = top;
+        }
+        // A phone has no margin to park the button in, so it would sit on the text
+        // being read. It only shows there once the reader starts heading back up.
+        buttons.forEach((button) => {
+            const wanted = scrollingUp || !button.closest("#mobile-content");
+            button.classList.toggle("is-visible", top > 200 && wanted);
+        });
     };
     // Also covers the restored position on a reload or Back, since restoring it
     // fires a scroll event of its own.

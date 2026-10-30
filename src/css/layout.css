@@ -231,6 +231,13 @@ Page structure and containers.
     .site-footer__views::before {
         display: none;
     }
+
+    /* Page stats a phone reader has no use for, and what made the row wrap. */
+    .site-footer__released,
+    .site-footer__edits,
+    .site-footer__words {
+        display: none;
+    }
 }
 
 /* The one warm note in the row; everything else stays muted grey. */
@@ -324,6 +331,12 @@ Page structure and containers.
     border-bottom: 2px solid var(--color-border-medium);
 }
 
+/* A page with no sections to list (the single-table pages) would otherwise draw
+   an empty band under the header. */
+.quick-links-container:empty {
+    display: none;
+}
+
 .top-buttons-background-box {
     flex-shrink: 0;
     position: sticky;
@@ -367,10 +380,11 @@ Page structure and containers.
 
 .title-text {
     margin: 0;
-    font-size: clamp(13px, 3px + 2.5vw, 20px);
+    font-size: 0.9375rem;
+    line-height: 1.2;
     font-weight: 600;
     text-align: center;
-    max-width: clamp(45%, calc(100% - 220px), 85%);
+    max-width: calc(100% - 8.5rem);
     overflow-wrap: break-word;
     color: var(--color-tier-1);
 }

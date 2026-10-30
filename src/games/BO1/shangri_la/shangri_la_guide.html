@@ -316,13 +316,7 @@ description: Complete Shangri-La Easter Egg guide for Black Ops Zombies. Time Tr
 </div>
 
 <script>
-    const version = new URLSearchParams(window.location.search).get('version').toLowerCase();
-    let title_text = 'Shangri-La Easter Egg Guide | Black Ops 1 Zombies';
-
-    if (version === 'bo3') {
-        title_text = 'Shangri-La Easter Egg Guide | Black Ops 3 Zombies';
+    if (new URLSearchParams(window.location.search).get('version')?.toLowerCase() === 'bo3') {
+        document.title = 'Shangri-La Easter Egg Guide | Black Ops 3 Zombies';
     }
-
-    document.querySelector('h1.title-text').textContent = title_text;
-    document.title = title_text;
 </script>

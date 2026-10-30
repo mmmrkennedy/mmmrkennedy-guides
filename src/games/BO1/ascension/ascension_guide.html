@@ -184,13 +184,7 @@ description: Complete Ascension (Cosmodrome) Easter Egg guide for Black Ops Zomb
 </div>
 
 <script>
-    const version = new URLSearchParams(window.location.search).get('version').toLowerCase();
-    let title_text = 'Ascension Easter Egg Guide | Black Ops 1 Zombies';
-
-    if (version === 'bo3') {
-        title_text = 'Ascension Easter Egg Guide | Black Ops 3 Zombies';
+    if (new URLSearchParams(window.location.search).get('version')?.toLowerCase() === 'bo3') {
+        document.title = 'Ascension Easter Egg Guide | Black Ops 3 Zombies';
     }
-
-    document.querySelector('h1.title-text').textContent = title_text;
-    document.title = title_text;
 </script>

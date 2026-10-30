@@ -31,6 +31,13 @@
     vertical-align: baseline;
 }
 
+/* A cell's padding has less room than the flag's usual footprint, so a line that
+ * fills its cell would push the table's scroll width. The glyph stays put. */
+td .gfb-flag {
+    margin-left: 0;
+    padding-right: 0;
+}
+
 /* Reveal a line's flag on hover — but not when the pointer is actually over a
  * nested flaggable line, since :hover also matches ancestors. Without the :has()
  * guard, hovering a sub-bullet would light up every parent line's flag too. */

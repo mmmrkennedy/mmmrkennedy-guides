@@ -280,6 +280,8 @@ a[data-media-type="audio"]::after {
 /* Back to Top stays out of the way until there is a top to go back to. The class
  * comes from initBackToTopVisibility (navigation/scroll-manager.ts). */
 .btn--fixed.bottom-right {
+    opacity: 1;
+    background-color: var(--color-bg-tertiary);
     transition: color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, visibility 0.15s ease;
 }
 

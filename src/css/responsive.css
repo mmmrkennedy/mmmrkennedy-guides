@@ -18,6 +18,27 @@ Desktop-specific upgrades. Base styles are mobile-first.
     display: none;
 }
 
+/* Phones: icon-only Home and legend buttons sit at opposite ends of the header,
+   which gives the title the room between them. */
+@media (width < 48.0625em) { /* --bp-md */
+    #mobile-content .btn--fixed.top-left {
+        left: var(--space-smd);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+    }
+
+    .legend-launcher {
+        position: absolute;
+        inset-block: 0;
+        right: var(--space-smd);
+        margin: auto 0;
+    }
+}
+
 @media (width >= 30em) { /* --bp-xs */
     .quick-links-container,
     .content-container,
@@ -114,6 +135,8 @@ Desktop-specific upgrades. Base styles are mobile-first.
 
     .title-text {
         margin: var(--space-sm);
+        font-size: clamp(1.25rem, 0.25rem + 2vw, 1.75rem);
+        max-width: clamp(45%, calc(100% - 220px), 85%);
     }
 
     .title-sub-text {

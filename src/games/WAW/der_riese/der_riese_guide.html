@@ -126,13 +126,8 @@ description: Complete Der Riese Easter Egg guide, also known as The Giant. Every
 </div>
 
 <script>
-    const version = new URLSearchParams(window.location.search).get('version');
-    let title_text = 'Der Riese Guide | Call of Duty Zombies';
-
-    if (version === 'remake') {
-        title_text = 'The Giant Guide | Black Ops 3 Zombies';
+    if (new URLSearchParams(window.location.search).get('version') === 'remake') {
+        document.querySelector('h1.title-text').textContent = 'The Giant Easter Egg Guide';
+        document.title = 'The Giant Easter Egg Guide | Black Ops 3 Zombies';
     }
-
-    document.querySelector('h1.title-text').textContent = title_text;
-    document.title = title_text;
 </script>
