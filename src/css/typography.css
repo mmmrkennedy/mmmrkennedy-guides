@@ -151,8 +151,3 @@ li > ol {
 /* .weapon-desc and .stats are styled with the information boxes in
  * components.css — they take the same frame, so they live with the rest of that
  * system. */
-
-.song-link {
-    font-weight: 600;
-    font-style: italic;
-}

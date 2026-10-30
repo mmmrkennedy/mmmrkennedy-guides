@@ -19,14 +19,10 @@ a:hover {
 
 .link-to-page {
     color: var(--color-link-internal);
-    text-decoration: underline;
-    font-style: italic;
 }
 
 .external-link {
     color: var(--color-link-external);
-    text-decoration: underline;
-    font-style: italic;
 }
 
 .solver-link {
@@ -36,8 +32,6 @@ a:hover {
 
 .internal-link {
     color: var(--color-link-page);
-    text-decoration: underline;
-    font-style: italic;
 }
 
 .internal-link::after {
