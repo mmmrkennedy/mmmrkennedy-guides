@@ -28,12 +28,6 @@ h4 {
     margin: var(--space-md) 0 var(--space-sm);
 }
 
-.discord-link-text {
-    margin: var(--space-xl) 0 var(--space-md);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-}
-
 /* Heading hierarchy — read the number, get the level.
  *   title-tier-1  largest  (section heading; gold)        Contents nav: top level
  *   title-tier-2  medium   (sub-section; amber)           Contents nav: indent 1

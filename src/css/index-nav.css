@@ -162,6 +162,41 @@
 /* Shown one day a year, above the map finder, by birthday.ts, so it stays a
    quiet line of text rather than a banner competing with the list below it.
    `hidden` in the markup does the hiding; nothing here needs to. */
+.discord-invite {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm) var(--space-md);
+    margin: 0 0 var(--space-md);
+    text-align: center;
+}
+
+.discord-invite__text {
+    margin: 0;
+    color: var(--color-text-secondary);
+}
+
+.discord-invite__link {
+    gap: var(--space-sm);
+    border-color: var(--color-tier-1);
+    color: var(--color-tier-1);
+    font-weight: 600;
+    font-style: normal;
+}
+
+/* The Discord logo already says where this goes. */
+.discord-invite__link::after {
+    display: none;
+}
+
+.discord-invite__link:not(:disabled):hover {
+    border-color: var(--color-tier-1);
+    background-color: var(--color-tier-1);
+    color: var(--color-bg-primary);
+    opacity: 1;
+}
+
 .site-birthday {
     margin: 0 0 var(--space-sm);
     padding: var(--space-sm) var(--space-md);
