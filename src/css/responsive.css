@@ -261,23 +261,27 @@ Desktop-specific upgrades. Base styles are mobile-first.
     .sidebar-toc li {
         position: relative;
         margin: 1px 0;
-        padding-left: 1rem;
+        padding-left: 0.625rem;
     }
 
     .sidebar-toc a {
         display: block;
         font-size: 0.8125rem;
+        line-height: 1.35;
         color: var(--color-link-default);
         text-decoration: none;
-        padding: 1px 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        padding: 2px 0 2px 6px;
     }
 
     .sidebar-toc a:hover {
         text-decoration: underline;
         opacity: 1;
+    }
+
+    /* The section being read (trackCurrentSection, quick-links.ts). */
+    .sidebar-toc a[aria-current] {
+        color: var(--color-text-primary);
+        box-shadow: inset 2px 0 0 var(--color-tier-1);
     }
 
     .sidebar-toc-sub-toggle {
