@@ -325,7 +325,7 @@
     {%- if page.url | cleanUrl in unfinishedPages %}
         <div class="content-container">
             <h2>Sorry, this page is not ready yet!</h2>
-            <p class="unfinished-text">Please check back later.</p>
+            <p>Please check back later.</p>
         </div>
     {%- else %}
         {{ content | safe }}
