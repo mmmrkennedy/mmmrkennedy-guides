@@ -60,6 +60,21 @@ Desktop-specific upgrades. Base styles are mobile-first.
         width: 100%;
     }
 
+    /* A run of tables with the same columns, stacked down a page. Sized by their
+       content, each one lands on different column widths and the stack looks
+       uneven. This split added the least height (at 1440px). */
+    .table-challenge-hints {
+        table-layout: fixed;
+    }
+
+    .table-challenge-hints th:nth-child(1) {
+        width: 25%;
+    }
+
+    .table-challenge-hints th:nth-child(2) {
+        width: 30%;
+    }
+
     .solver-with-button {
         width: fit-content;
     }

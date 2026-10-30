@@ -7,6 +7,75 @@ about: >-
 description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escape Alive main quest, Blundergat upgrades, Hell's Retriever, and the Spoon.
 ---
 
+<style>
+    details.spacing {
+        margin: var(--space-lg) 0;
+        border: 1px solid var(--color-border-medium);
+        border-left: 3px solid var(--color-tier-1);
+        border-radius: 4px;
+        background-color: var(--color-bg-secondary);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    details.spacing > summary {
+        cursor: pointer;
+        padding: var(--space-sm) var(--space-md);
+        color: var(--color-tier-1);
+        font-size: var(--font-size-md);
+        font-weight: 600;
+        line-height: var(--line-height-normal);
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        user-select: none;
+        transition: background-color 0.15s ease;
+    }
+
+    details.spacing > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    details.spacing > summary::before {
+        content: "";
+        flex-shrink: 0;
+        width: 0.625rem;
+        height: 0.625rem;
+        border-right: 2px solid var(--color-tier-1);
+        border-bottom: 2px solid var(--color-tier-1);
+        transform: rotate(-45deg);
+        transition: transform 0.2s ease;
+    }
+
+    details.spacing[open] > summary::before {
+        transform: rotate(45deg);
+    }
+
+    details.spacing > summary:hover {
+        background-color: rgb(201 169 97 / 8%);
+    }
+
+    details.spacing > summary:focus-visible {
+        outline: 2px solid var(--color-tier-1);
+        outline-offset: -2px;
+    }
+
+    details.spacing[open] > summary {
+        border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    details.spacing > :not(summary) {
+        padding: 0 var(--space-md);
+    }
+
+    details.spacing > ol,
+    details.spacing > ul {
+        margin: var(--space-sm) 0;
+        padding-inline-start: var(--space-xl);
+    }
+</style>
+
 <!-- Power -->
 <div class="content-container" data-section-ind="Map Progression" id="power">
     <h2 class="title-tier-1">Power</h2>

@@ -7,6 +7,24 @@ about: >-
 description: Complete Tag der Toten (TDT) guide for Black Ops 4. Salvation Lies Above main quest, Thundergun and Wunderwaffe quests, and the Heat Pack.
 ---
 
+<style>
+    /* Keeps the stacked Challenge Totem tables on the same column widths. Same
+       breakpoint as the shared table rules; below it these tables become cards. */
+    @media (width >= 48.0625em) {
+        .table-challenge-rewards {
+            table-layout: fixed;
+        }
+
+        .table-challenge-rewards th:nth-child(1) {
+            width: 30%;
+        }
+
+        .table-challenge-rewards th:nth-child(2) {
+            width: 20%;
+        }
+    }
+</style>
+
 <!-- Map Progression -->
 <div class="content-container" data-section-ind="Map Progression" id="power">
     <h2 class="title-tier-1">Power</h2>
@@ -102,7 +120,7 @@ description: Complete Tag der Toten (TDT) guide for Black Ops 4. Salvation Lies 
     <p class="title-tier-2" data-custom-quick-link="Frozen Crevasse" id="frozen_crevasse">
         Frozen Crevasse | <a href="pictures/challenge_totems/frozen_crevasse/totem_frozen_crevasse.webp">Totem Location</a>
     </p>
-    <table>
+    <table class="table-challenge-rewards">
         <tbody>
             <tr>
                 <th>Challenge</th>
@@ -147,7 +165,7 @@ description: Complete Tag der Toten (TDT) guide for Black Ops 4. Salvation Lies 
     <p class="title-tier-2" data-custom-quick-link="Lighthouse Station" id="lighthouse_station">
         Lighthouse Station | <a href="pictures/challenge_totems/lighthouse_station/totem_lighthouse.webp">Totem Location</a>
     </p>
-    <table>
+    <table class="table-challenge-rewards">
         <tbody>
             <tr>
                 <th>Challenge</th>
@@ -176,7 +194,7 @@ description: Complete Tag der Toten (TDT) guide for Black Ops 4. Salvation Lies 
     <p class="title-tier-2" data-custom-quick-link="Beach" id="beach">
         Beach | <a href="pictures/challenge_totems/beach/totem_beach.webp">Totem Location</a>
     </p>
-    <table>
+    <table class="table-challenge-rewards">
         <tbody>
             <tr>
                 <th>Challenge</th>
@@ -218,7 +236,7 @@ description: Complete Tag der Toten (TDT) guide for Black Ops 4. Salvation Lies 
     <p class="title-tier-2" data-custom-quick-link="Forecastle" id="forecastle">
         Forecastle | <a href="pictures/challenge_totems/forecastle/totem_forecastle.webp">Totem Location</a>
     </p>
-    <table>
+    <table class="table-challenge-rewards">
         <tbody>
             <tr>
                 <th>Challenge</th>
@@ -294,7 +312,7 @@ description: Complete Tag der Toten (TDT) guide for Black Ops 4. Salvation Lies 
     <p class="title-tier-2" data-custom-quick-link="Facility" id="facility">
         Facility (<a href="#zipline_handle" class="link-to-page">Zipline Handle</a> Required) | <a href="pictures/challenge_totems/facility/totem_facility.webp">Totem Location</a>
     </p>
-    <table>
+    <table class="table-challenge-rewards">
         <tbody>
             <tr>
                 <th>Challenge</th>

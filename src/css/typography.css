@@ -163,13 +163,3 @@ li > ol {
     font-weight: 600;
     font-style: italic;
 }
-
-.p-style {
-    display: block;
-    margin: var(--space-md) 0;
-}
-
-.p-style > ul,
-.p-style > ol {
-    margin-top: var(--space-sm);
-}

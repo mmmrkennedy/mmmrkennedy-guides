@@ -7,6 +7,36 @@ about: >-
 description: Complete Rave in the Redwoods (RITR) guide for Infinite Warfare Zombies. Locksmith main quest, Vlad upgrades, weapon charms, and side quests.
 ---
 
+<style>
+    /* Ability block — the "what this thing does" line that sits between a
+     * title-tier-2 heading and its numbered steps (Charms, etc.). Kept out of the
+     * step list on purpose: an ability isn't a step, and starting the <ol> at 0 to
+     * fake one reads as a mis-numbered instruction. */
+    .ability {
+        margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
+        padding: var(--space-sm) var(--space-md);
+        border-left: 3px solid var(--color-tier-2);
+        border-radius: 0 4px 4px 0;
+        background: var(--color-bg-secondary);
+        color: var(--color-text-primary);
+        line-height: var(--line-height-normal);
+    }
+
+    .ability-label {
+        display: block;
+        margin-bottom: 0.15rem;
+        color: var(--color-tier-2);
+        font-weight: 600;
+    }
+
+    /* Qualifier beside the label, e.g. an ability that only works in co-op. */
+    .ability-tag {
+        margin-left: var(--space-sm);
+        color: var(--color-text-muted);
+        font-weight: 400;
+    }
+</style>
+
 <!-- Power -->
 <div class="content-container" data-section-ind="Map Progression" id="power">
     <h2 class="title-tier-1">Power</h2>

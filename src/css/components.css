@@ -66,19 +66,6 @@ a:hover {
     vertical-align: middle;
 }
 
-/* Image links carry no icon (see the note below), which left colour as their
-   only cue: #78a8e8 against #e5e5e5 body copy is 1.95:1, well under the 3:1
-   WCAG asks for when colour is the sole distinguishing feature. A dotted
-   underline is the non-colour cue, and being dotted it stays visibly a
-   different kind of link from the solid-underlined page and external links.
-   Keyed off data-media-type rather than .lightbox-trigger so it is present in
-   the HTML rather than arriving with the script. */
-a[data-media-type="image"] {
-    text-decoration: underline dotted;
-    text-underline-offset: 0.2em;
-    text-decoration-thickness: 1px;
-}
-
 /* Video and audio links keep the default link blue — a video, a sound file and
    a picture are the same kind of thing here (media that opens in the lightbox),
    so the glyph does the distinguishing rather than more palette colours. Keyed
@@ -434,8 +421,7 @@ a[data-media-type="audio"]::after {
 }
 
 /* Information Boxes
- * Same shape as .ability below, so the two read as one system: an accent rule
- * down the side, a barely-there tint, and the type named in a small label above
+ * An accent rule down the side, a barely-there tint, and the type named in a small label above
  * the text. Each box sets --accent (rule), --accent-bg (tint) and --accent-text
  * (label); the body keeps the normal text colour so it reads like the rest of
  * the guide instead of a block of coloured text. */
@@ -446,10 +432,8 @@ a[data-media-type="audio"]::after {
 .tip,
 .disclaimer,
 .boss-fight-phases,
-.notes,
 .stats,
-.weapon-desc,
-.info-list {
+.weapon-desc {
     margin: var(--space-md) 0;
     padding: var(--space-sm) var(--space-md);
     border-left: 3px solid var(--accent);
@@ -488,8 +472,7 @@ a[data-media-type="audio"]::after {
     --accent-text: var(--color-no-return-text);
 }
 
-.danger,
-.danger-inline {
+.danger {
     --accent: var(--color-danger-border);
     --accent-bg: var(--color-danger-bg);
     --accent-text: var(--color-danger-text);
@@ -540,7 +523,7 @@ a[data-media-type="audio"]::after {
     content: "❓ Disclaimer";
 }
 
-/* Inline variants — the same six types for a line that belongs inside a list.
+/* Inline variants — the same types for a line that belongs inside a list.
  * No rule and no line of its own: the item keeps its bullet and stays level
  * with its siblings, with the tint behind the text and the label run into the
  * sentence. The label carries the type name, so the HTML starts straight at the
@@ -553,7 +536,6 @@ a[data-media-type="audio"]::after {
  * the cheaper compromise. */
 .note-inline,
 .no-return-inline,
-.danger-inline,
 .requirement-inline,
 .tip-inline,
 .disclaimer-inline {
@@ -564,7 +546,6 @@ a[data-media-type="audio"]::after {
 
 .note-inline::before,
 .no-return-inline::before,
-.danger-inline::before,
 .requirement-inline::before,
 .tip-inline::before,
 .disclaimer-inline::before {
@@ -574,7 +555,6 @@ a[data-media-type="audio"]::after {
 
 .note-inline::marker,
 .no-return-inline::marker,
-.danger-inline::marker,
 .requirement-inline::marker,
 .tip-inline::marker,
 .disclaimer-inline::marker {
@@ -592,10 +572,6 @@ a[data-media-type="audio"]::after {
     content: "Point of No Return: ";
 }
 
-.danger-inline::before {
-    content: "Warning: ";
-}
-
 .requirement-inline::before {
     content: "Requirement: ";
 }
@@ -608,8 +584,7 @@ a[data-media-type="audio"]::after {
     content: "Disclaimer: ";
 }
 
-/* These two label themselves in their own text ("Phase 1", "<strong>Wolf
- * Bow:</strong> …"), so they take the frame without a label. */
+/* Labels itself in its own text ("Phase 1"), so it takes the frame without a label. */
 .boss-fight-phases {
     --accent: var(--color-tier-2);
     --accent-bg: var(--color-bg-secondary);
@@ -618,14 +593,9 @@ a[data-media-type="audio"]::after {
     font-size: var(--font-size-md);
 }
 
-.notes {
-    --accent: var(--color-note-border);
-    --accent-bg: var(--color-bg-secondary);
-}
-
 /* The quest's vital signs — difficulty, completion time, RNG rating — on one
  * line under the tier-1 heading that names the quest. Takes the frame for the
- * same reason .notes does: it is an aside about the steps below it rather than
+ * same reason as a note box: it is an aside about the steps below it rather than
  * the first of them, and bold italic on the page background was not enough to
  * say so. Note grey rather than tier-2 gold on purpose — a .requirement box
  * usually follows it immediately, and two gold rules stacked read as one thing.
@@ -670,92 +640,6 @@ a[data-media-type="audio"]::after {
 
 .weapon-desc:has(+ .weapon-desc) {
     border-bottom-right-radius: 0;
-}
-
-/* The list-shaped member of the family: a <ul> of caveats sitting between a
- * title-tier-2 heading that names them ("Warnings Before Proceeding") and the
- * <ol> of steps they apply to. Same frame and colours as .weapon-desc directly
- * above — the heading already labels it, so no ::before — because these two are
- * the same beat in a section: read this before you start the steps. Left bare,
- * such a list runs flush with the numbered steps under it and reads as step
- * zero rather than as a warning about them.
- *
- * Three list-specific adjustments to the shared box:
- *   - the inline padding has to carry the marker column too. Markers are
- *     `outside`, so they sit left of the content edge; on the box's own 1rem
- *     they land on top of the accent rule. 2rem keeps the same 1rem gap between
- *     the rule and the bullets that the other boxes have to their text.
- *   - the first and last items drop their outer margins, which would otherwise
- *     stack on the box padding and leave the text floating off-centre.
- *   - relaxed leading for the same reason .weapon-desc takes it: these items
- *     run two or three lines each, not the single line a .tip does. */
-.info-list {
-    --accent: var(--color-tier-2);
-    --accent-bg: var(--color-bg-secondary);
-
-    padding-inline-start: var(--space-xl);
-    line-height: var(--line-height-relaxed);
-}
-
-.info-list > li:first-child {
-    margin-top: 0;
-}
-
-.info-list > li:last-child {
-    margin-bottom: 0;
-}
-
-/* The heading that names the list, pulled into the same panel so the two read
- * as one block instead of a heading with an unrelated box under it. It takes
- * the top half of the frame — same rule, same tint, top corner rounded — and
- * the list below drops its top margin, top padding and top-right radius to
- * close the seam, the same trick consecutive .weapon-desc boxes use above.
- *
- * The underline .title-tier-2 normally carries comes off: it exists to separate
- * a heading from body text that shares the page background, and inside a tinted
- * panel it just draws a line across the middle of the box. The tier-2 colour and
- * weight stay, so the heading still reads at its usual level in the page. */
-.info-list-title {
-    margin-bottom: 0;
-    padding: var(--space-sm) var(--space-md) var(--space-xs);
-    border-bottom: none;
-    border-left: 3px solid var(--color-tier-2);
-    border-radius: 0 4px 0 0;
-    background: var(--color-bg-secondary);
-}
-
-.info-list-title + .info-list {
-    margin-top: 0;
-    padding-top: 0;
-    border-top-right-radius: 0;
-}
-
-/* Ability block — the "what this thing does" line that sits between a
- * title-tier-2 heading and its numbered steps (Charms, etc.). Kept out of the
- * step list on purpose: an ability isn't a step, and starting the <ol> at 0 to
- * fake one reads as a mis-numbered instruction. */
-.ability {
-    margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    border-left: 3px solid var(--color-tier-2);
-    border-radius: 0 4px 4px 0;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
-    line-height: var(--line-height-normal);
-}
-
-.ability-label {
-    display: block;
-    margin-bottom: 0.15rem;
-    color: var(--color-tier-2);
-    font-weight: 600;
-}
-
-/* Qualifier beside the label, e.g. an ability that only works in co-op. */
-.ability-tag {
-    margin-left: var(--space-sm);
-    color: var(--color-text-muted);
-    font-weight: 400;
 }
 
 /* Tables */
@@ -1123,73 +1007,6 @@ input.spacing {
     /* Each dot takes a full em of height; pull them together */
     letter-spacing: -0.4em;
     line-height: 1;
-}
-
-details.spacing {
-    margin: var(--space-lg) 0;
-    border: 1px solid var(--color-border-medium);
-    border-left: 3px solid var(--color-tier-1);
-    border-radius: 4px;
-    background-color: var(--color-bg-secondary);
-    padding: 0;
-    overflow: hidden;
-}
-
-details.spacing > summary {
-    cursor: pointer;
-    padding: var(--space-sm) var(--space-md);
-    color: var(--color-tier-1);
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    line-height: var(--line-height-normal);
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    user-select: none;
-    transition: background-color 0.15s ease;
-}
-
-details.spacing > summary::-webkit-details-marker {
-    display: none;
-}
-
-details.spacing > summary::before {
-    content: "";
-    flex-shrink: 0;
-    width: 0.625rem;
-    height: 0.625rem;
-    border-right: 2px solid var(--color-tier-1);
-    border-bottom: 2px solid var(--color-tier-1);
-    transform: rotate(-45deg);
-    transition: transform 0.2s ease;
-}
-
-details.spacing[open] > summary::before {
-    transform: rotate(45deg);
-}
-
-details.spacing > summary:hover {
-    background-color: rgb(201 169 97 / 8%);
-}
-
-details.spacing > summary:focus-visible {
-    outline: 2px solid var(--color-tier-1);
-    outline-offset: -2px;
-}
-
-details.spacing[open] > summary {
-    border-bottom: 1px solid var(--color-border-subtle);
-}
-
-details.spacing > :not(summary) {
-    padding: 0 var(--space-md);
-}
-
-details.spacing > ol,
-details.spacing > ul {
-    margin: var(--space-sm) 0;
-    padding-inline-start: var(--space-xl);
 }
 
 /* Once held the build-version watermark, which was removed — it collided with
