@@ -132,6 +132,15 @@ li > ol {
     margin-bottom: var(--space-smd);
 }
 
+/* A section's loose paragraphs share the column list text sits in. Starting at the
+   heading's edge instead, with no marker to hold them there, they read as floating.
+   Matched as "no class of its own" because line-flagger.ts adds its classes to these
+   at runtime, and the boxes and headings that sit beside them all have one. */
+.prose .content-container > p:is(:not([class]), [class="gfb-flaggable"], [class="gfb-flaggable gfb-flagged"]),
+.prose .content-container > .song-link {
+    padding-inline-start: var(--list-indent);
+}
+
 /* The Contents nav is single-line links, not paragraphs — paragraph spacing
    just makes it long enough to push the guide itself off the screen. */
 .prose .quick-links-container li {
