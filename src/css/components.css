@@ -109,21 +109,20 @@ a[data-media-type="audio"]::after {
     color: #c8a150;
 }
 
-/* A guide that isn't written yet: dimmed to secondary text so it reads as
+/* A guide that isn't written yet: dimmed to muted text so it reads as
    deliberately inactive rather than as a link that lost its colour. The build
    renames its href to data-href (the `unlinkUnwrittenGuides` transform in
    eleventy.config.cjs), so it's an anchor that can't navigate — no need to
    block pointer events, which means the not-allowed cursor sits on the name
    itself. Touch has no hover, so index-filter.ts answers a tap with a toast. */
 .disabled {
-    color: var(--color-text-primary);
-    opacity: 0.85;
+    color: var(--color-text-muted);
     text-decoration: none;
     cursor: pointer;
 }
 
 .disabled:hover {
-    opacity: 0.85;
+    opacity: 1;
     text-decoration: none;
 }
 

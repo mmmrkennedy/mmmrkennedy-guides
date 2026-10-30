@@ -29,10 +29,9 @@ h4 {
 }
 
 .discord-link-text {
-    margin-top: 0 !important;
-    margin-bottom: var(--space-md);
-    font-size: clamp(0.875rem, 2.5vw, 1.125rem);
-    font-weight: 600;
+    margin: var(--space-xl) 0 var(--space-md);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
 }
 
 /* Heading hierarchy — read the number, get the level.
