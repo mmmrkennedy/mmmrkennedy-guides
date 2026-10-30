@@ -34,6 +34,21 @@ a:hover {
     color: var(--color-link-page);
 }
 
+/* Faint enough not to compete with the text, and it firms up on hover. Image links
+   stay bare: there are thousands of them, and they make up most of a guide. */
+.link-to-page,
+.external-link,
+.internal-link {
+    text-decoration: underline 1px color-mix(in srgb, currentcolor 40%, transparent);
+    text-underline-offset: 0.2em;
+}
+
+.link-to-page:hover,
+.external-link:hover,
+.internal-link:hover {
+    text-decoration-color: currentcolor;
+}
+
 .internal-link::after {
     content: "";
     display: inline-block;
