@@ -98,7 +98,9 @@ export default function BO6LetterboardSolver({ title }: { title?: string }) {
                 >
                     <option value="" disabled>Choose your letters…</option>
                     {BOARDS.map((b) => (
-                        <option key={b.id} value={b.id}>{b.bottomLeft}</option>
+                        // A string: prerendering treats a numeric 0 as equal to the empty
+                        // value above, which would show this board as already selected.
+                        <option key={b.id} value={String(b.id)}>{b.bottomLeft}</option>
                     ))}
                 </select>
             </div>
