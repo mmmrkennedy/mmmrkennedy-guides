@@ -4,6 +4,8 @@ bun.lock
 
 # Build output
 dist/
+# Compiled from src/ts (tsc -p tsconfig.scripts.json)
+/src/js/
 
 # IDE
 *.iws

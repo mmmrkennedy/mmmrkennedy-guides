@@ -1,5 +1,5 @@
 {
-  "// purpose": "Editor/IDE type-checking for the global browser scripts. Tools resolve a file's project via the nearest tsconfig.json, so this guarantees globals.d.ts (the window.* + QuickLinkItem ambient declarations) is loaded. The production build emits via the root tsconfig.scripts.json; this config never emits.",
+  "// purpose": "Editor/IDE type-checking for the global browser scripts. Tools resolve a file's project via the nearest tsconfig.json, so this guarantees globals.d.ts (the window.* ambient declarations) is loaded. The production build emits via the root tsconfig.scripts.json; this config never emits.",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ES2020",

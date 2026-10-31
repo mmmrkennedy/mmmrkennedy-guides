@@ -108,10 +108,8 @@ function combinations<T>(arr: T[], k: number): T[][] {
 
 type Solution = {
     placements: [number, number][];
-    components: Component[];
     net: number;
     netNoBonus: number;
-    bonus: number;
     confidence: Confidence;
 };
 
@@ -136,10 +134,10 @@ function findSolutions(grid: CellType[][]): Solution[] {
     for (const combo of combinations(emptyCells, 3)) {
         const placements = combo as [number, number][];
         const components = poweredComponents(grid, placements);
-        const { net, netNoBonus, bonus } = computeScore(components);
+        const { net, netNoBonus } = computeScore(components);
         if (!isKeepableScore(net)) continue;
         const confidence = classifyConfidence(net);
-        results.push({ placements, components, net, netNoBonus, bonus, confidence });
+        results.push({ placements, net, netNoBonus, confidence });
     }
 
     const confidenceRank: Record<Confidence, number> = { high: 0, med: 1, low: 2 };
@@ -156,7 +154,6 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
     const [phase, setPhase] = useState<Phase>("setup");
     const [solutions, setSolutions] = useState<Solution[]>([]);
     const [solutionIndex, setSolutionIndex] = useState<number>(0);
-    const [debug, setDebug] = useState<boolean>(false);
     const [message, setMessage] = useState<string | JSX.Element>(defaultMessage);
 
     // The grid is the whole input. Reported as coordinates (what you'd re-click
@@ -171,7 +168,6 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         "Grid (row by row, # = rod)": grid.map((row) =>
             row.map((cell) => (cell === "rod" ? "#" : ".")).join(""),
         ),
-        "Debug mode": debug,
     }));
 
     const toggleCell = (r: number, c: number) => {
@@ -272,36 +268,6 @@ export default function BO7TotenreichReactorSolver({ title }: { title?: string }
         return cells;
     };
 
-    const renderDebugPanel = () => {
-        if (!debug) return null;
-        const sol = solutions[solutionIndex];
-        if (!sol) {
-            return (
-                <div className="solver-debug-panel">
-                    {phase === "setup"
-                        ? "Debug: place rods and click Solve to see score breakdown."
-                        : "Debug: no solutions to inspect."}
-                </div>
-            );
-        }
-        const raw = Math.round(sol.net + 27);
-        const rawNoBonus = Math.round(sol.netNoBonus + 27);
-        const componentsStr = sol.components
-            .map((c) => `n=${c.size} U=${c.uraniumCount} → ${baseScore(c.size).toFixed(1)}`)
-            .join("\n  ");
-        return (
-            <div className="solver-debug-panel">
-                {`Solution ${solutionIndex + 1}/${solutions.length}
-Confidence:    ${sol.confidence}
-Net (current): ${sol.net.toFixed(2)}    → raw ${raw}px
-Net (no bonus):${sol.netNoBonus.toFixed(2)}    → raw ${rawNoBonus}px
-Bonus applied: ${sol.bonus.toFixed(2)} ${sol.bonus > 0 ? "(all 3 U in one component)" : "(no bonus)"}
-Components:
-  ${componentsStr}`}
-            </div>
-        );
-    };
-
     return (
         <div
             className="solver-container solver-container--totenreich-reactor"
@@ -309,15 +275,6 @@ Components:
         >
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">{message}</p>
-
-            {/*<label className="solver-toggle">*/}
-            {/*    <input*/}
-            {/*        type="checkbox"*/}
-            {/*        checked={debug}*/}
-            {/*        onChange={(e) => setDebug((e.target as HTMLInputElement).checked)}*/}
-            {/*    />*/}
-            {/*    Debug mode*/}
-            {/*</label>*/}
 
             <div className="solver-grid-wrapper">
                 <div className="solver-grid is-framed">{renderGrid()}</div>
@@ -340,7 +297,6 @@ Components:
                 </div>
             )}
 
-            {renderDebugPanel()}
         </div>
     );
 }

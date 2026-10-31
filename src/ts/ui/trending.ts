@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Map normalized path -> { anchor, isSolver } from the index's internal links.
     const byPath = new Map<string, { anchor: HTMLAnchorElement; isSolver: boolean }>();
-    document.querySelectorAll<HTMLAnchorElement>("a[data-prefetchable]").forEach((a) => {
+    document.querySelectorAll<HTMLAnchorElement>('a[href^="/games/"]').forEach((a) => {
         if (a.classList.contains("disabled")) return;
         const href = a.getAttribute("href");
         if (!href) return;

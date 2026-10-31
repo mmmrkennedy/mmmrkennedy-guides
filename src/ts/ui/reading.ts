@@ -22,13 +22,10 @@
  * cumulative state, and the server upserts. `hides` counts the round trips,
  * which is itself the most site-specific number here.
  *
- * THE SCROLLER IS NOT THE WINDOW
+ * THE SCROLLER IS THE WINDOW
  *
- * `.content-window` scrolls, the document does not (layout.css: `overflow:
- * hidden auto` with a fixed height, on every viewport). So the
- * IntersectionObserver takes it as `root` and scroll depth is measured off its
- * scrollTop. scroll-manager.ts already works this way; a version of this file
- * that used window.scrollY would report 0% depth for every reader on the site.
+ * The document scrolls, so the IntersectionObservers use the viewport as their
+ * root and scroll depth is measured off window.scrollY, like scroll-manager.ts.
  */
 document.addEventListener("DOMContentLoaded", () => {
     const ENDPOINT = "/api/reading";
@@ -67,7 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (readStore(OPT_OUT_KEY)) return;
     if (privacySignalled()) return;
 
-    const scroller = document.querySelector<HTMLElement>(".content-window");
     const path = normalizePath(window.location.pathname);
 
     // A guide is a stack of `.content-container[id]`, but the granularity that
@@ -160,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (entry.isIntersecting) markReached((entry.target as HTMLElement).id);
                 }
             },
-            { root: scroller, threshold: 0 },
+            { threshold: 0 },
         );
         for (const el of anchors) observer.observe(el);
     }
@@ -198,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /**
      * What the reader is looking at: the last anchor whose top is above the
-     * middle of the scroller, which is the same rule a reading-position
+     * middle of the window, which is the same rule a reading-position
      * highlight uses. It gives each anchor the span from itself to the next one,
      * so a sub-heading takes its own steps and its container keeps the intro.
      *
@@ -209,14 +205,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function currentAnchorId(): string | null {
         if (anchors.length === 0) return null;
 
-        const scrollTop = scroller ? scroller.scrollTop : window.scrollY;
+        const scrollTop = window.scrollY;
         ticksSinceMeasure++;
         if (scrollTop === lastScrollTop && ticksSinceMeasure < 10) return currentId;
         lastScrollTop = scrollTop;
         ticksSinceMeasure = 0;
 
-        const box = scroller ? scroller.getBoundingClientRect() : null;
-        const mid = (box ? box.top : 0) + (box ? box.height : window.innerHeight) / 2;
+        const mid = window.innerHeight / 2;
 
         let found: string | null = null;
         for (const el of anchors) {
@@ -231,13 +226,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateDepth(): void {
-        const el = scroller;
-        if (!el) return;
+        const el = document.documentElement;
         const total = el.scrollHeight;
         if (total <= 0) return;
-        // A page shorter than its scroller has scrollHeight === clientHeight,
+        // A page shorter than the window has scrollHeight === clientHeight,
         // which lands on 100 — correct, the reader did see all of it.
-        const pct = Math.round(Math.min(100, ((el.scrollTop + el.clientHeight) / total) * 100));
+        const pct = Math.round(Math.min(100, ((window.scrollY + el.clientHeight) / total) * 100));
         if (pct > depth) depth = pct;
     }
 
@@ -268,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     else solversVisible.delete(el);
                 }
             },
-            { root: scroller, threshold: 0 },
+            { threshold: 0 },
         );
 
         for (const root of roots) {
@@ -351,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /**
      * One delegated capture-phase listener, so lightbox.ts, quick-links.ts and
-     * path-tabs.ts stay untouched. Media links are matched the same way
+     * guide-controls.ts stay untouched. Media links are matched the same way
      * lightbox.ts matches them, so an `img` event means a lightbox opened; keep
      * the two extension lists in step.
      */

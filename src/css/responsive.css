@@ -5,12 +5,22 @@
 Desktop-specific upgrades. Base styles are mobile-first.
 */
 
-#mobile-content { display: block; }
-#non-mobile-content { display: none; }
-
+/* Home and Back to Top: the icon on phones, the words from here up. */
 @media (width >= 48.0625em) { /* --bp-md */
-    #mobile-content { display: none; }
-    #non-mobile-content { display: block; }
+    .btn-icon {
+        display: none;
+    }
+}
+
+@media (width < 48.0625em) { /* --bp-md */
+    .btn-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
 }
 
 /* Sidebar TOC - shown only when there's enough space beside centered content */
@@ -21,7 +31,7 @@ Desktop-specific upgrades. Base styles are mobile-first.
 /* Phones: icon-only Home and legend buttons sit at opposite ends of the header,
    which gives the title the room between them. */
 @media (width < 48.0625em) { /* --bp-md */
-    #mobile-content .btn--fixed.top-left {
+    .btn--fixed.top-left {
         left: var(--space-smd);
         display: flex;
         align-items: center;
@@ -172,10 +182,6 @@ Desktop-specific upgrades. Base styles are mobile-first.
         max-width: clamp(45%, calc(100% - 220px), 85%);
     }
 
-    .title-sub-text {
-        font-size: var(--font-size-sm);
-    }
-
     .btn--fixed.bottom-right {
         --btn-bottom: 1.25rem;
         --btn-right: 1.25rem;
@@ -199,11 +205,6 @@ Desktop-specific upgrades. Base styles are mobile-first.
     .btn--fixed.top-left {
         height: auto;
     }
-
-    .content-window {
-        padding-bottom: 0;
-        height: calc(100dvh - var(--header-height-desktop));
-    }
 }
 
 @media (width >= 75em) { /* --bp-lg */
@@ -222,26 +223,18 @@ Desktop-specific upgrades. Base styles are mobile-first.
     }
 
     .sidebar-toc {
-        /* Mirrors updateHorizontal() in quick-links.ts so the pre-rendered
-           sidebar is already in the right place at first paint, instead of
-           sitting at width 0 until the core bundle runs. --toc-content-left is
-           where the centred content column starts; the one thing CSS can't see
-           is .content-window's scrollbar, so JS re-measures and corrects the
-           few px afterwards. Keep the three constants in sync with that
-           function. */
-        --toc-gap: 10px;
-        --toc-min-left: 8px;
-        --toc-max-width: 340px;
-        --toc-content-left: calc((100vw - var(--content-max-width)) / 2);
+        /* A float in the left margin of <main>, ending flush against the content
+           column. It takes no room from the column, and <main> is what stops it
+           short of the footer. Percentages here are of <main>'s width. */
+        --toc-margin: calc((100% - var(--content-max-width)) / 2);
+        --toc-width: min(340px, calc(var(--toc-margin) - 18px));
 
         display: block;
-        position: fixed;
+        position: sticky;
         top: var(--header-height-desktop);
-        right: calc(100vw - var(--toc-content-left) + var(--toc-gap));
-        width: min(
-            var(--toc-max-width),
-            calc(var(--toc-content-left) - var(--toc-gap) - var(--toc-min-left))
-        );
+        float: left;
+        width: var(--toc-width);
+        margin-left: calc(var(--toc-margin) - 10px - var(--toc-width));
         max-height: calc(100dvh - var(--header-height-desktop) - var(--space-lg));
         overflow: hidden auto;
         padding: var(--space-sm) var(--space-md);

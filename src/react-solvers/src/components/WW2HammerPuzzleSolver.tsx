@@ -102,12 +102,6 @@ export default function WW2HammerPuzzleSolver({ title }: { title?: string }) {
         setResult(buildSolutionLines(next));
     };
 
-    // Redundant now that every input re-solves. Kept commented, alongside its
-    // button below, so auto-solve can be backed out in one edit.
-    // const handleSolve = () => {
-    //     setResult(buildSolutionLines(directions));
-    // };
-
     // Back to the untouched state, nudge and all — not "Already solved!".
     const handleReset = () => {
         setDirections([0, 0, 0, 0]);
@@ -140,9 +134,6 @@ export default function WW2HammerPuzzleSolver({ title }: { title?: string }) {
             </div>
 
             <div className="solver-controls">
-                {/* Superseded by auto-solve — restore this and handleSolve together.
-                <button type="button" className="btn btn--solver" onClick={handleSolve}>Solve</button>
-                */}
                 <button type="button" className="btn btn--solver" onClick={handleReset}>Reset</button>
             </div>
 

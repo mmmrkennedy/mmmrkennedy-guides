@@ -7,7 +7,7 @@
 const MAX_PATH_LENGTH = 512;
 
 // Accept only same-site absolute paths; reject schemes, hosts, and traversal.
-// Mirrors the client-side normalizePath in view-counter.ts / line-flagger.ts so
+// Mirrors the client-side normalizePath in footer.ts / line-flagger.ts so
 // a path stored by one endpoint matches a lookup from another.
 export function normalizePath(raw) {
     if (!raw) return null;

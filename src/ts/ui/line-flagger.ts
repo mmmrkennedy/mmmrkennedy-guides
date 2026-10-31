@@ -12,7 +12,7 @@
  * back to DOM lines, so a flag (and any note) retires automatically once the
  * wording is edited — the line you flagged no longer exists.
  *
- * Network: like view-counter.ts, the eleventy dev server has no Functions, so a
+ * Network: like footer.ts, the eleventy dev server has no Functions, so a
  * failed call on localhost is treated as a silent demo no-op rather than a
  * user-facing error. Under `wrangler pages dev` and in production the real
  * endpoints are hit.

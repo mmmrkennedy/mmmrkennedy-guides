@@ -53,6 +53,8 @@
     {%- if mapName %}
         {%- set metaKeywords = mapName + ' Easter Egg, ' + mapName + ' Easter Egg guide, ' + mapName + ' main quest, ' + mapName + ' main Easter Egg, ' + mapName + ' walkthrough, ' + mapName + ' guide, ' + mapName + ' steps, ' + mapName + ' tutorial, ' + mapName + ' solo Easter Egg, ' + titleSuffix + ', Call of Duty Zombies, COD Zombies, Zombies Easter Egg guide, main quest walkthrough' %}
         <meta name="keywords" content="{{ metaKeywords }}">
+    {%- elif keywords %}
+        <meta name="keywords" content="{{ keywords }}">
     {%- endif %}
     <meta name="author" content="mmmrkennedy">
     {#- Which deploy produced this page. Read by ts/ui/line-flagger.ts and stored
@@ -83,12 +85,16 @@
     <link rel="canonical" href="https://mmmrkennedy.com{{ page.url | cleanUrl }}">
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
+    <meta property="og:type" content="{{ 'website' if homePage else 'article' }}">
     <meta property="og:url" content="https://mmmrkennedy.com{{ page.url | cleanUrl }}">
     <meta property="og:title" content="{{ pageTitle }}">
     <meta property="og:description" content="{{ metaDescription }}">
     <meta property="og:image" content="{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}">
     <meta property="og:site_name" content="mmmrkennedy's Zombies Guides">
+    {%- if homePage %}
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    {%- endif %}
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -111,6 +117,11 @@
     {#- The homepage's filter and game chips, reused on /solvers. #}
     {%- if useIndexNav %}
         <link rel="stylesheet" type="text/css" href="/css/index-nav.css?v={{ site.buildVersion }}">
+    {%- endif %}
+    {#- Home only: the 🔥 on the most-viewed link. Above the fold there, so it blocks
+        paint as the bundle does. #}
+    {%- if homePage %}
+        <link rel="stylesheet" type="text/css" href="/css/trending.css?v={{ site.buildVersion }}">
     {%- endif %}
     {#- On a solver-only page the solver IS the content, so its stylesheet blocks
         first paint like any other. In a guide the solver sits thousands of words
@@ -166,6 +177,32 @@
         the date in the SERP and the date on the page can never disagree. #}
     {%- set articlePublished = page.inputPath | releasedISO %}
     {%- set articleModified = page.inputPath | lastmodISO %}
+    {%- if homePage %}
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "{{ title }}",
+            "description": "{{ metaDescription }}",
+            "url": "https://mmmrkennedy.com{{ page.url }}",
+            "image": "{{ ogImage }}",
+            "author": {
+                "@type": "Person",
+                "name": "mmmrkennedy",
+                "url": "https://mmmrkennedy.com"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "mmmrkennedy's Zombies Guides",
+                "url": "https://mmmrkennedy.com"
+            },
+            "about": {
+                "@type": "VideoGame",
+                "name": "Call of Duty Zombies"
+            }
+        }
+    </script>
+    {%- else %}
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -214,6 +251,7 @@
             }
         }
     </script>
+    {%- endif %}
 
     {%- if breadcrumb %}
         <script type="application/ld+json">
@@ -262,7 +300,28 @@
     {%- endif %}
 </head>
 
-<body{% if skipTOC %} data-skip-toc="true"{% endif %}{% if noFlags %} data-no-flags{% endif %}{% if statsPage %} data-stats-live{% endif %}>
+<body{% if skipTOC %} data-skip-toc="true"{% endif %}{% if noFlags %} data-no-flags{% endif %}{% if statsPage %} data-stats-live{% endif %}{% if homePage %} data-trending{% endif %}>
+{#- Icon on phones, words from --bp-md up (responsive.css). -#}
+{%- set backToTop %}
+<button type="button" class="btn btn--fixed bottom-right">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon lucide lucide-arrow-up-to-line-icon lucide-arrow-up-to-line" aria-hidden="true">
+            <path d="M5 3h14" />
+            <path d="m18 13-6-6-6 6" />
+            <path d="M12 7v14" />
+        </svg>
+        <span class="btn-label">Back to Top</span>
+    </button>
+{%- endset %}
+{%- set adToggle %}
+<div class="version-display">
+        <div class="version-and-toggle">
+            <button type="button" id="ad-toggle-btn" class="ad-toggle-btn" aria-pressed="true">Hide Ads</button>
+            <span id="ad-mode-indicator" class="ad-mode-indicator"></span>
+        </div>
+    </div>
+{%- endset %}
+{#- The home page has no top bar: its title opens the page and nothing sits above it. -#}
+{%- if not homePage %}
 <div class="top-buttons-background-box">
     <!-- Title at the top of the page -->
     <h1 class="title-text">{{ pageHeading }}</h1>
@@ -279,49 +338,34 @@
     </button>
     {%- endif %}
 
-    <!-- Mobile devices content -->
-    <div id="mobile-content">
-        {#- An anchor, not a button. `navigateToIndex()` only ever set
-            location.href = "/", so the behaviour is identical, but a <button
-            onclick> is invisible to a crawler: it left every guide page with no
-            followable link back to the index, and the site with a link graph
-            that ran one way and stopped. #}
-        <a class="btn btn--link btn--fixed top-left" href="/">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-arrow-left-icon lucide-circle-arrow-left" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <path d="m12 8-4 4 4 4" />
-                <path d="M16 12H8" />
-            </svg>
-            <span class="visually-hidden">Home</span>
-        </a>
-        <button type="button" class="btn btn--fixed bottom-right" onclick="window.ScrollManager.scrollToTop()" aria-label="Back to Top">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-to-line-icon lucide-arrow-up-to-line" aria-hidden="true">
-                <path d="M5 3h14" />
-                <path d="m18 13-6-6-6 6" />
-                <path d="M12 7v14" />
-            </svg>
-        </button>
-    </div>
-
-    <!-- Non-mobile devices content -->
-    <div id="non-mobile-content">
-        <a class="btn btn--link btn--fixed top-left" href="/">Home</a>
-        <button type="button" class="btn btn--fixed bottom-right" onclick="window.ScrollManager.scrollToTop()">Back to Top</button>
-    </div>
-
-    <div class="version-display">
-        <div class="version-and-toggle">
-            <button type="button" id="ad-toggle-btn" class="ad-toggle-btn" aria-pressed="true">Hide Ads</button>
-            <span id="ad-mode-indicator" class="ad-mode-indicator"></span>
-        </div>
-    </div>
+    {#- An anchor, not a button. `navigateToIndex()` only ever set
+        location.href = "/", so the behaviour is identical, but a <button
+        onclick> is invisible to a crawler: it left every guide page with no
+        followable link back to the index, and the site with a link graph
+        that ran one way and stopped. #}
+    <a class="btn btn--link btn--fixed top-left" href="/">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon lucide lucide-circle-arrow-left-icon lucide-circle-arrow-left" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m12 8-4 4 4 4" />
+            <path d="M16 12H8" />
+        </svg>
+        <span class="btn-label">Home</span>
+    </a>
+    {{ backToTop | safe }}
+    {{ adToggle | safe }}
 </div>
+{%- endif %}
 
-<div class="content-window{% if not statsPage %} prose{% endif %}">
+<div class="content-window{% if not statsPage and not homePage %} prose{% endif %}">
+    {%- if homePage %}
+    <h1 class="page-title">{{ title }}</h1>
+    {{ backToTop | safe }}
+    {{ adToggle | safe }}
+    {%- endif %}
     {#- The guide body, and nothing that repeats from page to page. The footer
         stays outside: a <footer> inside <main> loses its contentinfo landmark
         role, so nesting it would trade one landmark for another. #}
-    <main>
+    <main{% if homePage %} class="content-container"{% endif %}>
     {%- if page.url | cleanUrl in unfinishedPages %}
         <div class="content-container">
             <h2>Sorry, this page is not ready yet!</h2>
@@ -383,14 +427,18 @@
             instead of `content`, so it must not advertise the word count of a
             body nobody can read. #}
         {%- set words = null if (noWordCount or page.url | cleanUrl in unfinishedPages) else (content | wordcount) %}
+        {#- The home page has no guide body of its own worth counting, so it reports
+            the whole library instead. #}
+        {%- if homePage %}{% set words = siteWords.words %}{% endif %}
         <p class="site-footer__meta">
             <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
             {%- if editorList %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
-            {%- if released %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__released" datetime="{{ releasedISO }}" title="Released {{ releasedRel }}">Initial release {{ released }}</time>{% endif %}
+            {%- if released and not homePage %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__released" datetime="{{ releasedISO }}" title="Released {{ releasedRel }}">Initial release {{ released }}</time>{% endif %}
             {%- if updated %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__updated" datetime="{{ updatedISO }}" title="Last updated {{ updated }}">Updated {{ updatedRel }}</time>{% endif %}
             {%- if edits %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
-            {%- if words %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__words">{{ words | thousands }} words</span>{% endif %}
+            {%- if words %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__words">{{ words | thousands }} words{% if homePage %} across {{ siteWords.guides }} guides{% endif %}</span>{% endif %}
             {%- if not statsPage %}<span class="site-footer__sep" aria-hidden="true"></span><a class="site-footer__link" href="/stats">Site stats</a>{% endif %}
+            {%- if homePage %}<span class="site-footer__sep" aria-hidden="true"></span><a class="site-footer__link" href="/solvers">All puzzle solvers</a>{% endif %}
             <span class="site-footer__views"></span>
         </p>
         {#- CC BY-SA 3.0 asks for credit "in any reasonable manner based on the
@@ -412,30 +460,30 @@
 {%- if useIndexNav %}
 <script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
+{%- if homePage %}
+<script src="/js/ui/birthday.js?v={{ site.buildVersion }}" defer></script>
+{%- endif %}
 <script src="/js/bundle.ads.min.js?v={{ site.buildVersion }}" async></script>
 {%- else %}
 <script src="/js/core/logger.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/core/page-utils.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/navigation/scroll-manager.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/content/guide-controls.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/legend.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/lightbox.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/content/link-processor.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/content/quick-links.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/content/solver-button-processor.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/content/path-tabs.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/quick-links-utils.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/scripts.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/view-counter.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/relative-time.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/lightbox.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/footer.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/line-flagger.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/reading.js?v={{ site.buildVersion }}" defer></script>
 <script src="/js/ui/return-pill.js?v={{ site.buildVersion }}" defer></script>
 {%- if useIndexNav %}
 <script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
+{%- if homePage %}
+<script src="/js/ui/trending.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/birthday.js?v={{ site.buildVersion }}" defer></script>
+{%- endif %}
 {%- if statsPage %}
-<script src="/js/ui/stats-live.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/table-sort.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/ui/stats.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
 <!-- Ads load as an independent async island (ads.ts self-bootstraps) -->
 <script src="/js/ui/ads.js?v={{ site.buildVersion }}" async></script>
@@ -487,6 +535,7 @@
 </div>
 {%- endif %}
 
+{%- if not homePage %}
 <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
     <button class="close-lightbox" type="button" aria-label="Close"></button>
     <div class="lightbox-spinner" role="status" aria-label="Loading media" hidden></div>
@@ -503,5 +552,6 @@
         <button class="lightbox-nav lightbox-next" type="button" aria-label="Next image"></button>
     </div>
 </div>
+{%- endif %}
 </body>
 </html>

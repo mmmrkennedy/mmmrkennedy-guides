@@ -17,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const chipsBox = nav?.querySelector<HTMLElement>(".index-nav__chips") ?? null;
     const clearBtn = nav?.querySelector<HTMLButtonElement>(".index-nav__clear") ?? null;
     const emptyMsg = document.querySelector<HTMLElement>(".index-nav__empty");
-    const contentWindow = document.querySelector<HTMLElement>(".content-window");
     const container = document.querySelector<HTMLElement>(".content-container");
     if (!nav || !input || !chipsBox || !container) return;
 
@@ -28,36 +27,17 @@ document.addEventListener("DOMContentLoaded", () => {
         chip: HTMLAnchorElement;
     }
 
-    /**
-     * The chips ship in the HTML — preRenderIndexNav in eleventy.config.cjs
-     * builds them, and owns the friendly labels, so the bar has its full height
-     * at first paint instead of growing when this script runs. Building one
-     * here is the fallback for markup that predates that step; it can only fall
-     * back to the raw id for a label, which is why the map lives in the build.
-     */
-    function adoptChip(id: string): HTMLAnchorElement {
-        const existing = chipsBox!.querySelector<HTMLAnchorElement>(`.index-nav__chip[data-target="${id}"]`);
-        if (existing) return existing;
-
-        const a = document.createElement("a");
-        a.className = "index-nav__chip";
-        a.href = "#" + id;
-        a.textContent = id;
-        a.dataset.target = id;
-        chipsBox!.appendChild(a);
-        return a;
-    }
-
     // Pair each game <h2 id> with the <ul> that follows it, and claim its chip.
     const groups: Group[] = [];
     container.querySelectorAll<HTMLElement>("h2[id]").forEach((heading) => {
         let list = heading.nextElementSibling as HTMLElement | null;
         while (list && list.tagName !== "UL") list = list.nextElementSibling as HTMLElement | null;
-        if (!list) return;
+        const chip = chipsBox.querySelector<HTMLAnchorElement>(`.index-nav__chip[data-target="${heading.id}"]`);
+        if (!list || !chip) return;
         const items = Array.from(list.children).filter(
             (c): c is HTMLElement => c.tagName === "LI",
         );
-        groups.push({ heading, list, items, chip: adoptChip(heading.id) });
+        groups.push({ heading, list, items, chip });
     });
     if (groups.length === 0) return;
 
@@ -142,11 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function scrollToSection(id: string): void {
         const el = document.getElementById(id);
-        if (!el || !contentWindow) return;
+        if (!el) return;
         const offset = nav!.getBoundingClientRect().height + 8;
-        const top = el.getBoundingClientRect().top - contentWindow.getBoundingClientRect().top + contentWindow.scrollTop - offset;
-        contentWindow.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
-        history.pushState({ anchor: id }, "", "#" + id);
+        const top = el.getBoundingClientRect().top + window.scrollY - offset;
+        history.pushState(null, "", "#" + id);
+        window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
     }
 
     // --- Live filter ---------------------------------------------------------
@@ -207,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Scroll-spy: highlight the chip for the section nearest the top -------
-    if (contentWindow && "IntersectionObserver" in window) {
+    if ("IntersectionObserver" in window) {
         const visible = new Set<string>();
         const io = new IntersectionObserver(
             (entries) => {
@@ -231,7 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             },
             {
-                root: contentWindow,
                 // Only treat a heading as "current" while it sits in the band just
                 // below the sticky bar and the top ~30% of the viewport.
                 rootMargin: `-${Math.round(nav.getBoundingClientRect().height)}px 0px -70% 0px`,

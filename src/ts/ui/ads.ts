@@ -369,7 +369,7 @@ function makeAdsRed(): void {
 window.Ads = { initAds, makeAdsRed };
 
 // Self-bootstrap as an independent async island. The ads bundle is loaded with
-// `async`, decoupled from the core init in scripts.ts, so a slow, blocked, or
+// `async`, decoupled from the core scripts, so a slow, blocked, or
 // failed ad payload never delays nav/lightbox/etc. `async` means this file can
 // execute before or after DOMContentLoaded, so guard on readyState.
 if (document.readyState === "loading") {

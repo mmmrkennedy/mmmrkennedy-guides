@@ -23,9 +23,6 @@
  * section back into view.
  */
 document.addEventListener("DOMContentLoaded", () => {
-    const contentWindow = document.querySelector<HTMLElement>(".content-window");
-    if (!contentWindow) return;
-
     let pill: HTMLButtonElement | null = null;
     let labelEl: HTMLElement | null = null;
     let armed = false; // a jump is active and the pill is offering a return
@@ -34,6 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Hide the pill once the reader scrolls the section they left back into view
     // (but only after it first left — a short jump can leave the origin on screen).
+    // The margin stops a section sitting behind the sticky top bar counting as seen.
+    const topBarHeight = document.querySelector(".top-buttons-background-box")?.getBoundingClientRect().height ?? 0;
     const io =
         "IntersectionObserver" in window
             ? new IntersectionObserver(
@@ -44,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         else if (leftOrigin && armed) hide();
                     }
                 },
-                { root: contentWindow },
+                { rootMargin: `-${Math.round(topBarHeight)}px 0px 0px 0px` },
             )
             : null;
 
@@ -107,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function goBack(): void {
         // Disarm before stepping back so our own popstate listener doesn't fight
-        // scroll-manager's restoration.
+        // the browser's restoration.
         hide();
         window.history.back();
     }

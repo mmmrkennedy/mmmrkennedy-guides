@@ -6,10 +6,6 @@
  * comparing bar lengths. Mark colours live in tokens.css.
  */
 
-.stats-intro {
-    color: var(--color-text-secondary);
-}
-
 /* --- Hero figure: the one number the page leads with --- */
 .stat-hero {
     margin: var(--space-xl) 0 var(--space-2xl);
@@ -239,7 +235,7 @@ a.chart__label:focus-visible {
     text-decoration: underline;
 }
 
-/* --- Sortable columns (built by table-sort.ts) --- */
+/* --- Sortable columns (built by ui/stats.ts) --- */
 
 /* The button takes over the cell's padding so the whole header is clickable,
    not just the few pixels of text in the middle of it. */

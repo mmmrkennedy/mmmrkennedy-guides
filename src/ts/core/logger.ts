@@ -26,7 +26,7 @@
  * `window.Log` should be global.
  */
 (function () {
-    /** Local dev server. Same hosts view-counter.ts and line-flagger.ts treat as local. */
+    /** Local dev server. Same hosts footer.ts and line-flagger.ts treat as local. */
     function isLocalHost(): boolean {
         const h = window.location.hostname;
         return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";

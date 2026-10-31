@@ -11,6 +11,25 @@ Foundation styles and sensible defaults.
     box-sizing: border-box;
 }
 
+/* The document is the scroller. The gutter stops the page shifting when an overlay
+   locks scrolling, or when filtering makes a page short enough to lose its bar.
+   scroll-padding keeps a browser-driven fragment jump clear of the sticky top bar. */
+html {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scroll-padding-top: var(--header-height-desktop);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+html:has(.lightbox.is-open, .legend-overlay.is-open) {
+    overflow: hidden;
+}
+
 body {
     display: flex;
     flex-direction: column;
@@ -19,7 +38,7 @@ body {
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
     line-height: var(--line-height-relaxed);
-    height: 100dvh;
+    min-height: 100dvh;
     margin: 0;
     max-width: 100%;
     -webkit-font-smoothing: antialiased;

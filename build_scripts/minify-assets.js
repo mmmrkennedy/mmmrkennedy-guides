@@ -15,23 +15,16 @@ const BUNDLE = process.env.BUNDLE === "true";
 const JS_CORE_ORDER = [
     // First: defines window.Log, which any script below may call.
     "core/logger.js",
-    "core/page-utils.js",
     "navigation/scroll-manager.js",
+    "content/guide-controls.js",
     "ui/legend.js",
-    "ui/lightbox.js",
-    "content/link-processor.js",
     "content/quick-links.js",
-    "content/solver-button-processor.js",
-    "content/path-tabs.js",
-    "quick-links-utils.js",
-    "scripts.js",
-    "ui/view-counter.js",
-    "ui/relative-time.js",
+    "ui/lightbox.js",
+    "ui/footer.js",
     "ui/line-flagger.js",
     "ui/reading.js",
     "ui/trending.js",
-    "ui/stats-live.js",
-    "ui/table-sort.js",
+    "ui/stats.js",
     "ui/return-pill.js",
 ];
 

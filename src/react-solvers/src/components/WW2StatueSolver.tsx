@@ -190,12 +190,6 @@ export default function WW2StatueSolver({ title }: { title?: string }) {
         setResult(solvePuzzle([...newDirections], puzzleIdFor(activeWall)));
     }
 
-    // Redundant now that every input re-solves. Kept commented, alongside its
-    // button below, so auto-solve can be backed out in one edit.
-    // function handleSolve() {
-    //     setResult(solvePuzzle([...directions], puzzleIdFor(activeWall)));
-    // }
-
     // Back to the untouched state, nudge and all — not "Already solved!".
     function handleReset() {
         setDirections(DEFAULT_DIRECTIONS);
@@ -247,9 +241,6 @@ export default function WW2StatueSolver({ title }: { title?: string }) {
             </div>
 
             <div className="solver-controls">
-                {/* Superseded by auto-solve — restore this and handleSolve together.
-                <button type="button" className="btn btn--solver" onClick={handleSolve}>Solve</button>
-                */}
                 <button type="button" className="btn btn--solver" onClick={handleReset}>Reset</button>
             </div>
 

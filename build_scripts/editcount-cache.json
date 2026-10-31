@@ -23,7 +23,7 @@
   "src/games/BO3/gorod_krovi/gorod_krovi_guide.html": 12,
   "src/games/BO3/gorod_krovi/gorod_krovi_solver.html": 14,
   "src/games/BO3/revelations/revelations_guide.html": 11,
-  "src/games/BO3/shadows_of_evil/shadows_of_evil_guide.html": 24,
+  "src/games/BO3/shadows_of_evil/shadows_of_evil_guide.html": 25,
   "src/games/BO3/zetsubou_no_shima/zetsubou_no_shima_guide.html": 11,
   "src/games/BO4/alpha_omega/alpha_omega_guide.html": 25,
   "src/games/BO4/ancient_evil/ancient_evil_guide.html": 26,
@@ -93,8 +93,8 @@
   "src/games/WW2/the_tortured_path/survival_maps/bodega_cervantes_guide.html": 4,
   "src/games/WW2/the_tortured_path/survival_maps/uss_mount_olympus_guide.html": 4,
   "src/games/WW2/the_tortured_path/the_tortured_path_guide.html": 24,
-  "src/index.html": 50,
+  "src/index.html": 51,
   "src/react-solvers/index.html": 11,
   "src/solvers.html": 1,
-  "src/stats.html": 2
+  "src/stats.html": 3
 }

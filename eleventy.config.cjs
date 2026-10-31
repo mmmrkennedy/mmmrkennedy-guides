@@ -60,7 +60,7 @@ function cacheKeyFor(inputPath) {
 /**
  * "2026-05-11" -> "3 days ago" / "last month" / "2 years ago".
  *
- * Baked in at build time, so it would drift as the deploy ages; relative-time.ts
+ * Baked in at build time, so it would drift as the deploy ages; ui/footer.ts
  * re-renders it in the browser against the reader's own clock. Keep this bucket
  * ladder and the one there in sync, or pages visibly reword when the script runs.
  */
@@ -576,7 +576,7 @@ function renderNavigation(container, structure) {
  * while the sidebar was still missing — because it had to wait for the whole
  * document to parse, then the core bundle, then five earlier init steps.
  * Shipping it in the HTML lets it paint with everything else; quick-links.ts
- * hydrates this markup and keeps its runtime build as a fallback.
+ * attaches the behaviour to this markup.
  */
 function renderSidebarToc(document, tocContainer) {
     document.querySelector(".sidebar-toc")?.remove();
@@ -584,7 +584,6 @@ function renderSidebarToc(document, tocContainer) {
 
     const sidebar = document.createElement("nav");
     sidebar.className = "sidebar-toc";
-    sidebar.dataset.prebuilt = "true";
     sidebar.setAttribute("aria-label", "Page contents");
 
     const header = document.createElement("div");
@@ -613,20 +612,14 @@ function renderSidebarToc(document, tocContainer) {
 
     addSidebarSubToggles(document, body);
 
-    // Ahead of .content-window so it streams in before the guide body rather
-    // than after it. It's position:fixed, so DOM order doesn't affect layout.
-    const contentWindow = document.querySelector(".content-window");
-    if (contentWindow?.parentNode) {
-        contentWindow.parentNode.insertBefore(sidebar, contentWindow);
-    } else {
-        document.body.appendChild(sidebar);
-    }
+    // First in <main>, so it streams in before the guide body and its sticky
+    // travel ends where the guide does, clear of the footer.
+    document.querySelector("main")?.prepend(sidebar);
 }
 
 /**
- * Emits the collapse toggle for every sidebar item that has nested children,
- * matching what setupSidebarSubToggles() builds at runtime. Sub-lists ship
- * collapsed; quick-links.ts only has to attach the click handlers.
+ * Emits the collapse toggle for every sidebar item that has nested children.
+ * Sub-lists ship collapsed; quick-links.ts only has to attach the click handlers.
  */
 function addSidebarSubToggles(document, container) {
     for (const li of container.querySelectorAll("li")) {
@@ -1197,7 +1190,7 @@ function mapTableGrid(table) {
  *   - anything carrying colspan. One cell spanning several columns has no
  *     single heading to be labelled with, and splitting it would invent a
  *     division the author didn't write. These keep the scrolling table.
- *   - [data-sortable]. table-sort.ts puts its controls in the header row, and
+ *   - [data-sortable]. ui/stats.ts puts its controls in the header row, and
  *     card mode hides that row.
  *
  * rowspan is handled rather than refused. A spanned cell sits in the markup of
@@ -1308,7 +1301,7 @@ function preRenderRevealButtons(document) {
  *
  * The authored elements become the panels themselves rather than being wrapped,
  * so any `id` on them stays a valid anchor target. Interaction lives in
- * src/ts/content/path-tabs.ts.
+ * src/ts/content/guide-controls.ts.
  */
 // Chip labels for the home page's game jump-bar, keyed by the <h2 id> they
 // scroll to. The build owns them because the build is what renders the bar;
@@ -1458,11 +1451,6 @@ function preRenderPathTabs(document, outputPath) {
             path.setAttribute("role", "tabpanel");
             path.setAttribute("aria-labelledby", tabId);
 
-            // Deep links to a panel should land on the tab bar, not on the
-            // panel's first line — otherwise the tabs sit off-screen and the
-            // reader can't tell there's another route. See resolveScrollTarget
-            // in src/ts/navigation/scroll-manager.ts.
-            path.setAttribute("data-scroll-with", ".path-tabs");
             // A panel that already carries an id keeps it — guides deep-link to
             // these sections by name. aria-controls has to name whatever id the
             // panel ends up with, not the one generated here: pointing it at an

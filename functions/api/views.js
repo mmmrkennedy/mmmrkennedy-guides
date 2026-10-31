@@ -12,7 +12,7 @@
 // had. Existing KV counts were backfilled once during the cutover.
 //
 // The response contract is unchanged from the KV version, so the front-end
-// (src/ts/ui/view-counter.ts) needs no changes.
+// (src/ts/ui/footer.ts) needs no changes.
 
 // isProductionHost is the guard on the increment below: only real traffic may
 // move the counter. It lives in _shared.js because reading analytics needs the
@@ -39,7 +39,7 @@ export async function onRequestPost({ request, env }) {
     if (!path) return json({ error: "invalid or missing 'path'" }, 400);
 
     // Reads are left alone, so a preview still shows the real number — it just
-    // does not add to it. `counted` is advisory; view-counter.ts reads only
+    // does not add to it. `counted` is advisory; footer.ts reads only
     // `count` and ignores anything else.
     if (!isProductionHost(url)) {
         return json({ path, count: await readCount(env, path), counted: false });

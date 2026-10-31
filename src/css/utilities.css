@@ -116,7 +116,11 @@ No inline margin, so the panel lines up with the step text it sits under.
     margin-top: var(--space-sm);
 }
 
+/* A deep link to a panel lands on the tab bar, not on the panel's first line, or
+   the tabs sit off-screen and the reader can't tell there's another route.
+   guide-controls.ts measures the bar, which stacks and wraps by screen size. */
 .path-tabs__panel {
+    scroll-margin-top: var(--path-tabs-bar-height, 0);
     background-color: var(--color-bg-secondary);
     border: 1px solid var(--color-border-medium);
     border-top: 2px solid var(--color-tier-1);

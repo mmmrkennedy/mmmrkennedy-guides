@@ -110,14 +110,6 @@ a[data-media-type="audio"]::after {
     color: #d95b43;
 }
 
-.wrong-file-type {
-    color: #e89850;
-}
-
-.file-doesnt-exist {
-    color: #c8a150;
-}
-
 /* A guide that isn't written yet: dimmed to muted text so it reads as
    deliberately inactive rather than as a link that lost its colour. The build
    renames its href to data-href (the `unlinkUnwrittenGuides` transform in
@@ -181,26 +173,6 @@ a[data-media-type="audio"]::after {
 
 .btn--link:hover {
     text-decoration: none;
-}
-
-.btn--accent {
-    border-color: var(--color-link-external);
-    color: var(--color-link-external);
-}
-
-.btn--accent:not(:disabled):hover {
-    color: var(--color-link-external);
-    border-color: var(--color-text-primary);
-}
-
-.btn--danger {
-    border-color: var(--color-no-return-border);
-    color: var(--color-no-return-border);
-}
-
-.btn--danger:not(:disabled):hover {
-    color: var(--color-no-return-border);
-    border-color: var(--color-text-primary);
 }
 
 /* Reveal variant — same look as .btn--solver in Solvers.css, available in the main bundle. */
@@ -467,16 +439,14 @@ a[data-media-type="audio"]::after {
     font-weight: 600;
 }
 
-/* One set of colours per type, shared by the box and the inline variant below. */
-.note,
-.note-inline {
+/* One set of colours per type. */
+.note {
     --accent: var(--color-note-border);
     --accent-bg: var(--color-note-bg);
     --accent-text: var(--color-note-text);
 }
 
-.no-return,
-.no-return-inline {
+.no-return {
     --accent: var(--color-no-return-border);
     --accent-bg: var(--color-no-return-bg);
     --accent-text: var(--color-no-return-text);
@@ -488,22 +458,19 @@ a[data-media-type="audio"]::after {
     --accent-text: var(--color-danger-text);
 }
 
-.requirement,
-.requirement-inline {
+.requirement {
     --accent: var(--color-requirement-border);
     --accent-bg: var(--color-requirement-bg);
     --accent-text: var(--color-requirement-text);
 }
 
-.tip,
-.tip-inline {
+.tip {
     --accent: var(--color-tip-border);
     --accent-bg: var(--color-tip-bg);
     --accent-text: var(--color-tip-text);
 }
 
-.disclaimer,
-.disclaimer-inline {
+.disclaimer {
     --accent: var(--color-disclaimer-border);
     --accent-bg: var(--color-disclaimer-bg);
     --accent-text: var(--color-disclaimer-text);
@@ -542,67 +509,6 @@ a[data-media-type="audio"]::after {
 :is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc) + :is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc) {
     margin-top: 0;
     border-top-right-radius: 0;
-}
-
-/* Inline variants — the same types for a line that belongs inside a list.
- * No rule and no line of its own: the item keeps its bullet and stays level
- * with its siblings, with the tint behind the text and the label run into the
- * sentence. The label carries the type name, so the HTML starts straight at the
- * sentence ("Warning:" and friends are not repeated in the markup).
- *
- * Padding is deliberately 0 on the inline-start side. An outside ::marker is
- * placed against the border box, not the content box, so any padding there
- * (even cancelled by a negative margin) leaves this line's bullet out of step
- * with the bullets above and below it. The tint starting flush at the label is
- * the cheaper compromise. */
-.note-inline,
-.no-return-inline,
-.requirement-inline,
-.tip-inline,
-.disclaimer-inline {
-    padding: 0.1rem 0.35rem 0.1rem 0;
-    border-radius: 4px;
-    background: var(--accent-bg);
-}
-
-.note-inline::before,
-.no-return-inline::before,
-.requirement-inline::before,
-.tip-inline::before,
-.disclaimer-inline::before {
-    color: var(--accent-text);
-    font-weight: 600;
-}
-
-.note-inline::marker,
-.no-return-inline::marker,
-.requirement-inline::marker,
-.tip-inline::marker,
-.disclaimer-inline::marker {
-    color: var(--accent);
-}
-
-/* No emoji on any of these — at one line the coloured label is enough, and a
- * run of them down a list turns into a column of icons. The boxes above keep
- * theirs, where the label sits on its own line and has room for it. */
-.note-inline::before {
-    content: "Note: ";
-}
-
-.no-return-inline::before {
-    content: "Point of No Return: ";
-}
-
-.requirement-inline::before {
-    content: "Requirement: ";
-}
-
-.tip-inline::before {
-    content: "Tip: ";
-}
-
-.disclaimer-inline::before {
-    content: "Disclaimer: ";
 }
 
 /* Names the steps below it ("Phase 1"), so it's a plain label, not a box. */

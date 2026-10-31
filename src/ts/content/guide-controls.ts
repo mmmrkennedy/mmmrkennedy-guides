@@ -1,5 +1,8 @@
 /**
- * Segmented switcher for mutually exclusive routes through one guide step
+ * The guide's expand-at-build controls: path tabs and reveal buttons. The build
+ * renders their markup (eleventy.config.cjs); this only wires the interaction.
+ *
+ * Path tabs: a segmented switcher for mutually exclusive routes through one guide step
  * (e.g. the solver route vs. the in-game intended route).
  *
  * The markup is expanded at build time by the `preRenderPathTabs` transform in
@@ -42,8 +45,8 @@ function activatePath(group: HTMLElement, index: number): void {
  * route lands on the steps instead of on a closed panel. Walks outward so
  * nested switchers all open along the way.
  */
-function revealPathTo(id: string): void {
-    if (!id) return;
+function revealPathTo(id: string): boolean {
+    if (!id) return false;
 
     let target: HTMLElement | null = null;
     try {
@@ -51,8 +54,9 @@ function revealPathTo(id: string): void {
     } catch {
         target = document.getElementById(id);
     }
-    if (!target) return;
+    if (!target) return false;
 
+    const wasHidden = target.closest(".path-tabs__panel[hidden]") !== null;
     let panel = target.closest<HTMLElement>(".path-tabs__panel");
     while (panel) {
         const group = panel.parentElement?.closest<HTMLElement>(".path-tabs");
@@ -60,17 +64,31 @@ function revealPathTo(id: string): void {
         activatePath(group, getPanels(group).indexOf(panel));
         panel = group.parentElement?.closest<HTMLElement>(".path-tabs__panel") ?? null;
     }
+    return wasHidden;
 }
 
-function revealPathToHash(hash: string): void {
-    if (hash.length > 1) revealPathTo(hash.slice(1));
+function revealPathToHash(hash: string): boolean {
+    return hash.length > 1 && revealPathTo(hash.slice(1));
 }
 
 function initPathTabs(): void {
     const groups = document.querySelectorAll<HTMLElement>(".path-tabs");
     if (!groups.length) return;
 
+    const barObserver = new ResizeObserver((entries) => {
+        for (const { target } of entries) {
+            const group = target.parentElement;
+            const panels = group?.querySelector(":scope > .path-tabs__panels");
+            if (!group || !panels) continue;
+            const height = panels.getBoundingClientRect().top - group.getBoundingClientRect().top;
+            group.style.setProperty("--path-tabs-bar-height", `${Math.round(height)}px`);
+        }
+    });
+
     for (const group of groups) {
+        const bar = group.querySelector(":scope > .path-tabs__bar");
+        if (bar) barObserver.observe(bar);
+
         const tabs = getTabs(group);
 
         tabs.forEach((tab, index) => {
@@ -87,8 +105,8 @@ function initPathTabs(): void {
         });
     }
 
-    // Open the right path before anything scrolls to it. Capture phase so this
-    // runs ahead of ScrollManager's own anchor handling.
+    // Open the right path before the browser jumps to it. Capture phase so this
+    // runs ahead of the link's default action.
     document.addEventListener(
         "click",
         (event) => {
@@ -104,12 +122,30 @@ function initPathTabs(): void {
         true,
     );
 
-    window.addEventListener("hashchange", () => revealPathToHash(window.location.hash));
+    // The browser jumps before hashchange fires, and it can't jump to a closed panel.
+    window.addEventListener("hashchange", () => {
+        if (!revealPathToHash(window.location.hash)) return;
+        document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView();
+    });
     revealPathToHash(window.location.hash);
 }
 
-// Make functions available globally
-window.PathTabs = {
-    initPathTabs,
-    revealPathTo,
-};
+function initRevealButtons(): void {
+    document.querySelectorAll<HTMLElement>("[data-reveal-label]").forEach((div) => {
+        const button = div.querySelector("button");
+        if (!button) return;
+
+        button.addEventListener("click", () => {
+            const content = div.querySelector<HTMLElement>(".button-activated-div");
+            if (!content) return;
+            content.style.display = content.style.display === "none" ? "block" : "none";
+        });
+    });
+}
+
+// Runs first of the core scripts: a deep link into a collapsed path has to open
+// that path before the browser scrolls the target into view.
+document.addEventListener("DOMContentLoaded", () => {
+    initPathTabs();
+    initRevealButtons();
+});

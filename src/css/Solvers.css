@@ -41,7 +41,7 @@
     --solver-cell-border-width: 1px;
 
     /* Monospace, for anything a reader reads character by character:
-       tapped morse streams, result codes, debug dumps. */
+       tapped morse streams, result codes. */
     --solver-font-mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
 }
 
@@ -361,37 +361,8 @@ main:has(.solver-only-page) .related-maps {
     justify-content: center;
 }
 
-.solver-controls.is-left {
-    justify-content: flex-start;
-}
-
 .solver-controls.is-centered {
     justify-content: center;
-}
-
-/* Each button gets equal space on both sides — with N buttons,
-   the row divides into N equal segments and one button is
-   centered within each. The default keeps a row's buttons
-   together in the middle. */
-.solver-controls.is-distributed {
-    justify-content: space-around;
-}
-
-.solver-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-    cursor: pointer;
-    user-select: none;
-}
-
-.solver-toggle input[type="checkbox"] {
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--solver-accent);
-    cursor: pointer;
 }
 
 /* ------------------------------------------------------------
@@ -431,8 +402,6 @@ main:has(.solver-only-page) .related-maps {
    "the red wire"). Background-safe for the dark panel. */
 .solver-text--green { color: var(--color-tip-text); }
 .solver-text--pink { color: #e08bbf; }
-.solver-text--red { color: var(--color-no-return-text); }
-.solver-text--gold { color: var(--solver-accent); }
 
 .solver-container input[type="text"],
 .solver-container input[type="number"] {
@@ -1109,25 +1078,6 @@ main:has(.solver-only-page) .related-maps {
 
 .solver-output.is-recalc {
     animation: solver-recalc 0.15s ease-out;
-}
-
-/* ------------------------------------------------------------
-   Debug panel — for solvers that expose internal state
-   ------------------------------------------------------------ */
-.solver-debug-panel {
-    width: 0;
-    min-width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--color-bg-secondary);
-    border: 1px dashed var(--color-border-medium);
-    border-radius: 4px;
-    color: var(--color-text-secondary);
-    font-family: var(--solver-font-mono);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-normal);
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    overflow-x: auto;
 }
 
 /* ============================================================

@@ -390,7 +390,7 @@ async function main() {
         console.log(`\n${stillBroken.length} asset(s) are still wrong after a purge — the deploy is incomplete:\n`);
         for (const url of stillBroken) console.log(`  ${url}`);
         console.log("\nNothing cached survives a purge, so these are genuinely absent from the");
-        console.log("deployment. Rebuild with `npm run build` and redeploy. Do not deploy a dist/");
+        console.log("deployment. Rebuild with `bun run build` and redeploy. Do not deploy a dist/");
         console.log("that a dev watcher has rebuilt — it is unbundled and references different files.");
     }
 

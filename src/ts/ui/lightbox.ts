@@ -748,17 +748,31 @@ function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
     img.addEventListener("pointercancel", endPointer);
 }
 
-// Make functions available globally
-window.Lightbox = {
-    preloadAdjacentMedia,
-    openLightbox,
-    navigateToPrevious,
-    navigateToNext,
-    closeLightbox,
-    handleLightboxClick,
-    initLightbox,
-    // Exposed for the hover-preloader in scripts.ts, which lives in its own IIFE
-    // and would otherwise warm the cache with a full-size master — undoing the
-    // saving the moment anyone hovers a thumbnail.
-    tieredUrl,
-};
+document.addEventListener("DOMContentLoaded", initLightbox);
+
+/** Warms an image on hover, so the viewer opens on it without a wait. */
+document.addEventListener("DOMContentLoaded", () => {
+    const imageCache = new Map<string, HTMLImageElement>();
+
+    function loadImage(imgUrl: string): void {
+        if (imageCache.has(imgUrl)) return;
+        const img = new Image();
+        img.onerror = () => window.Log("error", "Failed to load image:", imgUrl);
+        img.src = imgUrl;
+        imageCache.set(imgUrl, img);
+    }
+
+    document.querySelectorAll<HTMLAnchorElement>("a.lightbox-trigger").forEach((aTag) => {
+        const imageUrl = aTag.getAttribute("href");
+        if (!imageUrl) return;
+        // Warm the copy the lightbox will actually ask for. Fetching the raw
+        // href pulled the full-size master, so a phone paid several MB on the
+        // touch that opens the lightbox and then downloaded the small version
+        // as well — cancelling out the whole point of the size variants.
+        // Resolved per event rather than once, because the answer depends on
+        // viewport and DPR, and a rotate or resize changes it.
+        const warm = () => loadImage(tieredUrl(imageUrl));
+        aTag.addEventListener("pointerenter", warm, { once: true });
+        aTag.addEventListener("click", warm, { once: true });
+    });
+});

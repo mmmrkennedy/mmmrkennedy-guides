@@ -1,7 +1,7 @@
 /**
  * Interactive R2 image workflow.
  *
- *   bun run r2       (or: npm run r2)
+ *   bun run r2
  *
  * Guide screenshots live in an R2 bucket and are served by
  * functions/games/[[path]].js, not from the deployment. That means uploading is

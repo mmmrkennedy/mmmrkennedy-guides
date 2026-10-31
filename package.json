@@ -8,7 +8,7 @@
         "build": "bun run build:scripts && bun run check:solvers && bun run build:react && bun run build:ssr && cross-env BUNDLE=true IMAGES_FROM_R2=true bun run build:eleventy && cross-env BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/inline-critical-css.js && node build_scripts/minify-html.js && bun run build:sitemap",
         "build:full": "bun run clean && bun run build",
         "// dev": "Development servers — unbundled, hot reload",
-        "dev": "eleventy --serve",
+        "dev": "tsc -p tsconfig.scripts.json && eleventy --serve",
         "dev:watch": "concurrently --names \"tsc,vite,ssr,11ty\" --prefix-colors \"yellow,cyan,magenta,green\" \"tsc -p tsconfig.scripts.json --watch\" \"vite build --watch\" \"vite build --config vite.ssr.config.js --watch\" \"eleventy --serve\"",
         "dev:react": "vite",
         "// steps": "Individual build steps",
@@ -51,7 +51,7 @@
         "sitemap": "^8.0.0"
     },
     "engines": {
-        "node": ">=14.0.0"
+        "node": ">=20.19.0"
     },
     "homepage": "https://mmmrkennedy.com",
     "devDependencies": {

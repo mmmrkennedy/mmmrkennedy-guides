@@ -5,12 +5,6 @@
 Page structure and containers.
 */
 
-.site-wrapper {
-    display: flex;
-    flex-direction: column;
-    overflow-y: hidden;
-}
-
 /* About This Map and More Zombies guides: the SEO blocks at the end of a page.
    They line up with the guide column and read as a plain end-of-page index, not a
    separate centered widget. The about text must stay visible (real text, readable
@@ -218,7 +212,7 @@ Page structure and containers.
     cursor: help;
 }
 
-/* Views count is filled in by JS (view-counter). Hidden until it has a value,
+/* Views count is filled in by JS (ui/footer.ts). Hidden until it has a value,
    and draws its own leading separator so it matches the static ones. */
 .site-footer__views:empty {
     display: none;
@@ -240,12 +234,9 @@ Page structure and containers.
     flex: 1;
     position: relative;
     width: 100%;
-    overflow: hidden auto;
+    overflow-x: clip;
     background-color: var(--color-bg-primary);
-    scrollbar-width: thin;
     overflow-wrap: break-word;
-    height: calc(100dvh - var(--header-height-mobile));
-    padding-bottom: var(--header-height-mobile);
 }
 
 /* Content Containers */
@@ -306,16 +297,6 @@ Page structure and containers.
     }
 }
 
-.title-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    padding: 0 var(--space-md);
-    line-height: 1;
-}
-
 .title-text {
     margin: 0;
     font-size: 0.9375rem;
@@ -325,14 +306,6 @@ Page structure and containers.
     max-width: calc(100% - 8.5rem);
     overflow-wrap: break-word;
     color: var(--color-tier-1);
-}
-
-.title-sub-text {
-    font-size: 0.75rem;
-    color: var(--color-text-secondary);
-    margin: 0;
-    white-space: nowrap;
-    text-align: center;
 }
 
 /* Lightbox */

@@ -61,7 +61,4 @@ function initLegend(): void {
     });
 }
 
-// Make functions available globally
-window.Legend = {
-    initLegend,
-};
+document.addEventListener("DOMContentLoaded", initLegend);

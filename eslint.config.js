@@ -8,6 +8,7 @@ export default [
     {
         ignores: [
             "dist/**",
+            "src/js/**",
             ".solver-ssr/**",
             "dumped_game_scripts/**",
             ".variants/**",
@@ -146,13 +147,6 @@ export default [
             "no-var": "error",
             eqeqeq: "warn",
             "no-debugger": "error",
-        },
-    },
-    // scripts.js exposes globals for HTML onclick handlers in .njk templates — ESLint can't see cross-file usage
-    {
-        files: ["src/js/scripts.js"],
-        rules: {
-            "no-unused-vars": "off",
         },
     },
     // Build/CLI scripts run in Node and legitimately log progress to stdout.
