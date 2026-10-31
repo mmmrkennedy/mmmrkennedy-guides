@@ -125,7 +125,8 @@ a[data-media-type="audio"]::after {
    block pointer events, which means the not-allowed cursor sits on the name
    itself. Touch has no hover, so index-filter.ts answers a tap with a toast. */
 .disabled {
-    color: var(--color-text-muted);
+    color: var(--color-text-primary);
+    opacity: 0.8;
     text-decoration: none;
     cursor: pointer;
 }

@@ -32,7 +32,6 @@ Page structure and containers.
 }
 
 .about-map__text {
-    max-width: 75ch;
     margin: 0;
     line-height: 1.6;
 }
