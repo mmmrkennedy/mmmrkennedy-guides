@@ -3,7 +3,7 @@
  * generate-sitemap.cjs
  *
  * Run on Cloudflare Pages CI as part of the normal build.
- * Reads build_scripts/lastmod-cache.json (kept fresh by GitHub Actions).
+ * Reads build_scripts/lastmod-cache.json (kept fresh by the pre-commit hook).
  * Does NOT require git history.
  *
  * Usage: node build_scripts/generate-sitemap.cjs
@@ -209,7 +209,7 @@ async function buildSitemap() {
 
     console.log(`sitemap.xml generated with ${written + 1} pages (homepage + ${written} linked) and ${imagesWritten} images.`);
     if (missingCache > 0) {
-        console.warn(`${missingCache} pages had no cache entry — lastmod omitted. Run refresh-lastmod-cache.cjs via GitHub Actions.`);
+        console.warn(`${missingCache} pages had no cache entry — lastmod omitted. Run update-page-dates.cjs.`);
     }
 }
 

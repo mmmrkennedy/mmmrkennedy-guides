@@ -7,7 +7,7 @@ let cachedMountChunks = null;
 let cachedSsrSolvers;
 let ssrWarned = false;
 
-// Git-based last-modified dates, kept fresh by GitHub Actions (refresh-lastmod-cache.cjs).
+// Git-based last-modified dates, kept fresh by the pre-commit hook (update-page-dates.cjs).
 // Same source the sitemap uses. Keyed by repo-root-relative path, e.g. "src/index.html".
 let lastmodCache = {};
 try {
@@ -16,7 +16,7 @@ try {
     console.warn("lastmod-cache.json not found; footer 'last updated' dates will be omitted.");
 }
 
-// Commits-per-file ("edit count"), from the same refresh script as lastmodCache.
+// Commits-per-file ("edit count"), from the same script as lastmodCache.
 let editcountCache = {};
 try {
     editcountCache = require("./build_scripts/editcount-cache.json");
@@ -24,11 +24,10 @@ try {
     console.warn("editcount-cache.json not found; footer edit counts will be omitted.");
 }
 
-// Initial-release dates, same key shape as lastmodCache. Unlike the two caches
-// above this one is NOT regenerated on CI: half of it was recovered from the old
-// zombiesGuides repo's history, which doesn't exist on the build server. It is
-// committed data, refreshed by hand via derive-release-dates.cjs. Pages absent
-// from it (unreleased guides, the index) simply render no release date.
+// Initial-release dates, same key shape as lastmodCache and from the same script.
+// Unlike the two caches above these can't be rebuilt from git, so they are only
+// added to. Pages absent from it (unreleased guides, the index) simply render no
+// release date.
 let releaseCache = {};
 try {
     releaseCache = require("./build_scripts/release-dates.json");
