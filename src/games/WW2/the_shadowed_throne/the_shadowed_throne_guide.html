@@ -354,7 +354,7 @@ description: Complete The Shadowed Throne (TST) guide for WW2 Zombies. Stadtjäg
         </li>
 
         <li class="dummy-li dummy-li-no-indent"><h4 class="title-tier-4" data-custom-quick-link="Statue Puzzle Solver" style="border: none; color: inherit; background-color: inherit; padding: 0; margin: 0" id="Statue Puzzle Solver"></h4>
-            <div id="statue-solver-react"></div>
+            <div data-solver="StatueSolver"></div>
         </li>
 
 
@@ -468,7 +468,7 @@ description: Complete The Shadowed Throne (TST) guide for WW2 Zombies. Stadtjäg
     </ul>
 
     <h4 class="title-tier-4" data-custom-quick-link="Hangman Word Solver" style="border: none; color: inherit; background-color: inherit; padding: 0; margin: 0" id="Hangman Word Solver"></h4>
-    <div id="hangman-solver-react"></div>
+    <div data-solver="HangmanSolver"></div>
 </div>
 
 <div class="content-container" id="hats">
@@ -788,14 +788,3 @@ description: Complete The Shadowed Throne (TST) guide for WW2 Zombies. Stadtjäg
         </tbody>
     </table>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountStatueSolver("statue-solver-react");
-            window.ZombiesSolvers.mountHangmanSolver("hangman-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

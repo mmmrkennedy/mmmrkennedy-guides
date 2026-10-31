@@ -54,7 +54,7 @@ function formatResult(solution: Solution): string {
     return lines.join("\n") + `\nTotal turns: ${solution.total}`;
 }
 
-export default function BO1DialSolver({ title }: { title?: string }) {
+export default function DialSolver({ title }: { title?: string }) {
     const [dials, setDials] = useState<[number, number, number, number]>([0, 0, 0, 0]);
     const [result, setResult] = useState<string>(formatResult(solve([0, 0, 0, 0])));
 

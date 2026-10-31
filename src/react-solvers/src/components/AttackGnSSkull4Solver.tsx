@@ -119,7 +119,7 @@ function solveCipher(targetWord: string, swingsetLettersArr: string[]): SolveRes
     }
 }
 
-export default function IWGnSSkull4Solver({ title }: { title?: string }) {
+export default function AttackGnSSkull4Solver({ title }: { title?: string }) {
     const [word, setWord] = useState<string>("");
     const [selectedSymbols, setSelectedSymbols] = useState<string[]>(["", "", "", ""]);
 

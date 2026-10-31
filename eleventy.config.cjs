@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 
 let cachedManifest = null;
-let cachedMountChunks = null;
 let cachedSsrSolvers;
 let ssrWarned = false;
 
@@ -864,7 +863,7 @@ function unlinkUnwrittenGuides(content, outputPath) {
  * This replaces the need for post-build scripts to update bundle hashes
  */
 /**
- * mountX() -> the chunk file that calling it will fetch.
+ * The chunk file of every solver on a page.
  *
  * Preloading these alongside the entry is what lets src/react-solvers/src/main.tsx
  * batch its renders without a straggler: the chunks arrive together instead of
@@ -877,31 +876,17 @@ function unlinkUnwrittenGuides(content, outputPath) {
  * FCP by competing with the render-blocking CSS. Hooks now live in the entry, so
  * this is one request per solver and FCP measured BETTER with it than without.
  *
- * The mount-name -> component mapping is read out of main.tsx rather than
- * duplicated here, so adding a solver cannot leave this table quietly stale.
- * Anchored on the `(id, opts) =>` form to skip the `mountX: MountFunction;`
- * lines in the interface above it, which carry no import to find.
  */
-function getMountChunkMap(manifest) {
-    if (cachedMountChunks) return cachedMountChunks;
-    cachedMountChunks = new Map();
-    try {
-        const source = fs.readFileSync(path.join(__dirname, "src/react-solvers/src/main.tsx"), "utf8");
-        const entries = /(mount[A-Za-z0-9]+)\s*:\s*\(id, opts\)\s*=>[\s\S]*?import\("\.\/components\/([A-Za-z0-9]+)"\)/g;
-        for (const [, mountName, component] of source.matchAll(entries)) {
-            const chunk = manifest[`src/components/${component}.tsx`];
-            if (chunk) cachedMountChunks.set(mountName, chunk.file);
-        }
-        if (!cachedMountChunks.size) {
-            console.warn("⚠️  No solver chunks resolved from main.tsx - skipping solver modulepreloads");
-        }
-    } catch (error) {
-        // Not fatal: without these the solvers still load, just one hop later.
-        console.warn("⚠️  Could not build solver chunk map:", error.message);
+function solverChunkHrefs(content, manifest) {
+    const hrefs = new Set();
+    for (const [, name] of content.matchAll(/\bdata-solver="([^"]+)"/g)) {
+        const chunk = manifest[`src/components/${name}.tsx`];
+        // Not fatal: without the hint the solver still loads, just one hop later.
+        if (chunk) hrefs.add(`/react-solvers/${chunk.file}`);
+        else console.warn(`⚠️  No chunk in the Vite manifest for solver ${name}`);
     }
-    return cachedMountChunks;
+    return [...hrefs];
 }
-
 
 /**
  * Build-time solver prerendering.
@@ -928,56 +913,8 @@ function getSsrSolvers() {
     return cachedSsrSolvers;
 }
 
-/* Only these ever appear in a mount call. Anything else and we decline to
-   prerender rather than guess, because a prop the build cannot see is a prop the
-   client will render differently - which is a hydration mismatch, not a missing
-   optimisation. */
-const SOLVER_PROP_KEYS = new Set(["title", "keySelectId", "colours", "names", "canArrange"]);
-
-/* One `key: value` pair, anchored at the start of whatever is left of the
-   object body. A value is a double-quoted string, a number, a boolean, or a
-   flat array of strings and numbers - the simon says solver takes its palette
-   as an array, which is why this is no longer a split on commas: a comma inside
-   the brackets is not a separator. */
-const SOLVER_PROP_PAIR = /^\s*([A-Za-z0-9_]+)\s*:\s*("(?:[^"\\]|\\.)*"|\[[^\]]*\]|true|false|-?\d+(?:\.\d+)?)\s*(?:,|$)/;
-
-/** One prop value, or undefined if it is anything JSON cannot read. */
-function parseSolverValue(literal) {
-    let value;
-    try {
-        value = JSON.parse(literal);
-    } catch {
-        return undefined;
-    }
-    if (Array.isArray(value)) {
-        const flat = value.every((item) => typeof item === "string" || typeof item === "number");
-        return flat ? value : undefined;
-    }
-    return value;
-}
-
 /**
- * Parse the options object out of a mountX("id", { ... }) call.
- * Returns null if it contains anything that is not a plain literal, which
- * leaves that solver to render client-side exactly as it did before.
- */
-function parseSolverProps(raw) {
-    if (!raw || !raw.trim()) return {};
-    const props = {};
-    let body = raw.trim().replace(/^\{/, "").replace(/\}$/, "").trim();
-    while (body) {
-        const m = SOLVER_PROP_PAIR.exec(body);
-        if (!m || !SOLVER_PROP_KEYS.has(m[1])) return null;
-        const value = parseSolverValue(m[2]);
-        if (value === undefined) return null;
-        props[m[1]] = value;
-        body = body.slice(m[0].length).trim();
-    }
-    return props;
-}
-
-/**
- * Render each solver a page mounts into its own div, so the markup ships in the
+ * Render each solver a page uses into its own div, so the markup ships in the
  * HTML instead of being created by JavaScript several hundred ms after first
  * paint.
  *
@@ -987,66 +924,49 @@ function parseSolverProps(raw) {
  * that rot; this puts the real content there at its real height instead, and
  * pays for itself again in LCP on pages where the solver IS the largest element.
  *
- * Authoring does not change: pages keep an empty <div id="..."> and a
- * mountX() call, and main.tsx hydrates whatever it finds. Every step here is
- * fail-safe - unparseable props, an unknown mount name, a component that throws,
- * a missing SSR build - and each one just leaves that div empty for the client,
- * which is precisely the old behaviour.
+ * Authoring does not change: pages keep an empty <div data-solver="..."> and
+ * main.tsx hydrates whatever it finds. Without an SSR build, or if a solver
+ * throws, that div stays empty for the client to fill. A name or props the build
+ * cannot read would also break in the browser, so those fail a production build
+ * and only warn in dev, where the SSR build can briefly lag a new solver.
  */
 function prerenderSolvers(content, outputPath) {
     if (!outputPath || !outputPath.endsWith(".html")) return content;
-    if (!content.includes("ZombiesSolvers.mount")) return content;
+    if (!content.includes("data-solver=")) return content;
 
     const ssr = getSsrSolvers();
     if (!ssr) return content;
 
-    let modified = content;
+    const problem = (message) => {
+        if (process.env.BUNDLE === "true") throw new Error(`prerenderSolvers: ${message} (${outputPath})`);
+        console.warn(`prerenderSolvers: ${message} (${outputPath})`);
+    };
 
-    const calls = /ZombiesSolvers\.(mount[A-Za-z0-9]+)\s*\(\s*"([^"]+)"\s*(?:,\s*(\{[^}]*\}))?\s*\)/g;
-    for (const [, mountName, elementId, rawProps] of content.matchAll(calls)) {
-        const Solver = ssr.solvers[mountName];
+    // Empty divs only, so a second pass can never nest one render inside another.
+    return content.replace(/(<div\b[^>]*\bdata-solver="([^"]+)"[^>]*>)\s*(<\/div>)/g, (whole, open, name, close) => {
+        const Solver = ssr.solvers[name];
         if (!Solver) {
-            console.warn(`prerenderSolvers: ${mountName} not in the SSR registry (${outputPath})`);
-            continue;
+            problem(`no solver file named ${name}`);
+            return whole;
         }
 
-        const props = parseSolverProps(rawProps);
-        if (props === null) {
-            console.warn(`prerenderSolvers: ${mountName} has props the build cannot read, skipping (${outputPath})`);
-            continue;
-        }
-
-        let html;
+        // domPass may have reserialized the attribute with double quotes.
+        const attr = open.match(/\bdata-solver-props=(?:"([^"]*)"|'([^']*)')/);
+        let props = {};
         try {
-            html = ssr.render(ssr.h(Solver, props));
+            if (attr) props = JSON.parse((attr[1] ?? attr[2]).replace(/&quot;/g, '"').replace(/&amp;/g, "&"));
         } catch (error) {
-            console.warn(`prerenderSolvers: ${mountName} threw while rendering, skipping (${outputPath}):`, error.message);
-            continue;
+            problem(`${name} has invalid data-solver-props: ${error.message}`);
+            return whole;
         }
 
-        // Match the div by id and fill it only if it is genuinely empty, so a
-        // second pass can never nest one render inside another.
-        const escaped = elementId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const target = new RegExp(`(<div[^>]*\\bid="${escaped}"[^>]*>)\\s*(</div>)`);
-        if (!target.test(modified)) {
-            console.warn(`prerenderSolvers: no empty <div id="${elementId}"> to fill (${outputPath})`);
-            continue;
+        try {
+            return open + ssr.render(ssr.h(Solver, props)) + close;
+        } catch (error) {
+            console.warn(`prerenderSolvers: ${name} threw while rendering, skipping (${outputPath}):`, error.message);
+            return whole;
         }
-        // data-solver-root marks the subtree as "Preact is about to hydrate this".
-        // ts/ui/line-flagger.ts skips it at DOMContentLoaded and waits for the
-        // solver:hydrated event instead — decorating it now would mean hydration
-        // reconciling away every ⚑ button a moment later.
-        //
-        // An attribute rather than the [id$="-react"] naming convention the mount
-        // divs happen to share: that convention lives in 19 hand-written templates
-        // and would fail silently the first time someone names one differently.
-        modified = modified.replace(target, (_m, open, close) => {
-            const marked = open.includes("data-solver-root") ? open : open.replace(/>$/, " data-solver-root>");
-            return marked + html + close;
-        });
-    }
-
-    return modified;
+    });
 }
 
 function injectReactBundle(content, outputPath) {
@@ -1082,21 +1002,10 @@ function injectReactBundle(content, outputPath) {
         let modified = content;
 
         // Handle modulepreload links: the entry, then the chunk for every solver
-        // this page mounts, so they all fetch in parallel instead of the page
+        // this page uses, so they all fetch in parallel instead of the page
         // waiting for the entry to run before it learns what else it needs.
         if (content.includes("<!-- REACT_BUNDLE_MODULEPRELOAD -->")) {
-            const hrefs = [bundlePath];
-            const mountChunks = getMountChunkMap(manifest);
-            const called = new Set();
-            for (const [, name] of content.matchAll(/ZombiesSolvers\.(mount[A-Za-z0-9]+)\s*\(/g)) {
-                called.add(name);
-            }
-            for (const name of called) {
-                const file = mountChunks.get(name);
-                if (!file) continue;
-                const href = `/react-solvers/${file}`;
-                if (!hrefs.includes(href)) hrefs.push(href);
-            }
+            const hrefs = [bundlePath, ...solverChunkHrefs(content, manifest)];
             const links = hrefs.map((href) => `<link rel="modulepreload" href="${href}" />`).join("");
             modified = modified.replace("<!-- REACT_BUNDLE_MODULEPRELOAD -->", links);
         }

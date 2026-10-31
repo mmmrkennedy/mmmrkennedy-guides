@@ -151,11 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // mount div is still empty at this point, and bailing now would skip
     // registering the solver:hydrated listener below, so the page would never get
     // flags at all. Stay if a solver is going to arrive.
-    //
-    // [id$="-react"] is a hint, not a contract: data-solver-root does not exist
-    // yet in the un-prerendered case, and the only cost of guessing wrong either
-    // way is an unused popover in the DOM.
-    const solverIncoming = document.querySelector("[data-solver-root], [id$='-react']") !== null;
+    const solverIncoming = document.querySelector("[data-solver]") !== null;
     if (lines.length === 0 && !solverIncoming) return;
 
     const path = normalizePath(window.location.pathname);
@@ -559,7 +555,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * about deferring changes a line's id or orphans a flag already in D1.
      */
     for (const el of lines) {
-        if (el.closest("[data-solver-root]")) continue;
+        if (el.closest("[data-solver]")) continue;
         decorate(el);
     }
 
@@ -572,10 +568,8 @@ document.addEventListener("DOMContentLoaded", () => {
      * undecorated — the same outcome as before this existed, never a broken page.
      */
     document.addEventListener("solver:hydrated", (e) => {
-        const detail = (e as CustomEvent<{ element?: HTMLElement; name?: string }>).detail;
-        const root = detail?.element;
+        const root = (e as CustomEvent<{ element?: HTMLElement }>).detail?.element;
         if (!root) return;
-        if (detail?.name && !root.dataset.solver) root.dataset.solver = detail.name;
         // Same scoping as the selector above: only lines inside a .content-container
         // are flaggable, and some solver roots are one while others sit inside one.
         root.querySelectorAll<HTMLElement>("p, li:not(.dummy-li)").forEach((el) => {

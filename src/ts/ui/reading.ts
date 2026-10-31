@@ -249,9 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * honest proxy for "this reader got what they came for".
      */
     function startSolverTracking(): void {
-        const roots = Array.from(
-            document.querySelectorAll<HTMLElement>("[data-solver-root], [id$='-react']"),
-        );
+        const roots = Array.from(document.querySelectorAll<HTMLElement>("[data-solver]"));
         if (roots.length === 0) return;
 
         const observer = new IntersectionObserver(

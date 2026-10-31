@@ -35,15 +35,5 @@ preloadImages:
 ---
 <div class="content-container">
     <p class="solver-intro">Skull 4 of the Skull Hop quest asks you to spell the word on the Ice Cream Parlour wall using the four symbols at the swingset. Enter the word to get the combinations to shoot.</p>
-    <div id="gns-skull4-solver-react"></div>
+    <div data-solver="AttackGnSSkull4Solver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountAttackGnSSkull4Solver("gns-skull4-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

@@ -118,7 +118,7 @@ function venomBoxCalc(buttonArr: Color[], roundNum: number): string {
     return "";
 }
 
-export default function IWBeastVenomXBoxSolver({ title }: { title?: string }) {
+export default function BeastVenomXBoxSolver({ title }: { title?: string }) {
     const [buttonCount, setButtonCount] = useState<ButtonCount>(3);
     const [selectedColors, setSelectedColors] = useState<Color[]>(["red", "red", "red"]);
     // 0 means the round field is empty. Left blank rather than defaulted to 1:

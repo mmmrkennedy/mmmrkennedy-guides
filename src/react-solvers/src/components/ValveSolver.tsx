@@ -109,7 +109,7 @@ function getAdjustments(green: ValveLocation, pink: ValveLocation): ValveResult 
     return { kind: "ok", adjustments };
 }
 
-export default function BO3ValveSolver({ title }: { title?: string }) {
+export default function ValveSolver({ title }: { title?: string }) {
     const [greenValve, setGreenValve] = useState<ValveLocation>("department_store");
     const [pinkValve, setPinkValve] = useState<ValveLocation>("supply_depot");
 

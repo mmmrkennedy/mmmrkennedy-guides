@@ -88,12 +88,6 @@ export default defineConfig({
                 // dynamic import() in src/main.tsx becomes its own chunk and a page
                 // downloads only the one it mounts.
                 //
-                // The `window.ZombiesSolvers` global that guide pages call is NOT
-                // affected. It never came from Rollup's `name` option (that only
-                // applies to iife/umd) — src/main.tsx assigns it explicitly, and an
-                // ES module can do that just as well. `name` is dropped here because
-                // it is inert for this format, not because the global went away.
-                //
                 // Safe for the injected <script type="module"> tag in
                 // eleventy.config.cjs, which is already a module tag.
                 format: "es",

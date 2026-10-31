@@ -152,7 +152,7 @@ function solvePuzzle(directions: RotationList, puzzleID: PuzzleID): string[] {
     return lines;
 }
 
-export default function WW2StatueSolver({ title }: { title?: string }) {
+export default function StatueSolver({ title }: { title?: string }) {
     const [activeWall, setActiveWall] = useState<WallID>("wall1");
     const [directions, setDirections] = useState<RotationList>(DEFAULT_DIRECTIONS);
 

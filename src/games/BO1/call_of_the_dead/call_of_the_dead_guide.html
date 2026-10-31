@@ -189,7 +189,7 @@ description: Complete Call of the Dead (COTD) guide for Black Ops Zombies. Ensem
             </ul>
         </li>
         <li class="dummy-li dummy-li-no-indent coop-only">
-            <div id="dials-solver-react"></div>
+            <div data-solver="DialSolver"></div>
         </li>
         <li>Acquire the V-R11 wonder weapon from the Mystery Box (there is no other way to get it).</li>
         <li>
@@ -238,16 +238,6 @@ description: Complete Call of the Dead (COTD) guide for Black Ops Zombies. Ensem
         const selector = document.getElementById("main-ee-version-selector");
         if (selector) {
             toggleCoopSteps(selector.value);
-        }
-    });
-</script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountDialSolver("dials-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
         }
     });
 </script>

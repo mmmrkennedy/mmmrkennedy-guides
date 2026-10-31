@@ -8,15 +8,5 @@ description: Attack of the Radioactive Thing (AOTRT) chemical step solver for In
 ---
 <div class="content-container">
     <p class="solver-intro">The last step of the 'Soul-Less' main quest has you craft one chemical at the garage chemistry set. Give it your M number, TV number, insect repellent and racing fuel numbers, and the chemical named on the radio, and it returns every chemical and keypad number you need.</p>
-    <div id="chemical-solver-react"></div>
+    <div data-solver="ChemicalStepSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountChemicalStepSolver("chemical-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

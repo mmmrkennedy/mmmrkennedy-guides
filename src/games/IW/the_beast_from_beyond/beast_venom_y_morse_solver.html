@@ -8,15 +8,5 @@ description: The Beast From Beyond (TBFB) Venom-Y Morse code solver for Infinite
 ---
 <div class="content-container">
     <p class="solver-intro">The terminal right of Bang Bangs plays one of two Morse code keys, Archer or Cross. Pick the one you heard to carry on with the Venom-Y upgrade.</p>
-    <div id="beast-venomy-morse-solver-react"></div>
+    <div data-solver="BeastVenomYMorseSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountBeastVenomYMorseSolver("beast-venomy-morse-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

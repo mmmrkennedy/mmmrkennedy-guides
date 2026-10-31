@@ -7,18 +7,5 @@ description: Moon Simon Says helper for Black Ops Zombies. Click a coloured squa
 ---
 <div class="content-container">
     <p class="solver-intro">Four computers can be found outside the spawn room. They will be flashing the colours, Red, Green, Blue, and Yellow.</p>
-    <div id="simon-says-solver-react"></div>
+    <div data-solver="SimonSaysSolver" data-solver-props='{"colours": ["#ff0000", "#00ff00", "#0000ff", "#ffd400"], "canArrange": false}'></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountSimonSaysSolver("simon-says-solver-react", {
-                colours: ["#ff0000", "#00ff00", "#0000ff", "#ffd400"],
-                canArrange: false,
-            });
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

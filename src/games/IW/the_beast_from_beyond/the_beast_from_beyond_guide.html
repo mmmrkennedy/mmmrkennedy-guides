@@ -169,7 +169,7 @@ description: Complete The Beast From Beyond (TBFB) guide for Infinite Warfare Zo
         </li>
 
         <li class="dummy-li dummy-li-no-indent">
-            <div id="beast-venomx-box-solver-react"></div>
+            <div data-solver="BeastVenomXBoxSolver"></div>
         </li>
 
         <li>
@@ -202,7 +202,7 @@ description: Complete The Beast From Beyond (TBFB) guide for Infinite Warfare Zo
         </li>
 
         <li class="dummy-li dummy-li-no-indent">
-            <div id="beast-venomx-maze-solver-react"></div>
+            <div data-solver="BeastVenomXMazeSolver"></div>
         </li>
 
         <li>
@@ -347,7 +347,7 @@ description: Complete The Beast From Beyond (TBFB) guide for Infinite Warfare Zo
         </li>
 
         <li class="dummy-li dummy-li-no-indent">
-            <div id="beast-venomy-morse-solver-react"></div>
+            <div data-solver="BeastVenomYMorseSolver" data-solver-props='{"keySelectId": "venom-y-key-selector"}'></div>
         </li>
 
         <li>
@@ -547,7 +547,7 @@ description: Complete The Beast From Beyond (TBFB) guide for Infinite Warfare Zo
         </li>
 
         <li class="dummy-li dummy-li-no-indent">
-            <div id="beast-floppy-solver-react"></div>
+            <div data-solver="BeastFloppyDiskSolver"></div>
         </li>
 
         <li>
@@ -935,7 +935,7 @@ description: Complete The Beast From Beyond (TBFB) guide for Infinite Warfare Zo
         </li>
 
         <li class="dummy-li">
-            <div id="beast-eight-queens-react"></div>
+            <div data-solver="BeastGnSEightQueensSolver"></div>
         </li>
 
         <li>Once all Queens are placed correctly, confetti will fly from the board and the completion sound will play.</li>
@@ -1121,18 +1121,4 @@ description: Complete The Beast From Beyond (TBFB) guide for Infinite Warfare Zo
         venom_y_archer_block.hidden = key !== "ARCHER";
         venom_y_cross_block.hidden = key !== "CROSS";
     }
-</script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountBeastGnSEightQueensSolver("beast-eight-queens-react");
-            window.ZombiesSolvers.mountBeastFloppyDiskSolver("beast-floppy-solver-react");
-            window.ZombiesSolvers.mountBeastVenomXMazeSolver("beast-venomx-maze-solver-react");
-            window.ZombiesSolvers.mountBeastVenomXBoxSolver("beast-venomx-box-solver-react");
-            window.ZombiesSolvers.mountBeastVenomYMorseSolver("beast-venomy-morse-solver-react", { keySelectId: "venom-y-key-selector" });
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
 </script>

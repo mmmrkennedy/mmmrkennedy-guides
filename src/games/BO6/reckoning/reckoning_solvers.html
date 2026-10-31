@@ -8,22 +8,11 @@ description: Reckoning solvers for Black Ops 6 Zombies. Search the periodic tabl
 <div class="content-container">
     <h2 class="solver-title">Periodic Table Solver</h2>
     <p class="solver-intro">Search the periodic table code from the monitor letters.</p>
-    <div id="periodic-solver-react"></div>
+    <div data-solver="PeriodicTableSolver"></div>
 </div>
 
 <div class="content-container">
     <h2 class="solver-title">Maxis Items Solver</h2>
     <p class="solver-intro">Sort the four S.A.M. files into the right order.</p>
-    <div id="maxis-solver-react"></div>
+    <div data-solver="MaxisItemsSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountMaxisItemsSolver("maxis-solver-react");
-            window.ZombiesSolvers.mountPeriodicTableSolver("periodic-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

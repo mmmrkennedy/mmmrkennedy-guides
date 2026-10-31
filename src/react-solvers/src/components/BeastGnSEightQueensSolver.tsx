@@ -84,7 +84,7 @@ function find_valid_sol(starting_queen_cords: number[]) {
 
 type Phase = "setup" | "solved";
 
-export default function IWBeastEightQueensSolver({ title }: { title?: string }) {
+export default function BeastGnSEightQueensSolver({ title }: { title?: string }) {
     const [queenLocation, setQueenLocation] = useState<[number, number]>([0, 0]);
     const [solution, setSolution] = useState<boolean[][] | null>(null);
     const [phase, setPhase] = useState<Phase>("setup");

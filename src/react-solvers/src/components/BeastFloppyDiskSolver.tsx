@@ -23,7 +23,7 @@ function processSymbols(symbols: number[]): number[] {
     return [];
 }
 
-export default function IWBeastFloppySolver({ title }: { title?: string }) {
+export default function BeastFloppyDiskSolver({ title }: { title?: string }) {
     const [selectedSymbols, setSelectedSymbols] = useState<number[]>([]);
 
     // The symbols are images with no names, so the grid position the reader

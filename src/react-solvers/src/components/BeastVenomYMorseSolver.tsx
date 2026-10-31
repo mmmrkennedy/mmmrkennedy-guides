@@ -174,7 +174,7 @@ interface Props {
     keySelectId?: string;
 }
 
-export default function IWBeastVenomYMorseSolver({ title, keySelectId }: Props) {
+export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
     const [phase, setPhase] = useState<Phase>("key");
     /* Step 1 is a single beep, so this is one symbol rather than a run. */
     const [keyTap, setKeyTap] = useState<Sym | null>(null);

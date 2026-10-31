@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { hydrate } from "preact";
 import type { ComponentType } from "preact";
 
@@ -16,61 +17,24 @@ import type { ComponentType } from "preact";
 import "preact/hooks";
 
 // Shared infrastructure, not a solver — and imported statically for the same
-// chunking reason as preact/hooks above. All 20 solvers call useSolverReport, so
+// chunking reason as preact/hooks above. Every solver calls useSolverReport, so
 // leaving this to be discovered through the dynamic imports would hoist it into a
 // second shared chunk sitting between the entry and every solver.
 import { SolverReportRoot, readSolverInputs } from "./solver-report";
 
-// Every solver lives behind its own dynamic import() below, which is what makes
-// Vite emit one chunk per solver instead of a single 28.9kB brotli bundle
-// carrying all 20 to every guide page. Do NOT add a static
-// `import X from "./components/X"` here — one is enough to pull that component
-// back into the entry chunk and quietly undo the split for that solver.
-
-interface MountOptions {
-    title?: string;
-    /* Morse solver only: id of an existing ARCHER/CROSS <select> to adopt. */
-    keySelectId?: string;
-    /* Simon says solver only: the pads, as hex colours, one per entry, and
-       optionally what to call each one (by position; blank keeps the colour's
-       own name). How long the flashed sequence runs is not configured - it is
-       recorded as it happens, however long that turns out to be.
-       `canArrange` (default true) offers the reader the Arrange button, which
-       reorders the pads to match a layout the game randomises; pass false where
-       the map always lays them out the same way. */
-    colours?: string[];
-    names?: string[];
-    canArrange?: boolean;
-}
-
-type MountFunction = (elementId: string, options?: MountOptions) => void;
-
-interface ZombiesSolvers {
-    mountTotenreichReactorSolver: MountFunction;
-    mountHangmanSolver: MountFunction;
-    mountStatueSolver: MountFunction;
-    mountHammerSolver: MountFunction;
-    mountValveSolver: MountFunction;
-    mountBeamsmasherSolver: MountFunction;
-    mountMaxisItemsSolver: MountFunction;
-    mountPeriodicTableSolver: MountFunction;
-    mountLetterboardSolver: MountFunction;
-    mountMahjongSolver: MountFunction;
-    mountShaolinWordFilter: MountFunction;
-    mountChemicalStepSolver: MountFunction;
-    mountAttackGnSSkull4Solver: MountFunction;
-    mountBeastGnSEightQueensSolver: MountFunction;
-    mountBeastFloppyDiskSolver: MountFunction;
-    mountBeastVenomXMazeSolver: MountFunction;
-    mountBeastVenomXBoxSolver: MountFunction;
-    mountBeastVenomYMorseSolver: MountFunction;
-    mountDialSolver: MountFunction;
-    mountSimonSaysSolver: MountFunction;
-}
+// Each file in components/ is one solver and one chunk, so a page downloads only
+// the ones it uses. A page asks for one by filename:
+//
+//   <div data-solver="DialSolver"></div>
+//   <div data-solver="SimonSaysSolver" data-solver-props='{"colours": ["#e74c3c"]}'></div>
+//
+// The filename is also the name flags are filed under, so renaming a solver splits
+// its flag history. Do NOT statically import a component here: one is enough to
+// pull it back into the entry chunk and quietly undo the split for that solver.
+const solvers = import.meta.glob<{ default: ComponentType<Record<string, unknown>> }>("./components/*.tsx");
 
 declare global {
     interface Window {
-        ZombiesSolvers: ZombiesSolvers;
         /**
          * Bridge to ts/ui/line-flagger.ts, which is a classic script in a
          * separate bundle and cannot import from this module graph. Optional on
@@ -84,7 +48,7 @@ declare global {
 }
 
 /**
- * Fetch a solver's chunk, then attach it to `elementId`.
+ * Fetch a solver's chunk, then attach it to its element.
  *
  * hydrate(), not render(), because the production build already put this
  * solver's markup in the page (eleventy.config.cjs `prerenderSolvers`). Preact
@@ -96,22 +60,15 @@ declare global {
  * hydrate() into an EMPTY container behaves like render(), which is what keeps
  * `eleventy --serve` on its own working: no SSR build, empty divs, client builds
  * the DOM exactly as it used to. One code path covers both.
- *
- * The element lookup happens before the import, not after: a missing id is a
- * page-authoring mistake, and it should be reported straight away rather than
- * after a pointless network round trip.
  */
-function mount<P extends MountOptions>(
-    elementId: string,
-    label: string,
-    load: () => Promise<{ default: ComponentType<P> }>,
-    props: P,
-) {
-    const element = document.getElementById(elementId);
-    if (!element) {
-        console.error(`mount${label}: element not found:`, elementId);
+function mount(element: HTMLElement) {
+    const name = element.dataset.solver;
+    const load = solvers[`./components/${name}.tsx`];
+    if (!load) {
+        console.error("Unknown solver:", name);
         return;
     }
+    const props = JSON.parse(element.dataset.solverProps ?? "{}");
     load()
         .then(({ default: Solver }) => {
             // SolverReportRoot renders no DOM, so hydration sees exactly the tree
@@ -123,21 +80,14 @@ function mount<P extends MountOptions>(
                 </SolverReportRoot>,
                 element,
             );
-            // Which solver this is, for ts/ui/line-flagger.ts: it labels the
-            // snapshot a solver flag carries, and a flag is worth little without
-            // it. Set on the DOM as well as the event so a listener that missed
-            // the event (or runs later) can still identify the subtree.
-            element.dataset.solver = label;
             // ts/ui/line-flagger.ts deliberately skips prerendered solver markup
             // at DOMContentLoaded, because hydrating afterwards would reconcile
             // away every ⚑ it had just injected. This is its cue that the subtree
             // is settled and safe to decorate. Fired per container, so a page with
             // five solvers flags each as it lands.
-            document.dispatchEvent(
-                new CustomEvent("solver:hydrated", { detail: { element, name: label } }),
-            );
+            document.dispatchEvent(new CustomEvent("solver:hydrated", { detail: { element } }));
         })
-        .catch((error) => console.error(`mount${label}: failed to load solver chunk:`, error));
+        .catch((error) => console.error(`${name}: failed to load solver chunk:`, error));
 }
 
 // How line-flagger.ts reaches a mounted solver's inputs. Assigned here rather
@@ -145,65 +95,16 @@ function mount<P extends MountOptions>(
 // SSR build, where `window` does not exist.
 window.SolverReport = { read: readSolverInputs };
 
-// Assigned synchronously, on module evaluation. Guide pages call these from a
-// DOMContentLoaded handler that falls back to console.error when the global is
-// missing, and a module script always finishes evaluating before that event
-// fires — so the contract holds. Deferring this assignment (behind an
-// IntersectionObserver, say) would break every solver page.
-window.ZombiesSolvers = {
-    mountTotenreichReactorSolver: (id, opts) =>
-        mount(id, "TotenreichReactorSolver", () => import("./components/BO7TotenreichReactorSolver"), { title: opts?.title }),
-    mountDialSolver: (id, opts) => mount(id, "DialSolver", () => import("./components/BO1DialSolver"), { title: opts?.title }),
-    mountHangmanSolver: (id, opts) => mount(id, "HangmanSolver", () => import("./components/WW2HangmanSolver"), { title: opts?.title }),
-    mountStatueSolver: (id, opts) => mount(id, "StatueSolver", () => import("./components/WW2StatueSolver"), { title: opts?.title }),
-    mountHammerSolver: (id, opts) => mount(id, "HammerSolver", () => import("./components/WW2HammerPuzzleSolver"), { title: opts?.title }),
-    mountValveSolver: (id, opts) => mount(id, "ValveSolver", () => import("./components/BO3ValveSolver"), { title: opts?.title }),
-    mountBeamsmasherSolver: (id, opts) =>
-        mount(id, "BeamsmasherSolver", () => import("./components/BO6BeamsmasherMathSolver"), { title: opts?.title }),
-    mountMaxisItemsSolver: (id, opts) => mount(id, "MaxisItemsSolver", () => import("./components/BO6MaxisItemsSolver"), { title: opts?.title }),
-    mountPeriodicTableSolver: (id, opts) =>
-        mount(id, "PeriodicTableSolver", () => import("./components/BO6PeriodicTableSolver"), { title: opts?.title }),
-    mountLetterboardSolver: (id, opts) =>
-        mount(id, "LetterboardSolver", () => import("./components/BO6LetterboardSolver"), { title: opts?.title }),
-    mountMahjongSolver: (id, opts) => mount(id, "MahjongSolver", () => import("./components/IWMahjongSolver"), { title: opts?.title }),
-    mountShaolinWordFilter: (id, opts) => mount(id, "ShaolinWordFilter", () => import("./components/IWMainQuestWordFilter"), { title: opts?.title }),
-    // V2 is the live one. The mount name and the label stay as they are: guide
-    // pages call mountChemicalStepSolver by that name, and the label is what a
-    // solver flag is filed under, so changing it would split this solver's report
-    // history across two names for no gain. Which build produced a report is
-    // already recorded in the snapshot's `build` field.
-    mountChemicalStepSolver: (id, opts) =>
-        mount(id, "ChemicalStepSolver", () => import("./components/IWChemicalStepSolverV2"), { title: opts?.title }),
-    mountAttackGnSSkull4Solver: (id, opts) =>
-        mount(id, "AttackGnSSkull4Solver", () => import("./components/IWGnSSkull4Solver"), { title: opts?.title }),
-    mountBeastGnSEightQueensSolver: (id, opts) =>
-        mount(id, "BeastGnSEightQueensSolver", () => import("./components/IWBeastEightQueensSolver"), { title: opts?.title }),
-    mountBeastFloppyDiskSolver: (id, opts) =>
-        mount(id, "BeastFloppyDiskSolver", () => import("./components/IWBeastFloppySolver"), { title: opts?.title }),
-    mountBeastVenomXMazeSolver: (id, opts) =>
-        mount(id, "BeastVenomXMazeSolver", () => import("./components/IWBeastVenomXMazeSolver"), { title: opts?.title }),
-    mountBeastVenomXBoxSolver: (id, opts) =>
-        mount(id, "BeastVenomXBoxSolver", () => import("./components/IWBeastVenomXBoxSolver"), { title: opts?.title }),
-    mountBeastVenomYMorseSolver: (id, opts) =>
-        mount(id, "BeastVenomYMorseSolver", () => import("./components/IWBeastVenomYMorseSolver"), {
-            title: opts?.title,
-            keySelectId: opts?.keySelectId,
-        }),
-    // Not tied to one map: the page supplies the palette, so a single component
-    // serves every flash-the-order puzzle.
-    mountSimonSaysSolver: (id, opts) =>
-        mount(id, "SimonSaysSolver", () => import("./components/SimonSaysSolver"), {
-            title: opts?.title,
-            colours: opts?.colours,
-            names: opts?.names,
-            canArrange: opts?.canArrange,
-        }),
-};
+// Waits for DOMContentLoaded because line-flagger.ts only starts listening for
+// solver:hydrated then, and a chunk that landed first would never get its flags.
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll<HTMLElement>("[data-solver]").forEach(mount);
+});
 
-// Dev preview only (src/react-solvers/index.html), which renders all 20 at once.
-// Behind its own dynamic import so the static imports it needs land in a chunk
-// nobody but that page ever downloads — importing it here directly would drag
-// every solver back into the entry.
+// Dev preview only (src/react-solvers/index.html), which renders every solver at
+// once. Behind its own dynamic import so the static imports it needs land in a
+// chunk nobody but that page ever downloads — importing it here directly would
+// drag every solver back into the entry.
 if (document.getElementById("root")) {
     void import("./dev-harness");
 }

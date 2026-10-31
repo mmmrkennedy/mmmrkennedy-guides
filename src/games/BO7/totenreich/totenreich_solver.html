@@ -7,15 +7,5 @@ description: Totenreich claw machine solver for Black Ops 7 Zombies. Mark where 
 ---
 <div class="content-container">
     <p class="solver-intro">Get every valid Uranium Rod placement for the claw machine, based on where your control rods sit.</p>
-    <div id="totenreich-solver-react"></div>
+    <div data-solver="TotenreichReactorSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountTotenreichReactorSolver("totenreich-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

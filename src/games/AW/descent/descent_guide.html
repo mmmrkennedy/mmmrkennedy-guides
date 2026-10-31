@@ -127,7 +127,7 @@ editors: [mmmrkennedy, Nomad]
             <p class="disclaimer">The order of the colours on the monitors is random, so you'll need to rearrange the colours on the helper below to properly use it.</p>
         </li>
         <li class="dummy-li">
-            <div id="simon-says-solver-react"></div>
+            <div data-solver="SimonSaysSolver" data-solver-props='{"title": "Simon Says Helper", "colours": ["#daf7f7", "#aafcff", "#f8eec5", "#ed9bf7"], "canArrange": true}'></div>
         </li>
         <li>
             Another challenge starts at the beginning of the next round. Friendly Fire is enabled across the lobby on this round. Do not down anyone through Friendly Fire or the challenge fails. In Solo, AI-controlled players will spawn in, and they <strong>will</strong> try to shoot you. Finish the round without a single Friendly Fire casualty to complete the challenge.
@@ -193,17 +193,3 @@ editors: [mmmrkennedy, Nomad]
         </li>
     </ul>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountSimonSaysSolver("simon-says-solver-react", {
-                title: "Simon Says Helper",
-                colours: ["#daf7f7", "#aafcff", "#f8eec5", "#ed9bf7"],
-                canArrange: true
-            });
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

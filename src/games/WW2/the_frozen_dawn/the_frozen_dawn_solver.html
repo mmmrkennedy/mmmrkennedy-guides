@@ -8,15 +8,5 @@ description: The Frozen Dawn (TFD) Thulian Hammer puzzle solver for WW2 Zombies.
 ---
 <div class="content-container">
     <p class="solver-intro">Four pillars rise around the 'Overlook', each with four blocks that turn when shot. Set the blocks to the directions you see in game and shoot them in the order this gives you, so every lightning bolt ends up facing the bowl.</p>
-    <div id="hammer-solver-react"></div>
+    <div data-solver="HammerSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountHammerSolver("hammer-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

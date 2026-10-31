@@ -104,7 +104,7 @@ li > ol {
  * indentation shouldn't apply to that block either, so it fills whatever the
  * list is sitting in: a solver in one spans its path panel, not the panel minus
  * a phantom marker's worth of space. Written on the item because the block
- * inside is usually a mount point (`<div id="…-solver-react">`) that CSS has no
+ * inside is usually a mount point (`<div data-solver="…">`) that CSS has no
  * stable handle on; blocks that do have one un-indent themselves instead (the
  * card-table and .path-tabs rules).
  *

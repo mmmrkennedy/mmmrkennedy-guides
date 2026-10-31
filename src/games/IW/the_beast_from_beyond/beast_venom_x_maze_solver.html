@@ -11,15 +11,5 @@ preloadImages:
 ---
 <div class="content-container">
     <p class="solver-intro">The two consoles above 'Bombstoppers' ask you to move the red square to the blue diamond past walls you cannot see. Enter the board you are looking at to get the path through it.</p>
-    <div id="beast-venomx-maze-solver-react"></div>
+    <div data-solver="BeastVenomXMazeSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountBeastVenomXMazeSolver("beast-venomx-maze-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

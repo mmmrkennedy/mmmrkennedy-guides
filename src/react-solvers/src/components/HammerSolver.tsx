@@ -83,7 +83,7 @@ function buildSolutionLines(directions: DirectionsArray): string[] {
     return lines;
 }
 
-export default function WW2HammerPuzzleSolver({ title }: { title?: string }) {
+export default function HammerSolver({ title }: { title?: string }) {
     const [directions, setDirections] = useState<DirectionsArray>([0, 0, 0, 0]);
 
     // Arrows are what the reader sees on each block; the raw 0-3 goes alongside

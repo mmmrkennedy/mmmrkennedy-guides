@@ -67,7 +67,7 @@ description: Complete Terminus Easter Egg guide for Black Ops 6. No Mo' Modi mai
 
         <li class="dummy-li">
             <h4 class="title-tier-4">Solver (Recommended)</h4>
-            <div id="beamsmasher-react"></div>
+            <div data-solver="BeamsmasherSolver"></div>
         </li>
 
         <li class="dummy-li">
@@ -568,13 +568,3 @@ description: Complete Terminus Easter Egg guide for Black Ops 6. No Mo' Modi mai
         <li>This can only be done once per match. If you save and quit, the pool balls will respawn, but you can only get the points once.</li>
     </ul>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountBeamsmasherSolver("beamsmasher-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

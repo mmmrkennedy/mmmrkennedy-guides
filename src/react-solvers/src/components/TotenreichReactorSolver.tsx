@@ -149,7 +149,7 @@ function findSolutions(grid: CellType[][]): Solution[] {
     return results;
 }
 
-export default function BO7TotenreichReactorSolver({ title }: { title?: string }) {
+export default function TotenreichReactorSolver({ title }: { title?: string }) {
     const [grid, setGrid] = useState<CellType[][]>(makeGrid);
     const [phase, setPhase] = useState<Phase>("setup");
     const [solutions, setSolutions] = useState<Solution[]>([]);

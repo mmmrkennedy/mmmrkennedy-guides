@@ -9,15 +9,5 @@ description: The Beast From Beyond (TBFB) Eight Queens solver for Infinite Warfa
 ---
 <div class="content-container">
     <p class="solver-intro">Skull 5 of the Skull Breaker quest is a chessboard in the 'Cafeteria' that starts with one Queen already placed. Enter where it sits to get where the other seven go without any of them attacking another.</p>
-    <div id="beast-eight-queens-react"></div>
+    <div data-solver="BeastGnSEightQueensSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountBeastGnSEightQueensSolver("beast-eight-queens-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

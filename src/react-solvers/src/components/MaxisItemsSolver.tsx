@@ -34,7 +34,7 @@ function calculateCode(picked: number[]): CalcResult {
     return { kind: "ok", code: files.map((f) => f.file_number).join("") };
 }
 
-export default function BO6MaxisItemsSolver({ title }: { title?: string }) {
+export default function MaxisItemsSolver({ title }: { title?: string }) {
     // picked[i] = file_number assigned to slot i (the i-th in-game appearance).
     // Length grows from 0 to 4 as user clicks; clicking a slot removes that entry.
     const [picked, setPicked] = useState<number[]>([]);

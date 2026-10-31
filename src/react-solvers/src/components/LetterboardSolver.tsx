@@ -48,7 +48,7 @@ function calculateCode(word: Word | null, boardId: BoardId | null): CalcResult {
     return { kind: "ok", code: digits };
 }
 
-export default function BO6LetterboardSolver({ title }: { title?: string }) {
+export default function LetterboardSolver({ title }: { title?: string }) {
     const [word, setWord] = useState<Word | null>(null);
     const [boardId, setBoardId] = useState<BoardId | null>(null);
 

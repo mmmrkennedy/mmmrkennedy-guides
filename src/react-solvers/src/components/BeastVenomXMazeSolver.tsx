@@ -136,7 +136,7 @@ function findSolPath(startCoords: [number, number], endCoords: [number, number])
     return solution ? solution.path : null;
 }
 
-export default function IWBeastVenomXMazeSolver({ title }: { title?: string }) {
+export default function BeastVenomXMazeSolver({ title }: { title?: string }) {
     const [draggables, setDraggables] = useState<DraggableState[]>([
         { type: "start", position: null },
         { type: "end", position: null },

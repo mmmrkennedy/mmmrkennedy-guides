@@ -2022,7 +2022,7 @@ main:has(.solver-only-page) .related-maps {
 /* ------------------------------------------------------------
    Simon says — colour pads and the order they were tapped.
    Generic: the palette and the number of pads come from the
-   page's mount call, so nothing here may assume either. Both
+   page's solver props, so nothing here may assume either. Both
    rows wrap, and --pad-color / --pad-ink are set per element
    by the component.
    ------------------------------------------------------------ */

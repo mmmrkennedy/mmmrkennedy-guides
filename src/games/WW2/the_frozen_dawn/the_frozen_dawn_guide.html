@@ -131,7 +131,7 @@ description: Complete The Frozen Dawn (TFD) guide for WW2 Zombies. Kingfall main
         </li>
 
         <li class="dummy-li dummy-li-no-indent">
-            <div id="hammer-solver-react"></div>
+            <div data-solver="HammerSolver"></div>
         </li>
 
         <li>
@@ -972,13 +972,3 @@ description: Complete The Frozen Dawn (TFD) guide for WW2 Zombies. Kingfall main
         </tbody>
     </table>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountHammerSolver("hammer-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

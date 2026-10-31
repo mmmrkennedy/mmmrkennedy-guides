@@ -172,7 +172,7 @@ function ElementList({ items }: { items: ElementObj[] }) {
     );
 }
 
-export default function BO6PeriodicTableSolver({ title }: { title?: string }) {
+export default function PeriodicTableSolver({ title }: { title?: string }) {
     const [input, setInput] = useState<string>("");
 
     useSolverReport("PeriodicTableSolver", () => ({ "Element letters typed": input }));

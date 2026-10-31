@@ -44,7 +44,7 @@ function calculate(slots: Slots): CalcResult {
     return { kind: "ok", code: `${pad(f1)} – ${pad(f2)} – ${pad(f3)}` };
 }
 
-export default function BO6BeamsmasherMathSolver({ title }: { title?: string }) {
+export default function BeamsmasherSolver({ title }: { title?: string }) {
     const [slots, setSlots] = useState<Slots>({ X: null, Y: null, Z: null });
 
     // Null is a genuinely different input from any symbol — it means the reader

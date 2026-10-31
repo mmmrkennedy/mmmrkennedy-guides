@@ -560,7 +560,7 @@ description: Complete Shaolin Shuffle Easter Egg guide for Infinite Warfare Zomb
         </li>
 
         <li class="dummy-li">
-            <div id="main-ee-word-filter-react"></div>
+            <div data-solver="ShaolinWordFilter"></div>
         </li>
 
         <li>
@@ -858,7 +858,7 @@ description: Complete Shaolin Shuffle Easter Egg guide for Infinite Warfare Zomb
                 </li>
             </ul>
 
-            <div id="mahjong-solver-react"></div>
+            <div data-solver="MahjongSolver"></div>
         </li>
 
         <li>Once the tiles are placed correctly, fireworks will shoot from behind the tiles and the completion sound will play.</li>
@@ -1154,14 +1154,3 @@ description: Complete Shaolin Shuffle Easter Egg guide for Infinite Warfare Zomb
 </div>
 
 <script src="/js/timezone_conversion.js?v={{ site.buildVersion }}" defer></script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountMahjongSolver("mahjong-solver-react");
-            window.ZombiesSolvers.mountShaolinWordFilter("main-ee-word-filter-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

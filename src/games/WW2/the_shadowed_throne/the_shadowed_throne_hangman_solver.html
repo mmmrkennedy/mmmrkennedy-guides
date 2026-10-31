@@ -8,15 +8,5 @@ description: The Shadowed Throne (TST) Cabaret hangman solver for WW2 Zombies. E
 ---
 <div class="content-container">
     <p class="solver-intro">The 'Cabaret' sign on 'Main Street' hides one of seven words, each with its own reward. Enter the letters you have revealed to see which words still fit.</p>
-    <div id="hangman-solver-react"></div>
+    <div data-solver="HangmanSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountHangmanSolver("hangman-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

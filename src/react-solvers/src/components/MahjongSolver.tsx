@@ -77,7 +77,7 @@ function TileGroup({ label, values, variant }: { label: string; values: number[]
     );
 }
 
-export default function IWMahjongSolver({ title }: { title?: string }) {
+export default function MahjongSolver({ title }: { title?: string }) {
     const [selectedValues, setSelectedValues] = useState<number[]>([]);
 
     useSolverReport("MahjongSolver", () => ({

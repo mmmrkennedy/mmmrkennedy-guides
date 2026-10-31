@@ -755,7 +755,7 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
                         </li>
 
                         <li class="dummy-li dummy-li-no-indent">
-                            <div id="chemical-solver-react"></div>
+                            <div data-solver="ChemicalStepSolver"></div>
                         </li>
 
                         <li>The Solver will return the chemicals and numbers to create your required chemical.</li>
@@ -1146,7 +1146,7 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
         </li>
 
         <li class="dummy-li dummy-li-no-indent">
-            <div id="gns-skull4-solver-react"></div>
+            <div data-solver="AttackGnSSkull4Solver"></div>
 
             <div class="solver-with-button" data-bool-quick-link="false" data-reveal-label="Click to show How to Solve Puzzle">
                     <ol>
@@ -1369,14 +1369,3 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
         </li>
     </ol>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountAttackGnSSkull4Solver("gns-skull4-solver-react");
-            window.ZombiesSolvers.mountChemicalStepSolver("chemical-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

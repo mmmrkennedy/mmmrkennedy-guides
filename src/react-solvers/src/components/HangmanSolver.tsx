@@ -39,7 +39,7 @@ function suggestWords(revealedSequence: string, guessedLetters: string): string[
     });
 }
 
-export default function WW2HangmanSolver({ title }: { title?: string }) {
+export default function HangmanSolver({ title }: { title?: string }) {
     const [revealedLetters, setRevealedLetters] = useState<string>("");
     const [guessedLetters, setGuessedLetters] = useState<string>("");
 

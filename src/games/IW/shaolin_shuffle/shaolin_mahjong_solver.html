@@ -13,15 +13,5 @@ preloadImages:
 ---
 <div class="content-container">
     <p class="solver-intro">Skull 2 of the Skullbuster quest puts a row of Mahjong tiles on the Disco roof, with tiles missing. Enter every tile you find, including the decoys, to get a winning hand of four sets of three and a pair and see which tiles to leave out.</p>
-    <div id="mahjong-solver-react"></div>
+    <div data-solver="MahjongSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountMahjongSolver("mahjong-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

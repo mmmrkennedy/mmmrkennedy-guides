@@ -10,13 +10,13 @@ import { useSolverReport } from "../solver-report";
  * put each flash the moment it happens, and it reads the order back.
  *
  * Nothing here is map-specific on purpose. A page supplies the palette in its
- * mount call and gets one pad per colour:
+ * data-solver-props and gets one pad per colour:
  *
- *   window.ZombiesSolvers.mountSimonSaysSolver("simon-says-solver-react", {
- *       title: "Simon Says Solver",
- *       colours: ["#e74c3c", "#2ecc71", "#5dade2", "#f1c40f"],
- *       names: ["Bar", "Atrium", "Kitchen", "Vault"],
- *   });
+ *   <div data-solver="SimonSaysSolver" data-solver-props='{
+ *       "title": "Simon Says Solver",
+ *       "colours": ["#e74c3c", "#2ecc71", "#5dade2", "#f1c40f"],
+ *       "names": ["Bar", "Atrium", "Kitchen", "Vault"]
+ *   }'></div>
  *
  * `names` is optional and lines up with `colours` by position. Without it a pad
  * is named after its own colour, which is right when the reader is looking at
@@ -31,7 +31,7 @@ import { useSolverReport } from "../solver-report";
  * thing that ends it, and Undo is there for the mistimed tap.
  *
  * The pads can also be dragged into the order they appear in game, which is
- * often randomised per game and cannot be baked into the mount call. That
+ * often randomised per game and cannot be baked into the page. That
  * arrangement is deliberately temporary: it lives in component state, is gone
  * on reload, and is purely where a pad sits. Which pad a tap recorded is held
  * as the pad's own index, so rearranging never rewrites a recorded sequence.

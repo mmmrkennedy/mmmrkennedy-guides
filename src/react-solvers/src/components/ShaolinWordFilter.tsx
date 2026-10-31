@@ -145,7 +145,7 @@ function sortGroupFirst(matchingWords: string[], group: string | null): string[]
     return [...inGroup, ...matchingWords.filter((word) => GROUP_OF.get(word) !== group)];
 }
 
-export default function IWMainQuestWordFilter({ title }: { title?: string }) {
+export default function ShaolinWordFilter({ title }: { title?: string }) {
     const [inputString, setInputString] = useState<string>("");
     const [group, setGroup] = useState<string | null>(null);
 

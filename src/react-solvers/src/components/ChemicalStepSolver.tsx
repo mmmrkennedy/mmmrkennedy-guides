@@ -237,7 +237,7 @@ function parseNum(raw: string): number | null {
     return Number(trimmed);
 }
 
-export default function IWChemicalStepSolverV2({ title }: { title?: string }) {
+export default function ChemicalStepSolver({ title }: { title?: string }) {
     const [mRaw, setMRaw] = useState("");
     const [tvRaw, setTvRaw] = useState("");
     const [oRaw, setORaw] = useState("");

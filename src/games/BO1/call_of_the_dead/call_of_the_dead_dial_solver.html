@@ -8,15 +8,5 @@ description: Call of the Dead (COTD) lighthouse dials solver for Black Ops Zombi
 ---
 <div class="content-container">
     <p class="solver-intro">A coloured dial sits on each of the four Lighthouse floors, and turning one also turns the dials above and below it. Enter the numbers you have to get the fewest turns to Yellow 2, Orange 7, Blue 4, Purple 6.</p>
-    <div id="dial-solver-react"></div>
+    <div data-solver="DialSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountDialSolver("dial-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>

@@ -8,15 +8,5 @@ description: The Shadowed Throne (TST) rotating statues solver for WW2 Zombies. 
 ---
 <div class="content-container">
     <p class="solver-intro">'Barbarossa's Refuge' has four walls of statues, and shooting one also rotates its neighbours. Enter a wall as you see it to get the shots that leave every statue on it facing forward.</p>
-    <div id="statue-solver-react"></div>
+    <div data-solver="StatueSolver"></div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.ZombiesSolvers) {
-            window.ZombiesSolvers.mountStatueSolver("statue-solver-react");
-        } else {
-            console.error("ZombiesSolvers not loaded!");
-        }
-    });
-</script>
