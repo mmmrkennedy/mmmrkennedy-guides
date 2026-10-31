@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // A guide is a stack of `.content-container[id]`, but the granularity that
     // matters is often finer: the four bows all live inside one container, and
     // so do the six steps of a main quest, each headed by a
-    // `p.title-tier-2[id]`. Collapsing those into their container would throw
+    // `h3.title-tier-2[id]`. Collapsing those into their container would throw
     // away the most useful thing here — which STEP readers linger on. So both
     // are tracked, in document order, and a container only holds the span
     // between its own heading and its first sub-heading.

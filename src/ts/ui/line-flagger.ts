@@ -127,7 +127,7 @@ const CELL_ON_SEL =
  * introduces a table swallowed the entire table's text into its hash and quote,
  * and parked its flag below the table.
  */
-const NESTED_BLOCK = "ul, ol, table, p, .table-scroll";
+const NESTED_BLOCK = "ul, ol, table, p, h3, h4, .table-scroll";
 /** Same set, matched only as a direct child. */
 const NESTED_BLOCK_CHILD = NESTED_BLOCK.split(", ")
     .map((sel) => ":scope > " + sel)
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.body.hasAttribute("data-no-flags")) return;
 
     const lines = document.querySelectorAll<HTMLElement>(
-        ".content-container p, .content-container li:not(.dummy-li)"
+        ".content-container p, .content-container :is(.title-tier-2, .title-tier-3, .title-tier-4), .content-container li:not(.dummy-li)"
     );
 
     // A solver page can have NO flaggable lines of its own — on

@@ -56,7 +56,7 @@ const CELL_ON_SEL = '[aria-pressed="true"], [aria-checked="true"], .is-on, .is-s
  * introduces a table swallowed the entire table's text into its hash and quote,
  * and parked its flag below the table.
  */
-const NESTED_BLOCK = "ul, ol, table, p, .table-scroll";
+const NESTED_BLOCK = "ul, ol, table, p, h3, h4, .table-scroll";
 /** Same set, matched only as a direct child. */
 const NESTED_BLOCK_CHILD = NESTED_BLOCK.split(", ")
     .map((sel) => ":scope > " + sel)
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Pages can opt out (e.g. the home/index page) via <body data-no-flags>.
     if (document.body.hasAttribute("data-no-flags"))
         return;
-    const lines = document.querySelectorAll(".content-container p, .content-container li:not(.dummy-li)");
+    const lines = document.querySelectorAll(".content-container p, .content-container :is(.title-tier-2, .title-tier-3, .title-tier-4), .content-container li:not(.dummy-li)");
     // A solver page can have NO flaggable lines of its own — on
     // beamsmasher_solver every paragraph belongs to the solver. Prerendered they
     // are already here, but without an SSR build (plain `eleventy --serve`) the

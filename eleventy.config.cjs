@@ -471,7 +471,7 @@ function buildNavStructure(document) {
         });
 
         // Find sub-items within this container
-        const subItems = container.querySelectorAll("p.title-tier-2, p.title-tier-3, p.title-tier-4");
+        const subItems = container.querySelectorAll(".title-tier-2, .title-tier-3, .title-tier-4");
 
         for (const [index, subItem] of subItems.entries()) {
             if (shouldExcludeFromNav(subItem)) continue;
