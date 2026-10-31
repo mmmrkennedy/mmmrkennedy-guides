@@ -7,11 +7,10 @@
       "DOM.Iterable"
     ],
     "module": "ES2020",
-    "outDir": "src/js",
-    "rootDir": "src/ts",
+    "moduleResolution": "bundler",
+    "noEmit": true,
     "strict": true,
-    "skipLibCheck": true,
-    "noEmitOnError": true
+    "skipLibCheck": true
   },
   "include": [
     "src/ts"

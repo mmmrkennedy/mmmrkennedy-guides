@@ -1686,7 +1686,6 @@ module.exports = function(eleventyConfig) {
 
     // Passthrough copy static assets (non-image)
     eleventyConfig.addPassthroughCopy("src/css/*");
-    eleventyConfig.addPassthroughCopy("src/js");
     eleventyConfig.addPassthroughCopy("src/favicon");
     eleventyConfig.addPassthroughCopy("src/font");
     // NOT src/react-solvers — Vite already builds that directory into

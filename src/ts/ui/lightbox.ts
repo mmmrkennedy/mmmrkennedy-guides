@@ -1,3 +1,5 @@
+import { log } from "../core/logger";
+
 /**
  * Lightbox system for images, video, and audio
  * Handles media display, navigation, and keyboard controls
@@ -392,7 +394,7 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
 
         // Start playing the video (autoplay may be blocked by the browser)
         lightboxVideo.play().catch((e) => {
-            window.Log("warn", "Auto-play prevented:", e);
+            log("warn", "Auto-play prevented:", e);
         });
     } else if (mediaType === "audio") {
         // The player is revealed straight away and shows its own buffering
@@ -413,7 +415,7 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
 
         // The opening click is a user gesture, so autoplay with sound is allowed
         lightboxAudio.play().catch((e) => {
-            window.Log("warn", "Auto-play prevented:", e);
+            log("warn", "Auto-play prevented:", e);
         });
     }
 }
@@ -493,7 +495,7 @@ function initLightbox(): void {
     const closeBtn = document.querySelector<HTMLElement>(".close-lightbox");
 
     if (!lightbox || !closeBtn) {
-        window.Log("warn", "Lightbox elements not found");
+        log("warn", "Lightbox elements not found");
         return;
     }
 
@@ -757,7 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function loadImage(imgUrl: string): void {
         if (imageCache.has(imgUrl)) return;
         const img = new Image();
-        img.onerror = () => window.Log("error", "Failed to load image:", imgUrl);
+        img.onerror = () => log("error", "Failed to load image:", imgUrl);
         img.src = imgUrl;
         imageCache.set(imgUrl, img);
     }

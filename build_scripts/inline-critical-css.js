@@ -52,6 +52,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import postcss from "postcss";
 import { JSDOM } from "jsdom";
+import { minify } from "terser";
+import ts from "typescript";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, "..", "dist");
@@ -90,6 +92,8 @@ const SKIP_PAGES = [/^react-solvers[/\\]/];
 const FEATURE_GATES = [
     { disabled: (body) => body.hasAttribute("data-no-flags"), scripts: [/ui[/\\]line-flagger\.js$/] },
     { disabled: (body) => body.dataset.skipToc === "true", scripts: [/content[/\\]quick-links\.js$/] },
+    // No early return to point at: guide-controls.ts just finds nothing to wire up.
+    { disabled: (body) => !body.querySelector(".path-tabs, .button-activated-div"), scripts: [/content[/\\]guide-controls\.js$/] },
 ];
 
 function findFiles(dir, ext) {
@@ -118,11 +122,11 @@ const SAFELIST = ["ads-full", "ads-hidden", "ads-minimal"];
  * queries with — which is tight enough to be worth purging against and still
  * covers everything added after page load.
  *
- * The React solver bundle is included: it lives outside dist/js and its
+ * The React solver bundle is included: it lives outside src/ts and its
  * components use core classes (btn, table-scroll) that no static markup carries
  * until the solver has rendered.
  */
-function harvestJsTokens() {
+async function harvestJsTokens() {
     const byFile = new Map([["(safelist)", new Set(SAFELIST)]]);
     const classish = /^-?[a-zA-Z_][a-zA-Z0-9_-]*$/;
 
@@ -134,13 +138,29 @@ function harvestJsTokens() {
         }
     };
 
-    // The bundles are concatenations of the per-file sources sitting beside
-    // them, so reading both would attribute every class to the bundle as well
-    // and leave FEATURE_GATES nothing to switch off.
+    // Reads src/ts rather than the bundles in dist/js. FEATURE_GATES switches off
+    // one script's classes per page, so tokens have to be attributed per script,
+    // and a bundle can't say which script a class came from.
+    const tsRoot = path.join(distDir, "..", "src", "ts");
+    // Minified because the patterns below were tuned against minified code.
+    const scripts = await Promise.all(
+        findFiles(tsRoot, ".ts")
+            .filter((f) => !f.endsWith(".d.ts"))
+            .map(async (f) => {
+                const js = ts.transpileModule(fs.readFileSync(f, "utf8"), {
+                    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ES2020 },
+                }).outputText;
+                const { code } = await minify(js, { compress: true, mangle: true });
+                return { key: path.join("js", path.relative(tsRoot, f)).replace(/\.ts$/, ".js"), code };
+            }),
+    );
     const sources = [
-        ...findFiles(path.join(distDir, "js"), ".js").filter((f) => !/[/\\]bundle\./.test(f)),
+        ...scripts,
         ...(fs.existsSync(path.join(distDir, "react-solvers"))
-            ? findFiles(path.join(distDir, "react-solvers"), ".js")
+            ? findFiles(path.join(distDir, "react-solvers"), ".js").map((f) => ({
+                  key: path.relative(distDir, f),
+                  code: fs.readFileSync(f, "utf8"),
+              }))
             : []),
     ];
 
@@ -155,8 +175,7 @@ function harvestJsTokens() {
     // Any string that reads as a CSS selector, i.e. what the JS queries for.
     const selectorish = /["'`]([^"'`\n]*[.#][a-zA-Z_-][^"'`\n]*)["'`]/g;
 
-    for (const file of sources) {
-        const code = fs.readFileSync(file, "utf8");
+    for (const { key, code } of sources) {
         tokens = new Set();
         let m;
 
@@ -170,7 +189,7 @@ function harvestJsTokens() {
             for (const t of selectorTokens(m[1])) tokens.add(t);
         }
 
-        byFile.set(path.relative(distDir, file).replace(/\\/g, "/"), tokens);
+        byFile.set(key.replace(/\\/g, "/"), tokens);
     }
 
     return byFile;
@@ -224,7 +243,7 @@ function purge(css, tokens) {
     return ast.toString();
 }
 
-const jsTokens = harvestJsTokens();
+const jsTokens = await harvestJsTokens();
 
 const rows = [];
 let inlinedTotal = 0;

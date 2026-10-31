@@ -11,30 +11,8 @@ const __dirname = path.dirname(__filename);
 const distDir = path.join(__dirname, "..", "dist");
 const BUNDLE = process.env.BUNDLE === "true";
 
-// Core site JS (nav, lightbox, legend, scroll, content, etc.), loaded `defer`.
-const JS_CORE_ORDER = [
-    // First: defines window.Log, which any script below may call.
-    "core/logger.js",
-    "navigation/scroll-manager.js",
-    "content/guide-controls.js",
-    "ui/legend.js",
-    "content/quick-links.js",
-    "ui/lightbox.js",
-    "ui/footer.js",
-    "ui/line-flagger.js",
-    "ui/reading.js",
-    "ui/trending.js",
-    "ui/stats.js",
-    "ui/return-pill.js",
-];
-
-// Ads, split into its own bundle, loaded `async` and decoupled from core so a
-// slow/blocked/failed ad payload never delays core interactivity. ads.js
-// self-bootstraps (see ads.ts), so it needs no ordering relative to core.
-const JS_ADS_ORDER = ["ui/ads.js"];
-
-// Production assets that pages load individually rather than through a bundle,
-// so they need the same content-addressing treatment (see below). Kept explicit
+// Production assets that pages load individually rather than through the CSS
+// bundle, so they need the same content-addressing treatment (see below). Kept explicit
 // rather than derived: the point is that adding a page-level <script>/<link>
 // without adding it here is a deliberate choice, not an accident.
 //   - Solvers.css   — 18 solver/guide pages, gated behind `useSolverCSS`
@@ -42,6 +20,7 @@ const JS_ADS_ORDER = ["ui/ads.js"];
 //   - stats.css     — the stats page only, gated behind `statsPage`
 //   - index-filter, birthday — index, plus index-filter on /solvers, so not worth carrying in the core bundle
 //   - timezone_conversion   — one guide (shaolin_shuffle)
+//   - core, ads — every page, built by build-scripts.mjs
 // Deliberately absent: css/styles.css. It is the bundler's input, and the only
 // page referencing it directly is the react-solvers dev harness.
 const STANDALONE_ASSETS = [
@@ -52,6 +31,8 @@ const STANDALONE_ASSETS = [
     "js/ui/index-filter.js",
     "js/ui/birthday.js",
     "js/timezone_conversion.js",
+    "js/core.js",
+    "js/ads.js",
 ];
 
 // Every CSS/JS file a production page references is content-addressed: the hash
@@ -178,14 +159,6 @@ async function bundleCSS() {
     return writeBundle("css", "bundle.min.css", output.styles);
 }
 
-async function bundleJSFile(order, plainName) {
-    const parts = order.map((f) => `(function(){\n${fs.readFileSync(path.join(distDir, "js", f), "utf8")}\n})();`);
-    const result = await terserMinify(parts.join("\n"), { compress: true, mangle: true });
-    if (!result.code) throw new Error(`bundling ${plainName}: terser returned no output`);
-
-    return writeBundle("js", plainName, result.code);
-}
-
 // Shared shape with hashStandaloneAsset, so rewriteAssetRefs treats bundles and
 // individually-loaded files identically.
 function writeBundle(dir, plainName, code) {
@@ -275,16 +248,7 @@ await Promise.all([
 ]);
 
 if (BUNDLE) {
-    // Order matters: bundling reads the per-file JS out of dist/js, so the
-    // standalone renames have to come after. (None of STANDALONE_ASSETS is in a
-    // bundle today, but the ordering keeps that from becoming a trap.)
-    const bundles = await Promise.all([
-        bundleCSS(),
-        bundleJSFile(JS_CORE_ORDER, "bundle.core.min.js"),
-        bundleJSFile(JS_ADS_ORDER, "bundle.ads.min.js"),
-    ]);
-
-    const assets = [...bundles, ...STANDALONE_ASSETS.map(hashStandaloneAsset)];
+    const assets = [await bundleCSS(), ...STANDALONE_ASSETS.map(hashStandaloneAsset)];
     const hits = rewriteAssetRefs(assets);
     const pruned = pruneStale(assets);
 

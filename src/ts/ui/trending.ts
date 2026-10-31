@@ -1,3 +1,5 @@
+import { log } from "../core/logger";
+
 /**
  * Trending indicator
  * ------------------
@@ -49,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch((err) => {
             // Endpoint unreachable (e.g. eleventy dev server) — no indicator, no noise.
-            window.Log("warn", "[trending] unavailable:", err);
+            log("warn", "[trending] unavailable:", err);
         });
 
     function decorate(anchor: HTMLAnchorElement, label: string): void {

@@ -1,3 +1,5 @@
+import { log } from "../core/logger";
+
 /**
  * Line flagger
  * ------------
@@ -342,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             activeSnapshot = captureSolver(root, name);
         } catch (err) {
-            window.Log("warn", "[line-flagger] solver capture failed:", err);
+            log("warn", "[line-flagger] solver capture failed:", err);
             activeSnapshot = { v: 2, solver: name, state: {} };
         }
         buildReasons(SOLVER_REASONS);
@@ -451,12 +453,12 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             if (isLocalHost()) {
                 // No Functions on the eleventy dev server: behave like the demo.
-                window.Log("warn", "[line-flagger] no backend on localhost; would POST", payload);
+                log("warn", "[line-flagger] no backend on localhost; would POST", payload);
                 markSent();
                 closePop();
                 showToast("🚩 Thanks, flagged for review (local demo)");
             } else {
-                window.Log("warn", "Flag submission failed:", err);
+                log("warn", "Flag submission failed:", err);
                 sending = false;
                 sendBtn.textContent = "Send";
                 sendBtn.disabled = false;
@@ -643,7 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch((err) => {
             // Endpoint unreachable (e.g. eleventy dev server) — no notes, no noise.
-            window.Log("warn", "[line-flagger] buggy-note check skipped:", err);
+            log("warn", "[line-flagger] buggy-note check skipped:", err);
         });
 
     /** Insert the caution note: inside an <li> (as first child) or before a <p>. */

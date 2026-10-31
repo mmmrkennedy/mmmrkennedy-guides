@@ -1,3 +1,5 @@
+import { log } from "../core/logger";
+
 /**
  * Relative time
  * -------------
@@ -102,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
             target.textContent = formatCount(data.count) + " " + noun;
         })
         .catch((err) => {
-            window.Log("warn", "View counter unavailable:", err);
+            log("warn", "View counter unavailable:", err);
         });
 
     /** True on the local dev server, where no /api/views Pages Function exists. */

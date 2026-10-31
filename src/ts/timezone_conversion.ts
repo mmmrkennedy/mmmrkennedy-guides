@@ -1,3 +1,5 @@
+import { log } from "./core/logger";
+
 function getEquivalentTimesInTimezone(timezone? :string): { equivalentTo12AMEST: string, equivalentTo1AMEST: string } {
     const isDST: number = isESTInDST();
 
@@ -53,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const timezone_element: HTMLElement | null = document.getElementById("timezone_conversion");
 
     if (!timezone_element) {
-        window.Log("error", "Timezone element not found!");
+        log("error", "Timezone element not found!");
         return;
     }
 

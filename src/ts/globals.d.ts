@@ -6,12 +6,6 @@
  * globals.
  */
 
-/** Console methods `Log` can dispatch to. */
-type LogLevel = "log" | "info" | "warn" | "error" | "debug";
-
-/** Levels as written at the call site — "warn" and "Warn" are both accepted. */
-type LogLevelInput = LogLevel | Capitalize<LogLevel>;
-
 interface AdsApi {
     initAds(): void;
     makeAdsRed(): void;
@@ -26,9 +20,6 @@ interface Navigator {
 }
 
 interface Window {
-    /** Dev-only console output; silent in production. See core/logger.ts. */
-    Log: (level: LogLevelInput, ...args: unknown[]) => void;
-
     /**
      * Set by the solver bundle (react-solvers/src/main.tsx) so ui/line-flagger.ts
      * can read a mounted solver's inputs when someone reports it. Optional: it

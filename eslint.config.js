@@ -8,7 +8,6 @@ export default [
     {
         ignores: [
             "dist/**",
-            "src/js/**",
             ".solver-ssr/**",
             "dumped_game_scripts/**",
             ".variants/**",

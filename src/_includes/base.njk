@@ -455,39 +455,15 @@
 </div>
 
 
-{%- if site.bundled %}
-<script src="/js/bundle.core.min.js?v={{ site.buildVersion }}" defer></script>
+<script src="/js/core.js?v={{ site.buildVersion }}" defer></script>
 {%- if useIndexNav %}
 <script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
 {%- if homePage %}
 <script src="/js/ui/birthday.js?v={{ site.buildVersion }}" defer></script>
-{%- endif %}
-<script src="/js/bundle.ads.min.js?v={{ site.buildVersion }}" async></script>
-{%- else %}
-<script src="/js/core/logger.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/navigation/scroll-manager.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/content/guide-controls.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/legend.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/content/quick-links.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/lightbox.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/footer.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/line-flagger.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/reading.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/return-pill.js?v={{ site.buildVersion }}" defer></script>
-{%- if useIndexNav %}
-<script src="/js/ui/index-filter.js?v={{ site.buildVersion }}" defer></script>
-{%- endif %}
-{%- if homePage %}
-<script src="/js/ui/trending.js?v={{ site.buildVersion }}" defer></script>
-<script src="/js/ui/birthday.js?v={{ site.buildVersion }}" defer></script>
-{%- endif %}
-{%- if statsPage %}
-<script src="/js/ui/stats.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
 <!-- Ads load as an independent async island (ads.ts self-bootstraps) -->
-<script src="/js/ui/ads.js?v={{ site.buildVersion }}" async></script>
-{%- endif %}
+<script src="/js/ads.js?v={{ site.buildVersion }}" async></script>
 
 {%- if useReactSolvers %}
     <!-- REACT_BUNDLE_PLACEHOLDER -->
