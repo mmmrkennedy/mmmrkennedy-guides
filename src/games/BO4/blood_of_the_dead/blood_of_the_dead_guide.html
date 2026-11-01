@@ -8,48 +8,52 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
 ---
 
 <style>
+    .bird-highlight-orange {
+        color: orange;
+    }
+
+    .bird-highlight-green {
+        color: lawngreen;
+    }
+
     details.spacing {
-        margin: var(--space-lg) 0;
+        margin: var(--space-md) 0;
         border: 1px solid var(--color-border-medium);
-        border-left: 3px solid var(--color-tier-1);
         border-radius: 4px;
         background-color: var(--color-bg-secondary);
-        padding: 0;
-        overflow: hidden;
     }
 
     details.spacing > summary {
-        cursor: pointer;
+        display: flex;
+        gap: var(--space-sm);
         padding: var(--space-sm) var(--space-md);
         color: var(--color-tier-1);
-        font-size: var(--font-size-md);
         font-weight: 600;
         line-height: var(--line-height-normal);
         list-style: none;
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
+        cursor: pointer;
         user-select: none;
-        transition: background-color 0.15s ease;
     }
 
     details.spacing > summary::-webkit-details-marker {
         display: none;
     }
 
+    /* Sits on the first line when the label wraps on a phone. The nudges keep the
+       point centred as it turns, which a plain rotate does not. */
     details.spacing > summary::before {
         content: "";
         flex-shrink: 0;
-        width: 0.625rem;
-        height: 0.625rem;
-        border-right: 2px solid var(--color-tier-1);
-        border-bottom: 2px solid var(--color-tier-1);
-        transform: rotate(-45deg);
-        transition: transform 0.2s ease;
+        width: 0.5rem;
+        height: 0.5rem;
+        margin-top: calc((1lh - 0.5rem) / 2);
+        border-right: 2px solid currentcolor;
+        border-bottom: 2px solid currentcolor;
+        transform: translateX(-1px) rotate(-45deg);
     }
 
     details.spacing[open] > summary::before {
-        transform: rotate(45deg);
+        transform: translateY(-1px) rotate(45deg);
     }
 
     details.spacing > summary:hover {
@@ -65,14 +69,29 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
         border-bottom: 1px solid var(--color-border-subtle);
     }
 
-    details.spacing > :not(summary) {
-        padding: 0 var(--space-md);
+    details.spacing > ol {
+        margin: 0;
+        padding: var(--space-md);
+        padding-inline-start: 2.5rem;
     }
 
-    details.spacing > ol,
-    details.spacing > ul {
-        margin: var(--space-sm) 0;
-        padding-inline-start: var(--space-xl);
+    /* The areas head their groups: tight to the locations under them, with the gap
+       falling between groups, and starting at the numbers' edge rather than the text's. */
+    details.spacing > ol > li {
+        margin: 0 0 var(--space-xs);
+    }
+
+    details.spacing > ol > .dummy-li {
+        margin: var(--space-lg) 0 var(--space-xs) calc(var(--space-md) - 2.5rem);
+    }
+
+    details.spacing > ol > .dummy-li:first-child {
+        margin-top: 0;
+    }
+
+    details.spacing > ol > .dummy-li p {
+        margin: 0;
+        font-weight: 600;
     }
 </style>
 
