@@ -121,15 +121,8 @@ td .gfb-flag {
 
 /* Popover */
 
-/* components.css appends a non-breaking space after every <label> so guide-content
-   labels keep a gap before their control, and exempts `.solver-container label`
-   from it. This popover is neither: it's appended to <body>, so it inherited the
-   nbsp, and because the label it used to have was a flex column the ::after
-   became a third flex ITEM, adding a phantom row under the field.
-
-   The popover has no <label> left, so this is a guard rather than a fix. It stays
-   because the trap is invisible from in here: nothing about writing a <label>
-   suggests a global rule will inject content into it. */
+/* components.css appends a non-breaking space after every <label>. The popover has
+   no <label> today, but this guards against one picking that up. */
 .gfb-pop label::after {
     content: none;
 }

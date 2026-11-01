@@ -35,20 +35,10 @@ const STANDALONE_ASSETS = [
     "js/ads.js",
 ];
 
-// Every CSS/JS file a production page references is content-addressed: the hash
-// of the bytes goes into the filename, so two different payloads can never share
-// a URL.
-//
-// This replaces `bundle.min.css?v=<build timestamp>`, which minted a fresh URL
-// each build but kept the path constant. On 2026-07-29 that let a bad edge entry
-// stick: a request landing during deploy propagation was answered with the
-// *previous* deployment's bytes under the *new* ?v= value, and /*.css in
-// _headers pinned that pairing for its full 30-day max-age. Readers got new HTML
-// with month-old CSS while the origin file was correct the whole time, so
-// nothing in the build log hinted at it.
-//
-// With the hash in the name that cannot recur: changed content means a filename
-// no cache has ever seen, so there is no entry left to go stale.
+// Every CSS/JS file a production page references has a hash of its bytes in the
+// filename, so two different payloads can never share a URL. A ?v= timestamp can't
+// promise that: during deploy propagation an edge can cache old bytes under the new
+// value, and _headers then pins that pairing for 30 days.
 const HASH_LEN = 8;
 
 function contentHash(code) {

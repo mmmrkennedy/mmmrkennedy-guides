@@ -21,29 +21,15 @@ import { log } from "../core/logger";
  *
  * SOLVER FLAGS
  * ------------
- * A solver gets a second, always-visible affordance instead of a per-line ⚑,
- * because the thing being reported is not any sentence — it's the answer, and
- * the answer is a function of inputs that no line quote captures. ("The solver
- * was wrong", on the venom box solver, is the report this exists to make
- * actionable.) Submitting one attaches a snapshot of the reader's INPUTS.
+ * A solver gets an always-visible report button instead of a per-line ⚑. It
+ * attaches a snapshot of the reader's inputs only: solvers are deterministic, so
+ * the answer can be recomputed from them.
  *
- * Inputs only, and that is the whole design. A solver is deterministic: the same
- * inputs always produce the same answer, so recording the answer records nothing
- * — it can be recomputed at will by feeding the inputs back in. What cannot be
- * recovered after the fact is what the reader actually entered, so that is what
- * gets stored, exactly as they entered it.
- *
- * The inputs come from the solver itself, via window.SolverReport (see
- * react-solvers/src/solver-report.tsx), because most of them are not in the page
- * to be read: the reactor grid, the queens board and the venom maze all keep
- * their state in the component and paint only the result. All 19 publish their
- * inputs, so the DOM scrape below is only a fallback for a solver that has not —
- * a new one, say. It recovers labelled controls and little else, which is why it
- * is second choice and why a snapshot that used it says so (`scraped: true`).
- *
- * Scope is the solver root and nothing else: no page-wide scrape, so a snapshot
- * cannot pick up anything the reader didn't put into the solver itself. They're
- * shown the whole payload in the popover before it sends.
+ * Inputs come from the solver via window.SolverReport (react-solvers/src/
+ * solver-report.tsx), because many solvers keep them in component state. The DOM
+ * scrape is a fallback for a solver that doesn't publish them, and marks itself
+ * `scraped: true`. Nothing outside the solver root is captured, and the reader sees
+ * the whole payload before it sends.
  */
 type FeedbackReason = "unclear" | "outdated" | "wrong" | "buggy";
 
@@ -124,10 +110,8 @@ const CELL_ON_SEL =
  * Blocks nested inside a line that are lines of their own: they're excluded from
  * the line's text, and the ⚑ goes before the first of them rather than after the
  * whole subtree. `.table-scroll` is the wrapper the build puts around every
- * <table> (prepareTables in build_scripts/eleventy/tables.cjs), so a bare `table` never actually
- * appears as a child here — without the wrapper in this list a list item that
- * introduces a table swallowed the entire table's text into its hash and quote,
- * and parked its flag below the table.
+ * <table> (prepareTables in build_scripts/eleventy/tables.cjs), so a bare `table`
+ * never appears as a child here.
  */
 const NESTED_BLOCK = "ul, ol, table, p, h3, h4, .table-scroll";
 /** Same set, matched only as a direct child. */
@@ -145,12 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
         ".content-container p, .content-container :is(.title-tier-2, .title-tier-3, .title-tier-4), .content-container li:not(.dummy-li)"
     );
 
-    // A solver page can have NO flaggable lines of its own — on
-    // beamsmasher_solver every paragraph belongs to the solver. Prerendered they
-    // are already here, but without an SSR build (plain `eleventy --serve`) the
-    // mount div is still empty at this point, and bailing now would skip
-    // registering the solver:hydrated listener below, so the page would never get
-    // flags at all. Stay if a solver is going to arrive.
+    // Without an SSR build a solver page can have no lines yet. Stay if a solver is
+    // going to arrive, or the solver:hydrated listener below never registers.
     const solverIncoming = document.querySelector("[data-solver]") !== null;
     if (lines.length === 0 && !solverIncoming) return;
 
@@ -179,10 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
         '<p class="gfb-pop__quote"></p>' +
         '<div class="gfb-pop__reasons"></div>' +
         "<textarea></textarea>" +
-        // Behind a disclosure, and below the description box rather than above
-        // it: most people reporting a wrong answer have no idea what the right
-        // one was. As a second open field it competed with the box that actually
-        // matters, and implied they owed us an answer they don't have.
+        // Behind a disclosure: most people reporting a wrong answer don't know the
+        // right one.
         '<details class="gfb-pop__expected" hidden>' +
             "<summary>Do you know what the solution should be? (optional)</summary>" +
             '<input type="text" autocomplete="off" placeholder="e.g. Button #2">' +
@@ -323,20 +301,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Solver mode. The snapshot is harvested at OPEN time, not at send time, for
-     * one reason that matters: the popover shows the reader exactly what they're
-     * about to attach, and that promise only holds if the thing shown is the thing
-     * sent. Harvesting again on send would let a stray click between the two
-     * quietly change the payload out from under them.
+     * Solver mode. The snapshot is taken at open, not at send, so what the popover
+     * shows is exactly what gets sent.
      */
     function openSolverPop(reportBtn: HTMLElement, root: HTMLElement): void {
         const name = root.dataset.solver || "UnknownSolver";
         activeTarget = root;
-        // The snapshot is an enhancement; the report is the point. A capture that
-        // throws on some solver must cost the reader their inputs, not their
-        // ability to tell us anything at all — without this, a failure here lands
-        // as a flag with no line_hash and no state, which is strictly worse than
-        // the "the solver was wrong" reports this set out to replace.
+        // A capture that throws must lose the inputs, not the report.
         try {
             activeSnapshot = captureSolver(root, name);
         } catch (err) {
@@ -541,18 +512,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Lines inside a prerendered solver are deliberately left alone here.
-     *
-     * The build renders each solver's markup into the page (eleventy's
-     * prerenderSolvers), so those paragraphs exist at DOMContentLoaded and would
-     * decorate happily — and then Preact hydrates that subtree, reconciles it
-     * against a vnode tree containing no ⚑, and removes every button we just
-     * added. The class survived, the button did not, and solver lines silently
-     * stopped being flaggable.
-     *
-     * So skip them now and decorate on solver:hydrated instead, once Preact owns
-     * the DOM and will not touch it again. Hashes are content-based, so nothing
-     * about deferring changes a line's id or orphans a flag already in D1.
+     * Lines inside a prerendered solver are left alone here, because hydration would
+     * remove the ⚑ buttons. They're decorated on solver:hydrated instead. Hashes are
+     * content-based, so deferring doesn't change a line's id.
      */
     for (const el of lines) {
         if (el.closest("[data-solver]")) continue;
@@ -564,8 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * Per container rather than per page, so a page mounting five solvers
      * decorates each as it lands instead of waiting for the slowest.
      *
-     * If a chunk never loads the event never fires and those lines stay
-     * undecorated — the same outcome as before this existed, never a broken page.
+     * If a chunk never loads, those lines just stay undecorated.
      */
     document.addEventListener("solver:hydrated", (e) => {
         const root = (e as CustomEvent<{ element?: HTMLElement }>).detail?.element;
@@ -591,11 +552,8 @@ document.addEventListener("DOMContentLoaded", () => {
      * belongs to. As a child of the card it inherits the card's width and the
      * card's position in every layout variant, with nothing to measure.
      *
-     * Preact tolerates a trailing foreign child here: verified against the live
-     * preview by injecting a probe and forcing repeated real re-renders through
-     * two different solvers' own controls. It survives because Preact only
-     * removes DOM it holds a vnode for, and sweeps unrecognised children solely
-     * while hydrating — which has already finished by the time this runs.
+     * Preact tolerates a trailing foreign child here: it sweeps unrecognised children
+     * only while hydrating, which has finished by the time this runs.
      *
      * Never inside .solver-output, though: several solvers force that element to
      * remount via a changing key= on every recalculation.

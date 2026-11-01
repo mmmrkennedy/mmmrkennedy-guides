@@ -143,13 +143,9 @@ li > ol {
     margin-bottom: var(--space-xs);
 }
 
-/* No reading-measure cap here by choice: prose runs the full container width,
- * which at the 1000px desktop max is ~105 characters per line (peaking at 134).
- * That is well past the ~75 where the eye reliably finds the start of the next
- * line, so long sections lean on the paragraph spacing above to stay legible.
- * A cap was tried at 38rem (~72 avg / 79 max) and dropped — it left ~344px of
- * empty column on desktop. If it comes back, cap the text and not the
- * container, so tables and screenshots keep the full width. */
+/* No line-length cap by choice: a 38rem cap left ~344px of empty column on desktop.
+ * If one comes back, cap the text and not the container, so tables and screenshots
+ * keep the full width. */
 
 /* Special paragraph styles */
 

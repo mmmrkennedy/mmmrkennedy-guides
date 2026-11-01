@@ -1,13 +1,7 @@
 /**
- * Gives every <table> its horizontal-scroll wrapper, and — where the table can
- * take it — stamps each body cell with the heading of its column so the mobile
- * stylesheet can restack the row as a card (see "Mobile: one card per row" in
- * components.css).
- *
- * The labels are baked in here rather than read off the header row at runtime
- * because `td::before` can only print a string the CSS already holds, and the
- * only other source of one is a script that walks every table on every page
- * load to write the same attributes this loop writes once.
+ * Gives every <table> its scroll wrapper and, where it can, labels each body cell
+ * with its column heading so CSS can restack rows as cards on phones (see "Mobile:
+ * one card per row" in components.css).
  */
 function prepareTables(document) {
     const tables = document.querySelectorAll("table");
@@ -31,13 +25,8 @@ function prepareTables(document) {
 }
 
 /**
- * Walks a table into a grid, so every cell is known by the row and column it
- * actually occupies rather than by its position in the markup. With a rowspan
- * above it, a row's second `<td>` can be the third column, and labelling it off
- * `cellIndex` would give it the wrong heading.
- *
- * Returns one entry per cell: the element, its top-left grid position, and its
- * span.
+ * Every cell with the row and column it actually occupies. With a rowspan above
+ * it, a row's second <td> can be the third column, so cellIndex would be wrong.
  */
 function mapTableGrid(table) {
     const taken = [];
@@ -65,24 +54,12 @@ function mapTableGrid(table) {
 }
 
 /**
- * Marks up one table for card mode: `data-label` on every body cell, an opt-in
- * `data-cards` on the table, and a marker on the header row so the stylesheet
- * can drop it once its text lives on the cells. Returns whether the table took
- * it — two shapes still don't:
+ * Marks up a table for card mode and returns whether it took it. Two shapes don't:
+ * colspan (a spanning cell has no single heading) and [data-sortable] (ui/stats.ts
+ * puts its controls in the header row, which card mode hides).
  *
- *   - anything carrying colspan. One cell spanning several columns has no
- *     single heading to be labelled with, and splitting it would invent a
- *     division the author didn't write. These keep the scrolling table.
- *   - [data-sortable]. ui/stats.ts puts its controls in the header row, and
- *     card mode hides that row.
- *
- * rowspan is handled rather than refused. A spanned cell sits in the markup of
- * the first row it covers, so stacked into cards the rows underneath would
- * silently lose it — the strategy note shared by three challenges would appear
- * on one card and vanish from the other two. So each covered row gets its own
- * copy, marked `data-card-copy`, which the stylesheet shows in card mode and
- * hides everywhere else. The table on desktop is untouched: a display:none cell
- * occupies no column, so the original span still draws exactly as authored.
+ * A rowspan cell would appear on only one card, so each covered row gets a copy
+ * marked `data-card-copy`, which CSS shows in card mode and hides otherwise.
  */
 function labelTableCells(table) {
     if (table.hasAttribute("data-cards")) return true;
@@ -90,16 +67,12 @@ function labelTableCells(table) {
     if (table.querySelector("[colspan]")) return false;
     if (fitsOnPhoneAsTable(table)) return false;
 
-    // Guides write the headings either in a <thead> or as a first row of <th>
-    // inside the <tbody>; both are the same row for this purpose.
     const headRow = table.tHead?.rows[0] ?? table.rows[0];
     if (!headRow?.cells.length) return false;
     const headings = Array.from(headRow.cells);
     if (!headings.every((cell) => cell.tagName === "TH")) return false;
 
-    // .table-key's first column is the row's subject, and card mode promotes it
-    // to the card's title — a "Item" label sitting above it would only restate
-    // the column it already is.
+    // .table-key's first column becomes the card's title, so it gets no label.
     const titleColumn = table.classList.contains("table-key") ? 0 : -1;
     const labelFor = (col) => headings[col]?.textContent.replace(/\s+/g, " ").trim();
 
@@ -112,8 +85,6 @@ function labelTableCells(table) {
         if (label) cell.setAttribute("data-label", label);
     }
 
-    // Copies are inserted after the labelling pass, so they never shift the grid
-    // the labels were read off.
     const rows = Array.from(table.rows);
     for (const { cell, col, row, rowSpan } of bodyCells) {
         if (rowSpan < 2) continue;
@@ -124,8 +95,6 @@ function labelTableCells(table) {
             copy.setAttribute("data-card-copy", "");
             if (col === titleColumn) copy.removeAttribute("data-label");
 
-            // Put it where the column says it belongs, so the card stacks its
-            // cells in the order the table reads them.
             const after = grid.find((e) => e.rowEl === rows[r] && e.col > col);
             rows[r].insertBefore(copy, after?.cell ?? null);
         }
@@ -137,10 +106,9 @@ function labelTableCells(table) {
 }
 
 /**
- * Whether a table's values are short enough to read as columns on a phone. Cards
- * give every value its own labelled row, which only earns its height when the
- * values are long: a two-column list of short names otherwise runs thousands of
- * pixels. Measured in characters, summing each column's longest value.
+ * Whether a table's values are short enough to read as columns on a phone, in
+ * which case cards would only make it much taller. Sums each column's longest
+ * value, in characters.
  */
 function fitsOnPhoneAsTable(table) {
     if (table.querySelector("td :is(ul, ol, table, img, button, div)")) return false;

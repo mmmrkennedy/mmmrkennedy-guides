@@ -1,15 +1,9 @@
 // GET /games/**/*.{webp,png,jpg,jpeg,gif}
 // Serves guide screenshots from R2 instead of from the deployment.
 //
-// Why: 4,555 images (2.8GB) used to ship inside every Pages deployment, against
-// a 20,000-file-per-deployment cap that was already 23% used and climbing with
-// each new map. They now live in an R2 bucket and are streamed from here, so a
-// deployment carries only the pages themselves (~150 files).
-//
-// URLs are deliberately UNCHANGED. Every guide references its screenshots
-// relatively (`pictures/main_ee/foo.webp`), and rewriting thousands of those
-// links would be a large, risky diff that buys nothing — so this maps the
-// existing URL onto an R2 key instead:
+// Images live in R2 to stay clear of the 20,000-file limit on a Pages deployment.
+// Guides link screenshots relatively (`pictures/main_ee/foo.webp`), so this maps
+// the existing URL onto an R2 key:
 //
 //     /games/BO7/astra/pictures/x.webp  ->  img/BO7/astra/pictures/x.webp
 //

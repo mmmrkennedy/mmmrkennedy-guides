@@ -5,32 +5,17 @@ const { preRenderIndexNav } = require("./index-nav.cjs");
 const { generateQuickLinks } = require("./quick-links.cjs");
 
 /**
- * The DOM-rewriting half of the build, run as a single pass.
+ * The DOM-rewriting steps, sharing one JSDOM parse because parsing is the slow
+ * part of the build.
  *
- * Each step below used to be its own Eleventy transform, which meant a page was
- * parsed into a JSDOM document and serialized back out up to five times over.
- * Eleventy's own benchmark put those five at 77% of build time, and most of the
- * parses bought nothing: prepareTables parsed all 82 pages to serve 33.
- * One parse, one serialize, same steps in the same order.
+ * A step takes the document and returns whether it changed anything. A page is
+ * re-serialized only if one did, so untouched pages come out byte-identical.
+ * generateQuickLinks reads the finished page, so it goes last.
  *
- * A step takes the shared document and returns whether it changed anything. The
- * page is re-serialized only if some step did, so pages no step touches (the
- * index, /stats, 404) come out byte-identical to their input instead of being
- * round-tripped through JSDOM's serializer.
+ * classifyLinks runs before this pass: the tables of contents built here are full
+ * of anchors it must not touch (they would pick up .link-to-page and go italic).
  *
- * Order is load-bearing:
- *   - generateQuickLinks reads the finished page, so it goes last.
- *
- * classifyLinks deliberately runs BEFORE this pass rather than inside it. It is
- * a regex over the HTML string, and the two tables of contents this pass builds
- * are full of anchors it must not touch (they would pick up .link-to-page and
- * render italic). Running it first means those anchors do not exist yet, which
- * is what the 40-line cutElement() surgery used to arrange by hand.
- *
- * A step that throws is logged and skipped; the rest of the pass still runs, so
- * one bad page loses one feature rather than the whole build. Note the step may
- * have mutated the document before throwing, and that partial edit does ship —
- * the alternative is discarding four good steps to undo half of a fifth.
+ * A step that throws is logged and skipped, and any partial edit it made ships.
  */
 const DOM_STEPS = [
     ["prepareTables", prepareTables],
@@ -39,8 +24,7 @@ const DOM_STEPS = [
     ["generateQuickLinks", generateQuickLinks],
 ];
 
-// Cheap string tests standing in for the selectors the steps run. If a page
-// matches none of them, parsing it could only ever find nothing to do.
+// If a page contains none of these, no step has anything to do, so skip the parse.
 const DOM_PASS_TRIGGERS = [
     "<table",
     "data-step-ref",

@@ -1,7 +1,6 @@
 /* ============================================================
    SOLVERS — shared foundation + per-solver overrides
-   Token-driven, mobile-first. Visual language inherited from
-   the legacy global_solver.css; structure rebuilt clean.
+   Token-driven, mobile-first.
    ============================================================ */
 
 /* ------------------------------------------------------------
@@ -1632,10 +1631,7 @@ main:has(.solver-only-page) .related-maps {
     background: var(--queens-dark);
 }
 
-/* Queen glyph, inlined rather than fetched. This hotlinked
-   upload.wikimedia.org, which cost a DNS lookup, a TLS handshake and ~350ms on
-   a throttled phone to deliver 1.4KB — and left the board's only artwork
-   dependent on a third party that owes us nothing.
+/* Queen glyph, inlined rather than fetched from a third party.
 
    "Chess qdt45" by Cburnett (https://commons.wikimedia.org/wiki/User:Cburnett),
    used here under CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/).

@@ -6,10 +6,7 @@ const LIGHTBOX_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".gif", ".webm"
 const LIGHTBOX_VIDEO_EXTS = new Set([".webm", ".mp4", ".mov"]);
 const LIGHTBOX_AUDIO_EXTS = new Set([".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
 
-/**
- * Eleventy transform to classify links and add appropriate CSS classes
- * Runs on all HTML output files
- */
+/** Adds link-type classes, lightbox attributes and external link safety attributes. */
 function classifyLinks(content, outputPath) {
     if (!outputPath || !outputPath.endsWith(".html")) return content;
 
@@ -41,8 +38,7 @@ function classifyLinks(content, outputPath) {
 
             if (isExternal) existing.add("external-link");
 
-            // For external links: ensure target="_blank" + rel="noopener noreferrer nofollow".
-            // Preserves any pre-existing target value and merges rel tokens.
+            // Keeps any existing target and merges rel tokens.
             let needsTarget = false;
             let computedRel = null;
             if (isExternal) {
@@ -58,11 +54,8 @@ function classifyLinks(content, outputPath) {
             }
 
             if (!href.startsWith("#") && !href.startsWith("http")) {
-                // A trailing slash means a half-written link (`pictures/foo/`), with
-                // one exception: "/" on its own is the site root, which is as
-                // complete as a path gets. Without this, a plain "Back to the
-                // index" link gets rewritten to href="#" and stops working — which
-                // is exactly what happened to the 404 page.
+                // A trailing slash means a half-written link (`pictures/foo/`),
+                // except "/" on its own, which is the site root.
                 if (href.endsWith("/") && href !== "/") {
                     existing.add("incomplete-path");
                     overrideHref = "#";
@@ -129,17 +122,9 @@ function classifyLinks(content, outputPath) {
 }
 
 /**
- * Eleventy transform: turn links to unwritten guides into plain text.
- *
- * Guides that don't exist yet are authored as `<a class="disabled" href="...">`
- * so the href is already in place for whenever the guide lands. This renames
- * that href to data-href in the output, which makes it an anchor with nowhere
- * to go: it can't be followed, focused or middle-clicked, and crawlers stop
- * seeing links to pages that aren't there. Because it's no longer a link, CSS
- * can style hover on the name itself (see `.disabled` in components.css)
- * instead of blocking pointer events wholesale.
- *
- * Runs last, so classifyLinks still sees the real href.
+ * Links to unwritten guides are authored as `<a class="disabled" href="...">`.
+ * Renaming href to data-href means they can't be followed or focused, and crawlers
+ * don't see them. Runs last, so classifyLinks still sees the real href.
  */
 function unlinkUnwrittenGuides(content, outputPath) {
     if (!outputPath?.endsWith(".html")) return content;
@@ -147,8 +132,7 @@ function unlinkUnwrittenGuides(content, outputPath) {
 
     let modified = false;
     const result = content.replace(/<a\s[^>]*>/gi, (tag) => {
-        // Exact class token only: `btn--disabled` or `is-disabled` must not match.
-        // Leading `\s` keeps this off attributes that merely end in "class".
+        // Exact class token only: `btn--disabled` must not match.
         const classAttr = /\sclass=["']([^"']*)["']/i.exec(tag);
         if (!classAttr || !classAttr[1].split(/\s+/).includes("disabled")) return tag;
         // `\s` before href so an already-renamed data-href is left alone.

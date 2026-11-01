@@ -22,17 +22,10 @@
     {%- set pageTitle = (pageHeading + ' | ' + titleSuffix) if mapName else pageHeading %}
     <title>{{ pageTitle }}</title>
 
-    {#- These fallbacks fire for any page with no `description` of its own, and
-        they used to run 177-183 chars once a real map name and game were
-        substituted in, which is past the ~155 Google will show. The three
-        Tortured Path survival maps shipped truncated for exactly that reason.
-        Kept short enough that even the longest name and game on the site
-        ("Attack of the Radioactive Thing", "Black Ops Cold War Zombies") lands
-        inside the budget, so a new page can never inherit a clipped one.
-
-        A disabled guide's own `description` is still the "CHANGE ME" from the
-        template, and it reaches search snippets and link previews even though
-        the body is the placeholder, so it is ignored until the guide launches. -#}
+    {#- Fallbacks for pages with no `description`. Keep them short enough that the
+        longest map and game names stay inside the ~155 chars Google shows. A
+        disabled guide's own `description` is still the template's "CHANGE ME", so
+        it is ignored until the guide launches. -#}
     {%- set description = null if (page.url | cleanUrl in unfinishedPages) else description %}
     {%- if mapName and solverTitle %}
         {%- set metaDescription = description or 'Interactive ' + solverTitle + ' for ' + mapName + ' in ' + titleSuffix + '. Solve this main quest step in seconds.' %}
@@ -41,14 +34,8 @@
     {%- else %}
         {%- set metaDescription = description or 'Complete Call of Duty Zombies Easter Egg guide. Step-by-step main quest walkthrough with pictures, videos, and detailed instructions.' %}
     {%- endif %}
-    {#- `aliases` used to be appended here as " Also known as X, Y." Two reasons
-        it is gone: it landed at the very end of the string, which is the first
-        thing Google truncates, so on the long descriptions it never reached the
-        snippet at all; and a meta description is not a ranking input, so the
-        terms earned nothing there. Aliases now go two better places instead:
-        woven into the hand-written `description` early enough to survive the
-        cut, and rendered in full into the About This Map copy below, which is
-        indexable body text. -#}
+    {#- Aliases go early in the hand-written `description` and in the About This Map
+        copy below, not on the end of this string, where Google truncates. -#}
     <meta name="description" content="{{ metaDescription }}">
     {%- if mapName %}
         {%- set metaKeywords = mapName + ' Easter Egg, ' + mapName + ' Easter Egg guide, ' + mapName + ' main quest, ' + mapName + ' main Easter Egg, ' + mapName + ' walkthrough, ' + mapName + ' guide, ' + mapName + ' steps, ' + mapName + ' tutorial, ' + mapName + ' solo Easter Egg, ' + titleSuffix + ', Call of Duty Zombies, COD Zombies, Zombies Easter Egg guide, main quest walkthrough' %}
@@ -61,22 +48,10 @@
         on solver flags, so a report can be told apart from one filed against
         code that has since been fixed. -#}
     <meta name="build" content="{{ site.buildVersion }}">
-    {#- One switch decides whether a map is live: `class="disabled"` on its link
-        in src/index.html, which _data/unfinishedPages.js reads. That is already
-        what stops the sitemap listing a page, what keeps it out of the related-
-        maps blocks, and what hides the "X Full Map Guide" link on a solver page,
-        so it decides the noindex and the placeholder body below too. Launching a
-        guide is removing that one class.
-
-        This used to read `unfinished or page.url in unfinishedPages`, and the
-        second half could never be true: page.url carries the .html the index
-        hrefs leave off, so no page path ever equalled a registry entry (and
-        before the fix in unfinishedPages.js the entries were "//games/..."
-        besides). Every stub was held up by the `unfinished: true` in its own
-        front matter alone, which meant two lists that had to agree and no
-        warning if they ever stopped. `| cleanUrl` normalises both sides the same
-        way the canonical URL below does, and the front-matter flag is gone from
-        all 17 guides that carried it. -#}
+    {#- One switch decides whether a map is live: `class="disabled"` on its link in
+        src/index.html, read by _data/unfinishedPages.js. It controls the sitemap,
+        related maps, the "X Full Map Guide" link, this noindex and the placeholder
+        body. Launching a guide is removing that one class. -#}
     {%- if page.url | cleanUrl in unfinishedPages %}
         <meta name="robots" content="noindex, nofollow">
     {%- else %}
@@ -123,14 +98,10 @@
     {%- if homePage %}
         <link rel="stylesheet" type="text/css" href="/css/trending.css?v={{ site.buildVersion }}">
     {%- endif %}
-    {#- On a solver-only page the solver IS the content, so its stylesheet blocks
-        first paint like any other. In a guide the solver sits thousands of words
-        below the fold, and blocking paint on 20KB that styles nothing visible
-        costs ~70ms of FCP on a throttled phone. There it loads async instead:
-        media="print" makes the browser fetch the sheet at low priority while it
-        matches no screen, and onload flips it to all the moment it lands.
-        No <noscript> fallback — the solver is React, so with JS off there is
-        nothing on the page for these rules to style. #}
+    {#- On a solver-only page the solver is the content, so its stylesheet blocks
+        paint. In a guide the solver is far below the fold, so it loads async:
+        media="print" fetches at low priority and onload flips it to all. No
+        <noscript> fallback, since with JS off there's no solver to style. #}
     {%- if useSolverCSS %}
         {%- if solverIsPrimary %}
         <link rel="stylesheet" type="text/css" href="/css/Solvers.css?v={{ site.buildVersion }}">
@@ -153,28 +124,16 @@
         <link rel="preload" as="image" href="{{ imgSrc }}">
         {%- endfor %}
     {%- endif %}
-    {#- Preload only where the solver is the reason for the visit. Unconditional,
-        this preloaded a 78KB Preact bundle at high priority on all 80 pages while
-        only 18 ever ran it; narrowed to those 18, it still put the bundle — the
-        largest asset on a guide — into the same millisecond as the CSS that
-        blocks first paint, for a widget nobody has scrolled to yet. Worth ~50ms
-        of FCP on a throttled phone. The <script> near the end of <body> is not
-        conditioned on this and still loads it there, just without jumping the
-        queue ahead of the page the reader actually came for. #}
+    {#- Preload only where the solver is the reason for the visit. On a guide it
+        would compete with the CSS that blocks first paint; the <script> near the
+        end of <body> still loads it there. #}
     {%- if useReactSolvers and solverIsPrimary %}
     <!-- REACT_BUNDLE_MODULEPRELOAD -->
     {%- endif %}
 
     <!-- JSON-LD Structured Data -->
-    {#- Article, not HowTo. This was HowTo until 2026-08-15, which earned nothing:
-        Google retired HowTo rich results entirely, and the block never carried the
-        `step` array HowTo requires anyway, so it validated as a bare entity with no
-        eligible treatment. Article is the type these pages actually are, and it is
-        the one Google still reads dates and author from. The BreadcrumbList below
-        is untouched — that one does still produce a rich result.
-
-        datePublished/dateModified come from the same filters the footer prints, so
-        the date in the SERP and the date on the page can never disagree. #}
+    {#- Article, not HowTo: Google retired HowTo rich results. The dates come from
+        the same filters the footer prints, so search and the page always agree. #}
     {%- set articlePublished = page.inputPath | releasedISO %}
     {%- set articleModified = page.inputPath | lastmodISO %}
     {%- if homePage %}

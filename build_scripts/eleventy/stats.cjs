@@ -8,12 +8,9 @@ const { lastmodCache, editcountCache, releaseCache } = require("./dates.cjs");
 const WORDCOUNT_FLOOR = 100;
 
 /**
- * Words of visible prose in a chunk of page HTML. Comments, <script>/<style>/
- * <template> bodies, reveal and path tab labels, and every tag (with its
- * attributes, so class names, hrefs and alt text never count) are dropped before
- * tokenizing. A word starts with
- * a letter or digit; inner apostrophes and hyphens keep "Pack-a-Punch" and
- * "Hell's" as one word each.
+ * Words of visible prose in page HTML. Comments, script/style/template bodies,
+ * reveal and path tab labels, and all tags are dropped first. Inner apostrophes
+ * and hyphens keep "Pack-a-Punch" and "Hell's" as one word each.
  */
 function countWords(html) {
     if (!html) return 0;
@@ -32,20 +29,8 @@ const PICTURE_REF = /(?:href|src)\s*=\s*["']([^"']+?\.(?:webp|png|jpe?g|gif))["'
 
 /**
  * Distinct screenshots a guide shows, counted from the links and <img>s in its
- * own HTML.
- *
- * This used to count image *files* in the guide's folder, which stopped working
- * when the images moved to R2: they're git-ignored now (see .gitignore), so a
- * Cloudflare checkout has none of them on disk and every guide measured zero.
- * Reading the references instead measures the same thing from something that
- * ships with the guide, and fixes two counting bugs the file walk had: it no
- * longer counts screenshots that no guide links any more, and a guide with
- * sub-guides under it (the Tortured Path survival maps) no longer counts its
- * children's folders as its own — that walk was recursive, so the three maps
- * and their parent were each claiming all four sets.
- *
- * Repeats collapse: linking one screenshot from two steps is still one
- * screenshot. Off-site images aren't ours to count.
+ * HTML. Not from files on disk: images are git-ignored and live in R2, so a
+ * Cloudflare checkout has none. Off-site images don't count.
  */
 function countPictures(html) {
     const seen = new Set();
@@ -60,14 +45,9 @@ function countPictures(html) {
  * Everything the stats page and the index footer report, measured once per build.
  *
  * src/index.html is the registry: each `h2[id]` opens a game section, and the
- * links under it are that game's maps in release order. A link is a map the site
- * intends to cover; `.disabled` means the guide isn't written yet (the build
- * serves those a placeholder, so their words aren't readable and don't count);
- * `.solver-link` is a tool, not a guide. Reading it here means the stats can
- * never disagree with the index: one list, one source.
- *
- * Per guide the counts come from the authored source, not the rendered page, for
- * the same reason the footer's does: transforms add chrome after the layout runs.
+ * links under it are that game's maps. `.disabled` means the guide isn't written
+ * yet; `.solver-link` is a tool, not a guide. Per-guide counts come from the
+ * authored source, because transforms add chrome to the rendered page.
  */
 let statsCache = null;
 function siteStats() {
@@ -78,9 +58,8 @@ function siteStats() {
     const guides = [];
     let solverCount = 0;
 
-    // Without the index there is no roster to measure. Rather than hand-copy the
-    // result shape into a second literal that drifts, fall through with no games:
-    // every aggregate below is already defined over empty arrays.
+    // Without the index, fall through with no games: every aggregate below works
+    // on empty arrays.
     let doc = null;
     try {
         doc = new JSDOM(fs.readFileSync(path.join(srcDir, "index.html"), "utf8")).window.document;
@@ -88,15 +67,10 @@ function siteStats() {
         console.warn("Couldn't read src/index.html, stats will be empty:", e.message);
     }
 
-    // A remastered map (Nacht, Kino, Origins…) is listed under both the game it
-    // shipped in and the one that remastered it. Its roster slot counts for each
-    // game (that's what coverage means), but the guide itself is measured once,
-    // so the per-game word totals still add up to the site total.
-    //
-    // The index runs newest game first, so walking the sections BOTTOM-TO-TOP
-    // reaches a map's original game before any remaster of it: Der Riese counts
-    // as World at War, not Black Ops 3, and that's the game its row in the table
-    // names.
+    // A remastered map is listed under both its original game and the remaster.
+    // It counts toward coverage for each, but its guide is measured once, so game
+    // word totals add up to the site total. The index runs newest game first, so
+    // walking bottom-to-top credits a map to its original game.
     const measured = new Map();
     const allMaps = new Set();
 
@@ -207,10 +181,8 @@ function siteStats() {
 }
 
 /**
- * Guides grouped by the year they first went live, oldest first, with empty
- * years kept so the chart reads as a timeline rather than a ranking. Guides with
- * no recorded release date sit out: release-dates.json covers what shipped, and
- * a missing entry means "unknown", not "released in year zero".
+ * Guides grouped by release year, oldest first. Empty years stay so the chart
+ * reads as a timeline; guides with no recorded date are left out.
  */
 function releasesByYear(guides) {
     const counts = new Map();

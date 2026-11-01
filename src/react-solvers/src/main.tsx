@@ -4,22 +4,12 @@ import type { ComponentType } from "preact";
 
 // Pulled in for its side effect on chunking, not for anything used here.
 //
-// Every solver uses preact hooks, but nothing in the entry did, so Rollup hoisted
-// them into a chunk shared between the dynamic chunks — which the browser cannot
-// discover until it has downloaded AND parsed a solver chunk. That made three
-// serial round trips to first render (entry -> solver -> hooks) where the old
-// single bundle needed one, and on a throttled phone the third hop was most of
-// the LCP regression on pages where the solver is the largest element.
-//
-// Statically importing it here puts hooks in the entry instead, so a solver page
-// is entry -> solver and the hooks chunk stops existing. Costs ~2.7kB on the
-// entry, which every page that mounts a solver was going to fetch anyway.
+// Every solver uses hooks. Importing them here keeps them in the entry, instead of
+// a shared chunk the browser only discovers after loading a solver, which would add
+// a third round trip before first render.
 import "preact/hooks";
 
-// Shared infrastructure, not a solver — and imported statically for the same
-// chunking reason as preact/hooks above. Every solver calls useSolverReport, so
-// leaving this to be discovered through the dynamic imports would hoist it into a
-// second shared chunk sitting between the entry and every solver.
+// Not a solver. Imported statically for the same chunking reason as preact/hooks.
 import { SolverReportRoot, readSolverInputs } from "./solver-report";
 
 // Each file in components/ is one solver and one chunk, so a page downloads only
@@ -50,16 +40,10 @@ declare global {
 /**
  * Fetch a solver's chunk, then attach it to its element.
  *
- * hydrate(), not render(), because the production build already put this
- * solver's markup in the page (`prerenderSolvers` in build_scripts/eleventy/solvers.cjs). Preact
- * then walks the DOM that is already there and only wires up handlers and state,
- * creating nothing — so the page does not move when a chunk lands, which is what
- * the split otherwise cost: CLS 1.23 on the five-solver page against 0.000
- * before it.
- *
- * hydrate() into an EMPTY container behaves like render(), which is what keeps
- * `eleventy --serve` on its own working: no SSR build, empty divs, client builds
- * the DOM exactly as it used to. One code path covers both.
+ * hydrate(), not render(), because the production build already put the solver's
+ * markup in the page (`prerenderSolvers` in build_scripts/eleventy/solvers.cjs), so
+ * the page doesn't move when a chunk lands. Hydrating an empty container acts like
+ * render(), which covers `eleventy --serve` with no SSR build.
  */
 function mount(element: HTMLElement) {
     const name = element.dataset.solver;

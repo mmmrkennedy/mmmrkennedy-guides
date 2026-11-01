@@ -15,10 +15,8 @@ try {
     console.warn("editcount-cache.json not found; footer edit counts will be omitted.");
 }
 
-// Initial-release dates, same key shape as lastmodCache and from the same script.
-// Unlike the two caches above these can't be rebuilt from git, so they are only
-// added to. Pages absent from it (unreleased guides, the index) simply render no
-// release date.
+// Initial-release dates. Unlike the two caches above these can't be rebuilt from
+// git, so they are only added to. Pages absent from it render no release date.
 let releaseCache = {};
 try {
     releaseCache = require("../release-dates.json");
@@ -26,11 +24,7 @@ try {
     console.warn("release-dates.json not found; footer release dates will be omitted.");
 }
 
-/**
- * "2026-05-11" -> "May 11, 2026". Formatted in UTC off the leading calendar date
- * so the build server's timezone (UTC on Cloudflare) can't shift an evening-local
- * date onto the next day.
- */
+/** "2026-05-11" -> "May 11, 2026". In UTC, so the build's timezone can't shift the day. */
 function formatCalendarDate(iso) {
     if (!iso) return "";
     const [y, m, d] = iso.slice(0, 10).split("-").map(Number);

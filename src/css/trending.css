@@ -6,12 +6,9 @@
 
 /* Super-subtle warm highlight behind the trending link.
  *
- * Nothing here may change the size of the line box. The decoration arrives when
- * /api/trending answers, which is after first paint, so any width it added
- * pushed the rest of the line along and re-wrapped the list — 0.092 CLS on the
- * homepage, blamed on the <ul> that moved. Hence box-shadow rather than the
- * padding this used to have, and an absolutely positioned flame rather than an
- * appended inline-block. */
+ * Nothing here may change the size of the line box: it arrives when /api/trending
+ * answers, after first paint, so any added width would re-wrap the list. Hence
+ * box-shadow and an absolutely positioned flame. */
 .trending-link {
     position: relative;
     background: rgb(232 150 62 / 4%);

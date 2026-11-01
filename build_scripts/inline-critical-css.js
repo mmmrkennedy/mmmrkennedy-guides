@@ -1,22 +1,12 @@
 /**
  * Per-page CSS: keep what the page can actually use, inline it, drop the link.
  *
- * Lighthouse flagged three render-blocking stylesheets on the homepage
- * (bundle.min.css, index-nav.css, trending.css) for ~150ms. They block because
- * the browser cannot paint until they arrive, and the last two are not even
- * discovered until the HTML has been parsed.
+ * A page uses under half of the bundle's rules on average, and stylesheets block
+ * first paint. This computes the used subset per page, emits it as a <style> where
+ * the first <link> was, and removes the links, so a cold load needs no CSS requests.
  *
- * Measured before writing this: the mean page matches 45% of the bundle's rules
- * (index 21%, the heaviest guide 61%). So most of what every page waits for is
- * rules it can never apply. This step computes the used subset per page, emits
- * it as a <style> in the <head> where the first <link> was, and removes the
- * links it replaced. A cold page load then needs zero CSS requests.
- *
- * The cost: CSS stops being a separately cached file. _headers gives CSS 30
- * days and HTML 300s, so today a second pageview re-uses the bundle for free,
- * while inlined CSS rides along with every navigation (mean +4.8KB gzip).
- * Break-even is around two pageviews per session; search traffic lands on one
- * guide and leaves, so cold load is the case worth optimising.
+ * The cost is that CSS is no longer cached separately. Search traffic mostly lands
+ * on one guide and leaves, so cold load is the case worth optimising.
  *
  * WHAT IS NOT TOUCHED
  *   - Solvers.css. On guide pages it is already non-blocking (media=print), and
@@ -75,19 +65,13 @@ const SKIP_PAGES = [/^react-solvers[/\\]/];
 /**
  * Scripts a page has switched off, so nothing they add can be styled there.
  *
- * The safelist is global — it cannot tell that the flag UI never runs on the
- * homepage — so without this the index carries every gfb-* rule for a feature
- * its own <body data-no-flags> disables. That was ~7KB of the index's inlined
- * CSS, all of it in front of the LCP element.
+ * The safelist is global, so without this the index would carry every gfb-* rule
+ * for a feature its <body data-no-flags> disables.
  *
- * Gates name a script, not a class prefix, and a class survives if ANY enabled
- * script can add it. The first cut of this gated on the "gfb-" prefix and broke
- * the homepage's "not written yet" toast, which is index-filter.ts borrowing
- * .gfb-toast from the flag UI's stylesheet (index-filter.ts:108). Per-script
- * attribution gets that right without a special case.
+ * Gates name a script, not a class prefix, and a class survives if any enabled
+ * script can add it: index-filter.ts borrows .gfb-toast from the flag UI.
  *
- * Each gate must correspond to an early return in the script it names:
- * data-no-flags is line-flagger.ts:140, data-skip-toc is quick-links.ts:129.
+ * Each gate must match an early return in the script it names.
  */
 const FEATURE_GATES = [
     { disabled: (body) => body.hasAttribute("data-no-flags"), scripts: [/ui[/\\]line-flagger\.js$/] },
