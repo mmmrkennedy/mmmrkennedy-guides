@@ -1,11 +1,23 @@
-const { lastmodCache, editcountCache, releaseCache, formatCalendarDate, cacheKeyFor, formatRelativeDate } = require("./build_scripts/eleventy/dates.cjs");
-const { WORDCOUNT_FLOOR, countWords, siteStats, resetStats } = require("./build_scripts/eleventy/stats.cjs");
-const { classifyLinks, unlinkUnwrittenGuides } = require("./build_scripts/eleventy/links.cjs");
-const { domPass } = require("./build_scripts/eleventy/dom-pass.cjs");
-const { injectReactBundle, prerenderSolvers } = require("./build_scripts/eleventy/solvers.cjs");
-const { smartCopyImages } = require("./build_scripts/eleventy/copy-images.cjs");
+const path = require("path");
+
+const STEPS_DIR = path.join(__dirname, "build_scripts", "eleventy") + path.sep;
 
 module.exports = function(eleventyConfig) {
+    // Eleventy can't see require() dependencies in an ESM project. Watching the steps
+    // reloads this function when one changes, and clearing them from the require
+    // cache makes the reload use the edit.
+    eleventyConfig.addWatchTarget("./build_scripts/eleventy/", { resetConfig: true });
+    for (const id of Object.keys(require.cache)) {
+        if (id.startsWith(STEPS_DIR)) delete require.cache[id];
+    }
+
+    const { lastmodCache, editcountCache, releaseCache, formatCalendarDate, cacheKeyFor, formatRelativeDate } = require("./build_scripts/eleventy/dates.cjs");
+    const { WORDCOUNT_FLOOR, countWords, siteStats, resetStats } = require("./build_scripts/eleventy/stats.cjs");
+    const { classifyLinks, unlinkUnwrittenGuides } = require("./build_scripts/eleventy/links.cjs");
+    const { domPass } = require("./build_scripts/eleventy/dom-pass.cjs");
+    const { injectReactBundle, prerenderSolvers } = require("./build_scripts/eleventy/solvers.cjs");
+    const { smartCopyImages } = require("./build_scripts/eleventy/copy-images.cjs");
+
     // classifyLinks first: it must not see the tables of contents domPass builds.
     eleventyConfig.addTransform("classifyLinks", classifyLinks);
     eleventyConfig.addTransform("domPass", domPass);
