@@ -66,21 +66,28 @@ function revealPathToHash(hash: string): boolean {
     return hash.length > 1 && revealPathTo(hash.slice(1));
 }
 
+/** Sets the offset that lands a deep link on the tab bar rather than below it. */
+function measureBar(group: Element): void {
+    const panels = group.querySelector(":scope > .path-tabs__panels");
+    if (!(group instanceof HTMLElement) || !panels) return;
+    const height = panels.getBoundingClientRect().top - group.getBoundingClientRect().top;
+    group.style.setProperty("--path-tabs-bar-height", `${Math.round(height)}px`);
+}
+
 function initPathTabs(): void {
     const groups = document.querySelectorAll<HTMLElement>(".path-tabs");
     if (!groups.length) return;
 
     const barObserver = new ResizeObserver((entries) => {
         for (const { target } of entries) {
-            const group = target.parentElement;
-            const panels = group?.querySelector(":scope > .path-tabs__panels");
-            if (!group || !panels) continue;
-            const height = panels.getBoundingClientRect().top - group.getBoundingClientRect().top;
-            group.style.setProperty("--path-tabs-bar-height", `${Math.round(height)}px`);
+            if (target.parentElement) measureBar(target.parentElement);
         }
     });
 
     for (const group of groups) {
+        // Measured now as well as on resize: the observer reports after the next
+        // layout, which can be too late for a deep link's jump.
+        measureBar(group);
         const bar = group.querySelector(":scope > .path-tabs__bar");
         if (bar) barObserver.observe(bar);
 
