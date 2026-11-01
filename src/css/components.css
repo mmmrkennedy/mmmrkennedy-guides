@@ -935,6 +935,7 @@ input.spacing {
     text-orientation: upright;
     vertical-align: middle;
     padding: 4px 2px;
+
     /* Each dot takes a full em of height; pull them together */
     letter-spacing: -0.4em;
     line-height: 1;

@@ -42,12 +42,8 @@
     /* Monospace, for anything a reader reads character by character:
        tapped morse streams, result codes. */
     --solver-font-mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
-}
 
-/* ------------------------------------------------------------
-   Container — the lifted panel
-   ------------------------------------------------------------ */
-.solver-container {
+    /* The lifted panel */
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
@@ -158,6 +154,7 @@ main:has(.solver-only-page) .related-maps {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
+
     /* max-width: 46rem; */
     margin-inline: auto;
 }
