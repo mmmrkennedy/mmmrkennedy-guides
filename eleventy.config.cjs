@@ -90,8 +90,9 @@ const WORDCOUNT_FLOOR = 100;
 
 /**
  * Words of visible prose in a chunk of page HTML. Comments, <script>/<style>/
- * <template> bodies and every tag (with its attributes, so class names, hrefs
- * and alt text never count) are dropped before tokenizing. A word starts with
+ * <template> bodies, reveal and path tab labels, and every tag (with its
+ * attributes, so class names, hrefs and alt text never count) are dropped before
+ * tokenizing. A word starts with
  * a letter or digit; inner apostrophes and hyphens keep "Pack-a-Punch" and
  * "Hell's" as one word each.
  */
@@ -100,6 +101,7 @@ function countWords(html) {
     const text = String(html)
         .replace(/<!--[\s\S]*?-->/g, " ")
         .replace(/<(script|style|template)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+        .replace(/<(button|summary)\b[^>]*(path-tabs__tab|btn--reveal)[^>]*>[\s\S]*?<\/\1>/gi, " ")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/g, " ")
         .replace(/&[a-z#0-9]+;/gi, "");
@@ -326,8 +328,7 @@ function releasesByYear(guides) {
  * Each step below used to be its own Eleventy transform, which meant a page was
  * parsed into a JSDOM document and serialized back out up to five times over.
  * Eleventy's own benchmark put those five at 77% of build time, and most of the
- * parses bought nothing: preRenderRevealButtons parsed all 82 pages to serve the
- * 3 that carry a data-reveal-label, and prepareTables parsed all 82 to serve 33.
+ * parses bought nothing: prepareTables parsed all 82 pages to serve 33.
  * One parse, one serialize, same steps in the same order.
  *
  * A step takes the shared document and returns whether it changed anything. The
@@ -336,9 +337,6 @@ function releasesByYear(guides) {
  * round-tripped through JSDOM's serializer.
  *
  * Order is load-bearing:
- *   - resolveStepRefs counts the <li> children of each <ol> before
- *     preRenderRevealButtons can re-parent any of them into a
- *     .button-activated-div and change what "direct child" means.
  *   - generateQuickLinks reads the finished page, so it goes last.
  *
  * classifyLinks deliberately runs BEFORE this pass rather than inside it. It is
@@ -355,8 +353,6 @@ function releasesByYear(guides) {
 const DOM_STEPS = [
     ["prepareTables", prepareTables],
     ["resolveStepRefs", resolveStepRefs],
-    ["preRenderRevealButtons", preRenderRevealButtons],
-    ["preRenderPathTabs", preRenderPathTabs],
     ["preRenderIndexNav", preRenderIndexNav],
     ["generateQuickLinks", generateQuickLinks],
 ];
@@ -366,8 +362,6 @@ const DOM_STEPS = [
 const DOM_PASS_TRIGGERS = [
     "<table",
     "data-step-ref",
-    "data-reveal-label",
-    "data-path-group",
     "data-index-nav",
     "content-container",
 ];
@@ -1183,34 +1177,6 @@ function fitsOnPhoneAsTable(table) {
     return columns.reduce((sum, length) => sum + length, 0) <= 62;
 }
 
-function preRenderRevealButtons(document) {
-    const elements = document.querySelectorAll("[data-reveal-label]");
-    if (!elements.length) return false;
-
-    for (const el of elements) {
-        const label = el.getAttribute("data-reveal-label");
-        const inner = el.innerHTML;
-        el.innerHTML = `<button type="button" class="btn--reveal">${label}</button>
-<div class="button-activated-div" style="display: none;">${inner}</div>`;
-    }
-    return true;
-}
-
-/**
- * Expands a `data-path-group` block into a segmented tab switcher.
- *
- * Authored form — direct children carrying `data-path-label` become the paths,
- * and the one marked `data-path-default` is the one shown on load:
- *
- *   <div class="path-tabs" data-path-group="chemistry-step">
- *     <div id="..." data-path-label="Solver Way" data-path-note="Recommended" data-path-default>…</div>
- *     <div id="..." data-path-label="Intended Way" data-path-note="Tedious">…</div>
- *   </div>
- *
- * The authored elements become the panels themselves rather than being wrapped,
- * so any `id` on them stays a valid anchor target. Interaction lives in
- * src/ts/content/guide-controls.ts.
- */
 // Chip labels for the home page's game jump-bar, keyed by the <h2 id> they
 // scroll to. The build owns them because the build is what renders the bar;
 // index-filter.ts reads the labels back off the chips it finds.
@@ -1301,83 +1267,6 @@ function renderIndexProgress(document, container) {
     const left = total - done;
     box.title = left === 0 ? "Every map is covered" : `${left} still being written`;
     box.removeAttribute("hidden");
-}
-
-function preRenderPathTabs(document, outputPath) {
-    const groups = document.querySelectorAll("[data-path-group]");
-    if (!groups.length) return false;
-
-    let modified = false;
-
-    for (const group of groups) {
-        const groupName = group.getAttribute("data-path-group");
-        const paths = Array.from(group.children).filter((el) => el.hasAttribute("data-path-label"));
-
-        // A switcher needs something to switch between.
-        if (paths.length < 2) {
-            console.warn(
-                `[preRenderPathTabs] "${groupName}" in ${outputPath} has ${paths.length} path(s); skipping.`,
-            );
-            continue;
-        }
-        modified = true;
-
-        const defaultIndex = Math.max(
-            0,
-            paths.findIndex((el) => el.hasAttribute("data-path-default")),
-        );
-
-        group.classList.add("path-tabs");
-
-        const bar = document.createElement("div");
-        bar.className = "path-tabs__bar";
-        bar.setAttribute("role", "tablist");
-
-        const panels = document.createElement("div");
-        panels.className = "path-tabs__panels";
-
-        paths.forEach((path, index) => {
-            const isDefault = index === defaultIndex;
-            const tabId = `path-${groupName}-tab-${index}`;
-            const panelId = `path-${groupName}-panel-${index}`;
-            const label = path.getAttribute("data-path-label");
-            const note = path.getAttribute("data-path-note");
-
-            const tab = document.createElement("button");
-            tab.type = "button";
-            tab.id = tabId;
-            tab.className = `path-tabs__tab${isDefault ? " is-active" : ""}`;
-            tab.setAttribute("role", "tab");
-            tab.setAttribute("aria-selected", String(isDefault));
-            tab.tabIndex = isDefault ? 0 : -1;
-            tab.innerHTML =
-                `<span class="path-tabs__label">${label}</span>` +
-                (note ? `<span class="path-tabs__note">${note}</span>` : "");
-            bar.appendChild(tab);
-
-            path.classList.add("path-tabs__panel");
-            path.setAttribute("role", "tabpanel");
-            path.setAttribute("aria-labelledby", tabId);
-
-            // A panel that already carries an id keeps it — guides deep-link to
-            // these sections by name. aria-controls has to name whatever id the
-            // panel ends up with, not the one generated here: pointing it at an
-            // id nothing has is an invalid ARIA reference, which is what
-            // Lighthouse caught on attack_of_the_radioactive_thing.
-            if (!path.id) path.id = panelId;
-            tab.setAttribute("aria-controls", path.id);
-            if (!isDefault) path.setAttribute("hidden", "");
-            path.removeAttribute("data-path-label");
-            path.removeAttribute("data-path-note");
-            path.removeAttribute("data-path-default");
-            panels.appendChild(path);
-        });
-
-        group.prepend(bar);
-        bar.after(panels);
-    }
-
-    return modified;
 }
 
 /**
@@ -1677,8 +1566,8 @@ module.exports = function(eleventyConfig) {
     });
 
     // Word count of a page's own body HTML, for the footer. Counts the content
-    // as authored: transforms (quick links, reveal-button chrome, table
-    // wrappers) all run after the layout renders, so none of that chrome is in
+    // as authored: transforms (quick links, table wrappers) all run after the
+    // layout renders, so none of that chrome is in
     // this string to inflate the number. Returns null below a floor so solver
     // shells and stubs render no count at all rather than "12 words".
     eleventyConfig.addFilter("wordcount", (html) => {

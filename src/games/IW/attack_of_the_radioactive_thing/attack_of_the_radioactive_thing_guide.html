@@ -693,9 +693,14 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
         </li>
 
         <li class="dummy-li">
-            <div data-path-group="chemistry" data-bool-quick-link="false">
+            <div class="path-tabs" data-bool-quick-link="false">
+            <div class="path-tabs__bar" role="tablist">
+                <button type="button" id="path-chemistry-tab-0" class="path-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="main_ee_step5" tabindex="0"><span class="path-tabs__label">The Solver Way</span><span class="path-tabs__note">Recommended</span></button>
+                <button type="button" id="path-chemistry-tab-1" class="path-tabs__tab" role="tab" aria-selected="false" aria-controls="main_ee_step4" tabindex="-1"><span class="path-tabs__label">The Intended Way</span><span class="path-tabs__note">Not Recommended</span></button>
+            </div>
+            <div class="path-tabs__panels">
 
-            <div id="main_ee_step5" data-path-label="The Solver Way" data-path-note="Recommended" data-path-default>
+            <div id="main_ee_step5" class="path-tabs__panel" role="tabpanel" aria-labelledby="path-chemistry-tab-0">
                     <ol start="20">
                         <li>
                             Go to the Motel Office and note down the <a href="pictures/main_ee/m_number.webp">"M Number"</a> found on the wall right of the window.
@@ -780,7 +785,7 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
                     </ol>
             </div>
 
-            <div id="main_ee_step4" data-path-label="The Intended Way" data-path-note="Not Recommended">
+            <div id="main_ee_step4" class="path-tabs__panel" role="tabpanel" aria-labelledby="path-chemistry-tab-1" hidden>
                     <ol start="20">
                         <li>
                             Go to the Motel Office and note down the <a href="pictures/main_ee/m_number.webp">"M Number"</a> found on the wall right of the window.
@@ -918,6 +923,7 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
                     </ol>
             </div>
 
+            </div>
             </div>
         </li>
     </ol>
@@ -1148,7 +1154,9 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
         <li class="dummy-li dummy-li-no-indent">
             <div data-solver="AttackGnSSkull4Solver"></div>
 
-            <div class="solver-with-button" data-bool-quick-link="false" data-reveal-label="Click to show How to Solve Puzzle">
+            <details class="solver-with-button" data-bool-quick-link="false">
+            <summary class="btn--reveal">Click to show How to Solve Puzzle</summary>
+            <div class="button-activated-div">
                     <ol>
                         <li data-step-id="convert-target-word">
                             Convert the Target Word to Numbers
@@ -1222,6 +1230,7 @@ description: Complete Attack of the Radioactive Thing (AOTRT) guide for Infinite
                         </li>
                     </ol>
             </div>
+            </details>
         </li>
 
         <li>Once you shoot the last letter, and the word is correct, all the symbols will disappear, the completion sound will play.</li>

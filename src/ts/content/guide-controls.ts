@@ -1,12 +1,7 @@
 /**
- * The guide's expand-at-build controls: path tabs and reveal buttons. The build
- * renders their markup (eleventy.config.cjs); this only wires the interaction.
- *
  * Path tabs: a segmented switcher for mutually exclusive routes through one guide step
- * (e.g. the solver route vs. the in-game intended route).
- *
- * The markup is expanded at build time by the `preRenderPathTabs` transform in
- * eleventy.config.cjs — this module only wires the interaction.
+ * (e.g. the solver route vs. the in-game intended route). The markup is written in the
+ * guide; this only wires the interaction.
  */
 
 /** Tabs belonging to `group` itself, not to any switcher nested inside it. */
@@ -130,22 +125,6 @@ function initPathTabs(): void {
     revealPathToHash(window.location.hash);
 }
 
-function initRevealButtons(): void {
-    document.querySelectorAll<HTMLElement>("[data-reveal-label]").forEach((div) => {
-        const button = div.querySelector("button");
-        if (!button) return;
-
-        button.addEventListener("click", () => {
-            const content = div.querySelector<HTMLElement>(".button-activated-div");
-            if (!content) return;
-            content.style.display = content.style.display === "none" ? "block" : "none";
-        });
-    });
-}
-
 // Runs first of the core scripts: a deep link into a collapsed path has to open
 // that path before the browser scrolls the target into view.
-document.addEventListener("DOMContentLoaded", () => {
-    initPathTabs();
-    initRevealButtons();
-});
+document.addEventListener("DOMContentLoaded", initPathTabs);

@@ -93,7 +93,7 @@ const FEATURE_GATES = [
     { disabled: (body) => body.hasAttribute("data-no-flags"), scripts: [/ui[/\\]line-flagger\.js$/] },
     { disabled: (body) => body.dataset.skipToc === "true", scripts: [/content[/\\]quick-links\.js$/] },
     // No early return to point at: guide-controls.ts just finds nothing to wire up.
-    { disabled: (body) => !body.querySelector(".path-tabs, .button-activated-div"), scripts: [/content[/\\]guide-controls\.js$/] },
+    { disabled: (body) => !body.querySelector(".path-tabs"), scripts: [/content[/\\]guide-controls\.js$/] },
 ];
 
 function findFiles(dir, ext) {

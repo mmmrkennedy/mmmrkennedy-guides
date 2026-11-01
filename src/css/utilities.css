@@ -23,7 +23,7 @@ Helper classes and special cases.
 
 /*
 Path switcher — two or more mutually exclusive routes through one step, only
-one of which is ever on screen. Built by the `preRenderPathTabs` transform.
+one of which is ever on screen.
 No inline margin, so the panel lines up with the step text it sits under.
 */
 .path-tabs {

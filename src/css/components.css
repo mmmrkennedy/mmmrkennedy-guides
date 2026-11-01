@@ -175,42 +175,34 @@ a[data-media-type="audio"]::after {
     text-decoration: none;
 }
 
-/* Reveal variant — same look as .btn--solver in Solvers.css, available in the main bundle. */
+/* The <summary> of a reveal section. Spells out the look it had as a <button>, which
+ * came partly from the browser: the font, the outset border, the default cursor. */
 .btn--reveal {
+    display: inline-block;
     padding: var(--space-sm) var(--space-lg);
-    border-color: #c9a961;
+    border: 2px outset #c9a961;
     color: #c9a961;
+    font-family: Arial, sans-serif;
     font-size: var(--font-size-base);
     font-weight: 500;
+    line-height: normal;
     background: transparent;
     transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
     border-radius: 12px;
+    text-align: center;
     text-transform: uppercase;
+    cursor: default;
+    user-select: none;
+    list-style: none;
 }
 
-.btn--reveal:not(:disabled):hover {
+.btn--reveal::-webkit-details-marker {
+    display: none;
+}
+
+.btn--reveal:hover {
     color: #d4b56f;
     border-color: #d4b56f;
-    background: transparent;
-}
-
-.btn--reveal.is-active {
-    background: #c9a961;
-    border-color: #c9a961;
-    color: var(--color-bg-primary);
-    font-weight: 700;
-}
-
-.btn--reveal.is-active:not(:disabled):hover {
-    background: #d4b56f;
-    border-color: #d4b56f;
-    color: var(--color-bg-primary);
-}
-
-.btn--reveal:disabled,
-.btn--reveal.is-disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
 }
 
 .btn--fixed {
