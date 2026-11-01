@@ -52,6 +52,25 @@ Desktop-specific upgrades. Base styles are mobile-first.
         display: none;
     }
 
+    /* A long list stops partway down the screen, so the guide starts sooner. */
+    .quick-links-container--long {
+        max-height: 60svh;
+        overflow: hidden;
+    }
+
+    .quick-links-show-all {
+        display: block;
+        position: absolute;
+        inset: auto 0 0;
+        padding: var(--space-xl) var(--space-md) var(--space-md);
+        border: 0;
+        background: linear-gradient(to bottom, transparent, var(--color-bg-primary) 60%);
+        color: var(--color-link-default);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
     .quick-links-sub-toggle {
         display: block;
         position: absolute;
@@ -349,5 +368,14 @@ Desktop-specific upgrades. Base styles are mobile-first.
 
     .sidebar-toc-sub-toggle:hover {
         color: var(--color-text-secondary);
+    }
+}
+
+/* Narrow phones: a table kept as columns has only just too little room, so tighten
+   it rather than leave a few pixels of sideways scroll. */
+@media (width < 24em) {
+    table:not([data-cards]) :is(th, td) {
+        padding-inline: var(--space-sm);
+        font-size: var(--font-size-sm);
     }
 }

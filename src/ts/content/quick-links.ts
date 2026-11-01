@@ -9,10 +9,19 @@ function initializeQuickLinks(): void {
 }
 
 /**
- * Opens or closes a section of the phone contents list.
+ * Opens a long phone contents list in full, or opens or closes one of its sections.
  */
 function toggleContentsSubList(event: Event): void {
-    const btn = (event.target as Element).closest(".quick-links-sub-toggle");
+    const target = event.target as Element;
+
+    const showAll = target.closest(".quick-links-show-all");
+    if (showAll) {
+        showAll.parentElement?.classList.remove("quick-links-container--long");
+        showAll.remove();
+        return;
+    }
+
+    const btn = target.closest(".quick-links-sub-toggle");
     if (!btn) return;
 
     const open = btn.parentElement?.classList.toggle("is-open") ?? false;

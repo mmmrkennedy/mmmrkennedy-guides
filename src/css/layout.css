@@ -160,6 +160,12 @@ Page structure and containers.
         display: none;
     }
 
+    /* Its own line after the rest, so a long list of names can't split the row. */
+    .site-footer__editors {
+        order: 1;
+        flex-basis: 100%;
+    }
+
     /* Page stats a phone reader has no use for, and what made the row wrap. */
     .site-footer__released,
     .site-footer__edits,
@@ -256,7 +262,8 @@ Page structure and containers.
     border-bottom: 2px solid var(--color-border-medium);
 }
 
-.quick-links-sub-toggle {
+.quick-links-sub-toggle,
+.quick-links-show-all {
     display: none;
 }
 

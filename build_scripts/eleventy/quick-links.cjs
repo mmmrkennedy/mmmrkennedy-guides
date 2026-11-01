@@ -1,4 +1,8 @@
 /** Builds the Contents list in .quick-links-container, and the sidebar from it. */
+// Headings take about twice the height of a link. At this many rows the list is
+// taller than a phone screen.
+const LONG_CONTENTS_ROWS = 24;
+
 function generateQuickLinks(document) {
     if (document.body?.dataset?.skipToc === "true") return false;
 
@@ -17,6 +21,7 @@ function generateQuickLinks(document) {
     renderNavigation(container, navStructure);
     renderSidebarToc(document, container);
     addContentsSubToggles(document, container);
+    addContentsShowAll(document, container);
 
     return true;
 }
@@ -205,6 +210,24 @@ function addSidebarSubToggles(document, container) {
 
         li.insertBefore(btn, li.firstChild);
     }
+}
+
+/**
+ * A long list gets a "Show all" button, and CSS caps its height on phones so the
+ * guide starts within the first screen. Runs after the sidebar is cloned.
+ */
+function addContentsShowAll(document, container) {
+    const links = container.querySelectorAll(":scope > ul > li").length;
+    const headings = container.querySelectorAll(":scope > h2, :scope > h4").length;
+    if (links + headings * 2 < LONG_CONTENTS_ROWS) return;
+
+    container.classList.add("quick-links-container--long");
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "quick-links-show-all";
+    btn.textContent = "Show all";
+    container.appendChild(btn);
 }
 
 /**
