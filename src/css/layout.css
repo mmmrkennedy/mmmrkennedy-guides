@@ -96,92 +96,111 @@ Page structure and containers.
     color: var(--color-text-primary);
 }
 
-/* Site Footer: copyright + last-updated date + edit count */
+/* Site Footer: two quiet centred lines on desktop, one short line on a phone. */
 .site-footer {
     position: relative;
-    padding: var(--space-xl) var(--space-md) var(--space-lg);
+    padding: var(--space-lg) var(--space-sm);
     text-align: center;
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
 }
 
-/* Hairline divider that fades out at both ends rather than butting into the
-   viewport edges, with a breath of the site's gold at the centre. Drawn as a
-   pseudo-element because a border can't carry a gradient. */
 .site-footer::before {
     content: "";
     position: absolute;
     inset: 0 0 auto;
     height: 1px;
-    background: linear-gradient(
-        to right,
-        transparent,
-        var(--color-border-medium) 20%,
-        var(--color-tier-3) 50%,
-        var(--color-border-medium) 80%,
-        transparent
-    );
+    background: var(--color-border-subtle);
 }
 
-/* Single-line meta row: copyright │ updated │ edits │ views.
-   Flex (not inline text) so a narrow screen wraps between whole items and the
-   wrapped rows stay evenly spaced. */
-.site-footer__meta {
+/* Fit-content keeps a line that fits tight and centred. A line that wraps fills
+   the width instead, which puts the first item of every row on the left edge,
+   where the clip hides its separator dot. No row ever starts with a stray dot. */
+.site-footer__meta,
+.site-footer__facts,
+.site-footer__base {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     justify-content: center;
     row-gap: var(--space-xs);
-    margin: 0;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow-x: clip;
     line-height: var(--line-height-tight);
 }
 
-/* Separators are hairline rules, not bullet glyphs, so they're quieter, and they echo the
-   divider above. Empty spans in the markup; the rule is drawn entirely here.
-   responsive.css opens the margins up once there's width to spare. */
-.site-footer__sep {
-    flex: none;
-    width: 1px;
-    height: 0.85em;
-    margin: 0 0.5em;
-    background-color: currentcolor;
-    opacity: 0.3;
+.site-footer__facts > *,
+.site-footer__base > * {
+    position: relative;
+    flex: 1 1 auto;
+    padding-inline: 0.35em calc(0.35em + 3px);
 }
 
-/* Below --bp-md the row always wraps, and a wrap strands a rule at the start
-   or end of a line. Drop the rules there and let a plain gap separate items. */
-@media (width < 48.0625em) { /* --bp-md */
-    .site-footer__meta {
-        column-gap: var(--space-smd);
+/* Sits in the previous item's right padding, which is 3px wider to make room. */
+.site-footer__facts > *::before,
+.site-footer__base > *::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    width: 3px;
+    height: 3px;
+    margin-top: -1.5px;
+    border-radius: 50%;
+    background-color: currentcolor;
+    opacity: 0.5;
+}
+
+/* Desktop: facts, then copyright and links a step quieter. The side padding
+   keeps both clear of the fixed Back to Top button. */
+@media (width >= 48.0625em) { /* --bp-md */
+    .site-footer {
+        padding-inline: 10.5rem;
     }
 
-    .site-footer__sep,
-    .site-footer__views::before {
-        display: none;
+    .site-footer__meta {
+        display: block;
+        width: auto;
+        overflow-x: visible;
+    }
+
+    .site-footer__base {
+        margin-top: var(--space-xs);
+        opacity: 0.85; /* the faintest this muted grey stays readable (4.5:1) */
+    }
+}
+
+/* Phone: both lines merge into one row, copyright first, and the page facts go. */
+@media (width < 48.0625em) { /* --bp-md */
+    .site-footer__facts,
+    .site-footer__base {
+        display: contents;
+    }
+
+    .site-footer__copyright {
+        order: -1;
+    }
+
+    .site-footer__base a {
+        order: 1;
     }
 
     /* Its own line after the rest, so a long list of names can't split the row. */
     .site-footer__editors {
-        order: 1;
+        order: 2;
         flex-basis: 100%;
     }
 
-    /* Page stats a phone reader has no use for, and what made the row wrap. */
     .site-footer__released,
-    .site-footer__edits,
-    .site-footer__words {
+    .site-footer__words,
+    .site-footer__views {
         display: none;
     }
 }
 
-/* The one warm note in the row; everything else stays muted grey. */
-.site-footer__copyright {
-    color: var(--color-tier-2);
-}
-
-/* Third-party artwork credit. A step quieter than the meta row above: it has to
-   be findable to satisfy the licence, not read by everyone. Inherits the
-   footer's own size and muted colour; only the opacity sets it back. */
+/* Third-party artwork credit. A step quieter than the lines above: it has to
+   be findable to satisfy the licence, not read by everyone. */
 .site-footer__credits {
     margin: var(--space-sm) 0 0;
     line-height: var(--line-height-tight);
@@ -189,50 +208,30 @@ Page structure and containers.
 }
 
 /* Counts sit next to each other across pages; tabular figures stop them jittering. */
-.site-footer__edits,
 .site-footer__words,
 .site-footer__views {
     font-variant-numeric: tabular-nums;
 }
 
-/* Footer navigation (the /stats link). Sits at the muted weight of the rest of
-   the meta row rather than the usual link blue, so it reads as footer furniture
-   and not as a call to action. */
 .site-footer__link {
     color: inherit;
     text-decoration: none;
-    border-bottom: 1px dotted rgb(255 255 255 / 12%);
 }
 
 .site-footer__link:hover,
 .site-footer__link:focus-visible {
     color: var(--color-text-secondary);
-    border-bottom-color: currentcolor;
+    text-decoration: underline;
 }
 
-/* Both carry a `title` (the full date on one, the age on the other), so both
-   get the hint that they're hoverable. */
-.site-footer__updated,
-.site-footer__released {
-    border-bottom: 1px dotted rgb(255 255 255 / 12%);
-    cursor: help;
+/* The licence links have to read as links, so they keep a resting underline. */
+.site-footer__credits .site-footer__link {
+    text-decoration: underline;
 }
 
-/* Views count is filled in by JS (ui/footer.ts). Hidden until it has a value,
-   and draws its own leading separator so it matches the static ones. */
+/* Views count is filled in by JS (ui/footer.ts). Hidden until it has a value. */
 .site-footer__views:empty {
     display: none;
-}
-
-.site-footer__views::before {
-    content: "";
-    display: inline-block;
-    width: 1px;
-    height: 0.85em;
-    margin: 0 0.5em;
-    vertical-align: -0.12em;
-    background-color: currentcolor;
-    opacity: 0.3;
 }
 
 /* Main Content Window */

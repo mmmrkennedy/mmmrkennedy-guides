@@ -380,7 +380,6 @@
         {%- set released = page.inputPath | released %}
         {%- set releasedISO = page.inputPath | releasedISO %}
         {%- set releasedRel = page.inputPath | releasedRelative %}
-        {%- set edits = page.inputPath | editcount %}
         {%- set editorList = editors | formatEditors %}
         {#- A page the index still marks disabled shows the placeholder above
             instead of `content`, so it must not advertise the word count of a
@@ -389,17 +388,20 @@
         {#- The home page has no guide body of its own worth counting, so it reports
             the whole library instead. #}
         {%- if homePage %}{% set words = siteWords.words %}{% endif %}
-        <p class="site-footer__meta">
-            <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
-            {%- if editorList %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
-            {%- if released and not homePage %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__released" datetime="{{ releasedISO }}" title="Released {{ releasedRel }}">Initial release {{ released }}</time>{% endif %}
-            {%- if updated %}<span class="site-footer__sep" aria-hidden="true"></span><time class="site-footer__updated" datetime="{{ updatedISO }}" title="Last updated {{ updated }}">Updated {{ updatedRel }}</time>{% endif %}
-            {%- if edits %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__edits">{{ edits }} edit{{ "s" if edits != 1 }}</span>{% endif %}
-            {%- if words %}<span class="site-footer__sep" aria-hidden="true"></span><span class="site-footer__words">{{ words | thousands }} words{% if homePage %} across {{ siteWords.guides }} guides{% endif %}</span>{% endif %}
-            {%- if not statsPage %}<span class="site-footer__sep" aria-hidden="true"></span><a class="site-footer__link" href="/stats">Site stats</a>{% endif %}
-            {%- if homePage %}<span class="site-footer__sep" aria-hidden="true"></span><a class="site-footer__link" href="/solvers">All puzzle solvers</a>{% endif %}
-            <span class="site-footer__views"></span>
-        </p>
+        <div class="site-footer__meta">
+            <p class="site-footer__facts">
+                {%- if editorList %}<span class="site-footer__editors">Edited by {{ editorList }}</span>{% endif %}
+                {%- if updated %}<time class="site-footer__updated" datetime="{{ updatedISO }}" title="Last updated {{ updated }}">Updated {{ updatedRel }}</time>{% endif %}
+                {%- if released and not homePage %}<time class="site-footer__released" datetime="{{ releasedISO }}" title="Released {{ releasedRel }}">Released {{ released }}</time>{% endif %}
+                {%- if words %}<span class="site-footer__words">{{ words | thousands }} words{% if homePage %} across {{ siteWords.guides }} guides{% endif %}</span>{% endif %}
+                <span class="site-footer__views"></span>
+            </p>
+            <p class="site-footer__base">
+                <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
+                {%- if not statsPage %}<a class="site-footer__link" href="/stats">Site stats</a>{% endif %}
+                {%- if homePage %}<a class="site-footer__link" href="/solvers">All puzzle solvers</a>{% endif %}
+            </p>
+        </div>
         {#- CC BY-SA 3.0 asks for credit "in any reasonable manner based on the
             medium", which for a web page means somewhere a reader can actually
             find it. Shown only where the artwork is: pages that mount the Eight

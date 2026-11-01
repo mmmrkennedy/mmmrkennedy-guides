@@ -11,7 +11,7 @@ module.exports = function(eleventyConfig) {
         if (id.startsWith(STEPS_DIR)) delete require.cache[id];
     }
 
-    const { lastmodCache, editcountCache, releaseCache, formatCalendarDate, cacheKeyFor, formatRelativeDate } = require("./build_scripts/eleventy/dates.cjs");
+    const { lastmodCache, releaseCache, formatCalendarDate, cacheKeyFor, formatRelativeDate } = require("./build_scripts/eleventy/dates.cjs");
     const { WORDCOUNT_FLOOR, countWords, siteStats, resetStats } = require("./build_scripts/eleventy/stats.cjs");
     const { classifyLinks, unlinkUnwrittenGuides } = require("./build_scripts/eleventy/links.cjs");
     const { domPass } = require("./build_scripts/eleventy/dom-pass.cjs");
@@ -92,12 +92,6 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addFilter("releasedRelative", (inputPath) => {
         if (!inputPath) return "";
         return formatRelativeDate(releaseCache[cacheKeyFor(inputPath)]);
-    });
-
-    // Commits that have touched the page, or null if unknown.
-    eleventyConfig.addFilter("editcount", (inputPath) => {
-        if (!inputPath) return null;
-        return editcountCache[cacheKeyFor(inputPath)] || null;
     });
 
     // Takes body HTML. Null below the floor, so stubs show no count.

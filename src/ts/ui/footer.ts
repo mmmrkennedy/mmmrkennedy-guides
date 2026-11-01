@@ -99,8 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
             const noun = data.count === 1 ? "view" : "views";
-            // Non-empty text lifts the `:empty { display:none }` rule and reveals
-            // the leading "•" separator drawn via ::before.
+            // Non-empty text lifts the `:empty { display:none }` rule.
             target.textContent = formatCount(data.count) + " " + noun;
         })
         .catch((err) => {

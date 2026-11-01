@@ -5,7 +5,7 @@
  * going up, and fills in how old the site turned.
  *
  * The date comes from the page (`data-birthday`), which the build fills from
- * release-dates.json, the same data behind every guide's "Initial release"
+ * release-dates.json, the same data behind every guide's "Released"
  * footer, so this can't drift from it.
  *
  * Client-side rather than baked in at build time for two reasons: a static build

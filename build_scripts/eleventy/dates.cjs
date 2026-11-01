@@ -12,7 +12,7 @@ let editcountCache = {};
 try {
     editcountCache = require("../editcount-cache.json");
 } catch {
-    console.warn("editcount-cache.json not found; footer edit counts will be omitted.");
+    console.warn("editcount-cache.json not found; stats page edit counts will be omitted.");
 }
 
 // Initial-release dates. Unlike the two caches above these can't be rebuilt from
