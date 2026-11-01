@@ -38,7 +38,7 @@ h4 {
  *   title-tier-4  == tier-3 visually, but nests one level deeper in the Contents nav
  * Smaller number = bigger/higher. tier-3 and tier-4 share the look; only their
  * auto-generated Contents-list indent differs (see generateQuickLinks in
- * eleventy.config.cjs). */
+ * build_scripts/eleventy/quick-links.cjs). */
 .title-tier-1 {
     color: var(--color-tier-1);
     font-size: var(--font-size-xl);

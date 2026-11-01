@@ -1,6 +1,6 @@
 /**
  * Behaviour for the contents lists. The build renders both of them (the
- * generateQuickLinks transform in eleventy.config.cjs).
+ * generateQuickLinks step in build_scripts/eleventy/quick-links.cjs).
  */
 
 /** Wires up the phone contents list. */

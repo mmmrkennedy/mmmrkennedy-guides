@@ -51,7 +51,7 @@ declare global {
  * Fetch a solver's chunk, then attach it to its element.
  *
  * hydrate(), not render(), because the production build already put this
- * solver's markup in the page (eleventy.config.cjs `prerenderSolvers`). Preact
+ * solver's markup in the page (`prerenderSolvers` in build_scripts/eleventy/solvers.cjs). Preact
  * then walks the DOM that is already there and only wires up handlers and state,
  * creating nothing — so the page does not move when a chunk lands, which is what
  * the split otherwise cost: CLS 1.23 on the five-solver page against 0.000

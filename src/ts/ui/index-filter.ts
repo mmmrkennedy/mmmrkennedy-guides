@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // map listed under two games (Shangri-La under BO1 and BO3, the Zombies
     // Chronicles remasters) counts once. A map is complete unless every listing
     // of it is `.disabled` — and those carry data-href, not href, because the
-    // build unlinks them (see `unlinkUnwrittenGuides` in eleventy.config.cjs).
+    // build unlinks them (see `unlinkUnwrittenGuides` in build_scripts/eleventy/links.cjs).
     function renderProgress(): void {
         const box = document.querySelector<HTMLElement>("[data-index-progress]");
         if (!box) return;

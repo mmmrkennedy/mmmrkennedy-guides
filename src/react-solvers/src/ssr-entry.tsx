@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 // Build-time only. vite.ssr.config.js builds this into .solver-ssr/, which
-// eleventy.config.cjs requires to render each solver's initial HTML straight into
+// build_scripts/eleventy/solvers.cjs requires to render each solver's initial HTML straight into
 // the page. main.tsx loads the same files on demand; this loads them all up front,
 // because Node needs them present synchronously.
 //

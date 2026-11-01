@@ -16,7 +16,7 @@ import { log } from "../core/logger";
  * The release date itself is absolute and never rewritten; only the tooltip that
  * says how long ago it was.
  *
- * The bucket ladder here must match `formatRelativeDate` in eleventy.config.cjs,
+ * The bucket ladder here must match `formatRelativeDate` in build_scripts/eleventy/dates.cjs,
  * or pages would visibly flip wording the moment the script runs.
  */
 document.addEventListener("DOMContentLoaded", () => {

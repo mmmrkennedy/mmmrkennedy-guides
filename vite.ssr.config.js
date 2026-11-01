@@ -2,7 +2,7 @@
 //
 // vite.config.js builds the BROWSER bundle: an entry plus one dynamically
 // imported chunk per solver. This one builds the same components for NODE, so
-// eleventy.config.cjs can render each solver's initial HTML straight into the
+// build_scripts/eleventy/solvers.cjs can render each solver's initial HTML straight into the
 // page and the browser gets markup instead of an empty div to fill in.
 //
 // Two deliberate choices worth not undoing:
@@ -35,7 +35,7 @@ export default defineConfig({
         minify: false,
         rollupOptions: {
             output: {
-                // CJS so eleventy.config.cjs can require() it directly. An ESM
+                // CJS so build_scripts/eleventy/solvers.cjs can require() it directly. An ESM
                 // output would force a dynamic import and make the eleventy
                 // transform async for no gain.
                 format: "cjs",

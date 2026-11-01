@@ -79,7 +79,7 @@ a:hover {
    a picture are the same kind of thing here (media that opens in the lightbox),
    so the glyph does the distinguishing rather than more palette colours. Keyed
    off the data-media-type that the `classifyLinks` transform already stamps on
-   every media link (eleventy.config.cjs), so there's no second place to keep in
+   every media link (build_scripts/eleventy/links.cjs), so there's no second place to keep in
    sync. Images deliberately get no icon: they're the overwhelming majority, and
    a marker on almost every link marks nothing. */
 a[data-media-type="video"]::after,
@@ -113,7 +113,7 @@ a[data-media-type="audio"]::after {
 /* A guide that isn't written yet: dimmed to muted text so it reads as
    deliberately inactive rather than as a link that lost its colour. The build
    renames its href to data-href (the `unlinkUnwrittenGuides` transform in
-   eleventy.config.cjs), so it's an anchor that can't navigate — no need to
+   build_scripts/eleventy/links.cjs), so it's an anchor that can't navigate — no need to
    block pointer events, which means the not-allowed cursor sits on the name
    itself. Touch has no hover, so index-filter.ts answers a tap with a toast. */
 .disabled {
@@ -653,7 +653,7 @@ td[data-card-copy] {
  * trades that for columns parked off-screen. So each body row becomes a card:
  * the cells stack, and each one is introduced by its column's heading, printed
  * from the data-label the build stamps on it (labelTableCells in
- * eleventy.config.cjs). That makes the header row a duplicate, so it comes off.
+ * build_scripts/eleventy/tables.cjs). That makes the header row a duplicate, so it comes off.
  *
  * Only tables the build marked [data-cards] switch — tables with rowspan, or
  * with sort controls in the header, keep the scrolling table (see

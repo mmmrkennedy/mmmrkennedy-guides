@@ -89,7 +89,7 @@ export default defineConfig({
                 // downloads only the one it mounts.
                 //
                 // Safe for the injected <script type="module"> tag in
-                // eleventy.config.cjs, which is already a module tag.
+                // build_scripts/eleventy/solvers.cjs, which is already a module tag.
                 format: "es",
             },
             // Exclude styles.css from being bundled
