@@ -182,7 +182,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // keep dismissing a floating popover. So it gets flag mode (see startPicking) and
     // the form as a bottom sheet. Decided by input type rather than width, so a
     // narrow desktop window keeps its hover flags.
-    const isSheet = window.matchMedia("(hover: none)").matches;
+    // Some Android phones wrongly report hover support, hence the pointer check.
+    const isSheet = window.matchMedia("(hover: none), (pointer: coarse)").matches;
     pop.classList.toggle("gfb-pop--sheet", isSheet);
 
     const titleEl = pop.querySelector<HTMLElement>(".gfb-pop__title")!;
@@ -603,14 +604,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function setUpFlagMode(): void {
         let launcher: HTMLButtonElement | null = null;
-        let pastContents = true;
 
         syncFlagMode = () => {
             const flagging = picking || !pop.hidden;
             document.body.classList.toggle("gfb-picking", picking);
             document.body.classList.toggle("gfb-flagging", flagging);
             banner.hidden = !picking;
-            if (launcher) launcher.hidden = flagging || !pastContents;
+            if (launcher) launcher.hidden = flagging;
         };
 
         // A page that is mostly a solver already has the solver's own report button,
@@ -634,15 +634,6 @@ document.addEventListener("DOMContentLoaded", () => {
         banner.querySelector("button")?.addEventListener("click", stopPicking);
         document.body.appendChild(banner);
 
-        // Out of the way until the reader has passed the contents list.
-        const contents = document.querySelector(".quick-links-container");
-        if (contents) {
-            pastContents = false;
-            new IntersectionObserver(([entry]) => {
-                pastContents = !entry.isIntersecting && entry.boundingClientRect.bottom <= 0;
-                syncFlagMode();
-            }).observe(contents);
-        }
         syncFlagMode();
     }
     if (isSheet) setUpFlagMode();

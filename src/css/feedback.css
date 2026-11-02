@@ -337,18 +337,18 @@ td .gfb-flag {
     position: fixed;
 
     /* Directly above Back to Top: 48px tall, with --space-md below it. */
-    right: calc(var(--space-md) + 2px);
+    right: var(--space-md);
     bottom: calc(var(--space-md) + 48px + var(--space-sm) + env(safe-area-inset-bottom, 0px));
     z-index: 100;
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     padding: 0;
     border: 1px solid var(--color-border-medium);
-    border-radius: 8px;
+    border-radius: 6px;
     background: var(--color-bg-tertiary);
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     font-size: 1.05rem;
     line-height: 1;
 }
@@ -398,7 +398,7 @@ td .gfb-flag {
     background: rgb(192 112 48 / 16%);
 }
 
-@media (hover: none) {
+@media (hover: none), (pointer: coarse) {
     .gfb-flag {
         display: none;
     }
