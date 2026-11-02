@@ -120,6 +120,8 @@ const NESTED_BLOCK_CHILD = NESTED_BLOCK.split(", ")
     .join(", ");
 /** Nested blocks plus the chrome this script injects — all skipped by lineText(). */
 const NOT_OWN_TEXT = NESTED_BLOCK + ", .gfb-flag, .gfb-buggy-note";
+/** Fewer text lines than this and the page is a solver or a stub: no flag launcher. */
+const MIN_LINES_FOR_LAUNCHER = 5;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Pages can opt out (e.g. the home/index page) via <body data-no-flags>.
@@ -176,6 +178,13 @@ document.addEventListener("DOMContentLoaded", () => {
         "</div>";
     document.body.appendChild(pop);
 
+    // A touch screen has no hover to reveal a ⚑, and its keyboard and scrolling would
+    // keep dismissing a floating popover. So it gets flag mode (see startPicking) and
+    // the form as a bottom sheet. Decided by input type rather than width, so a
+    // narrow desktop window keeps its hover flags.
+    const isSheet = window.matchMedia("(hover: none)").matches;
+    pop.classList.toggle("gfb-pop--sheet", isSheet);
+
     const titleEl = pop.querySelector<HTMLElement>(".gfb-pop__title")!;
     const quoteEl = pop.querySelector<HTMLElement>(".gfb-pop__quote")!;
     const reasonsEl = pop.querySelector<HTMLElement>(".gfb-pop__reasons")!;
@@ -191,6 +200,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let activeTarget: HTMLElement | null = null;
     let activeQuote = "";
     let sending = false;
+    /** The line chosen in flag mode, highlighted while the sheet is open. */
+    let pickedLine: HTMLElement | null = null;
+    let picking = false;
+    /** Replaced below on touch screens, which show page state while flagging. */
+    let syncFlagMode = (): void => {};
     /** Set for a solver report, null for a line flag — the mode switch. */
     let activeSnapshot: SolverSnapshot | null = null;
     /**
@@ -269,11 +283,31 @@ document.addEventListener("DOMContentLoaded", () => {
         pop.hidden = true;
         activeTarget = null;
         activeSnapshot = null;
+        pickedLine?.classList.remove("gfb-picked");
+        pickedLine = null;
         resetForm();
+        syncFlagMode();
+    }
+
+    /** Lift the sheet above the on-screen keyboard, which covers fixed elements. */
+    function fitSheet(): void {
+        const vv = window.visualViewport;
+        if (!vv || pop.hidden) return;
+        pop.style.bottom = Math.max(0, window.innerHeight - vv.height - vv.offsetTop) + "px";
+        pop.style.maxHeight = Math.round(vv.height * 0.85) + "px";
+    }
+    if (isSheet) {
+        window.visualViewport?.addEventListener("resize", fitSheet);
+        window.visualViewport?.addEventListener("scroll", fitSheet);
     }
 
     /** Under the anchor, clamped to the viewport; flipped above if it'd overflow. */
     function positionPop(anchor: HTMLElement): void {
+        if (isSheet) {
+            fitSheet();
+            syncFlagMode();
+            return;
+        }
         const r = anchor.getBoundingClientRect();
         const pw = pop.offsetWidth;
         const ph = pop.offsetHeight;
@@ -436,14 +470,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("click", (e) => {
         const t = e.target as Node | null;
-        if (pop.hidden || (t && pop.contains(t))) return;
+        // A stray tap must not throw away a half-typed note: the sheet has Cancel.
+        if (isSheet || pop.hidden || (t && pop.contains(t))) return;
         if (t instanceof Element && t.closest(".gfb-flag, .gfb-solver-flag")) return;
         closePop();
     });
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closePop();
+        if (e.key !== "Escape") return;
+        stopPicking();
+        closePop();
     });
-    window.addEventListener("resize", closePop);
+    if (!isSheet) window.addEventListener("resize", closePop);
     // Capture phase, so a scroll anywhere on the page dismisses the popover it
     // would otherwise leave stranded — except a scroll INSIDE it, which a solver
     // snapshot long enough to overflow makes routine.
@@ -451,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "scroll",
         (e) => {
             const t = e.target as Node | null;
-            if (t && pop.contains(t)) return;
+            if (isSheet || (t && pop.contains(t))) return;
             closePop();
         },
         true,
@@ -520,6 +557,95 @@ document.addEventListener("DOMContentLoaded", () => {
         if (el.closest("[data-solver]")) continue;
         decorate(el);
     }
+
+    // ---- Flag mode (touch only) ----
+    const banner = document.createElement("div");
+
+    function startPicking(): void {
+        picking = true;
+        const barBottom = document.querySelector(".top-buttons-background-box")?.getBoundingClientRect().bottom ?? 0;
+        banner.style.top = barBottom + "px";
+        window.addEventListener("click", pickLine, true);
+        syncFlagMode();
+    }
+
+    function stopPicking(): void {
+        if (!picking) return;
+        picking = false;
+        window.removeEventListener("click", pickLine, true);
+        syncFlagMode();
+    }
+
+    /**
+     * Runs ahead of every other click handler, so a tap on a link or image inside a
+     * line selects the line instead of opening it. Tabs and disclosures still work,
+     * because the line being reported may be inside one.
+     */
+    function pickLine(e: Event): void {
+        const t = e.target;
+        if (!(t instanceof Element) || t.closest(".gfb-pick-banner, .path-tabs__tab, summary")) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const line = t.closest<HTMLElement>(".gfb-flaggable");
+        if (!line) return;
+        stopPicking();
+        pickedLine = line;
+        line.classList.add("gfb-picked");
+        openPop(line, line);
+
+        // Keep the chosen line in sight above the sheet.
+        const barBottom = document.querySelector(".top-buttons-background-box")?.getBoundingClientRect().bottom ?? 0;
+        const r = line.getBoundingClientRect();
+        if (r.top < barBottom + 8 || r.bottom > pop.getBoundingClientRect().top - 8) {
+            window.scrollBy({ top: r.top - barBottom - 16, behavior: "auto" });
+        }
+    }
+
+    function setUpFlagMode(): void {
+        let launcher: HTMLButtonElement | null = null;
+        let pastContents = true;
+
+        syncFlagMode = () => {
+            const flagging = picking || !pop.hidden;
+            document.body.classList.toggle("gfb-picking", picking);
+            document.body.classList.toggle("gfb-flagging", flagging);
+            banner.hidden = !picking;
+            if (launcher) launcher.hidden = flagging || !pastContents;
+        };
+
+        // A page that is mostly a solver already has the solver's own report button,
+        // so the launcher only goes where there's a real run of text to flag.
+        const textLines = flaggable.filter((el) => !el.closest("[data-solver]"));
+        if (textLines.length < MIN_LINES_FOR_LAUNCHER) return;
+
+        launcher = document.createElement("button");
+        launcher.type = "button";
+        launcher.className = "gfb-launcher";
+        launcher.setAttribute("aria-label", "Flag a problem with a line");
+        launcher.textContent = "⚑";
+        launcher.addEventListener("click", startPicking);
+        document.body.appendChild(launcher);
+
+        banner.className = "gfb-pick-banner";
+        banner.setAttribute("role", "status");
+        banner.innerHTML =
+            "<span>Tap the line with the problem</span>" +
+            '<button type="button" class="gfb-pick-banner__close" aria-label="Stop flagging">✕</button>';
+        banner.querySelector("button")?.addEventListener("click", stopPicking);
+        document.body.appendChild(banner);
+
+        // Out of the way until the reader has passed the contents list.
+        const contents = document.querySelector(".quick-links-container");
+        if (contents) {
+            pastContents = false;
+            new IntersectionObserver(([entry]) => {
+                pastContents = !entry.isIntersecting && entry.boundingClientRect.bottom <= 0;
+                syncFlagMode();
+            }).observe(contents);
+        }
+        syncFlagMode();
+    }
+    if (isSheet) setUpFlagMode();
 
     /**
      * Fired once per solver by react-solvers/src/main.tsx, right after hydrate().
