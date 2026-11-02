@@ -1,67 +1,9 @@
 /* Guide feedback — inline line flagging
  * --------------------------------------
- * Styles for the ⚑ flag affordance, the shared "flag this line" popover, the
- * confirmation toast, and the auto-shown "may be buggy" caution note.
+ * Styles for flag mode, the shared "flag this line" sheet, the confirmation toast,
+ * and the auto-shown "may be buggy" caution note.
  * Relies only on existing tokens.css variables. Behaviour lives in
  * src/ts/ui/line-flagger.ts. */
-
-/* Inline flag affordance */
-.gfb-flaggable {
-    position: relative;
-}
-
-.gfb-flag {
-    display: inline-block;
-    margin-left: var(--space-xs);
-
-    /* Collapse the flag's layout footprint: without this, a line that exactly
-     * fills the available width pushes the ⚑ onto a new (empty) line. The
-     * negative right margin removes the width it reserves for line-breaking
-     * while the glyph still paints right after the text. */
-    margin-right: -1.75rem;
-    padding: 0 0.2rem;
-    border: 0;
-    background: none;
-    cursor: pointer;
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
-    line-height: 1;
-    opacity: 0;
-    transition: opacity 0.12s, color 0.12s;
-    vertical-align: baseline;
-}
-
-/* A cell's padding has less room than the flag's usual footprint, so a line that
- * fills its cell would push the table's scroll width. The glyph stays put. */
-td .gfb-flag {
-    margin-left: 0;
-    padding-right: 0;
-}
-
-/* Reveal a line's flag on hover — but not when the pointer is actually over a
- * nested flaggable line, since :hover also matches ancestors. Without the :has()
- * guard, hovering a sub-bullet would light up every parent line's flag too. */
-.gfb-flaggable:hover:not(:has(.gfb-flaggable:hover)) > .gfb-flag {
-    opacity: 0.5;
-}
-
-.gfb-flag:hover,
-.gfb-flag:focus-visible {
-    opacity: 1;
-    color: var(--color-danger-text);
-    outline: none;
-}
-
-.gfb-flagged {
-    background: rgb(192 112 48 / 8%);
-    border-radius: 4px;
-    box-shadow: 0 0 0 0.3rem rgb(192 112 48 / 8%);
-}
-
-.gfb-flagged > .gfb-flag {
-    opacity: 1;
-    color: var(--color-danger-text);
-}
 
 /* Auto-note for buggy steps (reuses the danger/amber note tokens) */
 .gfb-buggy-note {
@@ -75,6 +17,10 @@ td .gfb-flag {
     border-radius: 6px;
     color: var(--color-danger-text);
     font-size: var(--font-size-sm);
+}
+
+.gfb-flaggable {
+    position: relative;
 }
 
 /* Solver reporting
@@ -119,9 +65,9 @@ td .gfb-flag {
     border-color: var(--color-danger-border);
 }
 
-/* Popover */
+/* Bottom sheet */
 
-/* components.css appends a non-breaking space after every <label>. The popover has
+/* components.css appends a non-breaking space after every <label>. The sheet has
    no <label> today, but this guards against one picking that up. */
 .gfb-pop label::after {
     content: none;
@@ -129,19 +75,25 @@ td .gfb-flag {
 
 .gfb-pop {
     position: fixed;
+    inset: auto 0 0;
     z-index: 1000;
-    width: min(20rem, calc(100vw - 1rem));
 
-    /* A solver snapshot can run to a dozen fields; scroll inside the popover
-     * rather than growing it past the viewport. line-flagger.ts exempts scrolls
-     * originating in here from the dismiss-on-scroll handler. */
+    /* Full width on a phone; centred and capped on a wide window, where a form
+     * stretched across the screen would be hard to read. */
+    width: min(100%, 36rem);
+    margin-inline: auto;
+
+    /* A solver snapshot can run to a dozen fields; scroll inside the sheet rather
+     * than growing it past the viewport. */
     max-height: min(80vh, 34rem);
     overflow-y: auto;
     overscroll-behavior: contain;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-medium);
-    border-radius: 10px;
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
     padding: var(--space-md);
+    padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 10px 30px rgb(0 0 0 / 45%);
     color: var(--color-text-primary);
 }
@@ -172,7 +124,7 @@ td .gfb-flag {
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border-medium);
     border-radius: 999px;
-    padding: 0.15rem 0.6rem;
+    padding: var(--space-sm) var(--space-smd);
     font: inherit;
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
@@ -193,7 +145,9 @@ td .gfb-flag {
     border-radius: 6px;
     padding: var(--space-sm);
     font: inherit;
-    font-size: var(--font-size-sm);
+
+    /* Under 16px, iOS zooms the page in when a field takes focus. */
+    font-size: 1rem;
     resize: vertical;
 }
 
@@ -210,6 +164,7 @@ td .gfb-flag {
 }
 
 .gfb-pop__btn {
+    min-height: 44px;
     border: 1px solid var(--color-border-medium);
     background: transparent;
     border-radius: 6px;
@@ -253,7 +208,7 @@ td .gfb-flag {
     border-radius: 6px;
     padding: var(--space-xs) var(--space-sm);
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: 1rem;
 }
 
 .gfb-pop__expected input:focus {
@@ -331,8 +286,7 @@ td .gfb-flag {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Flag mode and the bottom sheet: touch screens only, chosen by input type to match
- * isSheet in line-flagger.ts. */
+/* Flag mode */
 .gfb-launcher {
     position: fixed;
 
@@ -349,8 +303,26 @@ td .gfb-flag {
     border-radius: 6px;
     background: var(--color-bg-tertiary);
     color: var(--color-text-secondary);
+    cursor: pointer;
     font-size: 1.05rem;
     line-height: 1;
+}
+
+/* From this width Back to Top is a 39px tall text button, 1.25rem from the corner
+ * (responsive.css). Line up with it and match its height. */
+@media (width >= 48.0625em) { /* --bp-md */
+    .gfb-launcher {
+        right: 1.25rem;
+        bottom: calc(1.25rem + 39px + var(--space-sm));
+        width: 39px;
+        height: 39px;
+    }
+}
+
+/* A line can be picked from anywhere on it, including over a link or image. */
+.gfb-picking .content-container,
+.gfb-picking .content-container * {
+    cursor: pointer;
 }
 
 .gfb-launcher[hidden],
@@ -379,6 +351,7 @@ td .gfb-flag {
     border: 0;
     background: none;
     color: var(--color-text-secondary);
+    cursor: pointer;
     font-size: 1rem;
 }
 
@@ -399,32 +372,4 @@ td .gfb-flag {
 .gfb-sent {
     background: rgb(192 112 48 / 12%);
     box-shadow: 0 0 0 0.15rem rgb(192 112 48 / 12%);
-}
-
-@media (hover: none), (pointer: coarse) {
-    .gfb-flag {
-        display: none;
-    }
-
-    .gfb-pop--sheet {
-        inset: auto 0 0;
-        width: 100%;
-        border-width: 1px 0 0;
-        border-radius: 14px 14px 0 0;
-        padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
-    }
-
-    .gfb-pop--sheet .gfb-reason {
-        padding: var(--space-sm) var(--space-smd);
-    }
-
-    .gfb-pop--sheet .gfb-pop__btn {
-        min-height: 44px;
-    }
-
-    /* Under 16px, iOS zooms the page in when a field takes focus. */
-    .gfb-pop--sheet textarea,
-    .gfb-pop--sheet input {
-        font-size: 1rem;
-    }
 }

@@ -21,7 +21,7 @@ import { log } from "../core/logger";
  *
  * SOLVER FLAGS
  * ------------
- * A solver gets an always-visible report button instead of a per-line ⚑. It
+ * A solver gets its own report button rather than relying on flag mode. It
  * attaches a snapshot of the reader's inputs only: solvers are deterministic, so
  * the answer can be recomputed from them.
  *
@@ -108,18 +108,13 @@ const CELL_ON_SEL =
 
 /**
  * Blocks nested inside a line that are lines of their own: they're excluded from
- * the line's text, and the ⚑ goes before the first of them rather than after the
- * whole subtree. `.table-scroll` is the wrapper the build puts around every
+ * the line's text. `.table-scroll` is the wrapper the build puts around every
  * <table> (prepareTables in build_scripts/eleventy/tables.cjs), so a bare `table`
  * never appears as a child here.
  */
 const NESTED_BLOCK = "ul, ol, table, p, h3, h4, .table-scroll";
-/** Same set, matched only as a direct child. */
-const NESTED_BLOCK_CHILD = NESTED_BLOCK.split(", ")
-    .map((sel) => ":scope > " + sel)
-    .join(", ");
 /** Nested blocks plus the chrome this script injects — all skipped by lineText(). */
-const NOT_OWN_TEXT = NESTED_BLOCK + ", .gfb-flag, .gfb-buggy-note";
+const NOT_OWN_TEXT = NESTED_BLOCK + ", .gfb-buggy-note";
 /** Fewer text lines than this and the page is a solver or a stub: no flag launcher. */
 const MIN_LINES_FOR_LAUNCHER = 5;
 
@@ -178,14 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "</div>";
     document.body.appendChild(pop);
 
-    // A touch screen has no hover to reveal a ⚑, and its keyboard and scrolling would
-    // keep dismissing a floating popover. So it gets flag mode (see startPicking) and
-    // the form as a bottom sheet. Decided by input type rather than width, so a
-    // narrow desktop window keeps its hover flags.
-    // Some Android phones wrongly report hover support, hence the pointer check.
-    const isSheet = window.matchMedia("(hover: none), (pointer: coarse)").matches;
-    pop.classList.toggle("gfb-pop--sheet", isSheet);
-
     const titleEl = pop.querySelector<HTMLElement>(".gfb-pop__title")!;
     const quoteEl = pop.querySelector<HTMLElement>(".gfb-pop__quote")!;
     const reasonsEl = pop.querySelector<HTMLElement>(".gfb-pop__reasons")!;
@@ -204,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /** Spans around the own text of the line chosen in flag mode. */
     let pickedMarks: HTMLElement[] = [];
     let picking = false;
-    /** Replaced below on touch screens, which show page state while flagging. */
+    /** Replaced by setUpFlagMode, which shows page state while flagging. */
     let syncFlagMode = (): void => {};
     /** Set for a solver report, null for a line flag — the mode switch. */
     let activeSnapshot: SolverSnapshot | null = null;
@@ -296,29 +283,10 @@ document.addEventListener("DOMContentLoaded", () => {
         pop.style.bottom = Math.max(0, window.innerHeight - vv.height - vv.offsetTop) + "px";
         pop.style.maxHeight = Math.round(vv.height * 0.85) + "px";
     }
-    if (isSheet) {
-        window.visualViewport?.addEventListener("resize", fitSheet);
-        window.visualViewport?.addEventListener("scroll", fitSheet);
-    }
+    window.visualViewport?.addEventListener("resize", fitSheet);
+    window.visualViewport?.addEventListener("scroll", fitSheet);
 
-    /** Under the anchor, clamped to the viewport; flipped above if it'd overflow. */
-    function positionPop(anchor: HTMLElement): void {
-        if (isSheet) {
-            fitSheet();
-            syncFlagMode();
-            return;
-        }
-        const r = anchor.getBoundingClientRect();
-        const pw = pop.offsetWidth;
-        const ph = pop.offsetHeight;
-        const left = Math.max(8, Math.min(r.left, window.innerWidth - pw - 8));
-        let top = r.bottom + 6;
-        if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
-        pop.style.left = left + "px";
-        pop.style.top = top + "px";
-    }
-
-    function openPop(flagBtn: HTMLElement, target: HTMLElement): void {
+    function openPop(target: HTMLElement): void {
         activeTarget = target;
         activeSnapshot = null;
         buildReasons(LINE_REASONS);
@@ -331,14 +299,15 @@ document.addEventListener("DOMContentLoaded", () => {
         quoteEl.hidden = false;
         quoteEl.textContent = activeQuote.length > 90 ? activeQuote.slice(0, 90) + "…" : activeQuote;
         pop.hidden = false;
-        positionPop(flagBtn);
+        fitSheet();
+        syncFlagMode();
     }
 
     /**
      * Solver mode. The snapshot is taken at open, not at send, so what the popover
      * shows is exactly what gets sent.
      */
-    function openSolverPop(reportBtn: HTMLElement, root: HTMLElement): void {
+    function openSolverPop(root: HTMLElement): void {
         const name = root.dataset.solver || "UnknownSolver";
         activeTarget = root;
         // A capture that throws must lose the inputs, not the report.
@@ -367,7 +336,8 @@ document.addEventListener("DOMContentLoaded", () => {
         snapEl.hidden = false;
         snapEl.open = false;
         pop.hidden = false;
-        positionPop(reportBtn);
+        fitSheet();
+        syncFlagMode();
     }
 
     /** Show the payload verbatim, so nothing is captured behind the reader's back. */
@@ -432,15 +402,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (expected) payload.expected = expected.slice(0, 200);
         }
 
-        /** Solver roots get their own marker — .gfb-flagged styles a text line. */
         const markSent = (): void => {
-            if (isSheet && !snap) {
-                // Same reason as markOwnText: .gfb-flagged would paint nested blocks.
-                for (const mark of pickedMarks) mark.className = "gfb-sent";
-                pickedMarks = [];
+            if (snap) {
+                target.classList.add("gfb-solver-flagged");
                 return;
             }
-            target.classList.add(snap ? "gfb-solver-flagged" : "gfb-flagged");
+            for (const mark of pickedMarks) mark.className = "gfb-sent";
+            pickedMarks = [];
         };
 
         sending = true;
@@ -474,33 +442,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    document.addEventListener("click", (e) => {
-        const t = e.target as Node | null;
-        // A stray tap must not throw away a half-typed note: the sheet has Cancel.
-        if (isSheet || pop.hidden || (t && pop.contains(t))) return;
-        if (t instanceof Element && t.closest(".gfb-flag, .gfb-solver-flag")) return;
-        closePop();
-    });
+    // Stray clicks, scrolling and resizing must not throw away a half-typed note, so
+    // the sheet only closes through Cancel, Send or Escape.
     document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
         stopPicking();
         closePop();
     });
-    if (!isSheet) window.addEventListener("resize", closePop);
-    // Capture phase, so a scroll anywhere on the page dismisses the popover it
-    // would otherwise leave stranded — except a scroll INSIDE it, which a solver
-    // snapshot long enough to overflow makes routine.
-    window.addEventListener(
-        "scroll",
-        (e) => {
-            const t = e.target as Node | null;
-            if (isSheet || (t && pop.contains(t))) return;
-            closePop();
-        },
-        true,
-    );
 
-    // ---- Attach a ⚑ + stable id to each leaf paragraph / bullet ----
+    // ---- Attach a stable id to each leaf paragraph / bullet ----
     const flaggable: HTMLElement[] = [];
 
     /**
@@ -523,27 +473,6 @@ document.addEventListener("DOMContentLoaded", () => {
         el.classList.add("gfb-flaggable");
         el.dataset.lineId = lineId(el);
         flaggable.push(el);
-
-        const flag = document.createElement("button");
-        flag.type = "button";
-        flag.className = "gfb-flag";
-        flag.setAttribute("aria-label", "Flag this line as confusing or wrong");
-        flag.textContent = "⚑";
-        flag.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!pop.hidden && activeTarget === el) {
-                closePop();
-                return;
-            }
-            openPop(flag, el);
-        });
-        // Put the ⚑ at the end of the line's own text — before any nested
-        // sublist/table — not after the whole subtree.
-        const nested = el.querySelector(NESTED_BLOCK_CHILD);
-        if (nested) el.insertBefore(flag, nested);
-        else el.appendChild(flag);
-
         maybeInjectBuggyNote(el);
     }
 
@@ -556,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /**
      * Lines inside a prerendered solver are left alone here, because hydration would
-     * remove the ⚑ buttons. They're decorated on solver:hydrated instead. Hashes are
+     * undo the changes. They're decorated on solver:hydrated instead. Hashes are
      * content-based, so deferring doesn't change a line's id.
      */
     for (const el of lines) {
@@ -564,7 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
         decorate(el);
     }
 
-    // ---- Flag mode (touch only) ----
+    // ---- Flag mode ----
     const banner = document.createElement("div");
 
     function startPicking(): void {
@@ -583,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Runs ahead of every other click handler, so a tap on a link or image inside a
+     * Runs ahead of every other click handler, so a click on a link or image inside a
      * line selects the line instead of opening it. Tabs and disclosures still work,
      * because the line being reported may be inside one.
      */
@@ -596,7 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!line) return;
         stopPicking();
         pickedMarks = markOwnText(line);
-        openPop(line, line);
+        openPop(line);
 
         // Keep the chosen line in sight above the sheet.
         const barBottom = document.querySelector(".top-buttons-background-box")?.getBoundingClientRect().bottom ?? 0;
@@ -680,15 +609,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         banner.className = "gfb-pick-banner";
         banner.setAttribute("role", "status");
+        // Some Android phones wrongly report hover support, hence the pointer check.
+        const verb = window.matchMedia("(hover: none), (pointer: coarse)").matches ? "Tap" : "Click";
         banner.innerHTML =
-            "<span>Tap the line with the problem</span>" +
+            `<span>${verb} the line with the problem</span>` +
             '<button type="button" class="gfb-pick-banner__close" aria-label="Stop flagging">✕</button>';
         banner.querySelector("button")?.addEventListener("click", stopPicking);
         document.body.appendChild(banner);
 
         syncFlagMode();
     }
-    if (isSheet) setUpFlagMode();
+    setUpFlagMode();
 
     /**
      * Fired once per solver by react-solvers/src/main.tsx, right after hydrate().
@@ -709,7 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /**
-     * The solver's own affordance: always visible, unlike the hover-reveal ⚑,
+     * The solver's own affordance: always visible, unlike flag mode's lines,
      * because it's the only way to report the thing solvers actually get wrong
      * and a hidden control gets a shrug and a one-line "it was wrong" instead.
      *
@@ -745,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 closePop();
                 return;
             }
-            openSolverPop(btn, root);
+            openSolverPop(root);
         });
 
         bar.appendChild(btn);
@@ -784,8 +715,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /**
      * Normalized visible text of a line — its OWN text only. Text inside a nested
-     * list/table/paragraph (each its own flaggable line) plus injected chrome (the
-     * ⚑ button and any buggy-note) are excluded, so a list item that introduces a
+     * list/table/paragraph (each its own flaggable line) plus any injected buggy-note
+     * are excluded, so a list item that introduces a
      * sublist hashes and quotes by its own wording. For a leaf line with no nested
      * block this equals its full text, so existing line ids stay stable.
      */
@@ -822,9 +753,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---- Solver state harvesting ----------------------------------------------
 
     /**
-     * Collapse whitespace, and drop the ⚑ glyph: solver paragraphs are flaggable
-     * lines too, so this script's own affordance sits inside the very text being
-     * harvested. lineText() strips it for the same reason.
+     * Collapse whitespace, and drop the ⚑ glyph, which the report button injected
+     * into the solver card carries. lineText() strips it for the same reason.
      */
     function norm(s: string | null | undefined): string {
         return (s ?? "").replace(/⚑/g, "").replace(/\s+/g, " ").trim();
