@@ -201,8 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let activeTarget: HTMLElement | null = null;
     let activeQuote = "";
     let sending = false;
-    /** The line chosen in flag mode, highlighted while the sheet is open. */
-    let pickedLine: HTMLElement | null = null;
+    /** Spans around the own text of the line chosen in flag mode. */
+    let pickedMarks: HTMLElement[] = [];
     let picking = false;
     /** Replaced below on touch screens, which show page state while flagging. */
     let syncFlagMode = (): void => {};
@@ -284,8 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pop.hidden = true;
         activeTarget = null;
         activeSnapshot = null;
-        pickedLine?.classList.remove("gfb-picked");
-        pickedLine = null;
+        clearPickedMarks();
         resetForm();
         syncFlagMode();
     }
@@ -435,6 +434,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /** Solver roots get their own marker — .gfb-flagged styles a text line. */
         const markSent = (): void => {
+            if (isSheet && !snap) {
+                // Same reason as markOwnText: .gfb-flagged would paint nested blocks.
+                for (const mark of pickedMarks) mark.className = "gfb-sent";
+                pickedMarks = [];
+                return;
+            }
             target.classList.add(snap ? "gfb-solver-flagged" : "gfb-flagged");
         };
 
@@ -587,19 +592,66 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!(t instanceof Element) || t.closest(".gfb-pick-banner, .path-tabs__tab, summary")) return;
         e.preventDefault();
         e.stopPropagation();
-        const line = t.closest<HTMLElement>(".gfb-flaggable");
+        const line = lineAt(t);
         if (!line) return;
         stopPicking();
-        pickedLine = line;
-        line.classList.add("gfb-picked");
+        pickedMarks = markOwnText(line);
         openPop(line, line);
 
         // Keep the chosen line in sight above the sheet.
         const barBottom = document.querySelector(".top-buttons-background-box")?.getBoundingClientRect().bottom ?? 0;
-        const r = line.getBoundingClientRect();
+        const r = (pickedMarks[0] ?? line).getBoundingClientRect();
         if (r.top < barBottom + 8 || r.bottom > pop.getBoundingClientRect().top - 8) {
             window.scrollBy({ top: r.top - barBottom - 16, behavior: "auto" });
         }
+    }
+
+    /**
+     * The line a tap belongs to. Inside a table that's the tapped cell, not the list
+     * item around the table, and a tap on a header or the gap between cells is nothing.
+     * Cells get an id only when picked, so tables stay untouched until then.
+     */
+    function lineAt(tapped: Element): HTMLElement | null {
+        const line = tapped.closest<HTMLElement>(".gfb-flaggable");
+        const table = tapped.closest("table, .table-scroll");
+        if (!table || (line && !line.contains(table))) return line;
+        const cell = tapped.closest("td");
+        if (!cell || !lineText(cell)) return null;
+        cell.dataset.lineId = lineId(cell);
+        return cell;
+    }
+
+    /**
+     * Highlights a line's own text rather than its box, which would also cover any
+     * sublist or table nested inside it. Blocks are left out of the spans.
+     */
+    function markOwnText(line: HTMLElement): HTMLElement[] {
+        const marks: HTMLElement[] = [];
+        let run: ChildNode[] = [];
+        const flush = (): void => {
+            if (run.some((n) => (n.textContent ?? "").trim())) {
+                const mark = document.createElement("span");
+                mark.className = "gfb-picked";
+                run[0].before(mark);
+                mark.append(...run);
+                marks.push(mark);
+            }
+            run = [];
+        };
+        for (const node of Array.from(line.childNodes)) {
+            const isBlock =
+                node instanceof Element &&
+                (node.matches(NOT_OWN_TEXT) || !getComputedStyle(node).display.startsWith("inline"));
+            if (isBlock) flush();
+            else run.push(node);
+        }
+        flush();
+        return marks;
+    }
+
+    function clearPickedMarks(): void {
+        for (const mark of pickedMarks) mark.replaceWith(...Array.from(mark.childNodes));
+        pickedMarks = [];
     }
 
     function setUpFlagMode(): void {

@@ -387,15 +387,18 @@ td .gfb-flag {
     visibility: hidden;
 }
 
-.gfb-picked {
-    background: rgb(192 112 48 / 16%);
-    border-radius: 4px;
-    box-shadow: 0 0 0 0.3rem rgb(192 112 48 / 16%);
+/* Spans around a line's own text. Clone gives each wrapped row its own rounded box. */
+.gfb-picked,
+.gfb-sent {
+    border-radius: 3px;
+    background: rgb(192 112 48 / 30%);
+    box-shadow: 0 0 0 0.15rem rgb(192 112 48 / 30%);
+    box-decoration-break: clone;
 }
 
-/* Only the tapped line lights up, not the parent line around a nested one. */
-.gfb-picking .gfb-flaggable:active:not(:has(.gfb-flaggable:active)) {
-    background: rgb(192 112 48 / 16%);
+.gfb-sent {
+    background: rgb(192 112 48 / 12%);
+    box-shadow: 0 0 0 0.15rem rgb(192 112 48 / 12%);
 }
 
 @media (hover: none), (pointer: coarse) {
