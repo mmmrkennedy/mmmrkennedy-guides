@@ -25,7 +25,54 @@ const TIERS = [1280, 1920];
 // (null means the master). Kept so zoom can ask for the next one up.
 let currentMasterSrc = "";
 let currentTier: number | null = null;
-let tierUpgraded = false;
+let upgradeInFlight = false;
+
+// ---------------------------------------------------------------------------
+// Touch screens get a full-screen viewer: no arrows (swipe instead), a bar over
+// the top that a tap hides, and an optional rotate mode. A 16:9 screenshot on a
+// portrait phone fills about a quarter of the screen. Rotated, it lies along the
+// long side, so turning the phone shows it about three times bigger, and that
+// works even with rotation lock on. Once the phone really is landscape, the
+// rotation drops away and the image still fills the screen.
+// ---------------------------------------------------------------------------
+const TOUCH_QUERY = "(hover: none), (pointer: coarse)";
+const ROTATE_PREF_KEY = "lightbox-rotate";
+
+let isRotated = false;
+let currentNatural: { w: number; h: number } | null = null;
+
+function isTouch(): boolean {
+    return window.matchMedia(TOUCH_QUERY).matches;
+}
+
+function isPortrait(): boolean {
+    return window.matchMedia("(orientation: portrait)").matches;
+}
+
+function rotatePref(): boolean {
+    try {
+        return localStorage.getItem(ROTATE_PREF_KEY) === "1";
+    } catch {
+        return false;
+    }
+}
+
+function setRotatePref(on: boolean): void {
+    try {
+        if (on) localStorage.setItem(ROTATE_PREF_KEY, "1");
+        else localStorage.removeItem(ROTATE_PREF_KEY);
+    } catch {
+        // Private mode: the toggle still works for this visit.
+    }
+}
+
+/** Writes the caption into both places: beside the image on desktop, in the bar on touch. */
+function setCaption(text: string): void {
+    const caption = document.querySelector(".lightbox-caption");
+    const title = document.querySelector(".lightbox-title");
+    if (caption) caption.textContent = text;
+    if (title) title.textContent = text;
+}
 
 /** Only guide screenshots go through the images Function; leave anything else alone. */
 function canTier(src: string): boolean {
@@ -54,12 +101,21 @@ function withTier(src: string, tier: number | null): string {
  * width is bounded by both — height is usually the binding one on a desktop and
  * width on a phone. Multiplied by devicePixelRatio, because a 390px-wide phone
  * at 3x still wants ~1170 real pixels.
+ *
+ * Rotate mode swaps the screen's sides, because the image then lies along the
+ * long one. Runs before the image's own shape is known, so it assumes landscape,
+ * which nearly every screenshot is. A tier within 10% of the need is close enough:
+ * a rotated 3x phone wants ~2080px, and 1920 looks the same at a fraction of the
+ * master's size.
  */
 function tierForViewport(): number | null {
     const dpr = window.devicePixelRatio || 1;
-    const byWidth = window.innerWidth * dpr;
-    const byHeight = window.innerHeight * 0.9 * (16 / 9) * dpr;
-    const needed = Math.min(byWidth, byHeight);
+    const rotated = isTouch() && isPortrait() && rotatePref();
+    const w = rotated ? window.innerHeight : window.innerWidth;
+    const h = rotated ? window.innerWidth : window.innerHeight;
+    const byWidth = w * dpr;
+    const byHeight = h * 0.9 * (16 / 9) * dpr;
+    const needed = Math.min(byWidth, byHeight) * 0.9;
     return TIERS.find((t) => t >= needed) ?? null;
 }
 
@@ -99,6 +155,7 @@ let pinchStart: { dist: number; s0: number; P0x: number; P0y: number } | null = 
 let panLast: { x: number; y: number } | null = null;
 let swipeStart: { x: number; y: number } | null = null;
 let lastTapTime = 0;
+let tapTimer: number | null = null; // pending single tap, which hides or shows the bar
 let lastPointerType = "mouse";
 let navPrevBtn: HTMLButtonElement | null = null;
 let navNextBtn: HTMLButtonElement | null = null;
@@ -115,12 +172,20 @@ function getFocusableElements(): HTMLElement[] {
     return Array.from(candidates).filter((el) => el.offsetParent !== null);
 }
 
-/** Applies the current pan/zoom transform to the lightbox image. */
+/**
+ * Applies the current pan/zoom transform to the lightbox image.
+ *
+ * The rotation goes innermost, so translate and scale stay in screen pixels and
+ * the pinch and pan maths needs no changes for rotate mode.
+ */
 function applyImageTransform(): void {
     const img = document.getElementById("lightbox-img");
-    if (img) {
-        img.style.transform = `translate(${imgTransform.tx}px, ${imgTransform.ty}px) scale(${imgTransform.scale})`;
-    }
+    if (!img) return;
+    const { tx, ty, scale } = imgTransform;
+    const zoomed = scale !== 1 || tx !== 0 || ty !== 0;
+    const parts = zoomed ? [`translate(${tx}px, ${ty}px)`, `scale(${scale})`] : [];
+    if (isRotated) parts.push("rotate(90deg)");
+    img.style.transform = parts.join(" ");
 }
 
 /** Resets pan/zoom back to the fitted, centered state. */
@@ -128,8 +193,7 @@ function resetImageTransform(): void {
     imgTransform.scale = 1;
     imgTransform.tx = 0;
     imgTransform.ty = 0;
-    const img = document.getElementById("lightbox-img");
-    if (img) img.style.transform = "";
+    applyImageTransform();
 }
 
 /** Keeps a zoomed image from being panned past its own edges. */
@@ -137,20 +201,74 @@ function clampTranslation(): void {
     const lightbox = document.getElementById("lightbox");
     const img = document.getElementById("lightbox-img");
     if (!lightbox || !img) return;
-    const maxX = Math.max(0, (img.offsetWidth * imgTransform.scale - lightbox.clientWidth) / 2);
-    const maxY = Math.max(0, (img.offsetHeight * imgTransform.scale - lightbox.clientHeight) / 2);
+    // A rotated image's layout box is its unrotated shape; on screen the sides swap.
+    const w = isRotated ? img.offsetHeight : img.offsetWidth;
+    const h = isRotated ? img.offsetWidth : img.offsetHeight;
+    const maxX = Math.max(0, (w * imgTransform.scale - lightbox.clientWidth) / 2);
+    const maxY = Math.max(0, (h * imgTransform.scale - lightbox.clientHeight) / 2);
     imgTransform.tx = Math.min(maxX, Math.max(-maxX, imgTransform.tx));
     imgTransform.ty = Math.min(maxY, Math.max(-maxY, imgTransform.ty));
 }
 
 /** Shows/hides and enables/disables the prev/next arrows for the current item. */
 function updateNavButtons(): void {
-    if (!navPrevBtn || !navNextBtn) return;
     const multiple = allTriggers.length > 1;
-    navPrevBtn.style.display = multiple ? "flex" : "none";
-    navNextBtn.style.display = multiple ? "flex" : "none";
+
+    // Touch screens swipe between items, so they get a count instead of arrows.
+    const counter = document.querySelector(".lightbox-counter");
+    if (counter) counter.textContent = multiple ? `${currentIndex + 1} / ${allTriggers.length}` : "";
+
+    if (!navPrevBtn || !navNextBtn) return;
+    const showArrows = multiple && !isTouch();
+    navPrevBtn.style.display = showArrows ? "flex" : "none";
+    navNextBtn.style.display = showArrows ? "flex" : "none";
     navPrevBtn.disabled = currentIndex <= 0;
     navNextBtn.disabled = currentIndex >= allTriggers.length - 1;
+}
+
+/**
+ * Sizes the image for the screen: decides rotate mode, then upscales small images
+ * so they don't render tiny. Runs on load, and again when the rotate button or
+ * the phone's orientation changes.
+ */
+function fitImage(): void {
+    const lightbox = document.getElementById("lightbox");
+    const img = document.getElementById("lightbox-img");
+    if (!lightbox || !img || !currentNatural) return;
+    const { w, h } = currentNatural;
+
+    // Only a landscape image on a portrait touch screen gains anything from it.
+    const canRotate = isTouch() && isPortrait() && w > h;
+    isRotated = canRotate && rotatePref();
+    lightbox.classList.toggle("can-rotate", canRotate);
+    lightbox.classList.toggle("is-rotated", isRotated);
+    document.querySelector(".lightbox-rotate")?.setAttribute("aria-pressed", String(rotatePref()));
+
+    // Threshold: natural dims both under 600px. Scale to fit ~80vh / 90vw, capped at 3x.
+    img.style.width = "";
+    img.style.height = "";
+    const SMALL_THRESHOLD = 600;
+    const MAX_SCALE = 3;
+    if (w < SMALL_THRESHOLD && h < SMALL_THRESHOLD) {
+        const screenW = isRotated ? window.innerHeight : window.innerWidth;
+        const screenH = isRotated ? window.innerWidth : window.innerHeight;
+        const scale = Math.min(MAX_SCALE, (screenH * 0.8) / h, (screenW * 0.9) / w);
+        if (scale > 1) {
+            img.style.width = w * scale + "px";
+            img.style.height = h * scale + "px";
+        }
+    }
+
+    resetImageTransform();
+}
+
+/** Turns rotate mode on or off, and remembers the choice for next time. */
+function toggleRotate(): void {
+    setRotatePref(!rotatePref());
+    fitImage();
+    // The rotated view wants more pixels; fetch them now, not on the first pinch.
+    const img = document.getElementById("lightbox-img") as HTMLImageElement | null;
+    if (isRotated && img) upgradeTier(img, false);
 }
 
 /**
@@ -169,22 +287,30 @@ function updateNavButtons(): void {
  * immediately and they sharpen a moment later. `regrow` re-applies the new
  * natural size for the desktop path, where zoom means 1:1 pixels; the pinch path
  * leaves the box alone because its transform is doing the magnifying.
+ *
+ * `toMaster` skips straight to the original. A deep pinch or a double-tap on a
+ * 3x phone wants more pixels than 1920, and stopping a tier short left close-up
+ * detail soft. One step at a time, and a request already in flight wins.
  */
-function upgradeTier(img: HTMLImageElement, regrow: boolean): void {
-    if (tierUpgraded || !currentMasterSrc || !canTier(currentMasterSrc)) return;
-    const up = nextTierUp(currentTier);
-    if (up === undefined) return; // already the master
+function upgradeTier(img: HTMLImageElement, regrow: boolean, toMaster = false): void {
+    if (upgradeInFlight || !currentMasterSrc || !canTier(currentMasterSrc)) return;
+    const up = toMaster ? null : nextTierUp(currentTier);
+    if (up === undefined || currentTier === null) return; // already the master
 
-    tierUpgraded = true;
+    upgradeInFlight = true;
     const url = withTier(currentMasterSrc, up);
     const token = loadToken;
 
     const pre = new Image();
     pre.src = url;
+    pre.onerror = () => {
+        if (token === loadToken) upgradeInFlight = false;
+    };
     pre.onload = () => {
         // Navigated on while this was in flight — dropping it stops a stale
         // image painting over whatever replaced it.
         if (token !== loadToken) return;
+        upgradeInFlight = false;
         currentTier = up;
         img.setAttribute("src", url);
         if (regrow && pre.naturalWidth) {
@@ -274,9 +400,8 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
     const lightboxImg = document.getElementById("lightbox-img");
     const lightboxVideo = document.getElementById("lightbox-video") as HTMLVideoElement | null;
     const lightboxAudio = document.getElementById("lightbox-audio") as HTMLAudioElement | null;
-    const lightboxCaption = document.querySelector(".lightbox-caption");
 
-    if (!lightbox || !lightboxImg || !lightboxVideo || !lightboxAudio || !lightboxCaption) return;
+    if (!lightbox || !lightboxImg || !lightboxVideo || !lightboxAudio) return;
 
     // Remember what to return focus to — only on the initial open, not while
     // navigating between items (where focus is already inside the dialog).
@@ -288,8 +413,11 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
     currentIndex = index;
     const token = ++loadToken;
 
-    // Reset zoom state for each new image
-    lightbox.classList.remove("zoomed");
+    // Reset zoom and rotate state for each new item; fitImage() decides rotate
+    // again once an image knows its own shape.
+    lightbox.classList.remove("zoomed", "is-rotated", "can-rotate");
+    isRotated = false;
+    currentNatural = null;
     resetImageTransform();
     updateNavButtons();
 
@@ -313,7 +441,7 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
     // Stop any video/audio still playing from the previous item before showing the next
     lightboxVideo.pause();
     lightboxAudio.pause();
-    lightboxCaption.textContent = "Loading...";
+    setCaption("Loading...");
     scheduleSpinner(token);
 
     if (mediaType === "image") {
@@ -322,7 +450,7 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
         // one — and any map not yet generated — still load normally.
         currentMasterSrc = mediaSrc;
         currentTier = canTier(mediaSrc) ? tierForViewport() : null;
-        tierUpgraded = false;
+        upgradeInFlight = false;
         const tieredSrc = withTier(mediaSrc, currentTier);
 
         const img = new Image();
@@ -332,26 +460,11 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
             hideSpinner();
             lightboxImg.setAttribute("src", tieredSrc);
 
-            // Upscale small images so they don't render tiny in the lightbox.
-            // Threshold: natural dims both under 600px. Scale to fit ~80vh / 90vw, capped at 3x.
-            lightboxImg.style.width = "";
-            lightboxImg.style.height = "";
-            const SMALL_THRESHOLD = 600;
-            const MAX_SCALE = 3;
-            if (img.naturalWidth < SMALL_THRESHOLD && img.naturalHeight < SMALL_THRESHOLD) {
-                const scale = Math.min(
-                    MAX_SCALE,
-                    (window.innerHeight * 0.8) / img.naturalHeight,
-                    (window.innerWidth * 0.9) / img.naturalWidth
-                );
-                if (scale > 1) {
-                    lightboxImg.style.width = img.naturalWidth * scale + "px";
-                    lightboxImg.style.height = img.naturalHeight * scale + "px";
-                }
-            }
+            currentNatural = { w: img.naturalWidth, h: img.naturalHeight };
+            fitImage();
 
             lightboxImg.style.display = "block";
-            lightboxCaption.textContent = captionText;
+            setCaption(captionText);
 
             preloadAdjacentMedia(currentIndex);
         };
@@ -359,15 +472,15 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
         img.onerror = function () {
             if (token !== loadToken) return;
             hideSpinner();
-            lightboxCaption.textContent = "Error loading image";
+            setCaption("Error loading image");
             lightboxImg.style.display = "none";
         };
     } else if (mediaType === "video") {
-        lightboxCaption.textContent = captionText;
+        setCaption(captionText);
 
         lightboxVideo.onerror = function () {
             hideSpinner();
-            lightboxCaption.textContent = "Error loading video";
+            setCaption("Error loading video");
             lightboxVideo.style.display = "none";
         };
 
@@ -402,14 +515,14 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
         hideSpinner();
         lightboxAudio.setAttribute("src", mediaSrc);
         lightboxAudio.style.display = "block";
-        lightboxCaption.textContent = captionText;
+        setCaption(captionText);
 
         lightboxAudio.onloadeddata = function () {
-            lightboxCaption.textContent = captionText;
+            setCaption(captionText);
         };
 
         lightboxAudio.onerror = function () {
-            lightboxCaption.textContent = "Error loading audio";
+            setCaption("Error loading audio");
             lightboxAudio.style.display = "none";
         };
 
@@ -452,12 +565,16 @@ function closeLightbox(): void {
         // Fade out, then hide once the transition has run. The guard lets a
         // re-open during the fade cancel the pending hide.
         lightbox.classList.remove("is-open");
-        lightbox.classList.remove("zoomed");
+        lightbox.classList.remove("zoomed", "chrome-hidden");
         window.setTimeout(() => {
             if (!lightbox.classList.contains("is-open")) lightbox.style.display = "none";
         }, FADE_MS);
     }
 
+    if (tapTimer !== null) {
+        window.clearTimeout(tapTimer);
+        tapTimer = null;
+    }
     resetImageTransform();
 
     if (lightboxVideo) {
@@ -501,9 +618,21 @@ function initLightbox(): void {
 
     closeBtn.addEventListener("click", closeLightbox);
 
-    // Background click closes the lightbox
+    // Background click closes the lightbox. A tap on a touch screen hides or
+    // shows the bar instead (see setupGestures), like a phone's photo viewer.
     lightbox.addEventListener("click", (event) => {
+        if (lastPointerType === "touch" || lastPointerType === "pen") return;
         if (event.target === lightbox) closeLightbox();
+    });
+
+    document.querySelector(".lightbox-rotate")?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleRotate();
+    });
+
+    // Turning the phone changes whether rotate mode applies at all.
+    window.matchMedia("(orientation: portrait)").addEventListener("change", () => {
+        if (lightbox.classList.contains("is-open")) fitImage();
     });
 
     // Click-to-zoom on the lightbox image
@@ -573,7 +702,7 @@ function initLightbox(): void {
         });
     }
 
-    // Touch gestures (pinch-zoom, double-tap, pan, swipe) on the image
+    // Touch gestures (pinch-zoom, double-tap, pan, swipe) anywhere in the viewer
     if (lightboxImg) setupGestures(lightbox, lightboxImg);
 
     // Keyboard controls while the lightbox is open
@@ -608,8 +737,12 @@ function initLightbox(): void {
 
 /**
  * Sets up touch-driven pinch-zoom, double-tap zoom, drag-to-pan, and swipe
- * navigation/close on the lightbox image. Mouse pointers are ignored here so
- * the desktop click-to-zoom behaviour is preserved.
+ * navigation/close. Mouse pointers are ignored here so the desktop
+ * click-to-zoom behaviour is preserved.
+ *
+ * Listens on the whole viewer, not the image: on a portrait phone the image is a
+ * strip about a quarter of the screen tall, and gestures that only worked on it
+ * meant aiming at that strip.
  */
 function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
     const SWIPE_THRESHOLD = 50; // px before a drag counts as a swipe
@@ -620,18 +753,24 @@ function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
     // Deliberate enough to mean "I want to see detail", rather than the drift of
     // a two-finger pan, before spending a request on more pixels.
     const PINCH_UPGRADE_SCALE = 1.5;
+    // Past this, a 3x phone wants more than the 1920 tier has.
+    const PINCH_MASTER_SCALE = 2.25;
 
     const center = () => ({ cx: lightbox.clientWidth / 2, cy: lightbox.clientHeight / 2 });
     const focal = (event: PointerEvent) => {
         const rect = lightbox.getBoundingClientRect();
         return { x: event.clientX - rect.left, y: event.clientY - rect.top };
     };
+    // Zoom is for images only; video and audio still get swipes and taps.
+    const imageShown = () => img.style.display === "block";
 
-    img.addEventListener("pointerdown", (event) => {
+    lightbox.addEventListener("pointerdown", (event) => {
         lastPointerType = event.pointerType;
         if (event.pointerType === "mouse") return; // desktop uses click-to-zoom
+        // Buttons and native media controls keep their own taps.
+        if ((event.target as Element).closest("button, video, audio")) return;
         event.preventDefault();
-        img.setPointerCapture?.(event.pointerId);
+        lightbox.setPointerCapture?.(event.pointerId);
         activePointers.set(event.pointerId, focal(event));
 
         if (activePointers.size === 1) {
@@ -654,12 +793,12 @@ function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
         }
     });
 
-    img.addEventListener("pointermove", (event) => {
+    lightbox.addEventListener("pointermove", (event) => {
         if (event.pointerType === "mouse") return;
         if (!activePointers.has(event.pointerId)) return;
         activePointers.set(event.pointerId, focal(event));
 
-        if (activePointers.size >= 2 && pinchStart) {
+        if (activePointers.size >= 2 && pinchStart && imageShown()) {
             const ps = pinchStart;
             const [a, b] = [...activePointers.values()];
             const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
@@ -673,7 +812,8 @@ function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
             // Past a deliberate pinch, fetch more pixels. No regrow — the
             // transform is doing the magnifying, so the box stays put and only
             // the source sharpens.
-            if (imgTransform.scale > PINCH_UPGRADE_SCALE) upgradeTier(img, false);
+            if (imgTransform.scale > PINCH_MASTER_SCALE) upgradeTier(img, false, true);
+            else if (imgTransform.scale > PINCH_UPGRADE_SCALE) upgradeTier(img, false);
         } else if (activePointers.size === 1 && imgTransform.scale > 1 && panLast) {
             const pl = panLast;
             const p = activePointers.get(event.pointerId)!;
@@ -708,15 +848,28 @@ function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
             return;
         }
 
-        const dx = last.x - (swipeStart ? swipeStart.x : last.x);
-        const dy = last.y - (swipeStart ? swipeStart.y : last.y);
-        const moved = Math.hypot(dx, dy);
+        const sx = last.x - (swipeStart ? swipeStart.x : last.x);
+        const sy = last.y - (swipeStart ? swipeStart.y : last.y);
+        const moved = Math.hypot(sx, sy);
+        // Swipe directions are read the way the reader holds the phone. Rotated,
+        // the image's top is the screen's right edge, so the reader's "down" is
+        // the screen's left and their "right" is the screen's down.
+        const dx = isRotated ? sy : sx;
+        const dy = isRotated ? -sx : sy;
 
         if (moved < TAP_MOVE_TOL) {
-            // Tap — double-tap toggles zoom
+            // Tap: a double tap toggles zoom, a single one hides or shows the
+            // bar. The single tap waits out the double-tap window so a zoom
+            // doesn't flicker the bar.
             const now = Date.now();
             if (now - lastTapTime < DOUBLE_TAP_MS) {
-                if (imgTransform.scale > 1) {
+                if (tapTimer !== null) {
+                    window.clearTimeout(tapTimer);
+                    tapTimer = null;
+                }
+                if (!imageShown()) {
+                    // Nothing to zoom
+                } else if (imgTransform.scale > 1) {
                     resetImageTransform();
                 } else {
                     const { cx, cy } = center();
@@ -725,13 +878,17 @@ function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
                     imgTransform.ty = last.y - cy - DOUBLE_TAP_SCALE * (last.y - cy);
                     clampTranslation();
                     applyImageTransform();
-                    // Jumps straight past the pinch threshold without ever going
+                    // Jumps straight past the pinch thresholds without ever going
                     // through pointermove, so it needs its own upgrade.
-                    upgradeTier(img, false);
+                    upgradeTier(img, false, true);
                 }
                 lastTapTime = 0;
             } else {
                 lastTapTime = now;
+                tapTimer = window.setTimeout(() => {
+                    tapTimer = null;
+                    lightbox.classList.toggle("chrome-hidden");
+                }, DOUBLE_TAP_MS);
             }
         } else if (imgTransform.scale > 1) {
             // Drag while zoomed was a pan — nothing else to do
@@ -746,8 +903,8 @@ function setupGestures(lightbox: HTMLElement, img: HTMLImageElement): void {
         panLast = null;
     };
 
-    img.addEventListener("pointerup", endPointer);
-    img.addEventListener("pointercancel", endPointer);
+    lightbox.addEventListener("pointerup", endPointer);
+    lightbox.addEventListener("pointercancel", endPointer);
 }
 
 document.addEventListener("DOMContentLoaded", initLightbox);
