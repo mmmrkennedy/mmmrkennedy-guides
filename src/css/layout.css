@@ -404,7 +404,6 @@ Page structure and containers.
 }
 
 .lightbox-title,
-.lightbox-counter,
 .lightbox-rotate {
     display: none;
 }
@@ -629,7 +628,7 @@ Page structure and containers.
 
 /* Touch screens: a full-screen viewer like a phone's photo app. The image fills
    the screen edge to edge, swipes replace the arrows (lightbox.ts hides them),
-   and the caption, count, rotate and close sit in a bar over the top that a tap
+   and the caption, rotate and close sit in a bar over the top that a tap
    hides. Keyed to input, not width, so a landscape phone wider than --bp-md
    still gets it, and a narrow desktop window keeps its arrows. */
 @media (hover: none), (pointer: coarse) {
@@ -702,14 +701,6 @@ Page structure and containers.
         font-size: var(--font-size-sm);
         font-weight: 500;
         line-height: var(--line-height-tight);
-    }
-
-    .lightbox-counter {
-        display: block;
-        flex-shrink: 0;
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-sm);
-        font-variant-numeric: tabular-nums;
     }
 
     .lightbox.can-rotate .lightbox-rotate {

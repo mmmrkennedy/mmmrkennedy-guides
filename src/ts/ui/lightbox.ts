@@ -212,14 +212,9 @@ function clampTranslation(): void {
 
 /** Shows/hides and enables/disables the prev/next arrows for the current item. */
 function updateNavButtons(): void {
-    const multiple = allTriggers.length > 1;
-
-    // Touch screens swipe between items, so they get a count instead of arrows.
-    const counter = document.querySelector(".lightbox-counter");
-    if (counter) counter.textContent = multiple ? `${currentIndex + 1} / ${allTriggers.length}` : "";
-
     if (!navPrevBtn || !navNextBtn) return;
-    const showArrows = multiple && !isTouch();
+    // Touch screens swipe between items instead.
+    const showArrows = allTriggers.length > 1 && !isTouch();
     navPrevBtn.style.display = showArrows ? "flex" : "none";
     navNextBtn.style.display = showArrows ? "flex" : "none";
     navPrevBtn.disabled = currentIndex <= 0;
