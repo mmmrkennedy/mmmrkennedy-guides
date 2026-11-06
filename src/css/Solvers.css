@@ -98,17 +98,215 @@
     border-bottom: none;
 }
 
-/* Keep the panel here too. Tried dropping it (Nov 2026) for a flatter look, but
-   the intro, the guide link and the solver then ran together with nothing to
-   say where the tool starts and ends. */
+/* ------------------------------------------------------------
+   Solver-only page layout (Nov 2026 redesign, after NYT Games).
+   The solver is the whole page, so it gets no panel. Structure comes from
+   two things instead of a box:
+   - One column. Guide link, intro and solver share --solver-page-width and
+     are centred on it, so every edge lines up.
+   - Context above a rule, tool below it. The guide link and intro are a quiet
+     page header that the intro's rule closes off. Everything under the rule
+     belongs to the solver, and its instructions are brighter and larger than
+     the intro, so the page's voice and the tool's voice read differently.
+   Inside the solver, form rows and the result lose their outlines and are
+   separated by fill alone. Solvers embedded in guides keep the panel: there
+   it sets the tool apart from the prose around it.
+   ------------------------------------------------------------ */
+.solver-only-page {
+    --solver-page-width: 34rem;
+}
+
 .solver-only-page .solver-container {
-    margin-inline: auto;
+    width: fit-content;
+    min-width: min(100%, var(--solver-page-width));
+    margin: var(--space-lg) auto 0;
+    padding: 0;
+    gap: var(--space-md);
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Tool first, context after. On single-solver pages the intro paragraph sits
+   after the solver in the source, so it reads as an "about this puzzle" note
+   under a rule, followed by the guide link. On multi-solver pages (Reckoning)
+   it still comes before its solver as a subtitle, and keeps the base rule. */
+.solver-only-page [data-solver] + .solver-intro {
+    max-width: var(--solver-page-width);
+    margin: var(--space-xl) auto 0;
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.solver-only-page .solver-guide-link {
+    padding-top: var(--space-xs);
+}
+
+/* The tool's lead line, the solver's equivalent of NYT's "Create four groups
+   of four!". Balanced wrapping so a centred two- or three-line paragraph has
+   even lines instead of a long line over a stub. */
+.solver-only-page .solver-instructions {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    text-align: center;
+    text-wrap: balance;
+}
+
+/* Bigger pieces. The tool is the page, so it should fill the column rather
+   than sit small in the middle of it. */
+.solver-only-page .solver-container {
+    --solver-cell-size: clamp(2.75rem, 13vw, 5rem);
+}
+
+.solver-only-page .solver-container--beamsmasher .solver-symbol-select.is-grid {
+    --symbol-size: clamp(2.75rem, 13vw, 4.75rem);
+}
+
+.solver-only-page .solver-slot {
+    --slot-half-size: clamp(2.25rem, 9vw, 3rem);
+}
+
+/* The answer is the payoff, so it reads as one: centred, a size up, and any
+   bolded value in gold. An output with nothing in it yet (Simon Says before the
+   first tap) is hidden instead of showing an empty bar that looks like a text
+   field. */
+.solver-only-page .solver-output {
+    padding: var(--space-md) var(--space-lg);
+    font-size: var(--font-size-md);
+    text-align: center;
+}
+
+.solver-only-page .solver-output strong {
+    color: var(--solver-accent);
+}
+
+.solver-only-page .solver-output:empty {
+    display: none;
+}
+
+/* The container's own title on a multi-solver page heads its section. */
+.solver-only-page .content-container > .solver-title {
+    margin-top: var(--space-lg);
+    color: var(--color-tier-1);
+}
+
+.solver-only-page .solver-form-row {
+    border-color: transparent;
+}
+
+.solver-only-page .solver-output {
+    background: var(--color-bg-secondary);
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.solver-only-page .btn--solver {
+    border-radius: 999px;
+}
+
+/* Everything on these pages is centred, so pieces that sat at the left edge of
+   the old panel (pickers, step labels, the report button) come to the middle. */
+.solver-only-page .solver-symbol-select,
+.solver-only-page .solver-symbol-select.is-grid,
+.solver-only-page .morse-skip,
+.solver-only-page .gfb-solver-bar {
+    justify-content: center;
+}
+
+.solver-only-page .solver-step-label,
+.solver-only-page .morse-step {
+    text-align: center;
+}
+
+.solver-only-page .solver-stack {
+    align-items: center;
+}
+
+/* Slots: an empty slot is a faint recess with no outline, a filled one is a
+   solid tile with a gold label. Replaces the dashed boxes, which read as
+   unfinished. */
+.solver-only-page .solver-slot {
+    background: rgb(255 255 255 / 4%);
+    border: 2px solid transparent;
+    border-radius: 6px;
+}
+
+.solver-only-page .solver-slot.is-filled {
+    background: var(--color-bg-tertiary);
+    border-color: transparent;
+}
+
+.solver-only-page .solver-slot.is-filled:hover {
+    background: #3d3d3d;
+    border-color: transparent;
+}
+
+.solver-only-page .solver-slot.is-filled .solver-slot__label {
+    color: var(--solver-accent);
+}
+
+/* Text slots (Maxis) stack into a numbered list down the column instead of a
+   row of four that ran wider than the page. */
+.solver-only-page .solver-slot-list:has(.is-text) {
+    flex-direction: column;
+    align-self: stretch;
+}
+
+.solver-only-page .solver-slot.is-text {
+    min-width: 0;
+}
+
+.solver-only-page .mahjong-tile-empty {
+    background: rgb(255 255 255 / 4%);
+    border: none;
+}
+
+/* Text picker: the same flat tiles as the symbol pickers. */
+.solver-only-page .solver-text-picker {
+    gap: var(--space-sm);
+}
+
+.solver-only-page .solver-text-picker button {
+    padding: var(--space-sm) var(--space-md);
+    border-color: transparent;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.solver-only-page .solver-text-picker button:hover:not(:disabled) {
+    background-color: #3d3d3d;
+    border-color: transparent;
+}
+
+.solver-only-page .solver-text-picker button.is-selected,
+.solver-only-page .solver-text-picker button.is-selected:hover:not(:disabled) {
+    background-color: var(--solver-accent);
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--color-bg-primary);
+}
+
+/* Morse pads: flat, the press still flashes gold. */
+.solver-only-page .morse-pad {
+    border-color: transparent;
+}
+
+.solver-only-page .morse-pad:hover:not(:disabled) {
+    background: #3d3d3d;
+    border-color: transparent;
+}
+
+.solver-only-page .morse-pad:active:not(:disabled) {
+    background: var(--solver-accent);
 }
 
 /* Everything above it is centered here, so the block sits under the card rather
    than out at the guide column's left edge. */
-main:has(.solver-only-page) .related-maps {
-    max-width: 40rem;
+.content-window:has(.solver-only-page) > .related-maps {
+    /* --solver-page-width plus this block's own inline padding, so its text
+       lines up with the solver column. The token itself is scoped below here. */
+    max-width: calc(34rem + 2 * var(--space-md));
 }
 
 /* ------------------------------------------------------------
@@ -1485,6 +1683,13 @@ main:has(.solver-only-page) .related-maps {
 .solver-container--beamsmasher .solver-symbol-select.is-grid button {
     padding: 0;
     border-width: 1.5px;
+    overflow: hidden;
+}
+
+/* The symbols are white squares edge to edge, so the rounding goes on the image
+   itself. */
+.solver-container--beamsmasher .solver-symbol-select.is-grid img {
+    border-radius: 6px;
 }
 
 /* ------------------------------------------------------------

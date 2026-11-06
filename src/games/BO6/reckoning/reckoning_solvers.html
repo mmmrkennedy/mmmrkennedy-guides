@@ -3,16 +3,10 @@ layout: solver-only.njk
 mapName: 'Reckoning'
 solverTitle: 'Solvers'
 guideUrl: '/games/BO6/reckoning/reckoning_guide'
-description: Reckoning solvers for Black Ops 6 Zombies. Search the periodic table code from the monitor letters, and sort the four S.A.M. files into the right order.
+description: Every solver for Reckoning in Black Ops 6 Zombies. Search the periodic table code from the monitor letters, and sort the four S.A.M. files into the right order.
 ---
-<div class="content-container">
-    <h2 class="solver-title">Periodic Table Solver</h2>
-    <p class="solver-intro">Search the periodic table code from the monitor letters.</p>
-    <div data-solver="PeriodicTableSolver"></div>
-</div>
-
-<div class="content-container">
-    <h2 class="solver-title">Maxis Items Solver</h2>
-    <p class="solver-intro">Sort the four S.A.M. files into the right order.</p>
-    <div data-solver="MaxisItemsSolver"></div>
-</div>
+{#- Each solver has its own page, so each one can carry the title, heading and
+    description for the puzzle people actually search for. This page keeps the
+    URL those pages were split out of and points at all of them, rather than
+    hosting the same tools on a second URL and competing with them. -#}
+{% include "solver-hub-list.njk" %}

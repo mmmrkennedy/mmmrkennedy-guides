@@ -16,7 +16,20 @@ module.exports = function(eleventyConfig) {
     const { classifyLinks, unlinkUnwrittenGuides } = require("./build_scripts/eleventy/links.cjs");
     const { domPass } = require("./build_scripts/eleventy/dom-pass.cjs");
     const { injectReactBundle, prerenderSolvers } = require("./build_scripts/eleventy/solvers.cjs");
+    // Solver edits under `dev:watch`. Both Vite watchers write into .solver-ssr/
+    // (the prerender build, and the browser build's stamp file), and watching it
+    // rebuilds the pages against the new chunk hashes and prerender (see
+    // solvers.cjs). The two land a few hundred ms apart; Eleventy queues a second
+    // rebuild if one arrives mid-build, so pages end up current.
+    //
+    // .solver-ssr/ is gitignored, and Eleventy won't watch gitignored paths, so it
+    // doesn't read .gitignore. That costs nothing: no page template is
+    // gitignored, the output folder is ignored regardless, and node_modules is in
+    // Eleventy's own defaults.
+    eleventyConfig.setUseGitIgnore(false);
+    eleventyConfig.addWatchTarget("./.solver-ssr/");
     const { smartCopyImages } = require("./build_scripts/eleventy/copy-images.cjs");
+    const { solverPages, solverIndex, solverSpokes } = require("./build_scripts/eleventy/solver-index.cjs");
 
     // classifyLinks first: it must not see the tables of contents domPass builds.
     eleventyConfig.addTransform("classifyLinks", classifyLinks);
@@ -49,6 +62,12 @@ module.exports = function(eleventyConfig) {
             return data.page.url;
         };
     });
+
+    // Solver listings for /solvers and the map hubs, from each solver page's own
+    // front matter. See build_scripts/eleventy/solver-index.cjs.
+    eleventyConfig.addCollection("solverPages", solverPages);
+    eleventyConfig.addCollection("solverIndex", solverIndex);
+    eleventyConfig.addFilter("solverSpokes", solverSpokes);
 
     // Strip .html extension from URLs so canonicals match Cloudflare Pretty URLs
     eleventyConfig.addFilter("cleanUrl", (url) => url ? url.replace(/\.html$/, "") : url);

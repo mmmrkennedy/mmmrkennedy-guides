@@ -40,9 +40,26 @@ function serveGamesDirectory() {
     };
 }
 
+// Under `dev:watch`, tells the Eleventy dev server a new browser build landed.
+// Eleventy can't watch the manifest itself: it never watches anything under its
+// own output folder (dist/). So the build drops a stamp in .solver-ssr/, which it
+// does watch (see eleventy.config.cjs), and solvers.cjs then re-reads the
+// manifest for the new chunk hashes. Harmless in a one-shot build.
+function stampSolverBuild() {
+    return {
+        name: "stamp-solver-build",
+        apply: "build",
+        writeBundle() {
+            const dir = path.resolve(__dirname, ".solver-ssr");
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, "client-build-stamp"), String(Date.now()));
+        },
+    };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [preact(), serveGamesDirectory()],
+    plugins: [preact(), serveGamesDirectory(), stampSolverBuild()],
 
     // Serve from react-solvers directory for dev server
     root: path.resolve(__dirname, "./src/react-solvers"),

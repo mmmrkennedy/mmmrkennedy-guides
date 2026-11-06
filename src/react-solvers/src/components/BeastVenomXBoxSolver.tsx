@@ -135,8 +135,7 @@ export default function BeastVenomXBoxSolver({ title }: { title?: string }) {
         Round: roundNum >= 1 ? roundNum : null,
     }));
 
-    const handleButtonCountChange = (e: Event) => {
-        const newCount = parseInt((e.currentTarget as HTMLSelectElement).value) as ButtonCount;
+    const handleButtonCountChange = (newCount: ButtonCount) => {
         setButtonCount(newCount);
         const initialColors = Array(newCount).fill("red") as Color[];
         setSelectedColors(initialColors);
@@ -175,18 +174,20 @@ export default function BeastVenomXBoxSolver({ title }: { title?: string }) {
                 The game tracks one of its own variables incorrectly (found after looking at the code), so the solver can occasionally tell you the wrong button. That&apos;s just a bug in the game, and not something I can build around. Sorry.
             </p>
 
-            <div className="solver-form-row">
-                <label htmlFor="venom-x-box-count">Number of buttons:</label>
-                <select
-                    id="venom-x-box-count"
-                    value={buttonCount}
-                    onChange={handleButtonCountChange}
-                >
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                </select>
+            {/* Four options, all worth seeing at once: one tap on a pill instead
+                of opening a dropdown. Same pattern as the Statue wall picker. */}
+            <div className="solver-controls is-centered" role="group" aria-label="Number of buttons">
+                {([3, 4, 5, 6] as const).map((n) => (
+                    <button
+                        key={n}
+                        type="button"
+                        className={`btn btn--solver${buttonCount === n ? " is-active" : ""}`}
+                        aria-pressed={buttonCount === n}
+                        onClick={() => handleButtonCountChange(n)}
+                    >
+                        {n} buttons
+                    </button>
+                ))}
             </div>
 
             <div className="solver-form-row">

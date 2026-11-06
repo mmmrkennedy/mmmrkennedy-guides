@@ -325,7 +325,10 @@
         stays outside: a <footer> inside <main> loses its contentinfo landmark
         role, so nesting it would trade one landmark for another. #}
     <main{% if homePage %} class="content-container"{% endif %}>
-    {%- if page.url | cleanUrl in unfinishedPages %}
+    {#- Under `eleventy --serve` the real body renders anyway, so a stub guide can
+        be read while it's written. -#}
+    {%- set isPlaceholder = page.url | cleanUrl in unfinishedPages and not site.serve %}
+    {%- if isPlaceholder %}
         <div class="content-container">
             <h2>Sorry, this page is not ready yet!</h2>
             <p>Please check back later.</p>
@@ -345,6 +348,11 @@
             <p class="about-map__text">{{ about }}{% if aliases %} Also known as {{ aliases | join(', ') }}.{% endif %}</p>
         </section>
         {%- endif %}
+    {%- endif %}
+    </main>
+    {#- After </main>, not inside it: .content-window is a flex column whose main
+        grows to fill a short page, and this block goes down with the footer so
+        neither floats mid-screen. Still a <nav> landmark out here. -#}
         {#- Sibling maps from the same game, from src/_data/relatedMaps.js. The
             one link every guide had to another page was /stats in the footer,
             which meant no guide passed any authority to another and nothing
@@ -352,7 +360,7 @@
             by construction: they are noindex stubs, so linking them would only
             spend crawl budget on a placeholder. #}
         {%- set related = relatedMaps[page.url | cleanUrl] %}
-        {%- if related %}
+        {%- if related and not isPlaceholder %}
         <nav class="related-maps" aria-labelledby="related-maps-title">
             <h2 class="related-maps__title" id="related-maps-title">More Zombies guides</h2>
             <div class="related-maps__groups">
@@ -370,8 +378,7 @@
             <p class="related-maps__all"><a class="related-maps__link" href="/">All Call of Duty Zombies map guides</a></p>
         </nav>
         {%- endif %}
-    {%- endif %}
-    </main>
+
 
     <footer class="site-footer">
         {%- set updated = page.inputPath | lastmod %}
@@ -384,7 +391,7 @@
         {#- A page the index still marks disabled shows the placeholder above
             instead of `content`, so it must not advertise the word count of a
             body nobody can read. #}
-        {%- set words = null if (noWordCount or page.url | cleanUrl in unfinishedPages) else (content | wordcount) %}
+        {%- set words = null if (noWordCount or (page.url | cleanUrl in unfinishedPages and not site.serve)) else (content | wordcount) %}
         {#- The home page has no guide body of its own worth counting, so it reports
             the whole library instead. #}
         {%- if homePage %}{% set words = siteWords.words %}{% endif %}

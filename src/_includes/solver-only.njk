@@ -9,7 +9,11 @@ solverIsPrimary: true
 skipTOC: true
 ---
 <div class="solver-only-page">
-{#- A solver page is nearly always an arrival, not a step: readers land on
+{{ content | safe }}
+{#- Below the solver, not above it (Nov 2026): the tool is the page, so it
+    comes first and the context follows. Still on every page, still crawlable.
+
+    A solver page is nearly always an arrival, not a step: readers land on
     "Terminus Beamsmasher Solver" straight from search, solve their one puzzle
     and leave, because nothing on the page points at the guide the solver
     belongs to. The return pill can't cover this — it only appears for someone
@@ -35,5 +39,4 @@ skipTOC: true
     <a class="solver-guide-link__anchor internal-link" href="{{ guideClean }}">{{ guideLabel }}</a>
 </nav>
 {%- endif %}
-{{ content | safe }}
 </div>

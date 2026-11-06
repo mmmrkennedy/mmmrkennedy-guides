@@ -1,0 +1,19 @@
+{#- A map hub's cards: every other solver page in the hub's folder, in
+    `solverOrder`, each with its `hubLine` (or `description`). Built from those
+    pages' front matter by build_scripts/eleventy/solver-index.cjs, so a new
+    solver page appears here by existing.
+
+    The name is a real <h2> inside the anchor, so puzzle names stay in the
+    outline. The line is a <span>, not a <p>: line-flagger decorates
+    `.content-container p`, and a flag button inside an anchor would navigate
+    the moment it was clicked. -#}
+<div class="content-container">
+    <div class="solver-hub">
+        {%- for s in collections.solverPages | solverSpokes(page.url) %}
+        <a class="solver-hub__card" data-prefetchable href="{{ s.url | cleanUrl }}">
+            <h2 class="solver-hub__name">{{ s.data.solverTitle }}</h2>
+            <span class="solver-hub__line">{{ s.data.hubLine or s.data.description }}</span>
+        </a>
+        {%- endfor %}
+    </div>
+</div>

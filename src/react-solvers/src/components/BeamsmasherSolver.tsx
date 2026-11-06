@@ -66,14 +66,10 @@ export default function BeamsmasherSolver({ title }: { title?: string }) {
         return null;
     };
 
-    /** Click a symbol in the picker: assign to next empty slot, or
-     unassign if it's already assigned somewhere. */
-    const toggleSymbol = (value: SymbolValue) => {
-        const owner = slotForValue(value);
-        if (owner) {
-            setSlots({ ...slots, [owner]: null });
-            return;
-        }
+    /** Click a symbol in the picker: assign it to the next empty slot. A
+     placed symbol is disabled in the picker, so it's cleared from its slot. */
+    const pickSymbol = (value: SymbolValue) => {
+        if (slotForValue(value)) return;
         const nextEmpty = SLOT_KEYS.find((k) => slots[k] === null);
         if (!nextEmpty) return;
         setSlots({ ...slots, [nextEmpty]: value });
@@ -92,7 +88,7 @@ export default function BeamsmasherSolver({ title }: { title?: string }) {
         <div className="solver-container solver-container--beamsmasher">
             {title && <h2 className="solver-title">{title}</h2>}
             <p className="solver-instructions">
-                Click the symbols from the in-game computer's sticky notes in order, starting with X. Click a filled slot or its symbol again to clear it. The solution appears automatically.
+                Click the symbols from the in-game computer's sticky notes in order, starting with X. Click a filled slot to clear it. The solution appears automatically.
             </p>
 
             <div className="solver-symbol-select is-grid" role="group" aria-label="Symbol picker">
@@ -102,10 +98,9 @@ export default function BeamsmasherSolver({ title }: { title?: string }) {
                         <button
                             key={value}
                             type="button"
-                            className={owner ? "is-selected" : ""}
-                            aria-pressed={owner !== null}
+                            disabled={owner !== null}
                             aria-label={`Symbol ${value}${owner ? ` (assigned to ${owner})` : ""}`}
-                            onClick={() => toggleSymbol(value)}
+                            onClick={() => pickSymbol(value)}
                         >
                             <img loading="lazy" src={imageFor(value)} alt="" />
                         </button>

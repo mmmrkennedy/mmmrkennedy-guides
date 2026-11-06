@@ -30,7 +30,10 @@ export default defineConfig({
     build: {
         ssr: path.resolve(__dirname, "src/react-solvers/src/ssr-entry.tsx"),
         outDir: path.resolve(__dirname, ".solver-ssr"),
-        emptyOutDir: true,
+        // Not emptied: the browser build drops its stamp file in here too (see
+        // vite.config.js), and the output is one fixed-name file that each build
+        // overwrites, so there's nothing stale to clear.
+        emptyOutDir: false,
         sourcemap: false,
         minify: false,
         rollupOptions: {

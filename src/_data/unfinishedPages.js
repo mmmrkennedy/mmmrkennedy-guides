@@ -15,14 +15,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * guide yet. Deduped because a remaster is listed under two games, and normalised
  * like cleanUrl so it compares directly with a page URL.
  *
- * Empty under `eleventy --serve`, so a stub guide renders its real body while it's
- * being written. Builds get the full list.
+ * The same list in every run mode, so everything keyed off it (noindex, the
+ * solver pages' "Full Map Guide" link) behaves in dev exactly as it will on the
+ * live site. It used to be empty under `eleventy --serve`, which is how dev
+ * showed guide links that a build hides. The one thing dev does differently,
+ * rendering a stub's real body while it's being written, is gated on
+ * `site.serve` in base.njk instead.
  */
 export default function () {
-    if (process.env.ELEVENTY_RUN_MODE === "serve") {
-        return [];
-    }
-
     const indexPath = join(__dirname, "../index.html");
     const html = readFileSync(indexPath, "utf8");
     const dom = new JSDOM(html);

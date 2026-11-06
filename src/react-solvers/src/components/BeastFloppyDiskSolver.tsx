@@ -91,6 +91,12 @@ export default function BeastFloppyDiskSolver({ title }: { title?: string }) {
                 })}
             </div>
 
+            {/* Reset sits with the picker and the result comes last, the order
+                every other solver uses. */}
+            <div className="solver-controls">
+                <button className="btn btn--solver" onClick={resetAll}>Reset</button>
+            </div>
+
             <div className="solver-output">
                 <p style={{ margin: 0 }}>{getMessage()}</p>
                 {resultImages.length > 0 && (
@@ -104,10 +110,6 @@ export default function BeastFloppyDiskSolver({ title }: { title?: string }) {
                         ))}
                     </div>
                 )}
-            </div>
-
-            <div className="solver-controls">
-                <button className="btn btn--solver" onClick={resetAll}>Reset</button>
             </div>
         </div>
     );
