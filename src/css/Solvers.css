@@ -98,14 +98,11 @@
     border-bottom: none;
 }
 
-/* No panel chrome here: the solver is the whole page, so it sits straight on
-   the background instead of in a card inside the guide's card. In a guide the
-   panel stays, to set the tool apart from the prose around it. */
+/* Keep the panel here too. Tried dropping it (Nov 2026) for a flatter look, but
+   the intro, the guide link and the solver then ran together with nothing to
+   say where the tool starts and ends. */
 .solver-only-page .solver-container {
     margin-inline: auto;
-    background: none;
-    border-color: transparent;
-    box-shadow: none;
 }
 
 /* Everything above it is centered here, so the block sits under the card rather
