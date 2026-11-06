@@ -98,8 +98,14 @@
     border-bottom: none;
 }
 
+/* No panel chrome here: the solver is the whole page, so it sits straight on
+   the background instead of in a card inside the guide's card. In a guide the
+   panel stays, to set the tool apart from the prose around it. */
 .solver-only-page .solver-container {
     margin-inline: auto;
+    background: none;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 /* Everything above it is centered here, so the block sits under the card rather
@@ -539,29 +545,30 @@ main:has(.solver-only-page) .related-maps {
     margin: 0 auto;
 }
 
+/* Flat tiles: the fill alone separates a tile from the page, no outline.
+   Selection inverts the tile to a gold fill rather than adding a border or glow.
+   The border is kept, transparent, so sizes don't shift. */
 .solver-symbol-select button {
     padding: var(--space-xs);
     background-color: var(--color-bg-tertiary);
-    border: 2px solid var(--color-border-medium);
-    border-radius: 8px;
+    border: 2px solid transparent;
+    border-radius: 6px;
     cursor: pointer;
-    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
 .solver-symbol-select button:hover:not(:disabled) {
-    background-color: var(--color-bg-secondary);
-    border-color: var(--solver-accent);
+    background-color: #3d3d3d;
 }
 
 .solver-symbol-select button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    border-color: var(--color-border-subtle);
 }
 
-.solver-symbol-select button.is-selected {
-    border-color: var(--solver-accent);
-    box-shadow: 0 0 8px var(--solver-accent-glow);
+.solver-symbol-select button.is-selected,
+.solver-symbol-select button.is-selected:hover:not(:disabled) {
+    background-color: var(--solver-accent);
 }
 
 .solver-symbol-select button.is-placed {
@@ -607,12 +614,12 @@ main:has(.solver-only-page) .related-maps {
     align-items: stretch;
     padding: 0;
     background: var(--color-bg-tertiary);
-    border: 2px solid var(--color-border-medium);
-    border-radius: 4px;
+    border: 2px solid transparent;
+    border-radius: 6px;
     overflow: hidden;
     color: var(--color-text-primary);
     cursor: pointer;
-    transition: border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    transition: background-color 0.15s ease, opacity 0.15s ease;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -623,16 +630,15 @@ main:has(.solver-only-page) .related-maps {
 }
 
 .solver-letter-cell.is-selected {
-    border-color: var(--solver-accent);
-    box-shadow: 0 0 0 1px var(--solver-accent), 0 0 8px var(--solver-accent-glow);
+    background: var(--solver-accent);
+}
+
+.solver-letter-cell.is-selected .solver-letter-cell__letter {
+    color: var(--color-bg-primary);
 }
 
 .solver-letter-cell.is-static {
     cursor: default;
-}
-
-.solver-letter-cell.is-static:hover {
-    border-color: var(--color-border-medium);
 }
 
 .solver-letter-cell__letter {
