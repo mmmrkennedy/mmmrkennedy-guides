@@ -98,6 +98,10 @@
     border-bottom: none;
 }
 
+.solver-only-page .content-container:not(:has([data-solver])) {
+    margin-top: var(--space-xl);
+}
+
 /* ------------------------------------------------------------
    Solver-only page layout (Nov 2026 redesign, after NYT Games).
    The solver is the whole page, so it gets no panel. Structure comes from
@@ -140,7 +144,7 @@
 }
 
 .solver-only-page .solver-guide-link {
-    padding-top: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm) var(--space-sm);
 }
 
 /* The tool's lead line, the solver's equivalent of NYT's "Create four groups
@@ -781,7 +785,7 @@
 /* When NOT inside a grid, use the cell-size token for a fixed image size */
 .solver-symbol-select:not(.is-grid) img {
     width: var(--solver-cell-size);
-    height: var(--solver-cell-size);
+    height: var(--solver-cell-size)
 }
 
 /* ------------------------------------------------------------
@@ -1392,7 +1396,7 @@
 /* Tighten the button wrapper so the rendered tile matches reactor-cell size */
 .solver-container--floppy .solver-symbol-select.is-grid button {
     padding: 0;
-    border-width: 1.5px;
+    border-width: 3px;
 }
 
 /* Floppy result row: locked 4-column grid that shrinks images
@@ -1546,10 +1550,6 @@
     gap: var(--space-xs);
 }
 
-.mahjong-group.is-pair {
-    flex-basis: 100%;
-}
-
 .mahjong-group__label {
     color: var(--color-text-muted);
     font-size: 0.75rem;
@@ -1564,10 +1564,6 @@
     background: rgb(255 255 255 / 4%);
     border: 1px solid var(--color-border-subtle);
     border-radius: 6px;
-}
-
-.mahjong-group.is-pair .mahjong-group__tiles {
-    border-color: var(--solver-accent-dim);
 }
 
 .mahjong-group.is-decoy .mahjong-group__tiles {

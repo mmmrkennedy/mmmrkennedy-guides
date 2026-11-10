@@ -15,7 +15,7 @@ module.exports = function(eleventyConfig) {
     const { WORDCOUNT_FLOOR, countWords, siteStats, resetStats } = require("./build_scripts/eleventy/stats.cjs");
     const { classifyLinks, unlinkUnwrittenGuides } = require("./build_scripts/eleventy/links.cjs");
     const { domPass } = require("./build_scripts/eleventy/dom-pass.cjs");
-    const { injectReactBundle, prerenderSolvers } = require("./build_scripts/eleventy/solvers.cjs");
+    const { injectReactBundle, prerenderSolvers, resetSolverCaches } = require("./build_scripts/eleventy/solvers.cjs");
     // Solver edits under `dev:watch`. Both Vite watchers write into .solver-ssr/
     // (the prerender build, and the browser build's stamp file), and watching it
     // rebuilds the pages against the new chunk hashes and prerender (see
@@ -45,6 +45,9 @@ module.exports = function(eleventyConfig) {
 
     // Re-measure every build, or `eleventy --serve` freezes the stats at startup.
     eleventyConfig.on("eleventy.before", resetStats);
+
+    // Re-read the solver manifest and SSR build every build (see solvers.cjs).
+    eleventyConfig.on("eleventy.before", resetSolverCaches);
 
     eleventyConfig.addPassthroughCopy("src/css/*");
     eleventyConfig.addPassthroughCopy("src/favicon");

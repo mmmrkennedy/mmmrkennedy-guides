@@ -43,6 +43,22 @@ function getSsrSolvers() {
 }
 
 /**
+ * Drop the cached manifest and SSR build, so the next build reads them fresh.
+ * Runs before every build: under `dev:watch` a solver edit gives new chunk
+ * hashes and a new prerender, and without this the pages keep the ones from
+ * startup and point at chunks that no longer exist.
+ */
+function resetSolverCaches() {
+    cachedManifest = null;
+    cachedSsrSolvers = undefined;
+    try {
+        delete require.cache[require.resolve("../../.solver-ssr/solvers.cjs")];
+    } catch {
+        // No SSR build yet: nothing cached to drop.
+    }
+}
+
+/**
  * Renders each solver into its <div data-solver="...">, so the markup ships in the
  * HTML at its real height and the page doesn't shift when the script runs. main.tsx
  * hydrates whatever it finds.
@@ -138,4 +154,4 @@ function injectReactBundle(content, outputPath) {
     }
 }
 
-module.exports = { injectReactBundle, prerenderSolvers };
+module.exports = { injectReactBundle, prerenderSolvers, resetSolverCaches };

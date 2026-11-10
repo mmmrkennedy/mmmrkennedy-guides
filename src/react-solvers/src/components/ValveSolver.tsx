@@ -3,18 +3,6 @@ import { useSolverReport } from "../solver-report";
 
 type ValveLocation = "department_store" | "supply_depot" | "armory" | "infirmary" | "tank_factory" | "dragon_command";
 
-type ValveConfig = [
-        number | undefined,
-        number | undefined,
-        number | undefined,
-        number | undefined,
-        number | undefined,
-        number | undefined,
-];
-
-type LocationToConfigMap = Partial<Record<ValveLocation, ValveConfig>>;
-type ValveLegend = Record<ValveLocation, LocationToConfigMap>;
-
 const LOCATION_NAMES: Record<ValveLocation, string> = {
     department_store: "Department Store",
     supply_depot: "Supply Depot",
@@ -33,7 +21,12 @@ const LOCATION_ORDER: ValveLocation[] = [
     "dragon_command",
 ];
 
-const valveLegend: ValveLegend = {
+/** Hand-checked positions for every Green and Pink pair, in dropdown order
+ (undefined for the Pink valve). The route search below picks whichever of the
+ two valid routes this table lists, and falls back to it if the search fails. */
+type ValveConfig = (number | undefined)[];
+
+const valveLegend: Record<ValveLocation, Partial<Record<ValveLocation, ValveConfig>>> = {
     department_store: {
         supply_depot: [1, undefined, 2, 3, 1, 1],
         armory: [3, 2, undefined, 2, 2, 3],
@@ -43,10 +36,10 @@ const valveLegend: ValveLegend = {
     },
     supply_depot: {
         department_store: [undefined, 1, 3, 2, 3, 3],
-        armory: [3, 2, undefined, 2, 2, 3],
-        infirmary: [3, 2, 2, undefined, 1, 1],
-        tank_factory: [2, 2, 2, 3, undefined, 1],
-        dragon_command: [2, 1, 1, 2, 3, undefined],
+        armory: [2, 1, undefined, 2, 3, 2],
+        infirmary: [1, 1, 2, undefined, 1, 2],
+        tank_factory: [1, 1, 2, 1, undefined, 3],
+        dragon_command: [3, 2, 2, 1, 1, undefined],
     },
     armory: {
         department_store: [undefined, 3, 1, 3, 1, 2],
@@ -60,13 +53,13 @@ const valveLegend: ValveLegend = {
         supply_depot: [1, undefined, 2, 3, 2, 2],
         armory: [1, 1, undefined, 2, 2, 2],
         tank_factory: [1, 3, 1, 3, undefined, 2],
-        dragon_command: [3, 2, 2, 2, 2, undefined],
+        dragon_command: [3, 2, 3, 2, 2, undefined],
     },
     tank_factory: {
         department_store: [undefined, 2, 3, 3, 1, 1],
         supply_depot: [1, undefined, 1, 3, 1, 2],
         armory: [3, 2, undefined, 1, 1, 1],
-        infirmary: [3, 2, 2, undefined, 2, 3],
+        infirmary: [3, 2, 3, undefined, 2, 3],
         dragon_command: [1, 1, 1, 1, 1, undefined],
     },
     dragon_command: {
@@ -77,6 +70,38 @@ const valveLegend: ValveLegend = {
         tank_factory: [1, 3, 1, 1, undefined, 3],
     },
 };
+
+// Where each valve's settings 1, 2 and 3 send the air, from function_af4b355b in
+// zm_stalingrad_ee_main.gsc. The script calls Supply Depot "library" and the
+// Infirmary "barracks".
+const VALVE_LINKS: Record<ValveLocation, ValveLocation[]> = {
+    department_store: ["armory", "infirmary", "dragon_command"],
+    supply_depot: ["dragon_command", "armory", "tank_factory"],
+    armory: ["supply_depot", "tank_factory", "department_store"],
+    infirmary: ["department_store", "tank_factory", "dragon_command"],
+    tank_factory: ["infirmary", "supply_depot", "armory"],
+    dragon_command: ["supply_depot", "department_store", "infirmary"],
+};
+
+/** The puzzle is solved when the air from the Green valve passes through every
+ valve once and ends at the Pink one. Returns every such route, valve by valve. */
+function findRoutes(route: ValveLocation[], pink: ValveLocation): ValveLocation[][] {
+    const current = route[route.length - 1];
+    if (route.length === LOCATION_ORDER.length) {
+        return current === pink ? [route] : [];
+    }
+    return VALVE_LINKS[current]
+        .filter((next) => !route.includes(next))
+        .flatMap((next) => findRoutes([...route, next], pink));
+}
+
+/** A route as valve positions, in dropdown order (undefined for the Pink valve). */
+function routeToConfig(route: ValveLocation[]): ValveConfig {
+    return LOCATION_ORDER.map((location) => {
+        const i = route.indexOf(location);
+        return i === route.length - 1 ? undefined : VALVE_LINKS[location].indexOf(route[i + 1]) + 1;
+    });
+}
 
 interface ValveAdjustment {
     location: string;
@@ -92,20 +117,27 @@ function getAdjustments(green: ValveLocation, pink: ValveLocation): ValveResult 
         return { kind: "error", reason: "The Green and Pink Valves can't be at the same location." };
     }
 
-    const config = valveLegend[green]?.[pink];
+    const table = valveLegend[green]?.[pink];
+    const configs = findRoutes([green], pink).map(routeToConfig);
+    const matching = configs.find((c) => table && c.every((value, i) => value === table[i]));
+    if (!matching) {
+        console.warn(
+            `ValveSolver: the route search and the table disagree for ${green} -> ${pink}.`,
+            { table, search: configs },
+        );
+    }
+
+    const config = matching ?? table ?? configs[0];
     if (!config) {
-        return { kind: "error", reason: "Unable to look up the valve configuration. Please try again." };
+        return { kind: "error", reason: "Unable to work out the valve positions. Please try again." };
     }
 
     const adjustments: ValveAdjustment[] = [];
-    for (let i = 0; i < config.length; i++) {
-        const value = config[i];
-        if (value === undefined || value === 0) continue;
-        adjustments.push({
-            location: LOCATION_NAMES[LOCATION_ORDER[i]],
-            value,
-        });
-    }
+    config.forEach((value, i) => {
+        if (value !== undefined) {
+            adjustments.push({ location: LOCATION_NAMES[LOCATION_ORDER[i]], value });
+        }
+    });
     return { kind: "ok", adjustments };
 }
 

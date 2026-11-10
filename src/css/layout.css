@@ -242,6 +242,26 @@ Page structure and containers.
     overflow-x: clip;
     background-color: var(--color-bg-primary);
     overflow-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+}
+
+/* On a short page, main takes the spare height, so the related maps and footer
+   sit at the bottom of the screen. The footer stays the height of its content.
+   Width 100%: as flex items, children with auto side margins would otherwise
+   shrink to fit their content instead of filling the column. */
+.content-window > main,
+.content-window > .related-maps,
+.content-window > .site-footer {
+    width: 100%;
+}
+
+.content-window > main {
+    flex: 1 0 auto;
+}
+
+.content-window > .site-footer {
+    flex: none;
 }
 
 /* Content Containers */

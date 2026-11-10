@@ -66,7 +66,7 @@ function Tile({ value }: { value: number }) {
     return <img loading="lazy" className="mahjong-tile" src={tileImages[value]} alt={`${value} Dot`} />;
 }
 
-function TileGroup({ label, values, variant }: { label: string; values: number[]; variant?: "pair" | "decoy" }) {
+function TileGroup({ label, values, variant }: { label: string; values: number[]; variant?: "decoy" }) {
     return (
         <div className={`mahjong-group${variant ? ` is-${variant}` : ""}`}>
             <span className="mahjong-group__label">{label}</span>
@@ -168,7 +168,7 @@ export default function MahjongSolver({ title }: { title?: string }) {
                             {handResult.melds.map((meld, mi) => (
                                 <TileGroup key={mi} label={`Set ${mi + 1}`} values={meld} />
                             ))}
-                            <TileGroup label="Pair" values={handResult.pair} variant="pair" />
+                            <TileGroup label="Pair" values={handResult.pair} />
                         </div>
                         {handResult.unused.length > 0 && (
                             <div className="mahjong-hand">
