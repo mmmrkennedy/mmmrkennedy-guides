@@ -1055,9 +1055,9 @@
 }
 
 .reactor-cell.cell-activated {
-    background: var(--solver-accent);
-    border-color: var(--solver-accent-bright);
-    box-shadow: 0 0 6px var(--solver-accent-glow);
+    background: #c9a961;
+    border-color: #d4b56f;
+    box-shadow: 0 0 6px rgb(201 169 97 / 40%);
     cursor: default;
 }
 

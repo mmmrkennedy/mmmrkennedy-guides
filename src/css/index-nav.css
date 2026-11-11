@@ -110,6 +110,11 @@
         background-color 0.15s ease;
 }
 
+/* Lexend runs wider; without this the progress text wraps under the chips on desktop. */
+:root[data-font="lexend"] .index-nav__chip {
+    padding-inline: 0.6rem;
+}
+
 .index-nav__chip:hover {
     color: var(--color-text-primary);
     border-color: var(--color-text-muted);
