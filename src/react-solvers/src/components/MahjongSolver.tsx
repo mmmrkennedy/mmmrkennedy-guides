@@ -27,8 +27,7 @@ const tileImages: Record<number, string> = {
     5: "/games/IW/shaolin_shuffle/mahjong_solver/dot_5.webp",
 };
 
-// Backtracking search for 4 melds + 1 pair out of the picked tiles. Any extra
-// tiles are decoys and come back as `unused`.
+// Tiles beyond 4 melds + 1 pair are decoys.
 function calculateHand(selectedValues: number[]): HandResult | null {
     const counts = [0, 0, 0, 0, 0, 0];
     selectedValues.forEach((v) => counts[v]++);

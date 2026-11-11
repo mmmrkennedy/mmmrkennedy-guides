@@ -1,21 +1,12 @@
-// GET /games/**/*.{webp,png,jpg,jpeg,gif}
-// Serves guide screenshots from R2 instead of from the deployment.
-//
-// Images live in R2 to stay clear of the 20,000-file limit on a Pages deployment.
-// Guides link screenshots relatively (`pictures/main_ee/foo.webp`), so this maps
-// the existing URL onto an R2 key:
-//
+// Serves guide screenshots from R2, to stay under the 20,000-file Pages deployment limit.
 //     /games/BO7/astra/pictures/x.webp  ->  img/BO7/astra/pictures/x.webp
 //
-// IMPORTANT: a Pages Function claims its entire route and takes precedence over
-// static assets. This file sits at /games/[[path]], which is also where every
-// guide's HTML lives, so anything that is not an image MUST fall through via
-// next() — otherwise this single file 404s the whole site.
+// IMPORTANT: this Function takes precedence over static assets on all of /games/,
+// where every guide's HTML lives, so non-images MUST fall through via next().
 
 const IMAGE = /\.(webp|png|jpe?g|gif)$/i;
 
-// Downscaled copies, requested as ?w=1280. Must match TIERS in
-// build_scripts/r2.mjs, which is what writes them to variants/<tier>/.
+// Must match TIERS in build_scripts/r2.mjs, which writes variants/<tier>/.
 const TIERS = new Set(["1280", "1920"]);
 
 const CONTENT_TYPES = {
@@ -26,37 +17,20 @@ const CONTENT_TYPES = {
     gif: "image/gif",
 };
 
-// Images are not content-hashed, so a changed screenshot keeps its URL. Same
-// bargain src/_headers already documents for the static ones: store it, but
-// revalidate before reuse. R2 gives every object an ETag, so that revalidation
-// is a bodyless 304 rather than a re-download.
+// Images aren't content-hashed, so always revalidate; R2 ETags make that a 304.
 const CACHE_CONTROL = "public, no-cache";
 
 export async function onRequestGet(context) {
     const { request, env, next, waitUntil } = context;
     const url = new URL(request.url);
 
-    // Guide pages, solver pages, anything without an image extension: hand
-    // straight back to the static assets. This is the guard that keeps the
-    // Function from swallowing the site.
     if (!IMAGE.test(url.pathname)) return next();
 
-    // No binding — local `wrangler pages dev` without one, or a misconfigured
-    // deploy. Fall through rather than hard-fail: if a copy of the image is
-    // still in the deployment it gets served, and the page looks normal.
+    // No binding (e.g. local wrangler): fall through to any copy in the deployment.
     if (!env.IMAGES) return next();
 
-    // Inert under the CACHE_CONTROL above, and deliberately so: Cloudflare
-    // honours `no-cache` by not serving a stored copy without checking first, so
-    // put() does not retain one and match() does not hit. Verified against
-    // production — replacing an object in R2 changed the bytes and the ETag on
-    // the very next request, with no purge.
-    //
-    // That costs a Class B operation per request, which at this site's traffic
-    // is a few percent of the 10M/month free tier — cheap in exchange for a
-    // replaced screenshot never being served stale. Kept rather than deleted
-    // because it starts working the moment CACHE_CONTROL grows a real max-age,
-    // which is the trade to revisit if reads ever approach the tier.
+    // Inert under `no-cache` (Cloudflare never stores it), so every request costs
+    // an R2 Class B op. Kept so it works if CACHE_CONTROL ever gets a real max-age.
     const cache = caches.default;
     const cached = await cache.match(request);
     if (cached) return cached;
@@ -64,15 +38,12 @@ export async function onRequestGet(context) {
     // pathname is percent-encoded; R2 keys are raw.
     const rel = decodeURIComponent(url.pathname).slice("/games".length);
 
-    // ?w= picks a downscaled copy. Allowlisted rather than interpolated, so the
-    // parameter cannot be used to reach arbitrary keys in the bucket, and an
-    // unknown value quietly serves the master instead of failing.
+    // Allowlisted so ?w= can't reach arbitrary bucket keys.
     const asked = url.searchParams.get("w");
     const tier = asked && TIERS.has(asked) ? asked : null;
 
-    // Passing the request headers as `onlyIf` lets R2 evaluate If-None-Match /
-    // If-Modified-Since for us. When the condition fails it returns metadata
-    // with no body, which is exactly the 304 case.
+    // `onlyIf` lets R2 evaluate If-None-Match / If-Modified-Since; a failed
+    // condition returns metadata with no body, the 304 case.
     let object = null;
     let served = "master";
 
@@ -81,10 +52,7 @@ export async function onRequestGet(context) {
         if (object) served = tier;
     }
 
-    // No variant: either the image was already smaller than the tier (151 of
-    // them are) or it has not been generated yet. Either way the master is the
-    // right answer, which is what lets Part 2 roll out a map at a time without
-    // anything 404ing in the meantime.
+    // No variant when the image is already smaller than the tier, or not generated yet.
     if (!object) {
         object = await env.IMAGES.get(`img${rel}`, { onlyIf: request.headers });
     }
@@ -100,15 +68,10 @@ export async function onRequestGet(context) {
     headers.set("ETag", object.httpEtag);
     headers.set("Cache-Control", CACHE_CONTROL);
 
-    // Which copy actually answered. The URL cannot show this — that is the whole
-    // point of the design — so without it there is no way to confirm from the
-    // outside that a phone got the small one.
+    // The URL doesn't show which copy answered, so this is the only way to verify it.
     headers.set("X-Image-Tier", served);
 
-    // src/_headers applies to static assets only, never to a Function response,
-    // so its `/*` security block has to be repeated here or images would be the
-    // one resource on the site serving without it. Keep these in step with that
-    // file. Set before the 304 branch so a revalidated image carries them too.
+    // src/_headers doesn't apply to Function responses; keep these in step with its `/*` block.
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("X-Frame-Options", "DENY");
     headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -128,8 +91,6 @@ export async function onRequestGet(context) {
 
     const response = new Response(object.body, { status: 200, headers });
 
-    // Only full 200s are worth caching, and the body has to be cloned because
-    // the original is streamed to the client.
     if (waitUntil) waitUntil(cache.put(request, response.clone()));
 
     return response;

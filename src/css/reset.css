@@ -1,19 +1,11 @@
-/*
-===============================================================================
-2. RESET & BASE STYLES
-===============================================================================
-Foundation styles and sensible defaults.
-*/
-
 *,
 *::before,
 *::after {
     box-sizing: border-box;
 }
 
-/* The document is the scroller. The gutter stops the page shifting when an overlay
-   locks scrolling, or when filtering makes a page short enough to lose its bar.
-   scroll-padding keeps a browser-driven fragment jump clear of the sticky top bar. */
+/* The gutter stops the page shifting when an overlay locks scrolling or filtering
+   makes the page too short for a scrollbar. */
 html {
     scrollbar-gutter: stable;
     scrollbar-width: thin;

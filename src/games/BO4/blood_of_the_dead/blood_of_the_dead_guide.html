@@ -56,8 +56,14 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
         transform: translateY(-1px) rotate(45deg);
     }
 
+    /* The label follows the state: one span shows while open, the other while closed. */
+    details.spacing[open] > summary .when-closed,
+    details.spacing:not([open]) > summary .when-open {
+        display: none;
+    }
+
     details.spacing > summary:hover {
-        background-color: rgb(201 169 97 / 8%);
+        background-color: color-mix(in srgb, var(--color-tier-1) 8%, transparent);
     }
 
     details.spacing > summary:focus-visible {
@@ -668,30 +674,31 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
             You must spirit blast the Seagull three times, once per round. The Seagull can only be seen while aiming with the shield, but it can be heard with or without the shield.
             <ul>
                 <li>
-                    The first seagull might only spawn in five locations, which are marked in <span class="bird-highlight-green">green</span> in the list below. If you can't find it in the locations in <span class="bird-highlight-green">green</span>, then try the spawns near those.
+                    The first seagull might only spawn in three locations, which are marked in <span class="bird-highlight-green">green</span> in the list below. If you can't find it in the locations in <span class="bird-highlight-green">green</span>, then try the spawns near those.
                 </li>
                 <li>
                     Note: There is a way to know roughly where the Seagull is going to be for the second and third spawns. On the round before the second spawn (i.e. the round you found the first location) end the round at the top of the Gondola (the Gondola doesn't have to be there). Once you kill the last zombie, look <a href="pictures/main_ee/pain_and_guilt/aim_here_bird_step.webp">about here, out to the water</a> and wait for a subtle <a href="pictures/main_ee/pain_and_guilt/blue_light_streak_bird.webp">Blue Light Streak</a> coming from the water to shoot toward somewhere on the map. The light indicates what area of the map the Seagull has spawned: The right of your screen means it spawned in the 'Warden's Office'/'Citadel' area, Down means 'Docks,' and the left side of the screen means Spawn Area/'Catwalk.'
                 </li>
                 <li>
-                    There are 39 Locations the Seagull can be in. <a class="external-link" href="https://youtu.be/roBKFoVz_Qo">Video Guide</a> by <a class="external-link" href="https://www.youtube.com/@FastGuidesGlitch">Fast Guides Glitch</a>. This video shows 40 locations, but the last location shown for the 'Catwalk' area in this video is not a possible spawn.
+                    There are 39 Locations the Seagull can be in. <a class="external-link" href="https://youtu.be/roBKFoVz_Qo">Video Guide</a> by <a class="external-link" href="https://www.youtube.com/@FastGuidesGlitch">Fast Guides Glitch</a>. This video shows 40 locations, but the <a class="external-link" href="https://youtu.be/roBKFoVz_Qo?t=163">last location shown for the 'Catwalk'</a> area in this video is not a possible spawn.
                 </li>
             </ul>
         </li>
-        <li class="dummy-li">
-            <details class="spacing">
+        <li class="dummy-li" data-custom-quick-link="Seagull Spawn Locations" data-custom-indent="2" id="seagull_spawn_locations">
+            <details class="spacing" open>
                 <summary>
-                    Click to expand/collapse the list of Seagull Locations
+                    <span class="when-open">Hide the Seagull locations</span>
+                    <span class="when-closed">Show all 39 Seagull locations</span>
                 </summary>
                 <ol>
                     <li class="dummy-li">
-                        <p>Docks:</p>
+                        <p>Docks Area:</p>
                     </li>
                     <li>
                         <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/docks_bridge.webp">Docks Bridge - Above the Cola Perk</a> <!-- Confirmed -->
                     </li>
                     <li>
-                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/docks.webp">Docks - Above Mystery Box on Pole</a> <!-- Confirmed -->
+                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/docks.webp">Docks - On a pole near the Mystery Box location</a> <!-- Confirmed -->
                     </li>
 
                     <li class="dummy-li">
@@ -701,21 +708,21 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
                         <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/building_64_icr_machine.webp">Building 64 - On a machine near the ICR-7 wallbuy</a> <!-- Confirmed -->
                     </li>
                     <li>
-                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/china_alley.webp">China Alley - On the stairs outside the map</a> <!-- Confirmed -->
+                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/china_alley.webp">China Alley - On the inaccessible stairs outside the map</a> <!-- Confirmed -->
                     </li>
 
                     <li class="dummy-li">
-                        <p>Citadel Tunnels:</p>
+                        <p>Citadel Tunnels Area:</p>
                     </li>
                     <li>
                         <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/citadel_tunnels_spitfire.webp">Citadel Tunnels - In the middle of the Spitfire wallbuy room on a beam near the ceiling</a> <!-- Confirmed -->
                     </li>
                     <li>
-                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/citadel_tunnels_middle_of_room.webp">Citadel Tunnels - Above a barrier near the middle of the room, one level up from the number pad</a> <!-- Confirmed, but orange was removed. It may now be wrong without it (idk man) -->
+                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/citadel_tunnels_middle_of_room.webp">Citadel Tunnels - Above a barrier near the middle of the room, two levels up from the number pad</a> <!-- Confirmed, but orange was removed. It may now be wrong without it (idk man) -->
                     </li>
 
                     <li class="dummy-li">
-                        <p>Citadel:</p>
+                        <p>Citadel/Showers Area:</p>
                     </li>
                     <li>
                         <a href="pictures/main_ee/pain_and_guilt/seagull_locations/citadel_radiator.webp">Citadel - On the radiator at the top of the stairs coming from the 'Citadel Tunnels'</a> <!-- Confirmed, but orange was removed. It may now be wrong without it (idk man) -->
@@ -724,11 +731,17 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
                         <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/citadel_sandbags.webp">Citadel - On the sandbags near the entrance to the 'Showers'</a> <!-- Confirmed -->
                     </li>
                     <li>
+                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/showers.webp">Showers - On the dryer, near the fast travel</a> <!-- Confirmed -->
+                    </li>
+                    <li>
                         <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/citadel_near_wardens.webp">Citadel - In the room just before the stairs leading to 'Michigan Avenue'/'Warden's Office'</a> <!-- Confirmed -->
                     </li>
 
                     <li class="dummy-li">
                         <p>Warden's Office Area:</p>
+                    </li>
+                    <li>
+                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/michigan_avenue_wardens_office.webp">Michigan Avenue - Above the power box just outside the 'Warden's Office'/'Sally Port'</a> <!-- Confirmed -->
                     </li>
                     <li>
                         <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/sally_port.webp">Sally Port - Above the doorway with the Fan Trap</a> <!-- Confirmed -->
@@ -739,39 +752,28 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
                     <li>
                         <a href="pictures/main_ee/pain_and_guilt/seagull_locations/wardens_office_fireplace.webp">Warden's Office - Above the Fireplace</a> <!-- Confirmed -->
                     </li>
-
-                    <li class="dummy-li">
-                        <p>Eagle Plaza:</p>
-                    </li>
                     <li>
                         <a href="pictures/main_ee/pain_and_guilt/seagull_locations/eagle_plaza.webp">Eagle Plaza - On a wooden pallet, left of the lava river</a> <!-- Confirmed -->
-                    </li>
-
-                    <li class="dummy-li">
-                        <p>Michigan Avenue:</p>
-                    </li>
-                    <li>
-                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/michigan_avenue_wardens_office.webp">Michigan Avenue - Above the power box just outside the 'Warden's Office'/'Sally Port'</a> <!-- Confirmed -->
-                    </li>
-                    <li>
-                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/michigan_avenue_powerup.webp">Michigan Avenue - Near the cell with the power-up locked inside</a> <!-- Confirmed -->
                     </li>
 
                     <li class="dummy-li">
                         <p>Cellblock Area:</p>
                     </li>
                     <li>
-                        <a class="bird-highlight-green" href="pictures/main_ee/pain_and_guilt/seagull_locations/cell_block_3rd_floor_workbench.webp">Cell Block 3rd Floor - Beside the workbench</a> <!-- Confirmed -->
+                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/michigan_avenue_powerup.webp">Michigan Avenue - Near the cell with the power-up locked inside</a> <!-- Confirmed -->
                     </li>
                     <li>
                         <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cell_block_3rd_floor_hellhound.webp">Cell Block 3rd Floor - Above the Hellhound</a> <!-- Confirmed -->
+                    </li>
+                    <li>
+                        <a class="bird-highlight-green" href="pictures/main_ee/pain_and_guilt/seagull_locations/cell_block_3rd_floor_workbench.webp">Cell Block 3rd Floor - Beside the workbench</a> <!-- Confirmed -->
                     </li>
 
                     <li class="dummy-li">
                         <p>Library Area:</p>
                     </li>
                     <li>
-                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cd_street.webp">C-D Street - Near/Below the Hellhound</a> <!-- Confirmed -->
+                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cd_street.webp">C-D Street - Below the Hellhound</a> <!-- Confirmed -->
                     </li>
                     <li>
                         <a class="bird-highlight-green" href="pictures/main_ee/pain_and_guilt/seagull_locations/library.webp">Library - On a bookshelf</a> <!-- Confirmed -->
@@ -781,6 +783,19 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
                     </li>
                     <li>
                         <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cell_block_entrance_above_zombie_spawn.webp">Cell Block Entrance - On the railing above the Zombie Barrier</a> <!-- Confirmed -->
+                    </li>
+
+                    <li class="dummy-li">
+                        <p>Cafeteria Area:</p>
+                    </li>
+                    <li>
+                        <a class="bird-highlight-green" href="pictures/main_ee/pain_and_guilt/seagull_locations/times_square.webp">Times Square - On a broken walkway above the entrance to the 'Cafeteria'</a> <!-- Confirmed -->
+                    </li>
+                    <li>
+                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cafeteria_debris.webp">Cafeteria - On the pile of debris in the middle of the room (stand near the fast travel)</a> <!-- Confirmed -->
+                    </li>
+                    <li>
+                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cafeteria_wrapped_body.webp">Cafeteria - On the table with the wrapped body, outside a barrier</a> <!-- Confirmed -->
                     </li>
 
                     <li class="dummy-li">
@@ -800,27 +815,7 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
                     </li>
 
                     <li class="dummy-li">
-                        <p>Cafeteria Area:</p>
-                    </li>
-                    <li>
-                        <a class="bird-highlight-green" href="pictures/main_ee/pain_and_guilt/seagull_locations/times_square.webp">Times Square - On a broken walkway above the entrance to the 'Cafeteria'</a> <!-- Confirmed -->
-                    </li>
-                    <li>
-                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cafeteria_debris.webp">Cafeteria - On the pile of debris in the middle of the room (stand near the fast travel)</a> <!-- Confirmed -->
-                    </li>
-                    <li>
-                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/cafeteria_wrapped_body.webp">Cafeteria - On the table with the wrapped body, outside a barrier</a> <!-- Confirmed -->
-                    </li>
-
-                    <li class="dummy-li">
-                        <p>Showers:</p>
-                    </li>
-                    <li>
-                        <a class="bird-highlight-orange" href="pictures/main_ee/pain_and_guilt/seagull_locations/showers.webp">Showers - On the dryer, near the fast travel</a> <!-- Confirmed -->
-                    </li>
-
-                    <li class="dummy-li">
-                        <p>Recreation Yard/Catwalk:</p>
+                        <p>Recreation Yard/Catwalk Area:</p>
                     </li>
                     <li>
                         <a href="pictures/main_ee/pain_and_guilt/seagull_locations/rec_yard_beam.webp">Recreation Yard - On one of the beams to the left after leaving the Prison</a> <!-- Confirmed -->
@@ -849,6 +844,13 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
                     </li>
 
                     <li class="dummy-li">
+                        <p>New Industries:</p>
+                    </li>
+                    <li>
+                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/new_industries.webp">New Industries - In the room between the Spin Trap and the 'Transverse Tunnel,' on a pipe</a> <!-- Confirmed -->
+                    </li>
+
+                    <li class="dummy-li">
                         <p>Power House Area:</p>
                     </li>
                     <li>
@@ -856,13 +858,6 @@ description: Complete Blood of the Dead (BOTD) guide for Black Ops 4. Most Escap
                     </li>
                     <li>
                         <a href="pictures/main_ee/pain_and_guilt/seagull_locations/power_house_inside.webp">Power House - On the pipe overhead, left of the giant cylinder near the Mystery Box</a> <!-- Confirmed -->
-                    </li>
-
-                    <li class="dummy-li">
-                        <p>New Industries:</p>
-                    </li>
-                    <li>
-                        <a href="pictures/main_ee/pain_and_guilt/seagull_locations/new_industries.webp">New Industries - In the room between the Spin Trap and the 'Transverse Tunnel,' on a pipe</a> <!-- Confirmed -->
                     </li>
                 </ol>
             </details>

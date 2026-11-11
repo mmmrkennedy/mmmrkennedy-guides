@@ -34,7 +34,6 @@ async function smartCopyImages() {
     const skipImages = process.env.IMAGES_FROM_R2 === "true";
 
     const pairs = [
-        // src/games/**/* → dist/games/**/
         ...walkDir("src/games")
             .filter((src) => !(skipImages && R2_SERVED.has(path.extname(src).toLowerCase())))
             .map((src) => ({

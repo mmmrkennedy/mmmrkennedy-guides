@@ -1,14 +1,9 @@
-"""Crop every image in a folder to a fixed box.
-
-Box: top-left (990, 0) -> bottom-right (1810, 1440), i.e. an 820x1440 region.
-Edit the constants below to change the box.
-"""
+"""Crop every image in a folder to a fixed box."""
 
 import os
 
 from PIL import Image
 
-# Crop box: (left, top) -> (right, bottom)
 LEFT, TOP, RIGHT, BOTTOM = 990, 0, 1810, 1440
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff", ".gif"}

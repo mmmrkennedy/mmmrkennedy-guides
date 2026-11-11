@@ -89,7 +89,6 @@ export default function BeastGnSEightQueensSolver({ title }: { title?: string })
     const [solution, setSolution] = useState<boolean[][] | null>(null);
     const [phase, setPhase] = useState<Phase>("setup");
 
-    // One placed queen is the entire input; the other seven are the answer.
     useSolverReport("BeastGnSEightQueensSolver", () => ({
         "Queen placed at [row, col]": queenLocation,
     }));

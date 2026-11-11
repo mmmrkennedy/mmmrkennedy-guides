@@ -4,7 +4,7 @@ import { useSolverReport } from "../solver-report";
 const imagePath = "/games/IW/the_beast_from_beyond/floppy_disk_puzzle/pictures/";
 
 function processSymbols(symbols: number[]): number[] {
-    // The numbers indicate the corresponding file name number
+    // Numbers are picture_N.webp file indices.
     const lines = [
         [1, 2, 3, 4, 0, 5],
         [6, 5, 8, 9, 7, 1],
@@ -26,8 +26,7 @@ function processSymbols(symbols: number[]): number[] {
 export default function BeastFloppyDiskSolver({ title }: { title?: string }) {
     const [selectedSymbols, setSelectedSymbols] = useState<number[]>([]);
 
-    // The symbols are images with no names, so the grid position the reader
-    // clicked is the only honest identifier for them.
+    // The symbols have no names, so the grid index identifies them.
     useSolverReport("BeastFloppyDiskSolver", () => ({
         "Symbols selected, in order (grid index, 0-11)": selectedSymbols,
     }));
@@ -37,7 +36,6 @@ export default function BeastFloppyDiskSolver({ title }: { title?: string }) {
 
     const toggleSymbol = (symbolId: number) => {
         if (selectedSymbols.includes(symbolId)) {
-            // Allow deselecting by clicking again
             setSelectedSymbols(selectedSymbols.filter((id) => id !== symbolId));
         } else if (selectedSymbols.length < maxSymbols) {
             setSelectedSymbols([...selectedSymbols, symbolId]);
@@ -60,7 +58,6 @@ export default function BeastFloppyDiskSolver({ title }: { title?: string }) {
         }
         if (hasDuplicates) return "Invalid: duplicate symbol selected.";
         if (!isValid) return "Invalid: no matching sequence found.";
-        // return "Valid sequence — press the symbols in this order:";
         return "";
     };
 
@@ -91,8 +88,6 @@ export default function BeastFloppyDiskSolver({ title }: { title?: string }) {
                 })}
             </div>
 
-            {/* Reset sits with the picker and the result comes last, the order
-                every other solver uses. */}
             <div className="solver-controls">
                 <button className="btn btn--solver" onClick={resetAll}>Reset</button>
             </div>

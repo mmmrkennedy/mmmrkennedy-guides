@@ -1,0 +1,176 @@
+/*
+ * data-accent-picker="open" is set before first paint by base.njk's head script.
+ * On mobile the legend launcher steps left to make room (responsive.css).
+ * Selectors are scoped under .accent-picker so the global li margin
+ * (typography.css) and input sizing (components.css) don't leak in.
+ */
+
+.accent-picker {
+    --swatch-size: 1.5rem;
+    --toggle-size: 2.25rem;
+
+    position: fixed;
+
+    /* - 2px: the bar's border-bottom, so it centres on the same line as the other header buttons. */
+    top: calc((var(--header-height-desktop) - 2px - var(--toggle-size)) / 2);
+    right: var(--space-md);
+    z-index: 1001; /* above the sticky top bar (1000) */
+}
+
+.accent-picker__toggle {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: var(--toggle-size);
+    height: var(--toggle-size);
+    padding: 0;
+    border: 1.5px solid var(--color-border-medium); /* matches .btn */
+    border-radius: 50%;
+    background: var(--color-tier-1);
+    color: var(--color-bg-primary);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.accent-picker__toggle:hover,
+:root[data-accent-picker="open"] .accent-picker__toggle {
+    border-color: var(--color-text-secondary);
+}
+
+.accent-picker__toggle svg {
+    display: block;
+    transition: transform 0.15s ease;
+}
+
+:root[data-accent-picker="open"] .accent-picker__toggle svg {
+    transform: rotate(180deg);
+}
+
+.accent-picker__panel {
+    position: absolute;
+    top: calc(100% + var(--space-sm));
+    right: 0;
+    display: none;
+    flex-direction: column;
+    gap: var(--space-smd);
+    padding: var(--space-smd);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--space-smd);
+    box-shadow: 0 6px 16px rgb(0 0 0 / 50%);
+}
+
+:root[data-accent-picker="open"] .accent-picker__panel {
+    display: flex;
+}
+
+/* 11 options: 6 + 5. This grid sets the panel's width. */
+.accent-picker .accent-picker__options {
+    display: grid;
+    grid-template-columns: repeat(6, var(--swatch-size));
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.accent-picker .accent-picker__options li {
+    display: block;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+}
+
+.accent-picker .accent-picker__option,
+.accent-picker .accent-picker__color {
+    box-sizing: border-box;
+    width: var(--swatch-size);
+    height: var(--swatch-size);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.accent-picker .accent-picker__option {
+    display: block;
+    background: var(--swatch);
+    background-origin: border-box; /* a gradient swatch would otherwise tile under the transparent border */
+}
+
+.accent-picker .accent-picker__option:hover,
+.accent-picker .accent-picker__color:hover {
+    transform: scale(1.12);
+}
+
+.accent-picker .accent-picker__option[aria-pressed="true"],
+:root[data-accent="custom"] .accent-picker .accent-picker__color {
+    box-shadow: 0 0 0 2px var(--color-bg-secondary), 0 0 0 4px var(--color-text-primary);
+}
+
+.accent-picker__custom {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-top: var(--space-smd);
+    border-top: 1px solid var(--color-border-medium);
+}
+
+.accent-picker .accent-picker__color {
+    flex-shrink: 0;
+    background: none;
+    appearance: none;
+}
+
+.accent-picker__color::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.accent-picker__color::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+}
+
+.accent-picker__color::-moz-color-swatch {
+    border: none;
+    border-radius: 50%;
+}
+
+/* width 0 + flex 1: fills what the swatch leaves, never widens the panel. */
+.accent-picker .accent-picker__hex {
+    flex: 1;
+    box-sizing: border-box;
+    width: 0;
+    min-width: 0;
+    height: var(--swatch-size);
+    margin: 0;
+    padding: 0 var(--space-sm);
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: var(--font-size-sm);
+    line-height: 1;
+    color: var(--color-text-primary);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 999px;
+}
+
+.accent-picker .accent-picker__hex[aria-invalid="true"] {
+    border-color: var(--color-no-return-border);
+}
+
+.accent-picker__toggle:focus-visible,
+.accent-picker .accent-picker__option:focus-visible,
+.accent-picker .accent-picker__color:focus-visible,
+.accent-picker .accent-picker__hex:focus-visible {
+    outline: 2px solid var(--color-text-primary);
+    outline-offset: 2px;
+}
+
+@media print {
+    .accent-picker {
+        display: none;
+    }
+}

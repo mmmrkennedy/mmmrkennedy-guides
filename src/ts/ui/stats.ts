@@ -1,20 +1,4 @@
-/**
- * Live view stats
- * ---------------
- * On /stats (gated by <body data-stats-live>), fills the "Most read in the last
- * 7 days" chart from GET /api/trending — the same edge-cached D1 ranking the
- * home page's 🔥 marker uses, so this costs no new endpoint and no extra query.
- *
- * The ranking is paths only, so guide names come from the page itself: the
- * build-time table at the bottom of /stats already lists every published guide
- * with its URL, which also means a path the site no longer publishes is dropped
- * rather than rendered as a bare URL.
- *
- * Like footer.ts and line-flagger.ts, a failed call is treated as "no data
- * yet" rather than an error — the eleventy dev server has no Functions, and a
- * fresh deploy has no view history. The section removes itself in that case; the
- * rest of the page is build-time data and stands on its own.
- */
+// /api/trending returns paths only; names come from the build-time table on the page.
 document.addEventListener("DOMContentLoaded", () => {
     if (!document.body.hasAttribute("data-stats-live")) return;
 
@@ -25,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const TOP_N = 10;
 
-    // Published guides, keyed by normalized path, from the table this page already renders.
     const names = new Map<string, { name: string; url: string }>();
     document.querySelectorAll<HTMLAnchorElement>(".stats-table a[href]").forEach((a) => {
         const url = a.getAttribute("href");
@@ -40,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
             for (const item of data.ranked || []) {
                 if (!item.path || typeof item.count !== "number") continue;
                 const hit = names.get(normPath(item.path));
-                if (!hit) continue; // a solver, or a page no longer published
+                if (!hit) continue; // a solver, or no longer published
                 rows.push({ name: hit.name, url: hit.url, count: item.count });
                 if (rows.length === TOP_N) break;
             }
@@ -78,11 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
             chart.hidden = false;
         })
         .catch(() => {
-            // No Functions locally, or no history yet — drop the section quietly.
+            // No Functions on the dev server, or no history yet.
             section.remove();
         });
 
-    /** Mirror the server's path shape: leading slash, no trailing slash, no .html. */
+    // Must match the server's path shape.
     function normPath(p: string): string {
         let out = p.split(/[?#]/)[0];
         if (!out.startsWith("/")) out = "/" + out;
@@ -92,24 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-/**
- * Sortable tables
- * ---------------
- * Turns the column headers of any `table[data-sortable]` into sort controls.
- *
- * Progressive enhancement: the markup ships as a plain table already sorted by
- * the build (words, descending), and this wraps each header label in a button on
- * load. Without JS the table is still correct, just fixed in that order.
- *
- * Each sortable `<th>` declares a `data-sort-type`:
- *   number  parsed from the cell text, so "1,234" sorts as 1234
- *   date    the ISO "YYYY-MM-DD" the cell already prints, compared as text
- *   text    case-insensitive, locale-aware
- *
- * First click on a column sorts the way that column is most useful: descending
- * for numbers and dates (biggest, newest), ascending for text (A to Z). Clicking
- * the same column again flips it.
- */
+// Sortable `table[data-sortable]`: each sortable <th> sets data-sort-type number | date | text.
 type SortDirection = "ascending" | "descending";
 type SortKey = string | number | null;
 
@@ -122,10 +88,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!headRow || !body) return;
 
         const rows = Array.from(body.rows);
-        if (rows.length < 2) return; // nothing to reorder
+        if (rows.length < 2) return;
 
-        // The build's order is the tiebreak, so rows with equal values never
-        // shuffle against each other from one sort to the next.
+        // Build order is the tiebreak, so equal rows never shuffle between sorts.
         rows.forEach((row, i) => (row.dataset.sortIndex = String(i)));
 
         const headers = Array.from(headRow.cells).filter((th) => th.dataset.sortType);
@@ -139,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             th.textContent = "";
             th.appendChild(button);
-            // Leave a header the build already sorted by showing its direction.
             if (!th.getAttribute("aria-sort")) th.setAttribute("aria-sort", "none");
 
             button.addEventListener("click", () => {
@@ -168,34 +132,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     : Number(a.dataset.sortIndex) - Number(b.dataset.sortIndex);
             });
 
-            // One reflow instead of one per row.
             const fragment = document.createDocumentFragment();
             for (const row of ordered) fragment.appendChild(row);
             body.appendChild(fragment);
         }
     }
 
-    /** Numbers and dates open biggest-first; words open A to Z. */
     function defaultDirection(type: string | undefined): SortDirection {
         return type === "number" || type === "date" ? "descending" : "ascending";
     }
 
     function keyFor(row: HTMLTableRowElement, column: number, type: string): SortKey {
         const text = (row.cells[column]?.textContent ?? "").trim();
-        if (!text) return null; // no value: sorts last either way
+        if (!text) return null;
 
         if (type === "number") {
-            // Cells print thousands separators, so keep only the number itself.
             const value = Number(text.replace(/[^0-9.-]/g, ""));
             return Number.isFinite(value) ? value : null;
         }
-        // ISO dates compare correctly as plain strings, so they need no parsing.
+        // ISO dates compare correctly as strings.
         return type === "date" ? text : text.toLowerCase();
     }
 
     function compare(a: SortKey, b: SortKey, direction: SortDirection): number {
-        // Blanks sink to the bottom in both directions: an unknown value is never
-        // "the smallest", it's just missing.
+        // Blanks sink to the bottom in both directions.
         if (a === null && b === null) return 0;
         if (a === null) return 1;
         if (b === null) return -1;

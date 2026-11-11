@@ -1,7 +1,5 @@
 /**
- * The core site bundle, loaded `defer` on every page. Scripts run in this order,
- * and most wait for DOMContentLoaded, so this is also the order they start in.
- * Page-specific features turn themselves off when their markup or body flag is absent.
+ * Import order is the order features start in, since most wait for DOMContentLoaded.
  */
 import "./navigation/scroll-manager";
 // Ahead of the rest: a deep link into a collapsed path has to open that path
@@ -16,3 +14,4 @@ import "./ui/reading";
 import "./ui/trending";
 import "./ui/stats";
 import "./ui/return-pill";
+import "./ui/accent-picker";

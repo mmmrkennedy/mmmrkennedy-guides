@@ -1,21 +1,9 @@
-// Second Vite build, for build-time solver prerendering only.
+// Node build of the solvers for build-time prerendering by build_scripts/eleventy/solvers.cjs.
 //
-// vite.config.js builds the BROWSER bundle: an entry plus one dynamically
-// imported chunk per solver. This one builds the same components for NODE, so
-// build_scripts/eleventy/solvers.cjs can render each solver's initial HTML straight into the
-// page and the browser gets markup instead of an empty div to fill in.
+// Output goes to .solver-ssr/, not dist/: dist/ is deployed, and Pages has a 20,000-file cap.
 //
-// Two deliberate choices worth not undoing:
-//
-// Output lands in .solver-ssr/ at the repo root, NOT under dist/. Anything in
-// dist/ is deployed, and this is build machinery that would only add files to a
-// Pages deployment that already watches a 20,000-file cap.
-//
-// preact stays EXTERNAL rather than bundled. eleventy requires
-// preact-render-to-string separately, and that only works if both resolve the
-// same node_modules/preact — render-to-string reaches into preact's internals,
-// so two copies render nothing. Vite externalises dependencies in SSR builds by
-// default; this comment exists so nobody "fixes" it with noExternal.
+// preact must stay external (Vite's SSR default): render-to-string reaches into
+// preact's internals, so two copies render nothing. Don't "fix" it with noExternal.
 
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
@@ -30,17 +18,13 @@ export default defineConfig({
     build: {
         ssr: path.resolve(__dirname, "src/react-solvers/src/ssr-entry.tsx"),
         outDir: path.resolve(__dirname, ".solver-ssr"),
-        // Not emptied: the browser build drops its stamp file in here too (see
-        // vite.config.js), and the output is one fixed-name file that each build
-        // overwrites, so there's nothing stale to clear.
+        // The browser build drops its stamp file here too (see vite.config.js).
         emptyOutDir: false,
         sourcemap: false,
         minify: false,
         rollupOptions: {
             output: {
-                // CJS so build_scripts/eleventy/solvers.cjs can require() it directly. An ESM
-                // output would force a dynamic import and make the eleventy
-                // transform async for no gain.
+                // CJS so solvers.cjs can require() it; ESM would make the eleventy transform async.
                 format: "cjs",
                 entryFileNames: "solvers.cjs",
             },

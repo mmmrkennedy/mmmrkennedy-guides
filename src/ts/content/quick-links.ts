@@ -1,16 +1,9 @@
-/**
- * Behaviour for the contents lists. The build renders both of them (the
- * generateQuickLinks step in build_scripts/eleventy/quick-links.cjs).
- */
+/** The contents lists are rendered by generateQuickLinks in build_scripts/eleventy/quick-links.cjs. */
 
-/** Wires up the phone contents list. */
 function initializeQuickLinks(): void {
     document.querySelector(".quick-links-container")?.addEventListener("click", toggleContentsSubList);
 }
 
-/**
- * Opens a long phone contents list in full, or opens or closes one of its sections.
- */
 function toggleContentsSubList(event: Event): void {
     const target = event.target as Element;
 
@@ -29,7 +22,7 @@ function toggleContentsSubList(event: Event): void {
     btn.textContent = open ? "▾" : "▸";
 }
 
-/** Wires up the sidebar contents. Only visible at wide viewports via CSS. */
+/** The sidebar is only shown at wide viewports, via CSS. */
 function initializeSidebarToc(): void {
     const sidebar = document.querySelector<HTMLElement>(".sidebar-toc");
     if (!sidebar) return;
@@ -38,11 +31,7 @@ function initializeSidebarToc(): void {
     trackCurrentSection(sidebar);
 }
 
-/**
- * Marks the sidebar link for the section being read, opening its collapsed
- * parents and keeping it in view. Parents opened this way close again once the
- * reader moves on; ones the reader opened or closed by hand are left alone.
- */
+/** Auto-opened parents close again once the reader moves on; hand-toggled ones are left alone. */
 function trackCurrentSection(sidebar: HTMLElement): void {
     const topBar = document.querySelector<HTMLElement>(".top-buttons-background-box");
 
@@ -91,9 +80,8 @@ function trackCurrentSection(sidebar: HTMLElement): void {
     function update(): void {
         if (getComputedStyle(sidebar).display === "none") return;
 
-        // A section counts as current once its heading is near the top of the
-        // window. The short sections at the very end can never scroll that far,
-        // so over the last screenful the line slides down to the window's bottom.
+        // The last sections can never scroll near the top, so over the last
+        // screenful the "current" line slides down to the window's bottom.
         const root = document.documentElement;
         const viewTop = topBar ? topBar.getBoundingClientRect().bottom : 0;
         const viewHeight = root.clientHeight - viewTop;
@@ -135,9 +123,6 @@ function trackCurrentSection(sidebar: HTMLElement): void {
     update();
 }
 
-/**
- * Attaches the show/hide behaviour to a sidebar's toggle buttons.
- */
 function bindSidebarToggles(sidebar: HTMLElement): void {
     const tocBody = sidebar.querySelector<HTMLElement>(".sidebar-toc-body");
     const toggle = sidebar.querySelector<HTMLButtonElement>(".sidebar-toc-toggle");

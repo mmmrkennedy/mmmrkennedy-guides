@@ -1,25 +1,9 @@
 /**
- * Interactive R2 image workflow.
+ * Interactive R2 image workflow: `bun run r2`
  *
- *   bun run r2
- *
- * Guide screenshots live in an R2 bucket and are served by
- * functions/games/[[path]].js, not from the deployment. That means uploading is
- * a separate step from deploying, and it has to happen FIRST — HTML that goes
- * live referencing an image R2 does not have yet will 404 until it is uploaded.
- *
- * Two operations, kept apart because one of them deletes:
- *
- *   Upload (rclone copy) — only adds and overwrites, never removes. The
- *   everyday action after adding screenshots to a map.
- *
- *   Sync (rclone sync)   — makes the bucket match the source exactly, which
- *   means deleting objects whose local files are gone. Needed after re-shooting
- *   a map, because copy leaves renamed and removed screenshots behind, still
- *   answering at their old URLs. Scoped to one map so the blast radius is one
- *   map — never another map, and never the variants/ prefix.
- *
- * Both always dry-run first and ask before doing anything.
+ * Images are served from R2 by functions/games/[[path]].js, not the deployment.
+ * Upload BEFORE deploying, or new pages 404 on their images.
+ * Sync is scoped to one map so its deletes never reach another map or variants/.
  */
 
 import { spawn, spawnSync } from "node:child_process";
@@ -35,29 +19,21 @@ const SRC = path.join(REPO, "src", "games");
 const BUCKET = "r2:mmmrkennedy-images";
 const REMOTE = `${BUCKET}/img`;
 
-// Downscaled copies for small screens. A phone renders the lightbox about 390
-// CSS px wide, so at 3x DPR it needs ~1170 real pixels — not the 2560 of the
-// master, and certainly not the 5MB some masters weigh. See
-// docs/r2-migration-part2-responsive-variants.md.
+// A phone lightbox is ~390 CSS px, ~1170 real px at 3x DPR.
+// See docs/r2-migration-part2-responsive-variants.md.
 const TIERS = [1280, 1920];
 
-// Encoded variants are cached here between runs so a second run only touches
-// what changed. Gitignored: it is derived data, rebuildable from src/ at any
-// time, and roughly 1.5GB.
+// Gitignored, ~1.5GB, rebuildable from src/.
 const CACHE = path.join(REPO, ".variants");
 
-// How many cwebp processes at once. Each already uses -mt internally, so this
-// is deliberately well below core count.
+// Each cwebp already uses -mt, so this stays well below core count.
 const ENCODE_CONCURRENCY = 4;
 
-// Only the formats functions/games/[[path]].js serves. Without these the guide
-// .html files sitting in the same tree would be uploaded too.
+// Only the formats functions/games/[[path]].js serves; keeps guide .html out.
 const FILTERS = ["--include", "*.webp", "--include", "*.png", "--include", "*.jpg", "--include", "*.jpeg", "--include", "*.gif"];
 
-// The R2 API token is scoped to Object Read & Write, which cannot create
-// buckets. Without this rclone probes for the bucket first and that probe is a
-// CreateBucket call — denied with a 403 that reads like an auth failure. It only
-// surfaces on a prefix rclone has not seen, i.e. the first upload of a new map.
+// The R2 token can't create buckets, so rclone's bucket probe (a CreateBucket
+// call) 403s like an auth failure on the first upload of a new map.
 const NO_BUCKET_CHECK = ["--s3-no-check-bucket"];
 
 function findRclone() {
@@ -71,15 +47,12 @@ function findRclone() {
 
 const RCLONE = findRclone();
 
-/** Run rclone with its output going straight to the terminal, so the progress
- *  meter animates instead of arriving in one lump at the end. */
 function rclone(args) {
     const res = spawnSync(RCLONE, args, { stdio: "inherit" });
     if (res.error) throw res.error;
     return res.status ?? 1;
 }
 
-/** "BO7/astra_malorum" for every map folder that actually holds images. */
 function listMaps() {
     const maps = [];
     for (const game of fs.readdirSync(SRC, { withFileTypes: true })) {
@@ -96,11 +69,7 @@ function toRemote(mapPath) {
     return `${REMOTE}/${mapPath.split(path.sep).join("/")}`;
 }
 
-/**
- * Pixel width from a WebP header, without decoding the image or shelling out.
- * RIFF container: "RIFF"<len>"WEBP"<chunk>, then the chunk carries the size.
- * Returns 0 for anything unrecognised, which callers treat as "leave it alone".
- */
+/** Pixel width from the WebP header. 0 for anything unrecognised, which callers skip. */
 function webpWidth(file) {
     let fd;
     try {
@@ -120,7 +89,6 @@ function webpWidth(file) {
     }
 }
 
-/** Every .webp under `root`, recursively. */
 function walkWebp(root, out = []) {
     for (const e of fs.readdirSync(root, { withFileTypes: true })) {
         const p = path.join(root, e.name);
@@ -130,18 +98,7 @@ function walkWebp(root, out = []) {
     return out;
 }
 
-/**
- * What needs encoding, and what does not.
- *
- * Skipped, deliberately:
- *   - anything already at or below the tier width, because upscaling a
- *     128x128 sprite to 1280 would make it bigger AND worse;
- *   - .webp only — the nine other images under src/games are animated GIFs
- *     (calling cards, director's cut clips) and cwebp would flatten them to a
- *     single frame;
- *   - sources not newer than an already-cached variant, so a re-run costs
- *     nothing for images that have not changed.
- */
+/** .webp only: the other images are animated GIFs, which cwebp would flatten to one frame. */
 function planVariants(root) {
     const jobs = [];
     let skippedSmall = 0;
@@ -171,9 +128,7 @@ function planVariants(root) {
 function encodeOne({ src, dest, tier }) {
     return new Promise((resolve) => {
         fs.mkdirSync(path.dirname(dest), { recursive: true });
-        // Same settings the samples were judged on: q90 was accepted by eye at
-        // 1280 and rejected at full 2560, which is why only downscaled copies
-        // are lossy and the masters stay as they are.
+        // q90 passed by eye at 1280 but not at 2560, so masters stay untouched.
         const args = ["-q", "90", "-m", "6", "-pass", "10", "-mt", "-resize", String(tier), "0", src, "-o", dest];
         const p = spawn("cwebp", args, { stdio: "ignore" });
         p.on("error", () => resolve(false));
@@ -181,7 +136,6 @@ function encodeOne({ src, dest, tier }) {
     });
 }
 
-/** Bounded-concurrency encode with a single-line progress counter. */
 async function encodeAll(jobs) {
     let done = 0;
     let failed = 0;
@@ -223,19 +177,13 @@ function fmtSize(n) {
 }
 
 /**
- * Dry-run a copy or sync and sort what rclone would do into piles.
- *
- * rclone's own dry-run output does not say new vs changed, and it mixes in
- * "Skipped update modification time" lines that look like uploads but are not:
- * those are files whose content (md5) already matches and only the stored
- * timestamp differs. So run it with -vv --use-json-log, capture it, and read:
- *
+ * rclone's dry-run output doesn't distinguish new from changed, and its
+ * "update modification time" lines are md5-identical files, not uploads.
+ * So parse the -vv JSON log:
  *   debug  "Need to transfer - File not found at Destination"  -> new
  *   notice skipped: "copy"                                     -> new or changed
  *   notice skipped: "update modification time"                 -> timestamp only
  *   notice skipped: "delete"                                   -> deleted (sync only)
- *
- * `extra` is appended to the rclone args, e.g. --checksum.
  */
 function planTransfer(mode, source, remote, extra = []) {
     return new Promise((resolve) => {
@@ -292,7 +240,6 @@ function printGroup(title, items, prefix, limit = Infinity) {
     if (items.length > limit) console.log(`    … and ${items.length - limit} more`);
 }
 
-/** Print a plan, or its errors if the dry run failed. Returns false on failure. */
 function printPlan(plan, prefix) {
     if (plan.code !== 0) {
         for (const err of plan.errors.slice(0, 20)) console.log(`  ${err}`);
@@ -300,15 +247,12 @@ function printPlan(plan, prefix) {
     }
     printGroup("New", plan.added, prefix);
     printGroup("Changed", plan.changed, prefix);
-    // Same md5, different stored timestamp: no bytes go up, rclone only rewrites
-    // the metadata. Listed so they stop reappearing on every run.
     printGroup("Timestamp only, content identical (metadata update, no upload)", plan.touched, prefix, 10);
     // Never truncated: every one of these is permanent.
     printGroup("DELETED from R2", plan.deleted, prefix);
     return true;
 }
 
-/** rclone reads one path per line from a temp file; cleaned up afterwards. */
 function withListFile(items, fn) {
     const file = path.join(os.tmpdir(), `r2-list-${process.pid}-${Date.now()}.txt`);
     fs.writeFileSync(file, items.map((f) => f.path).join("\n") + "\n");
@@ -320,14 +264,9 @@ function withListFile(items, fn) {
 }
 
 /**
- * Carry out exactly the plan that was shown, rather than re-running copy/sync.
- * Skips the second full scan (most of the time a dry run takes), and it means
- * nothing is uploaded or deleted that was not on the list the user confirmed,
- * even if files change in between. Deletes run last, as rclone sync does, so a
- * failed upload never leaves a map with files already removed.
- *
- * --files-from-raw rather than --files-from: no comment or whitespace parsing,
- * so every filename is taken literally.
+ * Applies exactly the confirmed plan instead of re-running copy/sync, so nothing
+ * unlisted changes. Deletes run last so a failed upload never leaves files removed.
+ * --files-from-raw takes filenames literally (no comment/whitespace parsing).
  */
 function applyPlan(source, remote, plan, extra = []) {
     const uploads = [...plan.added, ...plan.changed, ...plan.touched];
@@ -352,17 +291,7 @@ function applyPlan(source, remote, plan, extra = []) {
     return true;
 }
 
-/**
- * Pull every image down from R2 into src/games.
- *
- * Images are gitignored, so a fresh clone has none and every guide renders with
- * broken pictures until this runs. R2 is the copy of record for them; this is
- * how a new machine — or a recovered one — gets a working tree.
- *
- * `copy` in this direction only adds and overwrites: it will not delete local
- * files, so running it on a working tree that is ahead of the bucket cannot
- * lose anything.
- */
+/** Images are gitignored; R2 is the copy of record, so a fresh clone needs this. */
 async function doRestore(ask) {
     console.log("\n  Downloads every image from R2 into src/games.");
     console.log("  For a fresh clone, or a machine that has lost its images.");
@@ -402,12 +331,6 @@ async function doVariants(ask) {
     await runVariants(ask, mapRel);
 }
 
-/**
- * The variant flow for a known scope. Split out from the menu entry so uploading
- * or syncing a map can offer it straight afterwards — new images with no
- * variants do not break anything (the Function falls back to the master), they
- * just quietly serve full-size to everyone, which is the failure this avoids.
- */
 async function runVariants(ask, mapRel) {
     const root = mapRel ? path.join(SRC, ...mapRel.split("/")) : SRC;
 
@@ -419,7 +342,6 @@ async function runVariants(ask, mapRel) {
     console.log(`  too small      : ${skippedSmall} (source already <= tier, would upscale)`);
 
     if (jobs.length) {
-        // -pass 10 is slow by design; on a full run this is minutes, not seconds.
         console.log(`\n  Encoding is CPU-heavy. The cache at .variants/ makes re-runs cheap,`);
         console.log(`  and interrupting is safe — finished files are kept.`);
         if (!(await confirm(ask, `Encode ${jobs.length} variants now? (y/N):`))) {
@@ -458,17 +380,12 @@ async function runVariants(ask, mapRel) {
     for (const tier of TIERS) rclone(["size", `${BUCKET}/variants/${tier}`, ...NO_BUCKET_CHECK]);
 }
 
-/** Thrown when stdin ends (Ctrl+D, or piped input running out). */
 class Eof extends Error {}
 
-/**
- * rl.question() never settles if the interface closes while it is pending, which
- * leaves the process hanging on an unsettled await. Race every prompt against
- * close so end-of-input becomes an ordinary "quit" instead.
- */
+// rl.question() never settles if the interface closes while pending, so race it against close.
 function createAsk(rl) {
     const closed = new Promise((_, reject) => rl.once("close", () => reject(new Eof())));
-    closed.catch(() => {}); // never an unhandled rejection if we exit another way
+    closed.catch(() => {});
     return (q) => Promise.race([rl.question(q), closed]);
 }
 
@@ -498,12 +415,7 @@ async function confirm(ask, question, defaultYes = false) {
     return a === "y" || a === "yes";
 }
 
-/**
- * Offered after an upload or sync, because "changed some images" and "their
- * variants are stale" are the same event. Defaults to yes: forgetting is
- * silent — the Function falls back to the master, so the only symptom is every
- * visitor getting full-size images.
- */
+// Defaults to yes: missing variants fail silently, the Function just serves full-size masters.
 async function offerVariants(ask, mapRel) {
     if (spawnSync("cwebp", ["-version"], { stdio: "ignore" }).error) return;
     const where = mapRel || "every map";
@@ -591,7 +503,6 @@ async function doSync(ask) {
     const summary = parts.join(", ");
 
     if (plan.deleted.length) {
-        // Deliberate friction: typing the map name is harder to do by reflex than y.
         const typed = (await ask(`\n  ${summary}. This DELETES. Type the map name to confirm (${map}): `)).trim();
         if (typed !== map) {
             console.log("  Did not match. Cancelled.");
@@ -603,16 +514,13 @@ async function doSync(ask) {
     }
 
     console.log("");
-    // --checksum carries through: without it a same-size, same-mtime re-encode
-    // the dry run flagged would be skipped again by the size+time comparison.
+    // Pass --checksum through, or size+time skips the same-size re-encodes the dry run flagged.
     if (!applyPlan(source, remote, plan, extra)) return;
 
     console.log("\n  Bucket now holds:");
     rclone(["size", remote, ...NO_BUCKET_CHECK]);
     console.log("\n  Replacements go live immediately — no purge needed.");
 
-    // Sync is the "I re-shot this map" action, so its variants are certainly
-    // stale — this is the pairing that matters most.
     await offerVariants(ask, map);
 }
 
@@ -705,7 +613,6 @@ async function main() {
             if (choice === "7" || choice === "q") return;
         }
     } catch (err) {
-        // Ctrl+D or end of piped input — an ordinary way to leave, not a fault.
         if (!(err instanceof Eof)) throw err;
         console.log("");
     } finally {

@@ -2,16 +2,9 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { useSolverReport } from "../solver-report";
 
 /*
- * The seven word groups from build_word_codex_list() in
- * scripts/cp/maps/cp_disco/disco_mpq.gsc, in the game's own order.
- *
- * The puzzle draws from ONE group at a time: determine_puzzle_wordlist() picks a
- * group (never the same one twice running) and walks its ten words in shuffled
- * order, only moving to another group once all ten have been failed. So the
- * group a word belongs to says what the rest of the game can throw at you.
- *
- * Nothing uses the grouping yet - the lists are flattened straight back into a
- * single alphabetical list below, and the filter behaves exactly as it did.
+ * Groups from build_word_codex_list() in scripts/cp/maps/cp_disco/disco_mpq.gsc,
+ * in game order. determine_puzzle_wordlist() walks one group's ten words
+ * (shuffled) until all ten fail, then picks a different group.
  */
 const RAVE: string[] = [
     "HARPOON", "TREES", "DANCE", "BASEMENT", "SLASHER",
@@ -48,9 +41,8 @@ const CHARACTERS: string[] = [
     "BROADWAY", "COMICBOOKS", "NEWYORK", "ACTORS", "AUDITION",
 ];
 
-/* In no group. solve_word_logic() rolls randomint(101) == 100 each time it
-   picks a word and swaps in this one instead - once per game at most. Rare, but
-   without it the filter dead-ends on a word the game is really showing you. */
+/* In no group. solve_word_logic() swaps it in on randomint(101) == 100, at most
+   once per game. */
 const EASTER_EGG: string[] = ["SAVAGEMADETHIS"];
 
 const GROUPS: { label: string; words: string[] }[] = [
@@ -63,9 +55,8 @@ const GROUPS: { label: string; words: string[] }[] = [
     { label: "Characters", words: CHARACTERS },
 ];
 
-/* Word -> its group. SAVAGEMADETHIS is absent on purpose: the game substitutes
-   it for whatever word was drawn without touching the walk through the group,
-   so it is evidence of nothing and must never pin a group on its own. */
+/* SAVAGEMADETHIS is left out on purpose: the game substitutes it without leaving
+   the current group, so it must never pin a group. */
 const GROUP_OF = new Map<string, string>(
     GROUPS.flatMap((group) => group.words.map((word): [string, string] => [word, group.label])),
 );
@@ -114,17 +105,9 @@ type GroupSignal =
     | { kind: "hold" };
 
 /**
- * What the current matches say about the active group.
- *
- * pin   every grouped match shares a group, so it is settled whichever of those
- *       words it turns out to be. An ungrouped match alongside them does not
- *       block it: SA still reads Extinction off SAMANTHA.
- * clear there are matches and none of them belong to a group. SAVAGEMADETHIS is
- *       the only word that can do this, and once SAV rules everything else out,
- *       any label would be naming a group with nothing tinted under it - the SA
- *       reading it came from has just been disproved.
- * hold  matches disagree, or nothing is typed, or nothing matches at all. The
- *       last answer stands; a typo should not wipe it.
+ * pin: ungrouped matches don't block it (SA still reads Extinction off SAMANTHA).
+ * clear: only SAVAGEMADETHIS matches, which disproves the earlier SA pin.
+ * hold: keep the last group, so a typo doesn't wipe it.
  */
 function readGroup(matchingWords: string[]): GroupSignal {
     const found = new Set<string>();
@@ -137,7 +120,6 @@ function readGroup(matchingWords: string[]): GroupSignal {
     return { kind: "hold" };
 }
 
-/** Group members first, everything else after; alphabetical within each. */
 function sortGroupFirst(matchingWords: string[], group: string | null): string[] {
     if (group === null) return matchingWords;
     const inGroup = matchingWords.filter((word) => GROUP_OF.get(word) === group);
@@ -161,19 +143,14 @@ export default function ShaolinWordFilter({ title }: { title?: string }) {
 
     const signal = useMemo(() => readGroup(matchingWords), [matchingWords]);
 
-    /* Latched, because the group has to outlive the word that revealed it: miss
-       a letter and the puzzle moves to the next word in the SAME group, so the
-       hint earns its keep on the word AFTER the one that identified it - by
-       which point the box has been retyped from scratch. A later pin replaces
-       it, which is also what recovers from the group rolling over after ten
-       misses, and a clear drops it when the letters land on the easter egg. */
+    /* Latched: after a miss the game moves to another word in the same group, so
+       the group must outlive the retyped box. A later pin covers the group
+       rolling over after ten misses. */
     useEffect(() => {
         if (signal.kind === "pin") setGroup(signal.group);
         else if (signal.kind === "clear") setGroup(null);
     }, [signal]);
 
-    /* Ordering and highlighting only. Which words match is still a plain
-       prefix test - the group never removes anything from the list. */
     const displayWords = sortGroupFirst(matchingWords, group);
 
     return (

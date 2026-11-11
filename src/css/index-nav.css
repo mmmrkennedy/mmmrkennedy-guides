@@ -1,18 +1,8 @@
-/* Home-page map finder
- * --------------------
- * Sticky bar atop the index: a live text filter and a row of game "chips" that
- * jump to each section, so a map near the bottom of the long list is reachable
- * without a long scroll. Built/enhanced by src/ts/ui/index-filter.ts. */
+/* Built by src/ts/ui/index-filter.ts. */
 
-/* The bar has to cover the full width of the column it sits in, not just the
- * container's content box. <ul> has a smaller padding-inline-start than
- * .content-container's own inline padding, so the list's bullet markers land in
- * that padding — outside the bar — and were visibly scrolling past its edges.
- * Pull the bar out over the padding and give the same amount back as its own
- * padding, so the background reaches the edge while the search field and chips
- * stay aligned with the list below. On mobile the container spans the viewport,
- * so this is what makes the bar full-bleed. Values track .content-container's
- * inline padding in layout.css / responsive.css — keep them in sync. */
+/* Negative margin over .content-container's inline padding so list bullets don't
+ * scroll past the bar's edges. Keep in sync with that padding in layout.css /
+ * responsive.css. */
 .index-nav {
     position: sticky;
     top: 0;
@@ -35,7 +25,6 @@
     }
 }
 
-/* Search field ----------------------------------------------------------- */
 .index-nav__search {
     position: relative;
     display: flex;
@@ -49,7 +38,6 @@
     pointer-events: none;
 }
 
-/* Override the global <input> sizing/margins for a full-width search box. */
 .index-nav__input {
     width: 100%;
     margin: 0;
@@ -57,7 +45,6 @@
     padding-right: calc(var(--space-md) + 1.25rem);
 }
 
-/* Hide the browser's native search "×"; we provide our own clear button. */
 .index-nav__input::-webkit-search-cancel-button {
     appearance: none;
 }
@@ -83,10 +70,6 @@
     color: var(--color-text-primary);
 }
 
-/* Jump chips ------------------------------------------------------------- */
-
-/* Chips take the row; the completion tally is pushed to the trailing edge.
- * Both wrap, so on narrow screens the tally drops to its own right-aligned line. */
 .index-nav__row {
     display: flex;
     flex-wrap: wrap;
@@ -101,7 +84,6 @@
     gap: var(--space-xs);
 }
 
-/* Completion tally, deliberately quiet: muted, small, no background. */
 .index-progress {
     margin-left: auto;
     font-size: var(--font-size-sm);
@@ -140,13 +122,11 @@
     font-weight: 600;
 }
 
-/* A game with no matches under the current filter: dimmed and unclickable. */
 .index-nav__chip.is-empty {
     opacity: 0.3;
     pointer-events: none;
 }
 
-/* "No results" notice + filtered-out rows -------------------------------- */
 .index-nav__empty {
     padding: var(--space-md);
     color: var(--color-text-secondary);
@@ -157,11 +137,7 @@
     display: none !important;
 }
 
-/* Birthday line ---------------------------------------------------------- */
-
-/* Shown one day a year, above the map finder, by birthday.ts, so it stays a
-   quiet line of text rather than a banner competing with the list below it.
-   `hidden` in the markup does the hiding; nothing here needs to. */
+/* Shown one day a year by birthday.ts. */
 .discord-invite {
     display: flex;
     flex-wrap: wrap;
@@ -184,7 +160,6 @@
     font-weight: 600;
 }
 
-/* The Discord logo already says where this goes. */
 .discord-invite__link::after {
     display: none;
 }

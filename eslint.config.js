@@ -16,7 +16,6 @@ export default [
         ],
     },
     js.configs.recommended,
-    // CommonJS files config (build scripts, config files)
     {
         files: ["**/*.cjs"],
         languageOptions: {
@@ -41,7 +40,6 @@ export default [
             "no-debugger": "error",
         },
     },
-    // JavaScript files config
     {
         files: ["**/*.{js,jsx}"],
         plugins: {
@@ -70,16 +68,13 @@ export default [
             },
         },
         rules: {
-            // React Rules
             "react/jsx-uses-react": "error",
             "react/jsx-uses-vars": "error",
             "react/prop-types": "off",
 
-            // React Hooks Rules
             "react-hooks/rules-of-hooks": "error",
             "react-hooks/exhaustive-deps": "warn",
 
-            // General JavaScript Rules
             "no-unused-vars": [
                 "warn",
                 {
@@ -94,7 +89,6 @@ export default [
             "no-debugger": "error",
         },
     },
-    // TypeScript/TSX files config
     ...tseslint.configs.recommended.map((config) => ({
         ...config,
         files: ["**/*.{ts,tsx}"],
@@ -123,16 +117,13 @@ export default [
             },
         },
         rules: {
-            // React Rules
             "react/jsx-uses-react": "error",
             "react/jsx-uses-vars": "error",
             "react/prop-types": "off",
 
-            // React Hooks Rules
             "react-hooks/rules-of-hooks": "error",
             "react-hooks/exhaustive-deps": "warn",
 
-            // TypeScript-specific rules
             "@typescript-eslint/no-unused-vars": [
                 "warn",
                 {
@@ -148,7 +139,6 @@ export default [
             "no-debugger": "error",
         },
     },
-    // Build/CLI scripts run in Node and legitimately log progress to stdout.
     {
         files: ["build_scripts/**"],
         languageOptions: {

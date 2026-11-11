@@ -1,12 +1,6 @@
-{#- A map hub's cards: every other solver page in the hub's folder, in
-    `solverOrder`, each with its `hubLine` (or `description`). Built from those
-    pages' front matter by build_scripts/eleventy/solver-index.cjs, so a new
-    solver page appears here by existing.
-
-    The name is a real <h2> inside the anchor, so puzzle names stay in the
-    outline. The line is a <span>, not a <p>: line-flagger decorates
-    `.content-container p`, and a flag button inside an anchor would navigate
-    the moment it was clicked. -#}
+{#- Cards come from solver pages' front matter (build_scripts/eleventy/solver-index.cjs).
+    The line is a <span>, not a <p>: line-flagger decorates `.content-container p`,
+    and a flag button inside an anchor would navigate on click. -#}
 <div class="content-container">
     <div class="solver-hub">
         {%- for s in collections.solverPages | solverSpokes(page.url) %}

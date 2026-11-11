@@ -156,11 +156,7 @@ export default function TotenreichReactorSolver({ title }: { title?: string }) {
     const [solutionIndex, setSolutionIndex] = useState<number>(0);
     const [message, setMessage] = useState<string | JSX.Element>(defaultMessage);
 
-    // The grid is the whole input. Reported as coordinates (what you'd re-click
-    // to reproduce it) and as a picture of the board (what it looked like), since
-    // a 4x4 of dots and hashes is faster to read than sixteen pairs of numbers.
-    // `phase`, `solutions` and `solutionIndex` are all downstream of these and are
-    // deliberately left out.
+    // Grid only: phase, solutions and solutionIndex are derived from it.
     useSolverReport("TotenreichReactorSolver", () => ({
         "Control rods placed": grid.flatMap((row, r) =>
             row.map((cell, c) => (cell === "rod" ? [r, c] : null)).filter(Boolean),

@@ -1,24 +1,11 @@
 import { log } from "../core/logger";
 
-/**
- * Ad management: inline ads (every other content-container) + right sidebar ad
- * Toggle persisted in localStorage under key 'ads-mode'
- * Modes: "full" (default), "minimal" (sidebars only), "hidden"
- *
- * Injection happens once per type; body classes control visibility thereafter.
- */
-
 type AdsMode = "full" | "minimal" | "hidden";
 
 const ADS_KEY = "ads-mode";
 const MOBILE_MAX_WIDTH = 768;
 const injected = { sidebars: false, inline: false, multiplex: false };
 
-/**
- * Site-wide kill switch. While true, ads are forced to "hidden" for everyone —
- * a stored 'ads-mode' preference is ignored, no slots are injected, and the
- * toggle button is hidden. Flip to false to restore normal behaviour.
- */
 const ADS_DISABLED = true;
 
 function isMobileViewport(): boolean {
@@ -61,18 +48,9 @@ const ADSENSE_SRC =
     "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2164582284838563";
 
 /**
- * Load adsbygoogle.js on demand, once.
- *
- * This module owns the loader rather than the page templates: the tag used to
- * sit in <head> on every page, so the whole Google stack (~1MB over ~28
- * requests across pagead2, fundingchoicesmessages, adtrafficquality and
- * doubleclick) was fetched even while ADS_DISABLED was true and not one slot
- * was ever injected. Keeping it here means the single flag below is the only
- * thing that decides whether Google is contacted at all, and a reader who sets
- * ads to "hidden" never pays for it either.
- *
- * Safe to call before any pushAd(): window.adsbygoogle is a plain queue array
- * until the script arrives, and AdSense drains whatever it finds on load.
+ * Loaded here, not in <head>, so Google's ~1MB stack is never fetched while ads
+ * are disabled or hidden. Safe before any push: window.adsbygoogle is a plain
+ * queue array that AdSense drains on load.
  */
 let adSenseRequested = false;
 function ensureAdSenseLoader(): void {
@@ -114,7 +92,7 @@ function injectInlineAdSlots(): void {
     );
     if (containers.length === 0) return;
 
-    // Exclude the last container — reserved for the multiplex ad
+    // Last container is reserved for the multiplex ad
     const eligible = containers.slice(0, -1);
 
     let cumulative = 0;
@@ -171,9 +149,7 @@ function injectSidebarAd(): void {
     wrapper.className = "ad-right-sidebar";
     wrapper.innerHTML = buildSidebarAdHTML();
     document.body.appendChild(wrapper);
-    // positionSidebarAd sizes the slot and pushes once it first reaches a
-    // usable width. AdSense reads availableWidth at push time, so we must
-    // never push an unpositioned (0-width) slot.
+    // AdSense reads availableWidth at push time, so never push a 0-width slot.
     positionSidebarAd(wrapper);
 }
 
@@ -208,8 +184,6 @@ function positionSidebarAd(adEl: HTMLElement): void {
         adEl.style.display = "block";
         adEl.style.left = `${leftEdge}px`;
         adEl.style.width = `${width}px`;
-        // Push only once the slot has a real width — handles the case where
-        // the sidebar is injected too narrow and only becomes usable on resize.
         if (!pushed) { pushed = true; pushAd(); }
     }
     update();
@@ -223,7 +197,6 @@ function injectLeftSidebarAd(): void {
     wrapper.className = "ad-left-sidebar";
     wrapper.innerHTML = buildSidebarAdHTML();
     document.body.appendChild(wrapper);
-    // positionLeftSidebarAd sizes the slot and pushes once usable (see injectSidebarAd).
     positionLeftSidebarAd(wrapper);
 }
 
@@ -240,7 +213,6 @@ function positionLeftSidebarAd(adEl: HTMLElement): void {
         adEl.style.display = "block";
         adEl.style.left = `${margin}px`;
         adEl.style.width = `${width}px`;
-        // Push only once the slot has a real width (see positionSidebarAd).
         if (!pushed) { pushed = true; pushAd(); }
     }
     update();
@@ -278,7 +250,7 @@ function applyMode(mode: AdsMode): void {
         applyInlineInterval(AD_INTERVAL_PX_FULL);
     }
 
-    // Re-sync sidebar positions after body class change lifts any display:none override
+    // The body class change may lift a display:none override, so re-sync positions
     if (needSidebars) {
         window.dispatchEvent(new Event("resize"));
     }
@@ -296,7 +268,6 @@ function initAdToggle(): void {
 
     const indicator = document.getElementById("ad-mode-indicator");
 
-    // Nothing to toggle while ads are disabled site-wide — hide the control.
     if (ADS_DISABLED) {
         btn.style.display = "none";
         if (indicator) indicator.style.display = "none";
@@ -336,7 +307,6 @@ function initAds(): void {
         window.addEventListener("load", start);
     }
 
-    // Re-apply if viewport crosses mobile→desktop so sidebars can load
     let wasMobile = isMobileViewport();
     let resizeTimer: ReturnType<typeof setTimeout> | undefined;
     window.addEventListener("resize", () => {
@@ -349,7 +319,6 @@ function initAds(): void {
     });
 }
 
-/** Debug helper (exposed on window.Ads): tints every ad slot red. */
 function makeAdsRed(): void {
     const styleId = "ads-red-override";
     if (document.getElementById(styleId)) return;
@@ -366,10 +335,7 @@ function makeAdsRed(): void {
 
 window.Ads = { initAds, makeAdsRed };
 
-// Self-bootstrap as an independent async island. The ads bundle is loaded with
-// `async`, decoupled from the core scripts, so a slow, blocked, or
-// failed ad payload never delays nav/lightbox/etc. `async` means this file can
-// execute before or after DOMContentLoaded, so guard on readyState.
+// Loaded `async`, apart from the core scripts, so this may run before or after DOMContentLoaded.
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initAds);
 } else {

@@ -1,20 +1,6 @@
 /**
- * Site birthday
- * -------------
- * Unhides the home page's birthday line on the anniversary of the first guide
- * going up, and fills in how old the site turned.
- *
- * The date comes from the page (`data-birthday`), which the build fills from
- * release-dates.json, the same data behind every guide's "Released"
- * footer, so this can't drift from it.
- *
- * Client-side rather than baked in at build time for two reasons: a static build
- * only knows the date it was deployed, so an anniversary with no deploy that day
- * would pass unmarked; and the greeting should land on the reader's own July 29,
- * not the build server's.
- *
- * Hidden by default, so a reader without JS sees nothing rather than a stale
- * greeting on the wrong day.
+ * Client-side so the anniversary shows without a deploy that day, on the reader's
+ * own date. data-birthday is filled by the build from release-dates.json.
  */
 document.addEventListener("DOMContentLoaded", () => {
     const banner = document.querySelector<HTMLElement>(".site-birthday[data-birthday]");
@@ -31,15 +17,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (today.getMonth() + 1 !== birthMonth || today.getDate() !== birthDay) return;
 
     const age = today.getFullYear() - birthYear;
-    if (age < 1) return; // the launch day itself isn't a birthday
+    if (age < 1) return;
 
     const slot = banner.querySelector<HTMLElement>(".site-birthday__age");
     if (slot) slot.textContent = ordinal(age);
     banner.hidden = false;
 
-    /** 1 -> "1st", 3 -> "3rd", 11 -> "11th". */
     function ordinal(n: number): string {
-        // The teens all take "th" regardless of their last digit.
         const teens = n % 100;
         if (teens >= 11 && teens <= 13) return `${n}th`;
 

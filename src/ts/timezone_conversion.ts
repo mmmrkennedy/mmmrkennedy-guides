@@ -3,15 +3,13 @@ import { log } from "./core/logger";
 function getEquivalentTimesInTimezone(timezone? :string): { equivalentTo12AMEST: string, equivalentTo1AMEST: string } {
     const isDST: number = isESTInDST();
 
-    // Create a Date object for 12 AM EST
+    // EST is UTC-5
     const dateAt12AM = new Date();
-    dateAt12AM.setUTCHours(5 - isDST, 0, 0, 0); // 12 AM EST is UTC-5
+    dateAt12AM.setUTCHours(5 - isDST, 0, 0, 0);
 
-    // Create a Date object for 1 AM EST
     const dateAt1AM = new Date();
-    dateAt1AM.setUTCHours(6 - isDST, 0, 0, 0); // 1 AM EST is UTC-5
+    dateAt1AM.setUTCHours(6 - isDST, 0, 0, 0);
 
-    // Format the times to the specified timezone or user's local timezone
     const options: Intl.DateTimeFormatOptions = {
         hour: "numeric",
         minute: "numeric",
@@ -31,11 +29,10 @@ function getEquivalentTimesInTimezone(timezone? :string): { equivalentTo12AMEST:
     };
 }
 
-// Function to format the time as "12 am TZ"
 function formatTime(localeString: string) {
     const [time, tzRaw] = localeString.split(" ");
     const tz = tzRaw.toUpperCase().includes("P") ? "PM" : "AM";
-    const formattedTime = time.toLowerCase().replace(":00:00", ""); // Remove ":00" for cleaner output
+    const formattedTime = time.toLowerCase().replace(":00:00", "");
     return `${formattedTime} ${tz}`;
 }
 
@@ -45,7 +42,6 @@ function isESTInDST(): number {
         timeZoneName: "short",
     });
 
-    // If it contains "EDT" instead of "EST", it's in DST
     return Number(timeZoneName.includes("EDT"));
 }
 

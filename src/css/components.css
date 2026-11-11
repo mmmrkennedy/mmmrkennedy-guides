@@ -1,11 +1,3 @@
-/*
-===============================================================================
-4. COMPONENTS
-===============================================================================
-Reusable UI elements.
-*/
-
-/* Links */
 a {
     color: var(--color-link-default);
     text-decoration: none;
@@ -34,8 +26,7 @@ a:hover {
     color: var(--color-link-page);
 }
 
-/* Faint enough not to compete with the text, and it firms up on hover. Image links
-   stay bare: there are thousands of them, and they make up most of a guide. */
+/* Image links get no underline: there are thousands of them. */
 .link-to-page,
 .external-link,
 .internal-link {
@@ -75,13 +66,8 @@ a:hover {
     vertical-align: middle;
 }
 
-/* Video and audio links keep the default link blue — a video, a sound file and
-   a picture are the same kind of thing here (media that opens in the lightbox),
-   so the glyph does the distinguishing rather than more palette colours. Keyed
-   off the data-media-type that the `classifyLinks` transform already stamps on
-   every media link (build_scripts/eleventy/links.cjs), so there's no second place to keep in
-   sync. Images deliberately get no icon: they're the overwhelming majority, and
-   a marker on almost every link marks nothing. */
+/* data-media-type is stamped by classifyLinks (build_scripts/eleventy/links.cjs).
+   Images get no icon: they're nearly every link. */
 a[data-media-type="video"]::after,
 a[data-media-type="audio"]::after {
     content: "";
@@ -105,17 +91,13 @@ a[data-media-type="audio"]::after {
     mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXZvbHVtZTEtaWNvbiBsdWNpZGUtdm9sdW1lLTEiPjxwYXRoIGQ9Ik0xMSA0LjcwMmEuNzA1LjcwNSAwIDAgMC0xLjIwMy0uNDk4TDYuNDEzIDcuNTg3QTEuNCAxLjQgMCAwIDEgNS40MTYgOEgzYTEgMSAwIDAgMC0xIDF2NmExIDEgMCAwIDAgMSAxaDIuNDE2YTEuNCAxLjQgMCAwIDEgLjk5Ny40MTNsMy4zODMgMy4zODRBLjcwNS43MDUgMCAwIDAgMTEgMTkuMjk4eiIvPjxwYXRoIGQ9Ik0xNiA5YTUgNSAwIDAgMSAwIDYiLz48L3N2Zz4=");
 }
 
-/* Link validation states */
 .incomplete-path {
     color: #d95b43;
 }
 
-/* A guide that isn't written yet: dimmed to muted text so it reads as
-   deliberately inactive rather than as a link that lost its colour. The build
-   renames its href to data-href (the `unlinkUnwrittenGuides` transform in
-   build_scripts/eleventy/links.cjs), so it's an anchor that can't navigate — no need to
-   block pointer events, which means the not-allowed cursor sits on the name
-   itself. Touch has no hover, so index-filter.ts answers a tap with a toast. */
+/* Unwritten guide. unlinkUnwrittenGuides (build_scripts/eleventy/links.cjs) moves
+   href to data-href, so no pointer-events block is needed. On touch,
+   index-filter.ts shows a toast on tap. */
 .disabled {
     color: var(--color-text-primary);
     opacity: 0.8;
@@ -128,13 +110,8 @@ a[data-media-type="audio"]::after {
     text-decoration: none;
 }
 
-/* Buttons */
-
-/* font-family and line-height are set here, not left to the UA. A <button>
- * gets Arial at line-height: normal from the UA stylesheet while an <a> wearing
- * the same classes inherits the body font at line-height: 1.75, so the two
- * rendered at different heights (46px vs 36px for the header Home control).
- * Stating both makes every .btn match, whatever element it is on. */
+/* font-family and line-height are explicit so a <button> (UA Arial, normal) and
+ * an <a> (body font, 1.75) with .btn render at the same height. */
 .btn {
     padding: var(--space-sm) var(--space-md);
     font-family: inherit;
@@ -159,11 +136,8 @@ a[data-media-type="audio"]::after {
     border-color: var(--color-text-muted);
 }
 
-/* Anchors wearing the button look. Used where a control was a <button onclick>
- * that only navigated — a crawler cannot follow those, so Home is now a real
- * link. Restores what a <button> gets from the UA and an <a> does not: centred
- * content inside a fixed height, and no underline. Font and line box are
- * normalised on .btn itself. */
+/* For navigation controls, since crawlers can't follow <button onclick>. Restores
+ * what a <button> gets from the UA: centred content and no underline. */
 .btn--link {
     display: inline-flex;
     align-items: center;
@@ -175,13 +149,12 @@ a[data-media-type="audio"]::after {
     text-decoration: none;
 }
 
-/* The <summary> of a reveal section. Spells out the look it had as a <button>, which
- * came partly from the browser: the font, the outset border, the default cursor. */
+/* A <summary>, restyled to match the UA look it had as a <button>. */
 .btn--reveal {
     display: inline-block;
     padding: var(--space-sm) var(--space-lg);
-    border: 2px outset #c9a961;
-    color: #c9a961;
+    border: 2px outset var(--color-tier-1);
+    color: var(--color-tier-1);
     font-family: Arial, sans-serif;
     font-size: var(--font-size-base);
     font-weight: 500;
@@ -201,8 +174,8 @@ a[data-media-type="audio"]::after {
 }
 
 .btn--reveal:hover {
-    color: #d4b56f;
-    border-color: #d4b56f;
+    color: var(--color-accent-bright);
+    border-color: var(--color-accent-bright);
 }
 
 .btn--fixed {
@@ -215,9 +188,7 @@ a[data-media-type="audio"]::after {
     inset: var(--btn-top, auto) var(--btn-right, auto) var(--btn-bottom, auto) var(--btn-left, auto);
 }
 
-/* Real hover only — on touch, :hover sticks to the last-tapped element, leaving
- * Home / Back to Top visibly brightened and nudged until something else is
- * tapped. Same reason the return pill gates its hover state. */
+/* On touch, :hover sticks to the last-tapped element. */
 @media (hover: hover) {
     .btn--fixed:hover {
         opacity: 1;
@@ -251,8 +222,7 @@ a[data-media-type="audio"]::after {
     opacity: 0.6;
 }
 
-/* Back to Top stays out of the way until there is a top to go back to. The class
- * comes from initBackToTopVisibility (navigation/scroll-manager.ts). */
+/* .is-visible comes from initBackToTopVisibility (navigation/scroll-manager.ts). */
 .btn--fixed.bottom-right {
     opacity: 1;
     background-color: var(--color-bg-tertiary);
@@ -268,17 +238,8 @@ a[data-media-type="audio"]::after {
     height: var(--space-2xl);
 }
 
-/* Legend panel — always-available "how to read this guide" reference */
-
-/* Launcher: small round icon button that sits beside the page title.
- *
- * The header centres its flex line, so this button counted toward the centring
- * and pushed the title 20px (half its own footprint) to the left at every
- * viewport size. The negative inline-end margin cancels the space it claims, so
- * the line measures as the title alone and the title lands dead centre, while
- * the button still renders immediately after it. Sized off its own width and
- * margin so the two stay in step; when the header is built without the button
- * (noLegend) there is nothing to cancel and the title is already centred. */
+/* The negative inline-end margin cancels the button's footprint so the header's
+ * centred flex line centres the title alone. Keep it in step with width and margin. */
 .legend-launcher {
     display: inline-flex;
     align-items: center;
@@ -395,11 +356,6 @@ a[data-media-type="audio"]::after {
     color: var(--color-text-primary);
 }
 
-/* Information Boxes
- * An accent rule down the side, a barely-there tint, and the type named in a small label above
- * the text. Each box sets --accent (rule), --accent-bg (tint) and --accent-text
- * (label); the body keeps the normal text colour so it reads like the rest of
- * the guide instead of a block of coloured text. */
 .note,
 .no-return,
 .danger,
@@ -417,8 +373,7 @@ a[data-media-type="audio"]::after {
     line-height: var(--line-height-normal);
 }
 
-/* The label. Emoji stays so the type is still recognisable at a glance without
- * relying on colour alone. */
+/* The emoji keeps the type recognisable without relying on colour. */
 .note::before,
 .no-return::before,
 .danger::before,
@@ -431,7 +386,6 @@ a[data-media-type="audio"]::after {
     font-weight: 600;
 }
 
-/* One set of colours per type. */
 .note {
     --accent: var(--color-note-border);
     --accent-bg: var(--color-note-bg);
@@ -492,7 +446,6 @@ a[data-media-type="audio"]::after {
     content: "❓ Disclaimer";
 }
 
-/* Boxes in a row read as one block, with only a hairline between them. */
 :is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc):has(+ :is(.note, .no-return, .danger, .requirement, .tip, .disclaimer, .stats, .weapon-desc)) {
     margin-bottom: 2px;
     border-bottom-right-radius: 0;
@@ -503,7 +456,6 @@ a[data-media-type="audio"]::after {
     border-top-right-radius: 0;
 }
 
-/* Names the steps below it ("Phase 1"), so it's a plain label, not a box. */
 .boss-fight-phases {
     margin: var(--space-md) 0 var(--space-xs);
     color: var(--color-tier-2);
@@ -511,16 +463,8 @@ a[data-media-type="audio"]::after {
     font-weight: 600;
 }
 
-/* The quest's vital signs — difficulty, completion time, RNG rating — on one
- * line under the tier-1 heading that names the quest. Takes the frame for the
- * same reason as a note box: it is an aside about the steps below it rather than
- * the first of them, and bold italic on the page background was not enough to
- * say so. Note grey rather than tier-2 gold on purpose — a .requirement box
- * usually follows it immediately, and two gold rules stacked read as one thing.
- *
- * Keeps the italic semibold it has always had. The line labels itself ("Stats
- * (Solo): …") in place of a ::before, and at one line the weight still reads as
- * emphasis — the length that makes .weapon-desc drop it is five times this. */
+/* Note grey, not gold: a .requirement box usually follows, and two gold rules
+ * stacked read as one. */
 .stats {
     --accent: var(--color-note-border);
     --accent-bg: var(--color-bg-secondary);
@@ -528,18 +472,8 @@ a[data-media-type="audio"]::after {
     font-weight: 600;
 }
 
-/* Wonder-weapon description: what the weapon does, sitting between the heading
- * that names it and the <ol> of steps to build it. Rule in tier-2 gold to tie it
- * to that heading, and no label for the same reason — the heading directly above
- * already says which weapon this is.
- *
- * Two exceptions to the shared box above, both because this is the only one of
- * these that runs paragraph-length (200–550 characters):
- *   - keeps the body's 1.75 leading instead of dropping to 1.6, which is fine for
- *     a two-line warning but too tight over five lines;
- *   - deliberately NOT bold — at this length a 600 weight stops reading as
- *     emphasis (nothing is emphasised if everything is) and the tighter semibold
- *     sidebearings make the block look denser than the leading actually is. */
+/* Paragraph-length (200-550 chars), so it keeps the relaxed leading and is
+ * deliberately not bold. */
 .weapon-desc {
     --accent: var(--color-tier-2);
     --accent-bg: var(--color-bg-secondary);
@@ -547,10 +481,7 @@ a[data-media-type="audio"]::after {
     line-height: var(--line-height-relaxed);
 }
 
-/* Weapons often take two of these back to back (what it does, then how it is
- * obtained). As separate boxes they read as two unrelated asides, so consecutive
- * ones merge into one panel: the negative margin collapses the 1rem gap to zero
- * and the shared padding becomes the paragraph break inside it. */
+/* Consecutive ones merge into one panel. */
 .weapon-desc + .weapon-desc {
     margin-top: calc(var(--space-md) * -1);
     padding-top: 0;
@@ -560,8 +491,7 @@ a[data-media-type="audio"]::after {
     border-bottom-right-radius: 0;
 }
 
-/* A list of short names whose order doesn't matter. Added by hand per list, since
-   a sequence of steps or directions has to stay one read top to bottom. */
+/* Added by hand, only to lists whose order doesn't matter. */
 .list-columns {
     columns: 8.5rem 3;
     column-gap: var(--space-xl);
@@ -572,7 +502,6 @@ a[data-media-type="audio"]::after {
     break-inside: avoid;
 }
 
-/* Tables */
 .table-scroll {
     margin: var(--space-md) calc(-1 * var(--space-md));
     overflow-x: auto;
@@ -614,10 +543,8 @@ td {
     vertical-align: top;
 }
 
-/* The cell's padding is its spacing; its content shouldn't add to it. A cell
-   is its own formatting context, so a list's margins (and its first and last
-   items') would otherwise sit inside the padding and leave a list-bearing cell
-   with far more space above and below its text than a plain one. */
+/* A cell is its own formatting context, so list margins would otherwise add
+   to its padding. */
 td > :first-child,
 td > :is(ul, ol):first-child > li:first-child {
     margin-top: 0;
@@ -630,15 +557,12 @@ td > :is(ul, ol):last-child > li:last-child > :is(ul, ol):last-child > li:last-c
     margin-bottom: 0;
 }
 
-/* A copy of a rowspan cell, stamped by labelTableCells for the rows the span
-   covers so card mode can give each of them the content. The table itself still
-   has the real spanned cell, and a display:none cell takes up no column, so this
-   draws exactly as authored until the cards take over below --bp-md. */
+/* Copy of a rowspan cell, stamped by labelTableCells for card mode. A
+   display:none cell takes no column, so table mode is unaffected. */
 td[data-card-copy] {
     display: none;
 }
 
-/* Left-column-key table: first col shrinks to content, last col fills */
 .table-key th:first-child,
 .table-key td:first-child {
     width: 20%;
@@ -646,42 +570,19 @@ td[data-card-copy] {
     font-weight: 600;
 }
 
-/* Mobile: one card per row.
- *
- * Under --bp-md a three-column table gets ~110px per column, which breaks every
- * cell into a stack of one-word lines, and the wrapper's horizontal scroll only
- * trades that for columns parked off-screen. So each body row becomes a card:
- * the cells stack, and each one is introduced by its column's heading, printed
- * from the data-label the build stamps on it (labelTableCells in
- * build_scripts/eleventy/tables.cjs). That makes the header row a duplicate, so it comes off.
- *
- * Only tables the build marked [data-cards] switch — tables with rowspan, or
- * with sort controls in the header, keep the scrolling table (see
- * labelTableCells for why). Desktop is untouched: every rule here is inside the
- * narrow query, and the markup the build adds is inert without it.
- *
- * The stacked cells lose their table roles in the accessibility tree, as they
- * would under any display:block restyle of a table. The ::before labels are
- * what carries the column meaning in that state, which is the reason they're
- * real text on the cell rather than a background image or a ::before on the row.
- */
+/* Mobile: one card per row. data-label and [data-cards] come from labelTableCells
+ * (build_scripts/eleventy/tables.cjs), which decides which tables qualify.
+ * Stacked cells lose their table roles, so the ::before labels must stay real
+ * text on the cell. */
 @media (width < 48.0625em) { /* --bp-md */
     .table-scroll--cards {
-        /* Not a scroll port any more: cards wrap, so nothing has to slide. */
         margin-inline: 0;
         overflow-x: visible;
         background-color: transparent;
     }
 
-    /* Cards take the full width of the block their list sits in rather than
-       hanging off its markers: two list levels cost a card a fifth of a phone
-       screen, and unlike the prose beside it a card has a frame that shows
-       exactly how much it lost. One rule per list level, each cancelling that
-       level's padding-inline-start, so the pull always stops at whatever the
-       list is in and never escapes it — see .dummy-li-no-indent in
-       typography.css for the same move made by an item rather than its content.
-       All four rules weigh the same (the ancestor part is :where()), so the last
-       one that matches wins: the deeper the list, the further back it pulls. */
+    /* Pull cards back over list indentation, one rule per level. All four have
+       equal specificity via :where(), so the last match wins: order matters. */
     :where(li) > .table-scroll--cards {
         margin-inline-start: calc(-1 * var(--list-indent));
     }
@@ -690,13 +591,12 @@ td[data-card-copy] {
         margin-inline-start: calc(-2 * var(--list-indent));
     }
 
-    /* A path panel is its own column, so only the lists inside it are the
-       table's to cancel. */
+    /* A path panel is its own column, so only lists inside it are cancelled. */
     :where(.path-tabs__panel li) > .table-scroll--cards {
         margin-inline-start: calc(-1 * var(--list-indent));
     }
 
-    /* The item has already moved; a table in one is where it needs to be. */
+    /* .dummy-li-no-indent has already removed the indent. */
     :where(.dummy-li-no-indent) > .table-scroll--cards {
         margin-inline-start: 0;
     }
@@ -708,8 +608,6 @@ td[data-card-copy] {
         padding: 0;
     }
 
-    /* Free-standing heading above the cards. The band it wears in table form is
-       there to cap the grid below it, and there's no grid left to cap. */
     table[data-cards] > caption {
         display: block;
         padding: 0 0 var(--space-sm);
@@ -750,17 +648,12 @@ td[data-card-copy] {
         display: none;
     }
 
-    /* Inside a card the cell divider is a hairline, not the full table grid. */
     table[data-cards] > tbody > tr > td + td {
         border-top: 1px solid var(--color-border-subtle);
     }
 
-    /* The label is the only thing naming what a cell holds once the header row
-       is gone, so it reads as a heading rather than a watermark: secondary text
-       at 8:1 on the card, not muted grey at 4.4:1, and set at the small end of
-       the body scale instead of below it. Uppercase and tracked keeps it
-       distinct from the value beneath without borrowing the tier colours, which
-       belong to the card's own title. */
+    /* Secondary, not muted (8:1 vs 4.4:1): with the header row gone this is the
+       only thing naming the cell. */
     td[data-label]::before {
         content: attr(data-label);
         display: block;
@@ -772,10 +665,7 @@ td[data-card-copy] {
         text-transform: uppercase;
     }
 
-    /* .table-key rows read "subject, then detail", so the subject takes the top
-       of the card as its title instead of being a labelled cell like the rest.
-       Width comes off the 20% the desktop column takes; the card is one column
-       wide and the rule would squeeze the title into a 20% ribbon. */
+    /* The subject cell becomes the card title. */
     table[data-cards].table-key > tbody > tr > td:first-child {
         width: auto;
         min-width: 0;
@@ -784,20 +674,15 @@ td[data-card-copy] {
         color: var(--color-tier-2);
     }
 
-    /* The divider under a title band carries the same weight as the frame. */
     table[data-cards].table-key > tbody > tr > td:first-child + td {
         border-top-color: var(--color-border-medium);
     }
 
-    /* Two-column key table: the one remaining heading only ever restates the
-       title above it ("Flyer" over "Locations"), so it comes off. Key tables
-       with a third column keep their headings, which do still carry meaning. */
+    /* In two-column key tables the remaining heading only restates the title. */
     table[data-cards].table-key > tbody > tr:not(:has(> td:nth-child(3))) > td:nth-child(2)::before {
         content: none;
     }
 
-    /* Lists are the usual cell content. Without the table's own indentation to
-       sit in, they need only enough padding to hang their markers on. */
     table[data-cards] td > ul,
     table[data-cards] td > ol {
         margin: 0;
@@ -806,18 +691,13 @@ td[data-card-copy] {
 
 }
 
-/* Forms */
-
-/* Guide-content labels sit inline, immediately before their control. Source
-   whitespace between `</label>` and the control can't be relied on for the gap
-   — the production HTML minifier collapses it away — so the space comes from
-   here instead. A non-breaking space is used because a plain one would collapse
-   at the end of the label's line box and render as nothing. */
+/* The production HTML minifier collapses whitespace between </label> and its
+   control. Non-breaking because a plain space collapses at the line box end. */
 label::after {
     content: "\a0";
 }
 
-/* Solver forms lay their labels out with flex gap; they don't want the extra. */
+/* Solver forms use flex gap instead. */
 .solver-container label::after {
     content: none;
 }
@@ -917,7 +797,6 @@ input.spacing {
     margin: var(--space-md) 0 var(--space-lg);
 }
 
-/* Special Components */
 .morse-code {
     display: inline-block;
     padding: 2px var(--space-sm);
@@ -929,7 +808,7 @@ input.spacing {
     letter-spacing: 0.1em;
 }
 
-/* Stacks symbols top to bottom, for readings shown vertically in-game */
+/* For readings shown vertically in-game */
 .morse-code.vertical {
     writing-mode: vertical-lr;
     text-orientation: upright;
@@ -941,9 +820,8 @@ input.spacing {
     line-height: 1;
 }
 
-/* The ad-mode toggle, which ads.ts hides while ads are disabled, so this renders
- * nothing today. Kept for re-enabling ads. Out of flow on purpose, so showing or
- * hiding it can't shift the page. */
+/* Ad-mode toggle; ads.ts hides it while ads are disabled. Kept for re-enabling
+ * ads. Out of flow so showing it can't shift the page. */
 .version-display {
     display: flex;
     justify-content: flex-end;
@@ -989,7 +867,7 @@ input.spacing {
 }
 
 .ad-toggle-btn:hover {
-    background: rgb(201 169 97 / 15%);
+    background: color-mix(in srgb, var(--color-tier-1) 15%, transparent);
 }
 
 .ad-mode-indicator {
@@ -1000,7 +878,6 @@ input.spacing {
     line-height: 1;
 }
 
-/* Ads */
 .ad-inline {
     width: 100%;
     min-height: 100px;
@@ -1034,7 +911,7 @@ input.spacing {
     height: calc(100dvh - var(--header-height-desktop) - var(--space-xl) - 48px - var(--space-md));
 }
 
-/* Ad visibility modes — controlled by body class set from JS */
+/* Body class set by ads.ts */
 body.ads-hidden .ad-inline,
 body.ads-hidden .ad-multiplex,
 body.ads-hidden .ad-infeed,
@@ -1043,12 +920,11 @@ body.ads-hidden .ad-left-sidebar {
     display: none !important;
 }
 
-/* Hide left sidebar on solver-only pages when in minimal mode */
 body.ads-minimal:has(.solver-only-page) .ad-left-sidebar {
     display: none !important;
 }
 
-/* Minimal mode: sidebars + multiplex only — hide all inline ads */
+/* Minimal mode: sidebars and multiplex only */
 body.ads-minimal .ad-inline {
     display: none !important;
 }

@@ -1,16 +1,3 @@
-/**
- * Home-page map finder
- * --------------------
- * The index lists every map grouped by game in one long page. Two affordances
- * make a map near the bottom reachable without a long scroll:
- *   1. a live text filter that hides non-matching entries (diacritic-insensitive,
- *      so "verruckt" matches "Verrückt" and "kowakujo" matches "Kowakujō"), and
- *   2. a row of game "chips" that jump to each game's section — offset by the
- *      sticky bar — with the current section highlighted as you scroll.
- *
- * Progressive enhancement: the full list works without this script; it only
- * activates when the .index-nav shell is present (home page only).
- */
 document.addEventListener("DOMContentLoaded", () => {
     const nav = document.querySelector<HTMLElement>("[data-index-nav]");
     const input = document.getElementById("index-filter") as HTMLInputElement | null;
@@ -27,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chip: HTMLAnchorElement;
     }
 
-    // Pair each game <h2 id> with the <ul> that follows it, and claim its chip.
     const groups: Group[] = [];
     container.querySelectorAll<HTMLElement>("h2[id]").forEach((heading) => {
         let list = heading.nextElementSibling as HTMLElement | null;
@@ -43,18 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // --- Completion tally ----------------------------------------------------
-    // Counted from the list itself so it can never drift from the links: every
-    // /games/ entry that isn't a `.solver-link` is one map, keyed by path so a
-    // map listed under two games (Shangri-La under BO1 and BO3, the Zombies
-    // Chronicles remasters) counts once. A map is complete unless every listing
-    // of it is `.disabled` — and those carry data-href, not href, because the
-    // build unlinks them (see `unlinkUnwrittenGuides` in build_scripts/eleventy/links.cjs).
+    // Keyed by path so a map listed under two games counts once. Disabled links
+    // carry data-href, not href (unlinkUnwrittenGuides in build_scripts/eleventy/links.cjs).
     function renderProgress(): void {
         const box = document.querySelector<HTMLElement>("[data-index-progress]");
         if (!box) return;
 
-        const maps = new Map<string, boolean>(); // path -> complete
+        const maps = new Map<string, boolean>();
         container!.querySelectorAll<HTMLAnchorElement>("a[href], a[data-href]").forEach((a) => {
             if (a.classList.contains("solver-link")) return;
             const target = a.getAttribute("href") ?? a.getAttribute("data-href") ?? "";
@@ -69,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let done = 0;
         for (const complete of maps.values()) if (complete) done++;
 
-        // Clamp the rounding so a single missing map can never read as "100%".
+        // So one missing map never rounds to 100%.
         let pct = Math.round((done / total) * 100);
         if (pct === 100 && done < total) pct = 99;
         if (pct === 0 && done > 0) pct = 1;
@@ -81,12 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     renderProgress();
 
-    // --- "Not written yet" tap hint ------------------------------------------
-    // A map without a guide is a `.disabled` anchor the build has stripped the
-    // href from, so clicking it does nothing at all. On a mouse the not-allowed
-    // cursor says why, but touch has no hover — so a tap gets an explanation.
-    // Reuses .gfb-toast from feedback.css; the line flagger (its other user) is
-    // off on this page via <body data-no-flags>.
+    // Touch has no hover to show the not-allowed cursor, so a tap explains instead.
+    // Reuses .gfb-toast from feedback.css.
     const toast = document.createElement("div");
     toast.className = "gfb-toast";
     toast.setAttribute("role", "status");
@@ -97,7 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const dead = (e.target as HTMLElement | null)?.closest<HTMLAnchorElement>("a.disabled");
         if (!dead) return;
 
-        // Built as nodes rather than innerHTML so the map name stays text
         const name = document.createElement("strong");
         name.textContent = (dead.textContent ?? "").trim();
         if (name.textContent.startsWith("The ")) {
@@ -110,12 +86,11 @@ document.addEventListener("DOMContentLoaded", () => {
         toastTimer = setTimeout(() => toast.classList.remove("is-on"), 2600);
     });
 
-    // --- Jump chips ----------------------------------------------------------
     chipsBox.addEventListener("click", (e) => {
         const chip = (e.target as HTMLElement).closest<HTMLAnchorElement>(".index-nav__chip");
         if (!chip) return;
         e.preventDefault();
-        e.stopPropagation(); // pre-empt the global anchor handler (it has no sticky-bar offset)
+        e.stopPropagation(); // the global anchor handler has no sticky-bar offset
         const id = chip.dataset.target;
         if (id) scrollToSection(id);
     });
@@ -129,11 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
         window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
     }
 
-    // --- Live filter ---------------------------------------------------------
+    // Strips combining diacritics, so "verruckt" matches "Verrückt".
     const fold = (s: string): string =>
         s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-    // Fold each item's text once up front; the list never changes.
     const folded = new Map<HTMLElement, string>();
     for (const g of groups) {
         for (const li of g.items) folded.set(li, fold(li.textContent ?? ""));
@@ -177,7 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // "/" focuses the filter from anywhere, unless already typing in a field.
     document.addEventListener("keydown", (e) => {
         if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
         const t = e.target as HTMLElement | null;
@@ -186,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
         input.focus();
     });
 
-    // --- Scroll-spy: highlight the chip for the section nearest the top -------
     if ("IntersectionObserver" in window) {
         const visible = new Set<string>();
         const io = new IntersectionObserver(
@@ -211,8 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             },
             {
-                // Only treat a heading as "current" while it sits in the band just
-                // below the sticky bar and the top ~30% of the viewport.
+                // Current = in the band below the sticky bar, top ~30% of the viewport.
                 rootMargin: `-${Math.round(nav.getBoundingClientRect().height)}px 0px -70% 0px`,
                 threshold: 0,
             },

@@ -1,23 +1,10 @@
 import { log } from "../core/logger";
 
 /**
- * Relative time
- * -------------
- * Re-renders the footer's ages against the reader's own clock: the visible
- * "Updated 3 days ago", and the "Released 2 years ago" tooltip on the initial
- * release date.
- *
- * The build bakes both strings into the page (see the `lastmodRelative` and
- * `releasedRelative` filters in eleventy.config.cjs), but that text ages with the
- * deploy: a guide edited yesterday still reads "yesterday" three weeks later. This
- * reads the machine-readable `datetime` attribute and rewrites on load, so the
- * baked-in string only ever shows to readers without JS.
- *
- * The release date itself is absolute and never rewritten; only the tooltip that
- * says how long ago it was.
- *
- * The bucket ladder here must match `formatRelativeDate` in build_scripts/eleventy/dates.cjs,
- * or pages would visibly flip wording the moment the script runs.
+ * The build bakes relative ages in (`lastmodRelative`/`releasedRelative` in
+ * eleventy.config.cjs), but that text goes stale after deploy, so re-render here.
+ * The buckets must match `formatRelativeDate` in build_scripts/eleventy/dates.cjs,
+ * or wording visibly flips on load.
  */
 document.addEventListener("DOMContentLoaded", () => {
     const updated = document.querySelectorAll<HTMLTimeElement>("time[datetime].site-footer__updated");
@@ -38,12 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         node.title = "Released " + relative(days);
     });
 
-    /**
-     * Whole days between a "YYYY-MM-DD" attribute and the reader's local calendar
-     * date. Both sides are reinterpreted as UTC so the subtraction is pure date
-     * arithmetic, so no timezone offset or DST hour can shift the result by a day.
-     * Null if the attribute isn't a bare calendar date.
-     */
+    /** Both sides go through UTC so no timezone offset or DST hour shifts the result by a day. */
     function daysSince(datetime: string): number | null {
         const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(datetime);
         if (!match) return null;
@@ -53,7 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return Math.max(0, Math.round((today - then) / 86400000));
     }
 
-    /** 0 → "today", 3 → "3 days ago", 40 → "last month". */
     function relative(days: number): string {
         if (days < 1) return "today";
         if (days < 7) return fmt.format(-days, "day");
@@ -63,27 +44,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-/**
- * View counter
- * ------------
- * Fetches the per-page hit count from the /api/views Pages Function (KV-backed)
- * and renders it into the footer's `.site-footer__views` placeholder.
- *
- * Increments once per browser session per path (sessionStorage); on later loads
- * it only reads, so refreshing a page does not inflate its count. Fails silently
- * (the placeholder stays empty and hidden) if the endpoint is unreachable.
- */
+/** View counter: POST (increment) once per session per path, GET after that. */
 document.addEventListener("DOMContentLoaded", () => {
     const target = document.querySelector<HTMLElement>(".site-footer__views");
     if (!target) return;
 
-    // No /api/views backend on the local dev server — skip the fetch entirely
-    // so it doesn't 404. The placeholder stays empty/hidden, same as a failure.
+    // No /api/views backend on the local dev server.
     if (isLocalHost()) return;
 
     const path = normalizePath(window.location.pathname);
     const sessionKey = "viewed:" + path;
-    // First sighting this session → POST (increments). Afterwards → GET (read only).
     const shouldIncrement = !sessionStorage.getItem(sessionKey);
     const endpoint = "/api/views?path=" + encodeURIComponent(path);
 
@@ -95,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 try {
                     sessionStorage.setItem(sessionKey, "1");
                 } catch {
-                    /* sessionStorage blocked (private mode) — skip dedupe, no-op */
+                    /* sessionStorage blocked: skip dedupe */
                 }
             }
             const noun = data.count === 1 ? "view" : "views";
@@ -106,20 +76,18 @@ document.addEventListener("DOMContentLoaded", () => {
             log("warn", "View counter unavailable:", err);
         });
 
-    /** True on the local dev server, where no /api/views Pages Function exists. */
     function isLocalHost(): boolean {
         const h = window.location.hostname;
         return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
     }
 
-    /** Mirror the server's normalization: leading slash, no trailing slash (except root). */
+    /** Must mirror the server's path normalization. */
     function normalizePath(p: string): string {
         if (!p.startsWith("/")) p = "/" + p;
         if (p.length > 1) p = p.replace(/\/+$/, "");
         return p;
     }
 
-    /** 1400000 → "1.4M", 12300 → "12.3K", 950 → "950". Drops a trailing ".0". */
     function formatCount(n: number): string {
         const units = [
             { value: 1000000000, suffix: "B" },

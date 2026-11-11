@@ -47,8 +47,7 @@ function calculate(slots: Slots): CalcResult {
 export default function BeamsmasherSolver({ title }: { title?: string }) {
     const [slots, setSlots] = useState<Slots>({ X: null, Y: null, Z: null });
 
-    // Null is a genuinely different input from any symbol — it means the reader
-    // never filled that slot — so it's reported rather than skipped.
+    // Null (unfilled) is reported, not skipped.
     useSolverReport("BeamsmasherSolver", () => ({
         "Slot X": slots.X,
         "Slot Y": slots.Y,
@@ -58,7 +57,6 @@ export default function BeamsmasherSolver({ title }: { title?: string }) {
     const result = useMemo(() => calculate(slots), [slots]);
     const recalcKey = `${slots.X}|${slots.Y}|${slots.Z}`;
 
-    /** Find which slot (if any) currently holds the given symbol. */
     const slotForValue = (value: SymbolValue): SlotKey | null => {
         for (const key of SLOT_KEYS) {
             if (slots[key] === value) return key;
@@ -66,8 +64,6 @@ export default function BeamsmasherSolver({ title }: { title?: string }) {
         return null;
     };
 
-    /** Click a symbol in the picker: assign it to the next empty slot. A
-     placed symbol is disabled in the picker, so it's cleared from its slot. */
     const pickSymbol = (value: SymbolValue) => {
         if (slotForValue(value)) return;
         const nextEmpty = SLOT_KEYS.find((k) => slots[k] === null);

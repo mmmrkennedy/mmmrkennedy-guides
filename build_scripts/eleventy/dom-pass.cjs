@@ -5,17 +5,10 @@ const { preRenderIndexNav } = require("./index-nav.cjs");
 const { generateQuickLinks } = require("./quick-links.cjs");
 
 /**
- * The DOM-rewriting steps, sharing one JSDOM parse because parsing is the slow
- * part of the build.
- *
- * A step takes the document and returns whether it changed anything. A page is
- * re-serialized only if one did, so untouched pages come out byte-identical.
- * generateQuickLinks reads the finished page, so it goes last.
- *
- * classifyLinks runs before this pass: the tables of contents built here are full
- * of anchors it must not touch (they would pick up .link-to-page and go italic).
- *
- * A step that throws is logged and skipped, and any partial edit it made ships.
+ * Steps share one JSDOM parse (the slow part) and return whether they changed
+ * anything. generateQuickLinks reads the finished page, so it goes last.
+ * classifyLinks must run before this pass, or the TOC anchors built here would
+ * get .link-to-page. A throwing step is skipped but its partial edit ships.
  */
 const DOM_STEPS = [
     ["prepareTables", prepareTables],
@@ -24,7 +17,7 @@ const DOM_STEPS = [
     ["generateQuickLinks", generateQuickLinks],
 ];
 
-// If a page contains none of these, no step has anything to do, so skip the parse.
+// Keep in sync with what the steps look for, or pages skip the parse.
 const DOM_PASS_TRIGGERS = [
     "<table",
     "data-step-ref",

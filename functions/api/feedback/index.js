@@ -1,23 +1,16 @@
-// GET /api/feedback?path=...
-// Returns the lines on a page whose OPEN "buggy" reports (counted by distinct
-// ip_hash) have crossed the threshold, so the client can render a caution note.
-//
-// Response: { path, buggy: [ { line_hash, reports } ] }
-//
-// Cached at the edge (~5 min) via the Cache API: the set changes slowly, and
-// caching keeps D1 reads near zero — same lesson as the view counter.
+// Lines whose open "buggy" reports from distinct IPs cross THRESHOLD, for the
+// client's caution note. Edge-cached via the Cache API to keep D1 reads near zero.
 
 import { normalizePath, json } from "../_shared.js";
 
-const THRESHOLD = 5; // distinct ip_hash count of open buggy reports to surface a line
+const THRESHOLD = 5;
 const CACHE_TTL = 300; // seconds
 
 export async function onRequestGet({ request, env, waitUntil }) {
     const path = normalizePath(new URL(request.url).searchParams.get("path"));
     if (!path) return json({ error: "invalid or missing 'path'" }, 400);
 
-    // Public read that must never break the page: with no DB, degrade to "no
-    // buggy lines" rather than erroring.
+    // Must never break the page, so degrade instead of erroring.
     if (!env.DB) return json({ path, buggy: [] }, 200);
 
     const cache = caches.default;
@@ -38,14 +31,14 @@ export async function onRequestGet({ request, env, waitUntil }) {
             .all();
         buggy = (results || []).map((r) => ({ line_hash: r.line_hash, reports: r.reports }));
     } catch {
-        // Don't break the page on a query error — return empty, uncached.
+        // Not cached, so a transient error doesn't stick.
         return json({ path, buggy: [] }, 200);
     }
 
     const resp = json({ path, buggy }, 200, {
         "Cache-Control": "public, max-age=" + CACHE_TTL,
     });
-    // Store a clone; the Cache API needs a cacheable (non no-store) response.
+    // The Cache API needs a cacheable (non no-store) response.
     if (waitUntil) waitUntil(cache.put(cacheKey, resp.clone()));
     return resp;
 }

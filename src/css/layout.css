@@ -1,14 +1,5 @@
-/*
-===============================================================================
-5. LAYOUT
-===============================================================================
-Page structure and containers.
-*/
-
-/* About This Map and More Zombies guides: the SEO blocks at the end of a page.
-   They line up with the guide column and read as a plain end-of-page index, not a
-   separate centered widget. The about text must stay visible (real text, readable
-   size) so it doesn't read as keyword stuffing. */
+/* End-of-page SEO blocks. The about text must stay visible at a readable size
+   so it doesn't read as keyword stuffing. */
 .about-map,
 .related-maps {
     margin: var(--space-xl) auto;
@@ -30,14 +21,12 @@ Page structure and containers.
     line-height: 1.6;
 }
 
-/* The sibling links that turn the guides into a crawlable cluster. */
 .related-maps__groups {
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
 }
 
-/* Game name beside its maps, stacking once the row gets too narrow for both. */
 .related-maps__group {
     display: flex;
     flex-wrap: wrap;
@@ -60,13 +49,11 @@ Page structure and containers.
     list-style: none;
 }
 
-/* `li` and `.prose li` add reading rhythm that would fight the row. Same
-   specificity as `.prose li`, and layout.css loads after typography.css. */
+/* Beats `.prose li` only because layout.css loads after typography.css. */
 .related-maps__list li {
     margin: 0;
 }
 
-/* The padding keeps these a comfortable tap target on phones. */
 .related-maps__link {
     display: inline-block;
     padding-block: 0.2rem;
@@ -96,7 +83,6 @@ Page structure and containers.
     color: var(--color-text-primary);
 }
 
-/* Site Footer: two quiet centred lines on desktop, one short line on a phone. */
 .site-footer {
     position: relative;
     padding: var(--space-lg) var(--space-sm);
@@ -113,9 +99,8 @@ Page structure and containers.
     background: var(--color-border-subtle);
 }
 
-/* Fit-content keeps a line that fits tight and centred. A line that wraps fills
-   the width instead, which puts the first item of every row on the left edge,
-   where the clip hides its separator dot. No row ever starts with a stray dot. */
+/* A wrapped line fills the width, putting each row's first item at the left
+   edge where the clip hides its separator dot. */
 .site-footer__meta,
 .site-footer__facts,
 .site-footer__base {
@@ -152,8 +137,7 @@ Page structure and containers.
     opacity: 0.5;
 }
 
-/* Desktop: facts, then copyright and links a step quieter. The side padding
-   keeps both clear of the fixed Back to Top button. */
+/* Side padding keeps clear of the fixed Back to Top button. */
 @media (width >= 48.0625em) { /* --bp-md */
     .site-footer {
         padding-inline: 10.5rem;
@@ -171,7 +155,6 @@ Page structure and containers.
     }
 }
 
-/* Phone: both lines merge into one row, copyright first, and the page facts go. */
 @media (width < 48.0625em) { /* --bp-md */
     .site-footer__facts,
     .site-footer__base {
@@ -186,7 +169,7 @@ Page structure and containers.
         order: 1;
     }
 
-    /* Its own line after the rest, so a long list of names can't split the row. */
+    /* Own line, so a long list of names can't split the row. */
     .site-footer__editors {
         order: 2;
         flex-basis: 100%;
@@ -199,15 +182,13 @@ Page structure and containers.
     }
 }
 
-/* Third-party artwork credit. A step quieter than the lines above: it has to
-   be findable to satisfy the licence, not read by everyone. */
+/* Third-party artwork credit: has to stay findable to satisfy the licence. */
 .site-footer__credits {
     margin: var(--space-sm) 0 0;
     line-height: var(--line-height-tight);
     opacity: 0.7;
 }
 
-/* Counts sit next to each other across pages; tabular figures stop them jittering. */
 .site-footer__words,
 .site-footer__views {
     font-variant-numeric: tabular-nums;
@@ -224,17 +205,15 @@ Page structure and containers.
     text-decoration: underline;
 }
 
-/* The licence links have to read as links, so they keep a resting underline. */
 .site-footer__credits .site-footer__link {
     text-decoration: underline;
 }
 
-/* Views count is filled in by JS (ui/footer.ts). Hidden until it has a value. */
+/* Filled in by ui/footer.ts. */
 .site-footer__views:empty {
     display: none;
 }
 
-/* Main Content Window */
 .content-window {
     flex: 1;
     position: relative;
@@ -246,10 +225,7 @@ Page structure and containers.
     flex-direction: column;
 }
 
-/* On a short page, main takes the spare height, so the related maps and footer
-   sit at the bottom of the screen. The footer stays the height of its content.
-   Width 100%: as flex items, children with auto side margins would otherwise
-   shrink to fit their content instead of filling the column. */
+/* As flex items with auto side margins, these would otherwise shrink to their content. */
 .content-window > main,
 .content-window > .related-maps,
 .content-window > .site-footer {
@@ -264,7 +240,6 @@ Page structure and containers.
     flex: none;
 }
 
-/* Content Containers */
 .quick-links-container,
 .content-container,
 .ad-inline,
@@ -286,8 +261,6 @@ Page structure and containers.
     display: none;
 }
 
-/* A page with no sections to list (the single-table pages) would otherwise draw
-   an empty band under the header. */
 .quick-links-container:empty {
     display: none;
 }
@@ -313,10 +286,8 @@ Page structure and containers.
     transform: translateY(-50%);
 }
 
-/* The generic hover lift (.btn--fixed:hover, components.css) is a bare
- * translateY(-1px), which would wipe out the -50% centring above — and at equal
- * specificity this file wins anyway, so top-left simply never lifted. Restate
- * the lift with the centring folded in. */
+/* The generic .btn--fixed:hover lift (components.css) would replace the -50%
+   centring, so restate it with the centring folded in. */
 @media (hover: hover) {
     .btn--fixed.top-left:hover {
         transform: translateY(calc(-50% - 1px));
@@ -334,7 +305,6 @@ Page structure and containers.
     color: var(--color-tier-1);
 }
 
-/* Lightbox */
 .lightbox {
     display: none;
     position: fixed;
@@ -363,8 +333,7 @@ Page structure and containers.
 }
 
 .lightbox-content {
-    /* No transform here: it would trap the position:fixed desktop nav arrows.
-       Anchor for the absolutely-positioned caption (and mobile arrows). */
+    /* No transform here: it would trap the position:fixed desktop nav arrows. */
     position: relative;
     display: flex;
     flex-direction: column;
@@ -382,7 +351,6 @@ Page structure and containers.
     box-shadow: 0 8px 32px rgb(0 0 0 / 40%);
 }
 
-/* Audio has no visual frame to fit; give the player a sensible, capped width. */
 .lightbox-content audio {
     width: min(90vw, 480px);
     display: block;
@@ -391,7 +359,7 @@ Page structure and containers.
 .lightbox-content img {
     cursor: zoom-in;
 
-    /* Gestures are handled in JS; stop the browser hijacking touch for scroll/zoom */
+    /* Gestures are handled in JS */
     touch-action: none;
     user-select: none;
     -webkit-user-drag: none;
@@ -410,15 +378,14 @@ Page structure and containers.
     margin-right: auto;
 }
 
-/* JS sets the image to its natural pixel size; lift the fitted caps so it can grow */
+/* JS sets the image to its natural pixel size */
 .lightbox.zoomed .lightbox-content img {
     max-width: none;
     max-height: none;
     cursor: zoom-out;
 }
 
-/* The bar only exists as a box on touch screens (below). Elsewhere the close
-   button sits in the corner as before, and the bar's other parts are hidden. */
+/* The bar only exists as a box on touch screens (below). */
 .lightbox-bar {
     display: contents;
 }
@@ -450,7 +417,7 @@ Page structure and containers.
 }
 
 .close-lightbox::before {
-    /* The × glyph is optically low in its line box; nudge it up to center */
+    /* The × glyph sits optically low in its line box */
     content: "\00d7";
     line-height: 1;
     transform: translateY(-3px);
@@ -460,31 +427,26 @@ Page structure and containers.
     opacity: 1;
 }
 
-/* Loading spinner. Sibling of .lightbox-content rather than a child so it can be
-   centred in the viewport without joining the content column's flex flow — the
-   media is display:none while loading, and an in-flow spinner would move the
-   caption. JS only unhides it once a load has run past SPINNER_DELAY_MS, so
-   cache hits and preloaded neighbours never flash it. */
+/* Sibling of .lightbox-content, not a child: in its flex flow the spinner would
+   move the caption. JS unhides it only past SPINNER_DELAY_MS. */
 .lightbox-spinner {
     position: absolute;
 
-    /* The "Loading..." caption is anchored to a zero-width .lightbox-content
-       while the media is hidden, so it lands dead centre too. Drop the ring
-       below it rather than through it. */
+    /* The "Loading..." caption also lands dead centre while the media is
+       hidden, so drop the ring below it. */
     top: calc(50% + var(--space-lg));
     left: 50%;
     width: var(--space-2xl);
     height: var(--space-2xl);
     margin: calc(var(--space-2xl) / -2) 0 0 calc(var(--space-2xl) / -2);
-    border: 3px solid rgb(201 169 97 / 25%); /* --color-tier-1 @ 25% */
+    border: 3px solid color-mix(in srgb, var(--color-tier-1) 25%, transparent);
     border-top-color: var(--color-tier-1);
     border-radius: 50%;
     animation: lightbox-spin 0.8s linear infinite;
     pointer-events: none;
 }
 
-/* The rule above beats the UA sheet's `[hidden] { display: none }`, so the
-   attribute has to be re-honoured here or the spinner never hides. */
+/* The rule above beats the UA sheet's `[hidden]`, so re-honour it. */
 .lightbox-spinner[hidden] {
     display: none;
 }
@@ -506,8 +468,7 @@ Page structure and containers.
     }
 }
 
-/* Spinning a ring is the whole signal here, so reduced motion gets an opacity
-   pulse rather than `animation: none` — a static ring reads as a stuck UI. */
+/* Pulse rather than `animation: none`: a static ring reads as a stuck UI. */
 @media (prefers-reduced-motion: reduce) {
     .lightbox-spinner {
         animation: lightbox-pulse 1.4s ease-in-out infinite;
@@ -516,8 +477,7 @@ Page structure and containers.
 }
 
 .lightbox-caption {
-    /* Imagus-style: a compact dark label floating just above the image's top edge,
-       so it never covers image content. Anchored to .lightbox-content (= image box). */
+    /* Floats above the image's top edge so it never covers the image. */
     position: absolute;
     left: 0;
     bottom: 100%;
@@ -525,7 +485,7 @@ Page structure and containers.
     z-index: 2001;
     color: var(--color-text-primary);
     background-color: rgb(26 26 26 / 78%); /* --color-bg-primary @ 78% */
-    border: 1px solid rgb(201 169 97 / 60%); /* --color-tier-1 @ 60% */
+    border: 1px solid color-mix(in srgb, var(--color-tier-1) 60%, transparent);
     backdrop-filter: blur(8px);
     padding: var(--space-xs) var(--space-sm);
     border-radius: 4px;
@@ -533,16 +493,14 @@ Page structure and containers.
     font-weight: 500;
     line-height: var(--line-height-tight);
 
-    /* Sized to its text, capped at the image's width. The max() floor keeps
-       placeholder states ("Loading...", "Error loading audio") readable: the
-       media is hidden then, so .lightbox-content (and thus 100%) is 0 wide. */
+    /* The max() floor keeps placeholder states readable: with the media hidden,
+       .lightbox-content (and thus 100%) is 0 wide. */
     width: max-content;
     max-width: min(90vw, max(100%, 20rem));
     text-align: left;
 }
 
-/* On-screen prev/next arrows (shown by JS only when there are 2+ items).
-   Desktop: fixed to the viewport's side edges. Mobile: absolute, below the image. */
+/* Shown by JS only when there are 2+ items. */
 .lightbox-nav {
     position: fixed;
     top: 50%;
@@ -581,8 +539,7 @@ Page structure and containers.
     right: 0.625rem;
 }
 
-/* Chevrons via pseudo-elements (decorative, since the aria-label is the real name),
-   nudged up to correct the glyph's optical low bias, matching the close button. */
+/* Nudged up for the glyph's optical low bias, like the close button. */
 .lightbox-nav::before {
     line-height: 1;
     transform: translateY(-3px);
@@ -603,7 +560,6 @@ Page structure and containers.
     opacity: 1;
 }
 
-/* Mobile: maximise image area, enlarge touch targets, respect notches */
 @media (width < 48.0625em) { /* --bp-md */
     .lightbox {
         width: 100vw;
@@ -626,8 +582,6 @@ Page structure and containers.
         right: calc(0.5rem + env(safe-area-inset-right));
     }
 
-    /* Drop the arrows just below the image's bottom corners (anchored to the image),
-       inset slightly from the edges */
     .lightbox-nav {
         position: absolute;
         top: 100%;
@@ -646,11 +600,8 @@ Page structure and containers.
     }
 }
 
-/* Touch screens: a full-screen viewer like a phone's photo app. The image fills
-   the screen edge to edge, swipes replace the arrows (lightbox.ts hides them),
-   and the caption, rotate and close sit in a bar over the top that a tap
-   hides. Keyed to input, not width, so a landscape phone wider than --bp-md
-   still gets it, and a narrow desktop window keeps its arrows. */
+/* Full-screen viewer; lightbox.ts swaps arrows for swipes. Keyed to input, not
+   width, so a landscape phone wider than --bp-md still gets it. */
 @media (hover: none), (pointer: coarse) {
     .lightbox {
         width: 100vw;

@@ -1,11 +1,3 @@
-/*
-===============================================================================
-3. TYPOGRAPHY
-===============================================================================
-Hierarchy and text styles.
-*/
-
-/* Headings */
 .page-title {
     color: var(--color-tier-1);
     font-size: clamp(1.375rem, 4vw, 1.75rem);
@@ -13,7 +5,10 @@ Hierarchy and text styles.
     line-height: 1.2;
     text-align: center;
     text-wrap: balance;
-    padding: 0 var(--space-md);
+
+    /* Home has no top bar, so the fixed .accent-picker sits beside this title.
+       Both sides clear it (screen gap + 2.25rem button + gap) to stay centred. */
+    padding: 0 calc(var(--space-smd) + 2.25rem + var(--space-sm));
     margin: var(--space-md) 0;
 }
 
@@ -31,14 +26,8 @@ h4 {
     margin: var(--space-md) 0 var(--space-sm);
 }
 
-/* Heading hierarchy — read the number, get the level.
- *   title-tier-1  largest  (section heading; gold)        Contents nav: top level
- *   title-tier-2  medium   (sub-section; amber)           Contents nav: indent 1
- *   title-tier-3  smallest (sub-sub heading; olive)       Contents nav: indent 1
- *   title-tier-4  == tier-3 visually, but nests one level deeper in the Contents nav
- * Smaller number = bigger/higher. tier-3 and tier-4 share the look; only their
- * auto-generated Contents-list indent differs (see generateQuickLinks in
- * build_scripts/eleventy/quick-links.cjs). */
+/* tier-3 and tier-4 look the same; only their Contents-nav indent differs
+ * (generateQuickLinks in build_scripts/eleventy/quick-links.cjs). */
 .title-tier-1 {
     color: var(--color-tier-1);
     font-size: var(--font-size-xl);
@@ -73,7 +62,6 @@ h4 {
     margin-bottom: calc(var(--space-sm) * -1);
 }
 
-/* Lists */
 ul,
 ol {
     margin: var(--space-md) 0;
@@ -84,11 +72,8 @@ li {
     margin: var(--space-xs) 0 var(--space-sm);
 }
 
-/* Nested lists: pull the child up tight against the parent line it belongs to,
- * instead of the 1rem the base ul/ol rule would give it. No margin-bottom here
- * on purpose — whatever is set collapses through the parent <li>'s own 1rem
- * bottom margin, so the gap after a nested group is already the paragraph gap
- * above. */
+/* No margin-bottom on purpose: it collapses through the parent <li>'s own
+ * bottom margin anyway. */
 li > ul,
 li > ol {
     margin-top: var(--space-smd);
@@ -99,56 +84,28 @@ li > ol {
     counter-increment: list-item 0;
 }
 
-/* A dummy-li carries no marker and no step of its own — it exists to hang a
- * block off a list without numbering it. This variant says the list's
- * indentation shouldn't apply to that block either, so it fills whatever the
- * list is sitting in: a solver in one spans its path panel, not the panel minus
- * a phantom marker's worth of space. Written on the item because the block
- * inside is usually a mount point (`<div data-solver="…">`) that CSS has no
- * stable handle on; blocks that do have one un-indent themselves instead (the
- * card-table and .path-tabs rules).
- *
- * Mobile only: at --bp-md the indent is affordable, and lining the block up
- * with the steps around it is worth more than the width.
- */
+/* On the item because the block inside is usually a solver mount point with no
+ * stable CSS handle; card-table and .path-tabs un-indent themselves instead.
+ * Mobile only: from --bp-md up, lining up with the steps is worth more than the width. */
 @media (width < 48.0625em) { /* --bp-md */
     .dummy-li-no-indent {
         margin-inline-start: calc(-1 * var(--list-indent));
     }
 }
 
-/*
- * ---------------------------------------------------------------------------
- * Guide prose
- * ---------------------------------------------------------------------------
- * Scoped to .prose (set by base.njk on every page except the stats page) so it
- * can't reach the index map lists or the stats tiles/charts — those are lists
- * used as UI components, not prose, and the paragraph spacing below is wrong
- * for them.
- */
-
-/* Guide steps are 2–4 sentence paragraphs, so the gap between two <li> is a
- * paragraph break and has to read as one. At 0.5rem it was 36px against a 27px
- * line step — only 1.33x — and the eye had no way to find where a step ended,
- * which is what made long sections read as a wall. 1rem overshot the other way
- * at 1.63x, leaving the steps looking unrelated. 0.75rem sits at 40px / 1.48x:
- * clear of the line rhythm without breaking the list apart. */
+/* .prose is set by base.njk on every page except stats, keeping this off the
+ * index map lists and stats tiles. 0.75rem tested best: 0.5rem read as a wall,
+ * 1rem split steps apart. */
 .prose li {
     margin-bottom: var(--space-smd);
 }
 
-/* The Contents nav is single-line links, not paragraphs — paragraph spacing
-   just makes it long enough to push the guide itself off the screen. */
+/* Paragraph spacing pushes the guide itself off screen. */
 .prose .quick-links-container li {
     margin-bottom: var(--space-xs);
 }
 
-/* No line-length cap by choice: a 38rem cap left ~344px of empty column on desktop.
- * If one comes back, cap the text and not the container, so tables and screenshots
- * keep the full width. */
+/* No line-length cap by choice. If one comes back, cap the text, not the
+ * container, so tables and screenshots keep full width. */
 
-/* Special paragraph styles */
-
-/* .weapon-desc and .stats are styled with the information boxes in
- * components.css — they take the same frame, so they live with the rest of that
- * system. */
+/* .weapon-desc and .stats live with the information boxes in components.css. */

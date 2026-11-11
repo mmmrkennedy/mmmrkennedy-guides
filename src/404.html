@@ -1,90 +1,68 @@
 ---
-layout: null
+layout: base.njk
 permalink: /404.html
 eleventyExcludeFromCollections: true
+title: "Page Not Found"
+description: "This page could not be found."
+notFoundPage: true
+skipTOC: true
+noFlags: true
+noLegend: true
+noWordCount: true
 ---
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<title>Page not found — mmmrkennedy's Zombies Guides</title>
-<!--
-    Deliberately self-contained: no bundle, no webfont, no image, no script.
-
+{#-
     Cloudflare Pages serves this file for anything it cannot find. Without it,
-    Pages answers unknown paths with index.html and a 200 — and because
-    src/_headers matches on path, a miss on /js/<hash>.js got stamped
-    `public, max-age=2592000`, so an edge node that briefly lacked a
-    newly-deployed asset cached that HTML under the asset's URL for 30 days.
-    Every visitor routed there then got text/html for a <script>, which
-    X-Content-Type-Options: nosniff blocks, and the site's JS was dead until
-    someone purged the cache by hand. This file makes that a 404 instead.
+    Pages answers unknown paths with index.html and a 200, and because
+    src/_headers matches on path, a miss on /js/[hash].js got stamped
+    `public, max-age=2592000`: an edge node that briefly lacked a newly-deployed
+    asset cached that HTML under the asset's URL for 30 days, and the site's JS
+    was dead until someone purged the cache by hand. This file makes that a 404.
 
-    It must therefore never reference a hashed asset: the one moment it gets
-    served is the moment those assets may be unreachable.
--->
+    It uses base.njk like every other page. The trade-off: if the CSS bundle is
+    itself what's missing mid-deploy, this page renders unstyled for that window.
+    It still returns 404, so the caching fix above is unaffected.
+
+    `notFoundPage` (base.njk) makes it noindex, drops canonical and JSON-LD, and
+    keeps the view counter and reading analytics from logging every mistyped URL.
+-#}
+<div class="content-container not-found">
+    <p class="not-found__code">404</p>
+    <p class="not-found__text">This guide may have been renamed, or the link may be out of date.</p>
+    <a class="btn not-found__home" href="/">Back to all guides</a>
+</div>
+
 <style>
-    :root { color-scheme: dark }
-
-    body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 1.5rem;
-        background: #1a1a1a;
-        color: #e5e5e5;
-        font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    .not-found {
         text-align: center;
+        padding-block: var(--space-2xl);
     }
 
-    main { max-width: 34rem }
-
-    .code {
+    .not-found__code {
         margin: 0;
-        color: #c9a961;
+        color: var(--color-tier-1);
         font-size: clamp(3.5rem, 14vw, 6rem);
         font-weight: 700;
         line-height: 1;
         letter-spacing: 0.02em;
     }
 
-    h1 {
-        margin: 0.5rem 0 0.75rem;
-        font-size: 1.35rem;
-        font-weight: 600;
+    .not-found__text {
+        margin: var(--space-smd) 0 var(--space-xl);
+        color: var(--color-text-secondary);
     }
 
-    p {
-        margin: 0 0 1.75rem;
-        color: #b0b0b0;
-    }
-
-    a.home {
+    .not-found__home {
         display: inline-block;
-        padding: 0.6rem 1.4rem;
-        border: 1px solid #c9a961;
-        border-radius: 8px;
-        color: #c9a961;
-        text-decoration: none;
+        padding: var(--space-sm) var(--space-lg);
+        border-color: var(--color-tier-1);
+        color: var(--color-tier-1);
         font-weight: 600;
+        text-decoration: none;
     }
 
-    a.home:hover,
-    a.home:focus-visible {
-        background: #c9a961;
-        color: #1a1a1a;
+    .not-found__home:hover,
+    .not-found__home:focus-visible {
+        background: var(--color-tier-1);
+        color: var(--color-bg-primary);
     }
 </style>
-</head>
-<body>
-<main>
-    <p class="code">404</p>
-    <h1>Page not found</h1>
-    <p>This guide may have been renamed, or the link may be out of date.</p>
-    <a class="home" href="/">Back to all guides</a>
-</main>
-</body>
-</html>

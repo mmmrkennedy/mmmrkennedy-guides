@@ -21,9 +21,8 @@ const LOCATION_ORDER: ValveLocation[] = [
     "dragon_command",
 ];
 
-/** Hand-checked positions for every Green and Pink pair, in dropdown order
- (undefined for the Pink valve). The route search below picks whichever of the
- two valid routes this table lists, and falls back to it if the search fails. */
+/** Hand-checked positions in dropdown order (undefined for the Pink valve). Picks
+ which of the two valid searched routes to show, and is the fallback. */
 type ValveConfig = (number | undefined)[];
 
 const valveLegend: Record<ValveLocation, Partial<Record<ValveLocation, ValveConfig>>> = {
@@ -83,8 +82,7 @@ const VALVE_LINKS: Record<ValveLocation, ValveLocation[]> = {
     dragon_command: ["supply_depot", "department_store", "infirmary"],
 };
 
-/** The puzzle is solved when the air from the Green valve passes through every
- valve once and ends at the Pink one. Returns every such route, valve by valve. */
+/** Solved when the air passes through every valve once and ends at Pink. */
 function findRoutes(route: ValveLocation[], pink: ValveLocation): ValveLocation[][] {
     const current = route[route.length - 1];
     if (route.length === LOCATION_ORDER.length) {
@@ -95,7 +93,6 @@ function findRoutes(route: ValveLocation[], pink: ValveLocation): ValveLocation[
         .flatMap((next) => findRoutes([...route, next], pink));
 }
 
-/** A route as valve positions, in dropdown order (undefined for the Pink valve). */
 function routeToConfig(route: ValveLocation[]): ValveConfig {
     return LOCATION_ORDER.map((location) => {
         const i = route.indexOf(location);

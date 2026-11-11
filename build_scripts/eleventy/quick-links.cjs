@@ -1,4 +1,3 @@
-/** Builds the Contents list in .quick-links-container, and the sidebar from it. */
 // Headings take about twice the height of a link. At this many rows the list is
 // taller than a phone screen.
 const LONG_CONTENTS_ROWS = 24;
@@ -26,7 +25,6 @@ function generateQuickLinks(document) {
     return true;
 }
 
-/** The page's linkable headings, grouped by section. */
 function buildNavStructure(document) {
     const sections = [];
     const containers = document.querySelectorAll("div.content-container");
@@ -35,7 +33,6 @@ function buildNavStructure(document) {
     for (const container of containers) {
         if (shouldExcludeFromNav(container)) continue;
 
-        // Check if this container starts a new section
         if (container.dataset.sectionInd) {
             const sectionLevel = container.dataset.sectionHeaderLevel || "0";
 
@@ -62,7 +59,8 @@ function buildNavStructure(document) {
             isMain: true,
         });
 
-        const subItems = container.querySelectorAll(".title-tier-2, .title-tier-3, .title-tier-4");
+        // [data-custom-quick-link] gives a non-heading (list item, solver) its own entry.
+        const subItems = container.querySelectorAll(".title-tier-2, .title-tier-3, .title-tier-4, [data-custom-quick-link]");
 
         for (const [index, subItem] of subItems.entries()) {
             if (shouldExcludeFromNav(subItem)) continue;
@@ -76,7 +74,6 @@ function buildNavStructure(document) {
                 indent = parseInt(subItem.dataset.customIndent, 10);
             }
 
-            // One heading can have several Contents entries, split on ";".
             if (subItem.dataset.customQuickLink) {
                 const names = subItem.dataset.customQuickLink.split(";");
                 if (!subItem.id) subItem.id = names[0];
@@ -130,7 +127,6 @@ function renderNavigation(container, structure) {
                 if (lastItem) {
                     lastItem.appendChild(nestedList);
                 } else {
-                    // No parent item, create dummy
                     const dummyItem = document.createElement("li");
                     dummyItem.style.display = "none";
                     listStack[listStack.length - 1].appendChild(dummyItem);
@@ -151,10 +147,7 @@ function renderNavigation(container, structure) {
     }
 }
 
-/**
- * The fixed sidebar, cloned from the inline Contents list. Built here so it paints
- * with the page; quick-links.ts attaches the behaviour.
- */
+/** Built at build time so it paints with the page; quick-links.ts adds the behaviour. */
 function renderSidebarToc(document, tocContainer) {
     document.querySelector(".sidebar-toc")?.remove();
     if (!tocContainer.children.length) return;
@@ -194,7 +187,6 @@ function renderSidebarToc(document, tocContainer) {
     document.querySelector("main")?.prepend(sidebar);
 }
 
-/** Collapse toggles for sidebar items with children. Sub-lists ship collapsed. */
 function addSidebarSubToggles(document, container) {
     for (const li of container.querySelectorAll("li")) {
         const childUl = li.querySelector(":scope > ul");
@@ -212,10 +204,7 @@ function addSidebarSubToggles(document, container) {
     }
 }
 
-/**
- * A long list gets a "Show all" button, and CSS caps its height on phones so the
- * guide starts within the first screen. Runs after the sidebar is cloned.
- */
+/** CSS caps a long list's height on phones. Must run after renderSidebarToc clones the list. */
 function addContentsShowAll(document, container) {
     const links = container.querySelectorAll(":scope > ul > li").length;
     const headings = container.querySelectorAll(":scope > h2, :scope > h4").length;
@@ -230,10 +219,7 @@ function addContentsShowAll(document, container) {
     container.appendChild(btn);
 }
 
-/**
- * Expand buttons for the phone Contents list, which CSS shows on phones only. Runs
- * after the sidebar is cloned, because the sidebar has its own toggles.
- */
+/** Phone-only (via CSS). Runs after renderSidebarToc, since the sidebar has its own toggles. */
 function addContentsSubToggles(document, container) {
     for (const li of container.querySelectorAll("li")) {
         if (!li.querySelector(":scope > ul")) continue;

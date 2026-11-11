@@ -1,12 +1,9 @@
-// Link targets classifyLinks understands. Anything with an extension outside
-// VALID_EXTS is a typo worth warning about; the LIGHTBOX_* sets decide which
-// ones open in the lightbox and as what.
+// Any other extension is warned about as a typo.
 const VALID_EXTS = [".webp", ".html", ".webm", ".gif", ".jpg", ".jpeg", ".png", ".mp4", ".mov", ".flac", ".mp3", ".ogg", ".wav", ".m4a"];
 const LIGHTBOX_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".gif", ".webm", ".mp4", ".mov", ".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
 const LIGHTBOX_VIDEO_EXTS = new Set([".webm", ".mp4", ".mov"]);
 const LIGHTBOX_AUDIO_EXTS = new Set([".flac", ".mp3", ".ogg", ".wav", ".m4a"]);
 
-/** Adds link-type classes, lightbox attributes and external link safety attributes. */
 function classifyLinks(content, outputPath) {
     if (!outputPath || !outputPath.endsWith(".html")) return content;
 
@@ -31,14 +28,12 @@ function classifyLinks(content, outputPath) {
                 }
             }
 
-            // Anything with a scheme, or protocol-relative, plus the bare
-            // hostnames ("example.com/foo") authors write without one.
+            // Also catches bare hostnames ("example.com/foo") written without a scheme.
             const isExternal = /^(?:[a-z]+:)?\/\//i.test(href) ||
                 (href.includes(".com") && !href.startsWith("/"));
 
             if (isExternal) existing.add("external-link");
 
-            // Keeps any existing target and merges rel tokens.
             let needsTarget = false;
             let computedRel = null;
             if (isExternal) {
@@ -54,8 +49,7 @@ function classifyLinks(content, outputPath) {
             }
 
             if (!href.startsWith("#") && !href.startsWith("http")) {
-                // A trailing slash means a half-written link (`pictures/foo/`),
-                // except "/" on its own, which is the site root.
+                // A trailing slash means a half-written link (`pictures/foo/`).
                 if (href.endsWith("/") && href !== "/") {
                     existing.add("incomplete-path");
                     overrideHref = "#";
@@ -121,11 +115,8 @@ function classifyLinks(content, outputPath) {
     }
 }
 
-/**
- * Links to unwritten guides are authored as `<a class="disabled" href="...">`.
- * Renaming href to data-href means they can't be followed or focused, and crawlers
- * don't see them. Runs last, so classifyLinks still sees the real href.
- */
+// Renames href to data-href on unwritten guides so they can't be followed and crawlers
+// skip them. Must run after classifyLinks, which needs the real href.
 function unlinkUnwrittenGuides(content, outputPath) {
     if (!outputPath?.endsWith(".html")) return content;
     if (!content.includes("disabled")) return content;

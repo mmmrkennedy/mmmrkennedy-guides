@@ -1,22 +1,7 @@
-// Cloudflare Pages Function — per-page view counter backed by D1.
-//
-// Migrated off Workers KV (which was nearing its 1,000 writes/day free-tier cap)
-// onto D1. Requires a D1 database bound as `DB` (Pages → Settings → Functions →
-// D1 bindings). Routes are served from your own domain:
-//
-//   GET  /api/views?path=/games/...   → { path, count }   (read only, no increment)
-//   POST /api/views?path=/games/...   → { path, count }   (increment, returns new total)
-//
-// The POST increment is a single atomic upsert (INSERT ... ON CONFLICT DO UPDATE
-// ... RETURNING count), which removes the read-modify-write race the KV version
-// had. Existing KV counts were backfilled once during the cutover.
-//
-// The response contract is unchanged from the KV version, so the front-end
-// (src/ts/ui/footer.ts) needs no changes.
+// Per-page view counter. Requires a D1 database bound as `DB`
+// (Pages → Settings → Functions → D1 bindings). Response shape is read by
+// src/ts/ui/footer.ts.
 
-// isProductionHost is the guard on the increment below: only real traffic may
-// move the counter. It lives in _shared.js because reading analytics needs the
-// same hostname split (see functions/api/reading.js).
 import { normalizePath, json, isProductionHost } from "./_shared.js";
 
 async function readCount(env, path) {
@@ -38,9 +23,7 @@ export async function onRequestPost({ request, env }) {
     const path = normalizePath(url.searchParams.get("path"));
     if (!path) return json({ error: "invalid or missing 'path'" }, 400);
 
-    // Reads are left alone, so a preview still shows the real number — it just
-    // does not add to it. `counted` is advisory; footer.ts reads only
-    // `count` and ignores anything else.
+    // Previews show the real count without adding to it. footer.ts ignores `counted`.
     if (!isProductionHost(url)) {
         return json({ path, count: await readCount(env, path), counted: false });
     }
@@ -53,10 +36,8 @@ export async function onRequestPost({ request, env }) {
         .bind(path)
         .first();
 
-    // Also bump today's per-day bucket for "trending / popular this week".
-    // Best-effort: if the view_days table doesn't exist yet, the total counter
-    // above must still succeed, so swallow any error here.
-    const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+    // Best-effort: the total above must succeed even if view_days isn't migrated.
+    const day = new Date().toISOString().slice(0, 10); // UTC
     try {
         await env.DB.prepare(
             "INSERT INTO view_days (path, day, count) VALUES (?1, ?2, 1) " +
@@ -65,7 +46,7 @@ export async function onRequestPost({ request, env }) {
             .bind(path, day)
             .run();
     } catch {
-        /* view_days not migrated yet — ignore */
+        /* ignore */
     }
 
     return json({ path, count: row ? row.count : 1 });

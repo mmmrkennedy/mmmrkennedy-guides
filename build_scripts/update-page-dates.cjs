@@ -1,20 +1,12 @@
 #!/usr/bin/env node
 /**
- * update-page-dates.cjs
+ * Run by the pre-commit hook when a commit touches .html. Writes:
+ *   lastmod-cache.json    newest commit per page (rebuilt from git log)
+ *   editcount-cache.json  commits per page (rebuilt from git log)
+ *   release-dates.json    first-live day per guide
  *
- * Run by the pre-commit hook when a commit touches .html. Updates the dates the
- * footer, stats page and sitemap read:
- *   lastmod-cache.json    newest commit per page
- *   editcount-cache.json  commits per page
- *   release-dates.json    the day each guide first went live
- *
- * The first two are rebuilt from git log, so a commit that skipped the hook is
- * corrected by the next one that runs it. Staged pages aren't in the log yet, so
- * they count as edited now.
- *
- * Release dates can't be rebuilt: the older ones came from a previous repo. They
- * are only ever added to, when an enabled link in the staged index points at a
- * page with no date. To undo an accidental release, delete its line by hand.
+ * Release dates can't be rebuilt (older ones came from a previous repo), so they
+ * are only added to. To undo an accidental release, delete its line by hand.
  */
 
 const fs = require("fs");
@@ -58,8 +50,6 @@ function nowIso() {
     );
 }
 
-// ------------------------------------------------- last updated and edit counts
-
 // Newest first, so a file's first sighting is its newest date.
 const newest = {};
 const counts = {};
@@ -85,8 +75,6 @@ for (const page of pages) {
 }
 writeJson("lastmod-cache.json", lastmod);
 writeJson("editcount-cache.json", editcount);
-
-// ---------------------------------------------------------------- release dates
 
 const releases = JSON.parse(fs.readFileSync(path.join(__dirname, "release-dates.json"), "utf8"));
 const index = git("show :src/index.html").replace(/<!--[\s\S]*?-->/g, " ");

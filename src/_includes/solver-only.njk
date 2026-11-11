@@ -2,38 +2,19 @@
 layout: base.njk
 useSolverCSS: true
 useReactSolvers: true
-# The solver is the whole page here, not a widget inside a guide: its CSS and
-# bundle are the critical path, so base.njk preloads the bundle and lets the
-# stylesheet block paint. guide-with-solver.njk deliberately does not set this.
+# base.njk preloads the bundle and lets Solvers.css block paint.
+# guide-with-solver.njk deliberately does not set this.
 solverIsPrimary: true
 skipTOC: true
 ---
 <div class="solver-only-page">
 {{ content | safe }}
-{#- Below the solver, not above it (Nov 2026): the tool is the page, so it
-    comes first and the context follows. Still on every page, still crawlable.
-
-    A solver page is nearly always an arrival, not a step: readers land on
-    "Terminus Beamsmasher Solver" straight from search, solve their one puzzle
-    and leave, because nothing on the page points at the guide the solver
-    belongs to. The return pill can't cover this — it only appears for someone
-    who clicked through from the guide in the first place. This link is always
-    there, which also gives every solver page a crawlable edge back into its
-    parent guide instead of dead-ending the link graph.
-
-    Outside any .content-container and not a <p>, so line-flagger.ts leaves it
-    alone: this is chrome, not a line of the guide anyone would report. -#}
-{#- Four solver pages point at a guide that is still an "unfinished" stub
-    (Totenreich, Shattered Veil, Reckoning, Gorod Krovi as of writing), and
-    those render a "Sorry, this page is not ready yet!" placeholder. Sending a
-    reader there is worse than sending them nowhere, so the link waits until the
-    guide is live. `unfinishedPages` is the index's own `a.disabled` registry,
-    so the link appears the moment that class comes off — no second list to
-    remember to update. -#}
+{#- Always shown, since the return pill only appears for click-throughs from the
+    guide. Outside .content-container and not a <p>, so line-flagger.ts ignores it.
+    Hidden while the guide is an unfinished stub. -#}
 {%- set guideClean = guideUrl | cleanUrl %}
 {%- if mapName and guideUrl and guideClean not in unfinishedPages %}
-{#- Name first on every map: "Full The Frozen Dawn Map Guide" doesn't read, and
-    the map name opening the anchor text is what matters most here. -#}
+{#- Name first: "Full The Frozen Dawn Map Guide" doesn't read. -#}
 {%- set guideLabel = mapName + ' Full Map Guide' %}
 <nav class="solver-guide-link" aria-label="Related guide">
     <a class="solver-guide-link__anchor internal-link" href="{{ guideClean }}">{{ guideLabel }}</a>

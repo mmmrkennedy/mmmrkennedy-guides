@@ -1,7 +1,6 @@
 import { useState, useRef } from "preact/hooks";
 import { useSolverReport } from "../solver-report";
 
-// Type definitions
 type Color = "red" | "green" | "blue" | "black" | "yellow" | "white";
 type ButtonCount = 3 | 4 | 5 | 6;
 
@@ -16,8 +15,7 @@ interface ColorCounts {
 
 const COLORS: Color[] = ["red", "green", "blue", "black", "yellow", "white"];
 
-// Used for the result text — needs to be readable on a dark panel,
-// so 'black' is mapped to a light gray.
+// Result text: 'black' is light gray to stay readable on the dark panel.
 const COLOR_HEX: Record<Color, string> = {
     red:    "#e74c3c",
     green:  "#2ecc71",
@@ -27,9 +25,7 @@ const COLOR_HEX: Record<Color, string> = {
     white:  "#ecf0f1",
 };
 
-// Used for the swatch fills — closer to the actual in-game colors.
-// 'black' is dark but not pure black so it's distinguishable from
-// the panel and visible at low opacity when not selected.
+// Swatches: 'black' isn't pure black so it stays visible against the panel when unselected.
 const COLOR_SWATCH: Record<Color, string> = {
     red:    "#e74c3c",
     green:  "#2ecc71",
@@ -39,12 +35,8 @@ const COLOR_SWATCH: Record<Color, string> = {
     white:  "#ecf0f1",
 };
 
-// Helper functions converted from the game's validate_wire_logic().
-// Two of the game's inputs are round state, not colours: W is the round
-// you're on and S is the number of special rounds you've cleared. An
-// earlier version of this solver guessed both from the colour list
-// (distinct-colour count for S, the colour tallies for W), which is why
-// it disagreed with the game on every box except X=3.
+// Ported from the game's validate_wire_logic(). W (current round) and S (special
+// rounds cleared) are round state, not derived from the colours.
 
 // The GSC scans the wires in reverse, so BL(r) is the bottom-most red
 // button, not the first one found from the top.
@@ -58,8 +50,7 @@ function BL(arr: Color[], colour: Color): number {
     return index + 1;
 }
 
-// S, straight out of update_special_round_counter(). The bands are
-// exclusive on the low side — round 20 is the first that gives S = 4.
+// From update_special_round_counter().
 function specialRoundsFromRound(roundNum: number): number {
     if (roundNum > 19) return 4;
     if (roundNum > 14) return 3;
@@ -121,14 +112,10 @@ function venomBoxCalc(buttonArr: Color[], roundNum: number): string {
 export default function BeastVenomXBoxSolver({ title }: { title?: string }) {
     const [buttonCount, setButtonCount] = useState<ButtonCount>(3);
     const [selectedColors, setSelectedColors] = useState<Color[]>(["red", "red", "red"]);
-    // 0 means the round field is empty. Left blank rather than defaulted to 1:
-    // a wrong-but-plausible default would quietly hand out wrong answers to
-    // anyone who doesn't notice the field.
+    // 0 = empty. Not defaulted to 1: a plausible default would silently give wrong answers.
     const [roundNum, setRoundNum] = useState<number>(0);
     const calcKeyRef = useRef(0);
 
-    // 0 is this solver's "field is empty", not a round anyone can be on, so it's
-    // reported as empty rather than as a round of zero.
     useSolverReport("BeastVenomXBoxSolver", () => ({
         "Number of buttons": buttonCount,
         "Button colours (top to bottom)": selectedColors,
@@ -174,8 +161,6 @@ export default function BeastVenomXBoxSolver({ title }: { title?: string }) {
                 The game tracks one of its own variables incorrectly (found after looking at the code), so the solver can occasionally tell you the wrong button. That&apos;s just a bug in the game, and not something I can build around. Sorry.
             </p>
 
-            {/* Four options, all worth seeing at once: one tap on a pill instead
-                of opening a dropdown. Same pattern as the Statue wall picker. */}
             <div className="solver-controls is-centered" role="group" aria-label="Number of buttons">
                 {([3, 4, 5, 6] as const).map((n) => (
                     <button

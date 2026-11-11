@@ -1,11 +1,6 @@
-// POST /api/feedback/flag
-// Records a single line flag. Body: { path, line_hash, quote, reason, detail },
-// plus { solver, snapshot, expected } when the flag comes from a solver rather
-// than a line of prose (see the SOLVER FLAGS note in ts/ui/line-flagger.ts).
-//
-// All client validation is re-enforced here — never trust the client. Dedupe is
-// enforced both in SQL (INSERT OR IGNORE against the UNIQUE (line_hash, ip_hash,
-// reason) index) so one person can't inflate a buggy count.
+// Solver flags add { solver, snapshot, expected } (see SOLVER FLAGS in
+// ts/ui/line-flagger.ts). Dedupe relies on the UNIQUE (line_hash, ip_hash, reason)
+// index in D1.
 
 import { normalizePath, json, hashIp, notifyFlag } from "../_shared.js";
 
@@ -16,27 +11,17 @@ const MAX_LINE_HASH = 64;
 const MIN_DETAIL = 4;
 const MAX_SOLVER = 64;
 const MAX_EXPECTED = 200;
-/** Cap on the raw snapshot JSON. The client aims for 7800, so this has headroom. */
+/** The client aims for 7800. */
 const MAX_SNAPSHOT = 8192;
-/* Structural caps applied while re-building the snapshot below. A snapshot is
- * client-authored JSON: it is parsed, walked, and re-serialized from scratch, so
- * what lands in D1 is a value this file constructed, never a string a browser
- * handed us.
- *
- * The depth allowance has to clear a real solver's inputs, not just a flat form:
- * a board arrives as {state:{"Control rods":[[0,1],[2,3]]}}, which is already
- * five levels down before anything unusual happens. Too tight a cap doesn't
- * reject those — walk() nulls the offending branch — so the report would arrive
- * looking empty rather than looking rejected. */
+/* Depth must clear real solver boards ({state:{"Control rods":[[0,1],[2,3]]}} is
+ * five deep). Too tight a cap silently nulls branches instead of rejecting. */
 const SNAP_MAX_DEPTH = 8;
 const SNAP_MAX_KEYS = 80;
 const SNAP_MAX_ITEMS = 200;
 const SNAP_MAX_STRING = 300;
 
 /**
- * Rebuild `raw` as a plain JSON value within the structural caps, or return null
- * if it isn't usable. Rejecting outright (rather than repairing quietly) keeps a
- * malformed snapshot from being stored as half a report.
+ * Rejects rather than repairs, so a malformed snapshot isn't stored as half a report.
  */
 function sanitizeSnapshot(raw) {
     if (typeof raw !== "string" || raw.length === 0 || raw.length > MAX_SNAPSHOT) return null;
@@ -69,7 +54,7 @@ function sanitizeSnapshot(raw) {
             }
             return out;
         }
-        return null; // functions, symbols, undefined — not reachable from JSON
+        return null;
     };
 
     const clean = JSON.stringify(walk(parsed, 0));
@@ -98,17 +83,12 @@ export async function onRequestPost({ request, env, waitUntil }) {
     }
 
     const detail = typeof body.detail === "string" ? body.detail.trim() : "";
-    // Required for every reason; reject low-effort input (too short, or a single
-    // repeated character like "aaaa" / "....").
     if (detail.length < MIN_DETAIL || detail.length > MAX_DETAIL || /^(.)\1*$/.test(detail)) {
         return json({ error: "invalid 'detail'" }, 400);
     }
 
     const quote = (typeof body.quote === "string" ? body.quote : "").trim().slice(0, MAX_QUOTE);
 
-    // Solver fields. All three are optional and all three hang off `solver`: a
-    // snapshot with no solver to attribute it to is a malformed request, not a
-    // line flag with extra baggage, so it's rejected rather than dropped.
     let solver = null;
     let snapshot = null;
     let expected = null;
@@ -143,8 +123,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
         return json({ error: "could not record flag" }, 500);
     }
 
-    // Notify only on a genuinely new row — INSERT OR IGNORE drops duplicates, so
-    // a re-flag of the same line writes nothing and shouldn't send a message.
     if (result && result.meta && result.meta.changes > 0) {
         const notify = notifyFlag(env, request, { path, reason, quote, detail, solver, expected });
         if (waitUntil) waitUntil(notify);

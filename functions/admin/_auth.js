@@ -1,18 +1,9 @@
-// Shared auth for the /admin/* Pages Functions.
-//
-// Replaces HTTP Basic Auth with a signed session cookie so the sign-in step is a
-// real HTML form (see functions/admin/login.js) that password managers can fill.
-//
-// The cookie is `<base64url(payload)>.<base64url(hmac)>` where payload is
-// `<expiry-epoch-seconds>|<username>`. It is signed with a key derived from
-// ADMIN_USER + ADMIN_PASS, so changing the password invalidates every existing
-// session. Nothing is stored server-side.
-//
-// Files prefixed with "_" are not turned into routes by Pages Functions, so this
-// module is import-only.
+// Signed-cookie auth for /admin/* (a real form instead of Basic Auth, so password
+// managers can fill it). The key derives from ADMIN_USER + ADMIN_PASS, so changing
+// the password invalidates every session. The "_" prefix keeps Pages from routing it.
 
 export const COOKIE_NAME = "admin_session";
-export const SESSION_TTL_SECONDS = 14 * 24 * 60 * 60; // 14 days
+export const SESSION_TTL_SECONDS = 14 * 24 * 60 * 60;
 export const LOGIN_PATH = "/admin/login";
 export const DEFAULT_AFTER_LOGIN = "/admin/flags";
 
@@ -29,16 +20,10 @@ export function htmlResponse(body, status = 200, extraHeaders = {}) {
             "Content-Type": "text/html; charset=utf-8",
             "Cache-Control": "no-store",
             "X-Robots-Tag": "noindex, nofollow",
-            // Set here rather than relying on src/_headers — that file covers
-            // static assets, not Functions responses.
+            // src/_headers covers static assets, not Functions responses.
             "X-Frame-Options": "DENY",
             "X-Content-Type-Options": "nosniff",
-            // NOT `no-referrer`: per Fetch, a page with that policy sends
-            // `Origin: null` on its own form POSTs, which made originAllowed()
-            // below reject every real sign-in (curl was unaffected — it applies
-            // no referrer policy, which is why this survived testing).
-            // `same-origin` keeps admin URLs from leaking to third parties while
-            // leaving the Origin header intact.
+            // Not `no-referrer`: that makes form POSTs send `Origin: null`.
             "Referrer-Policy": "same-origin",
             ...extraHeaders,
         },
@@ -77,8 +62,7 @@ async function sessionKey(env) {
     );
 }
 
-// Compare two strings without leaking their contents through timing: HMAC both
-// under a fresh random key, then compare the fixed-length digests.
+// Constant-time: HMAC both under a random key, then compare fixed-length digests.
 export async function safeEqual(a, b) {
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey(
@@ -130,7 +114,6 @@ export async function createSessionToken(env, ttlSeconds = SESSION_TTL_SECONDS) 
     return `${b64urlEncode(new TextEncoder().encode(payload))}.${b64urlEncode(new Uint8Array(sig))}`;
 }
 
-// Returns the signed-in username, or null when there is no valid session.
 export async function getSession(request, env) {
     if (!isConfigured(env)) return null;
     const token = readCookie(request, COOKIE_NAME);
@@ -165,8 +148,7 @@ export async function getSession(request, env) {
 // `Secure` is skipped over plain http so `wrangler pages dev` still works locally.
 function cookieAttributes(request) {
     const secure = new URL(request.url).protocol === "https:" ? " Secure;" : "";
-    // SameSite=Lax keeps the session usable when following a link into the admin
-    // (e.g. from the Telegram flag notification) while blocking cross-site POSTs.
+    // Lax, not Strict, so links into the admin (e.g. flag notifications) stay signed in.
     return `Path=/admin; HttpOnly;${secure} SameSite=Lax`;
 }
 
@@ -178,16 +160,9 @@ export function clearedSessionCookie(request) {
     return `${COOKIE_NAME}=; ${cookieAttributes(request)}; Max-Age=0`;
 }
 
-// Cross-site POSTs are already blocked by SameSite=Lax; this is the second layer
-// for browsers/clients that ignore it. Requests without an Origin (curl, old
-// clients) are allowed through — the session cookie is still required.
-//
-// "null" counts as absent rather than as a mismatch. Browsers send a null origin
-// for reasons that have nothing to do with an attack — a strict referrer policy,
-// a privacy extension, resistFingerprinting — and a hard reject there locks the
-// owner out of their own admin. A sandboxed iframe can also produce it, but that
-// attack still has to get past SameSite=Lax, which withholds the session cookie
-// on any cross-site POST; without the cookie the request is rejected anyway.
+// Second layer behind SameSite=Lax. A missing or "null" Origin is allowed: privacy
+// settings and extensions send null, and rejecting it locked the owner out. The
+// session cookie is still required, and Lax withholds it on cross-site POSTs.
 export function originAllowed(request) {
     const origin = request.headers.get("Origin");
     if (!origin || origin === "null") return true;
@@ -198,7 +173,6 @@ export function originAllowed(request) {
     }
 }
 
-// Only same-site absolute /admin/... paths may be used as a post-login target.
 export function safeNext(raw) {
     if (!raw) return DEFAULT_AFTER_LOGIN;
     const next = String(raw);
@@ -215,8 +189,7 @@ export function redirect(request, path, extraHeaders = {}) {
     });
 }
 
-// Guard for an admin route: returns a Response to send back, or null when the
-// request is authenticated and should proceed.
+// Returns a Response to send back, or null when authenticated.
 export async function requireSession(request, env) {
     if (!isConfigured(env)) return notConfiguredResponse();
     const user = await getSession(request, env);

@@ -1,31 +1,9 @@
 /**
- * Reading analytics
- * -----------------
- * Records how a page was actually read and posts one beacon to /api/reading.
- * The view counter says a guide was opened; this says which SECTIONS were read,
- * in what order, and where the reader stopped.
+ * Reading analytics, posted to /api/reading. Anonymous by design: no cookies,
+ * `sess` dies with the tab, `pvid` is never stored.
  *
- * ANONYMITY
- *
- * No cookies and no persistent identifier. `sess` is 8 random hex in
- * sessionStorage and dies with the tab; `pvid` is 16 random hex that identifies
- * the ROW this pageview writes and is never stored anywhere. Nothing here reads
- * an IP (the server refuses to hash one either), a user agent, or the referrer
- * URL — only which SOURCE it came from. Collection is skipped entirely under
- * GPC/DNT, and `?analytics=off` sets a local opt-out flag for good.
- *
- * WHY ONE ROW, WRITTEN REPEATEDLY
- *
- * Readers of this site alt-tab constantly: the point of a guide is to go and do
- * the step in the game. So a beacon on every visibilitychange would mint twenty
- * rows for one read. Instead every beacon carries the same `pvid` and the full
- * cumulative state, and the server upserts. `hides` counts the round trips,
- * which is itself the most site-specific number here.
- *
- * THE SCROLLER IS THE WINDOW
- *
- * The document scrolls, so the IntersectionObservers use the viewport as their
- * root and scroll depth is measured off window.scrollY, like scroll-manager.ts.
+ * Readers alt-tab to the game constantly, so every beacon resends the full
+ * cumulative state under the same `pvid` and the server upserts one row.
  */
 document.addEventListener("DOMContentLoaded", () => {
     const ENDPOINT = "/api/reading";
@@ -38,27 +16,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const MAX_EVENTS = 40;
     const MAX_EVENT_VALUE = 120;
     const MAX_SECONDS = 7200;
-    /** Beacons are cheap but not free; a frantic alt-tabber does not need 40 of them. */
     const MIN_SEND_GAP_MS = 5000;
-    /** Give up looking for a solver after this long; it was never going to mount. */
     const SOLVER_POLL_MS = 500;
     const SOLVER_POLL_TRIES = 24;
     const SOLVER_DEBOUNCE_MS = 800;
 
+    if (document.body.hasAttribute("data-not-found")) return;
+
     const params = new URLSearchParams(window.location.search);
     const mode = params.get("analytics");
 
-    // `?analytics=off` is how the site's author keeps their own constant
-    // browsing out of the numbers, on every device they use. It stores a
-    // boolean, not an identifier.
+    // Keeps the site author's own browsing out of the numbers.
     if (mode === "off") {
         store(OPT_OUT_KEY, "1");
         return;
     }
     if (mode === "on") remove(OPT_OUT_KEY);
 
-    // `?analytics=debug` is the only way to collect from localhost, which is how
-    // `wrangler pages dev` gets tested against a local D1.
+    // `?analytics=debug` allows localhost, for testing `wrangler pages dev` against a local D1.
     const debug = mode === "debug";
     if (!debug && isLocalHost()) return;
     if (readStore(OPT_OUT_KEY)) return;
@@ -66,16 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const path = normalizePath(window.location.pathname);
 
-    // A guide is a stack of `.content-container[id]`, but the granularity that
-    // matters is often finer: the four bows all live inside one container, and
-    // so do the six steps of a main quest, each headed by a
-    // `h3.title-tier-2[id]`. Collapsing those into their container would throw
-    // away the most useful thing here — which STEP readers linger on. So both
-    // are tracked, in document order, and a container only holds the span
-    // between its own heading and its first sub-heading.
-    //
-    // The home page has no containers with ids, just an `h2[id]` per game, the
-    // same shape index-filter.ts reads; that is the fallback.
     const anchors = collectAnchors();
 
     const pvid = randomHex(8);
@@ -83,11 +48,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const ref = referrerBucket();
     const device = deviceClass();
 
-    /** Section id -> seconds. A key means "reached"; its value means "and stayed". */
+    /** Section id -> seconds. A key with 0 still means "reached". */
     const dwell = new Map<string, number>();
     const events: Array<[string, string]> = [];
 
-    /** Cached reading position, so a still page costs no layout work. */
     let lastScrollTop = -1;
     let ticksSinceMeasure = 0;
     let currentId: string | null = null;
@@ -120,9 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.setInterval(tick, TICK_MS);
 
-    // Backgrounding the tab is both the interesting event (they went to play)
-    // and the last reliable moment to write. pagehide is the terminal one and
-    // forces a send past the throttle.
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState !== "hidden") return;
         hides++;
@@ -130,24 +91,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     window.addEventListener("pagehide", () => flush(true));
 
-    // ---- section dwell -------------------------------------------------------
-
     /**
-     * Every id worth attributing time to, in document order: the section
-     * containers plus the `title-tier-*` sub-headings inside them. A sub-heading
-     * is a point, not a box, so an anchor's span runs from itself to the next
-     * anchor — see currentAnchorId().
+     * Sub-headings are tracked alongside containers so dwell lands on individual
+     * steps; each anchor's span runs to the next anchor in document order.
      */
     function collectAnchors(): HTMLElement[] {
         const selector = ".content-container[id], .content-container [class*='title-tier-'][id]";
-        // querySelectorAll returns document order, which is what the span rule needs.
         const found = Array.from(document.querySelectorAll<HTMLElement>(selector));
         if (found.length > 0) return found;
-        // Only the home page reaches this: no containers carry ids there.
+        // Home page: no containers carry ids, only one h2[id] per game.
         return Array.from(document.querySelectorAll<HTMLElement>("h2[id]"));
     }
 
-    /** The observer only answers "was this ever on screen"; dwell is the tick's job. */
     function startSectionTracking(): void {
         if (anchors.length === 0) return;
         const observer = new IntersectionObserver(
@@ -167,11 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!secFirst) secFirst = id;
     }
 
-    /**
-     * One second of attention, credited to ONE section. Crediting every visible
-     * section instead would make the seconds sum to more than the time spent,
-     * and the percentages the dashboard draws from them meaningless.
-     */
+    /** Credits one section per second, so section seconds sum to engaged time. */
     function tick(): void {
         if (document.visibilityState !== "visible") return;
         if (!document.hasFocus()) return;
@@ -193,14 +144,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * What the reader is looking at: the last anchor whose top is above the
-     * middle of the window, which is the same rule a reading-position
-     * highlight uses. It gives each anchor the span from itself to the next one,
-     * so a sub-heading takes its own steps and its container keeps the intro.
-     *
-     * Measuring ~40 elements every second would mean a forced layout every
-     * second, so the answer is cached until the page actually scrolls (with a
-     * periodic re-measure to catch late images shifting the page).
+     * Cached until the page scrolls to avoid a forced layout every tick, with a
+     * re-measure every 10 ticks to catch late images shifting the page.
      */
     function currentAnchorId(): string | null {
         if (anchors.length === 0) return null;
@@ -218,9 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (el.getBoundingClientRect().top > mid) break; // document order: the rest are lower
             if (el.id) found = el.id;
         }
-        // Above the first anchor the reader is on page chrome, not a section;
-        // crediting the first one anyway would inflate whatever comes first on
-        // every single guide.
+        // Above the first anchor credits nothing, or every guide's first section gets inflated.
         currentId = found;
         return found;
     }
@@ -229,24 +172,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const el = document.documentElement;
         const total = el.scrollHeight;
         if (total <= 0) return;
-        // A page shorter than the window has scrollHeight === clientHeight,
-        // which lands on 100 — correct, the reader did see all of it.
         const pct = Math.round(Math.min(100, ((window.scrollY + el.clientHeight) / total) * 100));
         if (pct > depth) depth = pct;
     }
 
-    // ---- solvers -------------------------------------------------------------
-
     /**
-     * Zero changes to the twenty Preact components: react-solvers/solver-report.tsx
-     * already publishes `window.SolverReport.read(root)` for the flagger, so the
-     * name and the reader's inputs are both available from out here. The selector
-     * is the one line-flagger.ts uses.
-     *
-     * Note what is NOT measured: whether the solver gave a correct answer.
-     * solver-report deliberately publishes inputs only, since the answer follows
-     * from them, so `f` ("every input was filled in by the end") is the closest
-     * honest proxy for "this reader got what they came for".
+     * Reads window.SolverReport (react-solvers/solver-report.tsx), which publishes
+     * inputs only, not answers, so `f` (all inputs filled) is the proxy for success.
      */
     function startSolverTracking(): void {
         const roots = Array.from(document.querySelectorAll<HTMLElement>("[data-solver]"));
@@ -271,8 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // The bundle is a dynamic import per solver, so the mount lands whenever
-        // it lands. Poll rather than race it.
+        // Each solver is a dynamic import, so poll for the mount.
         const pending = new Set(roots);
         let tries = 0;
         const timer = window.setInterval(() => {
@@ -316,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             serialized = JSON.stringify(report.inputs);
         } catch {
-            return; // a reader that throws must not take the pageview down with it
+            return;
         }
         if (serialized === solverState.get(root)) return;
         solverState.set(root, serialized);
@@ -339,14 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return true;
     }
 
-    // ---- interaction events --------------------------------------------------
-
-    /**
-     * One delegated capture-phase listener, so lightbox.ts, quick-links.ts and
-     * guide-controls.ts stay untouched. Media links are matched the same way
-     * lightbox.ts matches them, so an `img` event means a lightbox opened; keep
-     * the two extension lists in step.
-     */
+    /** An `img` event means a lightbox opened, so isMedia must match lightbox.ts. */
     function startEventTracking(): void {
         document.addEventListener(
             "click",
@@ -421,18 +345,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return extensions.some((ext) => lower.endsWith(ext));
     }
 
-    /** "pictures/pap/pap_bastion.webp" -> "pap/pap_bastion.webp". */
     function shortMediaName(href: string): string {
         const clean = href.split(/[?#]/)[0];
         return clean.split("/").slice(-2).join("/");
     }
 
-    // ---- sending -------------------------------------------------------------
-
     function flush(force: boolean): void {
         if (engaged === 0 && dwell.size === 0) return;
         if (!force && Date.now() - lastSendAt < MIN_SEND_GAP_MS) return;
-        if (engaged === lastSentEngaged && lastSendAt !== 0) return; // nothing new to say
+        if (engaged === lastSentEngaged && lastSendAt !== 0) return;
 
         lastSendAt = Date.now();
         lastSentEngaged = engaged;
@@ -440,8 +361,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function payload(): Record<string, unknown> {
-        // Guides run to ~30 sections, so the cap is a guard rather than a
-        // routine trim; when it does bite, the longest-read sections win.
         const entries = Array.from(dwell.entries())
             .sort((a, b) => b[1] - a[1])
             .slice(0, MAX_SECTIONS);
@@ -450,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const solvers: Record<string, Omit<SolverStat, "name">> = {};
         for (const stat of solverStats.values()) {
-            if (!stat.name) continue; // never mounted; nothing happened worth a row
+            if (!stat.name) continue; // never mounted
             solvers[stat.name] = { m: stat.m, e: stat.e, n: stat.n, f: stat.f, t: stat.t };
         }
 
@@ -494,8 +413,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ---- context -------------------------------------------------------------
-
     function referrerBucket(): string {
         const raw = document.referrer;
         if (!raw) return "direct";
@@ -527,7 +444,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return "other";
     }
 
-    /** Viewport width, not a user-agent string: coarse on purpose. */
     function deviceClass(): string {
         const width = window.innerWidth || document.documentElement.clientWidth || 0;
         if (width > 0 && width < 600) return "mobile";
@@ -543,7 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
             sessionStorage.setItem(SESSION_KEY, id);
             return id;
         } catch {
-            return null; // private mode; the pageview still counts, just unlinked
+            return null; // private mode
         }
     }
 

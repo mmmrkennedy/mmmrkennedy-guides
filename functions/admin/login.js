@@ -1,12 +1,5 @@
-// HTML sign-in page for /admin/*.
-//
-//   GET  /admin/login[?next=/admin/...]  → login form (or bounce if already in)
-//   POST /admin/login  (username, password, next) → set session cookie + redirect
-//   POST /admin/login  (action=logout)            → clear session cookie
-//
-// A real form rather than a Basic Auth prompt, so browser password managers can
-// store and autofill the credentials. Credentials still come from the ADMIN_USER
-// and ADMIN_PASS env vars; see functions/admin/_auth.js for the session cookie.
+// Sign-in page for /admin/*. A real form rather than Basic Auth so password
+// managers can autofill. Credentials come from the ADMIN_USER and ADMIN_PASS env vars.
 
 import {
     checkCredentials,
@@ -80,7 +73,6 @@ export async function onRequestGet({ request, env }) {
     const url = new URL(request.url);
     const next = safeNext(url.searchParams.get("next"));
 
-    // Already signed in — no reason to show the form.
     if (await getSession(request, env)) return redirect(request, next);
 
     return htmlResponse(loginPage({ next, notice: url.searchParams.get("out") ? "Signed out." : "" }));

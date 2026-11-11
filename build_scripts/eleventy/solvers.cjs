@@ -5,15 +5,11 @@ let cachedManifest = null;
 let cachedSsrSolvers;
 let ssrWarned = false;
 
-/**
- * The chunk file of every solver on a page. Preloading them with the entry makes
- * them arrive together, so a page with several solvers doesn't shift as each lands.
- */
+/** Preloaded with the entry so a page with several solvers doesn't shift as each lands. */
 function solverChunkHrefs(content, manifest) {
     const hrefs = new Set();
     for (const [, name] of content.matchAll(/\bdata-solver="([^"]+)"/g)) {
         const chunk = manifest[`src/components/${name}.tsx`];
-        // Not fatal: without the hint the solver still loads, just one hop later.
         if (chunk) hrefs.add(`/react-solvers/${chunk.file}`);
         else console.warn(`⚠️  No chunk in the Vite manifest for solver ${name}`);
     }
@@ -21,9 +17,8 @@ function solverChunkHrefs(content, manifest) {
 }
 
 /**
- * The Node build of the solvers (.solver-ssr/solvers.cjs, from vite.ssr.config.js).
- * Null when absent, as under `eleventy --serve` alone: mount divs stay empty and
- * the browser fills them.
+ * From vite.ssr.config.js. Null when absent (plain `eleventy --serve`): mount divs
+ * stay empty and the browser fills them.
  */
 function getSsrSolvers() {
     if (cachedSsrSolvers !== undefined) return cachedSsrSolvers;
@@ -42,12 +37,7 @@ function getSsrSolvers() {
     return cachedSsrSolvers;
 }
 
-/**
- * Drop the cached manifest and SSR build, so the next build reads them fresh.
- * Runs before every build: under `dev:watch` a solver edit gives new chunk
- * hashes and a new prerender, and without this the pages keep the ones from
- * startup and point at chunks that no longer exist.
- */
+/** Under `dev:watch` a solver edit changes chunk hashes, so stale caches would point at dead chunks. */
 function resetSolverCaches() {
     cachedManifest = null;
     cachedSsrSolvers = undefined;
@@ -59,13 +49,9 @@ function resetSolverCaches() {
 }
 
 /**
- * Renders each solver into its <div data-solver="...">, so the markup ships in the
- * HTML at its real height and the page doesn't shift when the script runs. main.tsx
- * hydrates whatever it finds.
- *
- * Without an SSR build, or if a solver throws, the div stays empty for the browser
- * to fill. A bad name or props would also break in the browser, so those fail a
- * production build and only warn in dev, where the SSR build can lag a new solver.
+ * Ships solver markup at its real height so the page doesn't shift; main.tsx hydrates it.
+ * A bad name or props fails a production build but only warns in dev, where the
+ * SSR build can lag a new solver.
  */
 function prerenderSolvers(content, outputPath) {
     if (!outputPath || !outputPath.endsWith(".html")) return content;

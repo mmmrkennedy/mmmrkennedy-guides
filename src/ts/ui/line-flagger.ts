@@ -1,39 +1,11 @@
 import { log } from "../core/logger";
 
 /**
- * Line flagger
- * ------------
- * Lets readers flag any sentence or bullet in a guide as unclear / out of date /
- * incorrect / buggy, with a required detail note, via POST /api/feedback/flag (a
- * D1-backed Pages Function). On load it also asks GET /api/feedback?path= which
- * lines have crossed the "buggy" report threshold and injects a caution note on
- * each, so readers are warned about steps many others report broken.
- *
- * Each flaggable line gets a stable content hash (FNV-1a of its normalized text)
- * as data-line-id. The same hash is recomputed on render to match server counts
- * back to DOM lines, so a flag (and any note) retires automatically once the
- * wording is edited — the line you flagged no longer exists.
- *
- * Network: like footer.ts, the eleventy dev server has no Functions, so a
- * failed call on localhost is treated as a silent demo no-op rather than a
- * user-facing error. Under `wrangler pages dev` and in production the real
- * endpoints are hit.
- *
- * SOLVER FLAGS
- * ------------
- * A solver gets its own report button rather than relying on flag mode. It
- * attaches a snapshot of the reader's inputs only: solvers are deterministic, so
- * the answer can be recomputed from them.
- *
- * Inputs come from the solver via window.SolverReport (react-solvers/src/
- * solver-report.tsx), because many solvers keep them in component state. The DOM
- * scrape is a fallback for a solver that doesn't publish them, and marks itself
- * `scraped: true`. Nothing outside the solver root is captured, and the reader sees
- * the whole payload before it sends.
+ * data-line-id is an FNV-1a hash of the line's normalized text, so editing a
+ * line retires its flags. Failed calls on localhost are a silent no-op.
  */
 type FeedbackReason = "unclear" | "outdated" | "wrong" | "buggy";
 
-/** Reason chips, in the order they're offered. Labels differ per mode. */
 const LINE_REASONS: ReadonlyArray<readonly [FeedbackReason, string]> = [
     ["unclear", "Doesn’t make sense"],
     ["outdated", "Out of date"],
@@ -41,10 +13,7 @@ const LINE_REASONS: ReadonlyArray<readonly [FeedbackReason, string]> = [
     ["buggy", "Doesn’t work / buggy"],
 ];
 
-/**
- * Same four reasons — the server enum is unchanged — relabelled for a solver,
- * and led by 'wrong', which is what a solver report almost always is.
- */
+/** 'wrong' leads: it's what a solver report almost always is. */
 const SOLVER_REASONS: ReadonlyArray<readonly [FeedbackReason, string]> = [
     ["wrong", "Gives the wrong answer"],
     ["buggy", "Broken / errors out"],
@@ -52,44 +21,26 @@ const SOLVER_REASONS: ReadonlyArray<readonly [FeedbackReason, string]> = [
     ["outdated", "Out of date"],
 ];
 
-/** The solver inputs captured alongside a solver flag. */
 interface SolverSnapshot {
-    /** Schema version, so a future shape change is detectable in the admin UI. */
+    /** Schema version, so a shape change is detectable in the admin UI. */
     v: 2;
     solver: string;
-    /**
-     * The reader's inputs: label -> whatever JSON describes that input best. A
-     * number for a dial, a string for a typed word, an array of [row, col] pairs
-     * for a board. Never anything the solver computed from them.
-     */
+    /** Reader's inputs only, never anything the solver computed from them. */
     state: Record<string, unknown>;
-    /** True when these came from the DOM fallback rather than the solver itself. */
+    /** Came from the DOM fallback rather than window.SolverReport. */
     scraped?: true;
-    /** site.buildVersion, from <meta name="build">: which deploy produced this. */
     build?: string;
-    /** Viewport, for the layout-dependent reports. */
     vp?: string;
 }
 
-/* Harvest limits. Bounded on the client so a hostile or pathological page can't
- * post a huge body; the server re-enforces its own caps regardless. */
+/* The server enforces its own caps too. */
 const SNAP_MAX_KEYS = 60;
 const SNAP_MAX_KEY = 60;
 const SNAP_MAX_VALUE = 200;
-/**
- * Kept under the server's 8192 so a snapshot never round-trips only to be
- * rejected. Measured in UTF-16 code units, exactly as the server measures it —
- * an approximation of bytes, but the same approximation on both sides, which is
- * the property that matters. Sized for the largest real input: a board reported
- * as a list of coordinates.
- */
+/** Under the server's 8192, measured in UTF-16 code units as the server does. */
 const SNAP_MAX_CHARS = 7800;
 
-/**
- * Containers whose whole subtree is summarized as ONE entry, so their inner
- * controls aren't also harvested individually. Order is document order; the
- * first match wins and consumes everything below it.
- */
+/** Container matches summarize their whole subtree as one entry. */
 const HARVEST_SEL = [
     '[role="radiogroup"]',
     ".solver-slot-list",
@@ -102,24 +53,20 @@ const HARVEST_SEL = [
     '[aria-pressed="true"]',
 ].join(", ");
 
-/** Marks a cell/button as "on" across the solvers' various naming habits. */
 const CELL_ON_SEL =
     '[aria-pressed="true"], [aria-checked="true"], .is-on, .is-selected, .is-filled, .is-active';
 
 /**
- * Blocks nested inside a line that are lines of their own: they're excluded from
- * the line's text. `.table-scroll` is the wrapper the build puts around every
- * <table> (prepareTables in build_scripts/eleventy/tables.cjs), so a bare `table`
- * never appears as a child here.
+ * Nested blocks are lines of their own, excluded from the parent's text.
+ * `.table-scroll` is the wrapper prepareTables (build_scripts/eleventy/tables.cjs)
+ * puts around every <table>.
  */
 const NESTED_BLOCK = "ul, ol, table, p, h3, h4, .table-scroll";
-/** Nested blocks plus the chrome this script injects — all skipped by lineText(). */
 const NOT_OWN_TEXT = NESTED_BLOCK + ", .gfb-buggy-note";
-/** Fewer text lines than this and the page is a solver or a stub: no flag launcher. */
+/** Below this the page is a solver or a stub. */
 const MIN_LINES_FOR_LAUNCHER = 5;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Pages can opt out (e.g. the home/index page) via <body data-no-flags>.
     if (document.body.hasAttribute("data-no-flags")) return;
 
     const lines = document.querySelectorAll<HTMLElement>(
@@ -133,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const path = normalizePath(window.location.pathname);
 
-    // ---- Toast ----
     const toast = document.createElement("div");
     toast.className = "gfb-toast";
     document.body.appendChild(toast);
@@ -145,7 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
         toastTimer = setTimeout(() => toast.classList.remove("is-on"), 2600);
     }
 
-    // ---- Shared "flag this line" popover ----
     const pop = document.createElement("div");
     pop.className = "gfb-pop";
     pop.setAttribute("role", "dialog");
@@ -188,28 +133,18 @@ document.addEventListener("DOMContentLoaded", () => {
     let activeTarget: HTMLElement | null = null;
     let activeQuote = "";
     let sending = false;
-    /** Spans around the own text of the line chosen in flag mode. */
     let pickedMarks: HTMLElement[] = [];
     let picking = false;
-    /** Replaced by setUpFlagMode, which shows page state while flagging. */
+    /** Replaced by setUpFlagMode. */
     let syncFlagMode = (): void => {};
-    /** Set for a solver report, null for a line flag — the mode switch. */
+    /** Non-null in solver mode. */
     let activeSnapshot: SolverSnapshot | null = null;
-    /**
-     * Chips are rebuilt per mode rather than relabelled in place, because the two
-     * modes also differ in ORDER: 'wrong' leads for a solver and would otherwise
-     * sit third, behind two reasons that almost never apply to one.
-     */
     let reasonBtns: HTMLButtonElement[] = [];
 
-    const MIN_DETAIL = 4; // anti low-effort: must be MORE than 3 characters
+    const MIN_DETAIL = 4;
     const DEFAULT_HINT = "Pick a reason and add at least a few words so we can act on it.";
 
-    /**
-     * Show an error in the hint line. Solver mode hides that line (the disclosure
-     * above it already says what's attached), so anything reporting a problem has
-     * to bring it back or the message would be written into a hidden element.
-     */
+    /** Solver mode hides the hint line, so an error has to unhide it. */
     function showHintError(message: string): void {
         hintEl.textContent = message;
         hintEl.classList.add("is-error");
@@ -246,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     function detailOk(): boolean {
         const v = textarea.value.trim();
-        // > 3 chars, and not a single repeated character ("aaaa", "....")
+        // Rejects a single repeated character ("aaaa", "....").
         return v.length >= MIN_DETAIL && !/^(.)\1*$/.test(v);
     }
     function refresh(): void {
@@ -303,10 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
         syncFlagMode();
     }
 
-    /**
-     * Solver mode. The snapshot is taken at open, not at send, so what the popover
-     * shows is exactly what gets sent.
-     */
+    /** Snapshot is taken at open, not send, so the popover shows exactly what gets sent. */
     function openSolverPop(root: HTMLElement): void {
         const name = root.dataset.solver || "UnknownSolver";
         activeTarget = root;
@@ -320,17 +252,10 @@ document.addEventListener("DOMContentLoaded", () => {
         buildReasons(SOLVER_REASONS);
         resetForm();
         titleEl.textContent = "Report a solver problem";
-        // "What did you expect?" moved out to the optional disclosure below, so
-        // asking it here too would be the same question twice.
         textarea.placeholder = "What happened? (required)";
         expectedWrap.hidden = false;
-        // No standing hint in solver mode: the disclosure below already announces
-        // what's attached, so a line repeating it is just noise. It comes back if
-        // there's an error to report.
         hintEl.hidden = true;
         activeQuote = snapshotSummary(activeSnapshot);
-        // The summary is already rendered field-by-field in the disclosure below,
-        // so repeating it as a quote is noise.
         quoteEl.hidden = true;
         renderSnapshot(activeSnapshot);
         snapEl.hidden = false;
@@ -340,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
         syncFlagMode();
     }
 
-    /** Show the payload verbatim, so nothing is captured behind the reader's back. */
+    /** Verbatim, so nothing is sent behind the reader's back. */
     function renderSnapshot(snap: SolverSnapshot): void {
         snapListEl.textContent = "";
         const row = (k: string, v: string): void => {
@@ -384,12 +309,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const payload: FlagPayload = {
             path,
-            // For a solver there is no line to hash, so the state stands in for
-            // one: the same person re-reporting the same inputs dedupes against
-            // the existing UNIQUE (line_hash, ip_hash, reason), while a genuinely
-            // different broken combination files as its own flag. It also makes
-            // the distinct-IP count per hash read as "N people hit this exact
-            // input", which is the number worth triaging on.
+            // A solver hashes its inputs instead, so re-reports of the same inputs
+            // dedupe on UNIQUE (line_hash, ip_hash, reason) and distinct IPs per
+            // hash count people hitting that exact input.
             line_hash: snap ? snapshotHash(snap) : (target.dataset.lineId ?? ""),
             quote: activeQuote,
             reason,
@@ -427,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("🚩 Thanks, flagged for review");
         } catch (err) {
             if (isLocalHost()) {
-                // No Functions on the eleventy dev server: behave like the demo.
+                // No Functions on the eleventy dev server.
                 log("warn", "[line-flagger] no backend on localhost; would POST", payload);
                 markSent();
                 closePop();
@@ -450,26 +372,18 @@ document.addEventListener("DOMContentLoaded", () => {
         closePop();
     });
 
-    // ---- Attach a stable id to each leaf paragraph / bullet ----
     const flaggable: HTMLElement[] = [];
 
     /**
-     * Line hashes that /api/feedback reported as buggy, or null until it answers.
-     *
-     * Held rather than consumed, because solver lines are decorated after this
-     * fetch may already have resolved (see the deferral below). Either order has
-     * to end up with the same notes: a line decorated first gets its note when
-     * the fetch lands, one decorated later reads the cached set on the way in.
+     * Held rather than consumed: solver lines may be decorated after the fetch
+     * resolves, and either order must end with the same notes.
      */
     let buggyHashes: Set<string> | null = null;
 
     function decorate(el: HTMLElement): void {
-        // Flaggable when the line has its own text. lineText() excludes any
-        // nested list/table/paragraph (each its own flaggable line), so an <li>
-        // that introduces a sublist (e.g. "Wait for X to spawn." + <ul>) is still
-        // flaggable by its own wording, while a pure grouping <li> is skipped.
+        // A pure grouping <li> has no own text and is skipped.
         if (!lineText(el)) return;
-        if (el.classList.contains("gfb-flaggable")) return; // already done
+        if (el.classList.contains("gfb-flaggable")) return;
         el.classList.add("gfb-flaggable");
         el.dataset.lineId = lineId(el);
         flaggable.push(el);
@@ -483,17 +397,13 @@ document.addEventListener("DOMContentLoaded", () => {
         injectBuggyNote(el);
     }
 
-    /**
-     * Lines inside a prerendered solver are left alone here, because hydration would
-     * undo the changes. They're decorated on solver:hydrated instead. Hashes are
-     * content-based, so deferring doesn't change a line's id.
-     */
+    // Hydration would undo changes to prerendered solver lines, so they wait for
+    // solver:hydrated.
     for (const el of lines) {
         if (el.closest("[data-solver]")) continue;
         decorate(el);
     }
 
-    // ---- Flag mode ----
     const banner = document.createElement("div");
 
     function startPicking(): void {
@@ -512,9 +422,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Runs ahead of every other click handler, so a click on a link or image inside a
-     * line selects the line instead of opening it. Tabs and disclosures still work,
-     * because the line being reported may be inside one.
+     * Capture phase, so a click on a link or image selects the line instead of
+     * opening it. Tabs and disclosures pass through: the line may be inside one.
      */
     function pickLine(e: Event): void {
         const t = e.target;
@@ -527,7 +436,6 @@ document.addEventListener("DOMContentLoaded", () => {
         pickedMarks = markOwnText(line);
         openPop(line);
 
-        // Keep the chosen line in sight above the sheet.
         const barBottom = document.querySelector(".top-buttons-background-box")?.getBoundingClientRect().bottom ?? 0;
         const r = (pickedMarks[0] ?? line).getBoundingClientRect();
         if (r.top < barBottom + 8 || r.bottom > pop.getBoundingClientRect().top - 8) {
@@ -535,11 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    /**
-     * The line a tap belongs to. Inside a table that's the tapped cell, not the list
-     * item around the table, and a tap on a header or the gap between cells is nothing.
-     * Cells get an id only when picked, so tables stay untouched until then.
-     */
+    /** Inside a table the tapped cell is the line. Cells get an id only when picked. */
     function lineAt(tapped: Element): HTMLElement | null {
         const line = tapped.closest<HTMLElement>(".gfb-flaggable");
         const table = tapped.closest("table, .table-scroll");
@@ -550,10 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return cell;
     }
 
-    /**
-     * Highlights a line's own text rather than its box, which would also cover any
-     * sublist or table nested inside it. Blocks are left out of the spans.
-     */
+    /** Wraps own text rather than the box, which would also cover nested sublists and tables. */
     function markOwnText(line: HTMLElement): HTMLElement[] {
         const marks: HTMLElement[] = [];
         let run: ChildNode[] = [];
@@ -594,8 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (launcher) launcher.hidden = flagging;
         };
 
-        // A page that is mostly a solver already has the solver's own report button,
-        // so the launcher only goes where there's a real run of text to flag.
+        // Solver pages already have the solver's own report button.
         const textLines = flaggable.filter((el) => !el.closest("[data-solver]"));
         if (textLines.length < MIN_LINES_FOR_LAUNCHER) return;
 
@@ -621,18 +521,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     setUpFlagMode();
 
-    /**
-     * Fired once per solver by react-solvers/src/main.tsx, right after hydrate().
-     * Per container rather than per page, so a page mounting five solvers
-     * decorates each as it lands instead of waiting for the slowest.
-     *
-     * If a chunk never loads, those lines just stay undecorated.
-     */
+    // Fired once per solver by react-solvers/src/main.tsx, right after hydrate().
     document.addEventListener("solver:hydrated", (e) => {
         const root = (e as CustomEvent<{ element?: HTMLElement }>).detail?.element;
         if (!root) return;
-        // Same scoping as the selector above: only lines inside a .content-container
-        // are flaggable, and some solver roots are one while others sit inside one.
+        // Some solver roots are a .content-container, others sit inside one.
         root.querySelectorAll<HTMLElement>("p, li:not(.dummy-li)").forEach((el) => {
             if (el.closest(".content-container")) decorate(el);
         });
@@ -640,26 +533,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /**
-     * The solver's own affordance: always visible, unlike flag mode's lines,
-     * because it's the only way to report the thing solvers actually get wrong
-     * and a hidden control gets a shrug and a one-line "it was wrong" instead.
-     *
-     * Appended INSIDE .solver-container, as its last child.
-     *
-     * The mount root is full-width while the card inside it is `width:
-     * fit-content` and, on a solver-only page, centred — so a bar parked on the
-     * root right-aligns to the root's edge and lands far from the solver it
-     * belongs to. As a child of the card it inherits the card's width and the
-     * card's position in every layout variant, with nothing to measure.
-     *
-     * Preact tolerates a trailing foreign child here: it sweeps unrecognised children
-     * only while hydrating, which has finished by the time this runs.
-     *
-     * Never inside .solver-output, though: several solvers force that element to
-     * remount via a changing key= on every recalculation.
+     * Goes inside .solver-container, not the full-width mount root, so it takes the
+     * fit-content card's width and position. Preact only sweeps foreign children
+     * while hydrating, which is done by now. Never inside .solver-output: several
+     * solvers remount it via a changing key=.
      */
     function addSolverReportButton(root: HTMLElement): void {
-        if (root.querySelector(".gfb-solver-bar")) return; // already done
+        if (root.querySelector(".gfb-solver-bar")) return;
         const card = root.querySelector<HTMLElement>(".solver-container") ?? root;
 
         const bar = document.createElement("div");
@@ -683,7 +563,6 @@ document.addEventListener("DOMContentLoaded", () => {
         card.appendChild(bar);
     }
 
-    // ---- Auto-note: ask which lines crossed the buggy threshold, warn on them ----
     fetch("/api/feedback?path=" + encodeURIComponent(path))
         .then((res) => (res.ok ? res.json() : Promise.reject(new Error("HTTP " + res.status))))
         .then((data: { buggy?: Array<{ line_hash?: string }> }) => {
@@ -696,11 +575,9 @@ document.addEventListener("DOMContentLoaded", () => {
             for (const el of flaggable) maybeInjectBuggyNote(el);
         })
         .catch((err) => {
-            // Endpoint unreachable (e.g. eleventy dev server) — no notes, no noise.
             log("warn", "[line-flagger] buggy-note check skipped:", err);
         });
 
-    /** Insert the caution note: inside an <li> (as first child) or before a <p>. */
     function injectBuggyNote(el: HTMLElement): void {
         const note = document.createElement("div");
         note.className = "gfb-buggy-note";
@@ -714,11 +591,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Normalized visible text of a line — its OWN text only. Text inside a nested
-     * list/table/paragraph (each its own flaggable line) plus any injected buggy-note
-     * are excluded, so a list item that introduces a
-     * sublist hashes and quotes by its own wording. For a leaf line with no nested
-     * block this equals its full text, so existing line ids stay stable.
+     * Own text only, excluding nested blocks and injected notes. For a leaf line
+     * this equals its full text, so existing line ids stay stable.
      */
     function lineText(el: HTMLElement): string {
         let out = "";
@@ -735,7 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return out.replace(/⚑/g, "").replace(/\s+/g, " ").trim();
     }
 
-    /** FNV-1a (32-bit), hex. The server accepts any [a-f0-9] line_hash. */
+    /** The server accepts any [a-f0-9] line_hash. */
     function fnv1a(text: string): string {
         let h = 0x811c9dc5;
         for (let i = 0; i < text.length; i++) {
@@ -745,17 +619,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return ("0000000" + h.toString(16)).slice(-8);
     }
 
-    /** Stable id for a line: FNV-1a of its normalized, lowercased text. */
     function lineId(el: HTMLElement): string {
         return fnv1a(lineText(el).toLowerCase());
     }
 
-    // ---- Solver state harvesting ----------------------------------------------
-
-    /**
-     * Collapse whitespace, and drop the ⚑ glyph, which the report button injected
-     * into the solver card carries. lineText() strips it for the same reason.
-     */
+    /** Drops the ⚑ that the injected report button carries. */
     function norm(s: string | null | undefined): string {
         return (s ?? "").replace(/⚑/g, "").replace(/\s+/g, " ").trim();
     }
@@ -767,7 +635,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return s.length > SNAP_MAX_VALUE ? s.slice(0, SNAP_MAX_VALUE - 1) + "…" : s;
     }
 
-    /** Best available human name for an arbitrary element. */
     function elementLabel(el: HTMLElement): string {
         return (
             asLabel(el.getAttribute("aria-label")) ||
@@ -779,15 +646,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Label for a form control, in descending order of how much the author meant
-     * it: the control's own <label>, an aria-label, the label of the row it sits
-     * in, then progressively weaker fallbacks.
-     *
-     * `.labels` rather than a `label[for="…"]` query: it covers both an explicit
-     * for= and a wrapping <label> in one go, and needs no selector built out of an
-     * id — which would otherwise mean CSS.escape, a global that is not guaranteed
-     * to exist and, when it doesn't, throws from inside the harvest and takes the
-     * whole report down with it.
+     * `.labels` rather than a `label[for="…"]` query: covers wrapping labels too, and
+     * avoids CSS.escape, which may not exist and would throw mid-harvest.
      */
     function controlLabel(el: HTMLElement): string {
         const labels = (el as HTMLInputElement).labels;
@@ -810,7 +670,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-    /** Readable value of a form control — option TEXT, not the option's value. */
     function controlValue(el: HTMLElement): string {
         if (el instanceof HTMLSelectElement) {
             const picked = Array.from(el.selectedOptions).map((o) => norm(o.textContent) || o.value);
@@ -823,18 +682,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return norm(v) === "" ? "(blank)" : norm(v);
     }
 
-    /** Which option(s) of a radiogroup are on, by their labels. */
     function groupValue(g: HTMLElement): string {
         const on = Array.from(g.querySelectorAll<HTMLElement>(CELL_ON_SEL));
         if (on.length === 0) return "(none)";
         return on.map(elementLabel).join(" + ");
     }
 
-    /**
-     * Slots already describe themselves: every solver builds them with an
-     * aria-label like "Slot 1: WOLF, click to clear". Strip the instruction half
-     * and the slot list reads back as the sequence the user picked.
-     */
+    /** Slot aria-labels look like "Slot 1: WOLF, click to clear"; the instruction half is stripped. */
     function slotListValue(list: HTMLElement): string {
         const slots = Array.from(
             list.querySelectorAll<HTMLElement>('.solver-slot, [role="listitem"]'),
@@ -845,11 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .join(" | ");
     }
 
-    /**
-     * Grids are only summarized by which cells are marked. A board's full state
-     * generally isn't in the DOM, so listing the "on" cells is the honest limit of
-     * what a generic harvest can claim to know.
-     */
+    /** Marked cells only: a board's full state generally isn't in the DOM. */
     function gridValue(g: HTMLElement): string {
         const on = Array.from(g.querySelectorAll<HTMLElement>(CELL_ON_SEL));
         if (on.length === 0) return "(no cells marked)";
@@ -859,13 +709,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * The reader's inputs for this solver.
-     *
-     * The solver's own report is the only source that knows what was ENTERED as
-     * opposed to what happens to be rendered, so it wins whenever it exists — for
-     * the grid and canvas solvers it's the only source at all. The DOM scrape is
-     * the fallback for a solver that hasn't published its inputs (a new one, say),
-     * and marks itself as such so a thin report isn't mistaken for a thin input.
+     * The solver's own report wins: only it knows what was entered rather than
+     * rendered, and it's the only source for grid and canvas solvers.
      */
     function captureSolver(root: HTMLElement, solver: string): SolverSnapshot {
         const reported = window.SolverReport?.read(root) ?? null;
@@ -883,15 +728,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return snap;
     }
 
-    /**
-     * Fallback: whatever the solver root exposes about its inputs, in DOM order.
-     *
-     * Generic by design — it reads the markup conventions the solvers share
-     * (labelled controls, radiogroups, self-describing slots) and nothing
-     * solver-specific. It captures no output and no error text: those are derived
-     * from the inputs and recomputing them is free, so storing them would only add
-     * noise to a report.
-     */
+    /** Inputs only, no output or error text: those are derived from the inputs. */
     function scrapeSolverInputs(root: HTMLElement): Record<string, string> {
         const container = root.querySelector<HTMLElement>(".solver-container") ?? root;
         const state: Record<string, string> = {};
@@ -902,8 +739,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const value = clampVal(norm(rawValue));
             if (!value) return;
             let key = norm(rawKey).slice(0, SNAP_MAX_KEY) || "field";
-            // Repeated labels are common (four rows all labelled "Symbol"), and
-            // silently overwriting would drop three of them.
             if (key in state) {
                 let n = 2;
                 while (`${key} (${n})` in state) n++;
@@ -913,13 +748,11 @@ document.addEventListener("DOMContentLoaded", () => {
             keyCount++;
         };
 
-        // Subtrees already summarized as a single entry; anything inside one is
-        // skipped so a radiogroup isn't also reported button by button.
         const consumed: Element[] = [];
         const toggles: string[] = [];
 
         for (const el of Array.from(container.querySelectorAll<HTMLElement>(HARVEST_SEL))) {
-            if (el.closest(".gfb-solver-bar")) continue; // our own button
+            if (el.closest(".gfb-solver-bar")) continue;
             if (consumed.some((c) => c.contains(el))) continue;
 
             if (el.matches('[role="radiogroup"]')) {
@@ -935,18 +768,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (el instanceof HTMLInputElement && /^(hidden|button|submit|reset|image|file)$/.test(el.type)) continue;
                 put(controlLabel(el), controlValue(el));
             } else {
-                // A pressed/active button outside any group — a mode or step
-                // toggle. Gathered into one entry rather than one key each, which
-                // would collide on label and read as noise.
+                // Loose pressed buttons share one entry; one key each would collide on label.
                 const label = elementLabel(el);
                 if (label && !toggles.includes(label)) toggles.push(label);
             }
         }
         if (toggles.length) put("Active buttons", toggles.join(", "));
 
-        // Say so rather than imply the capture is complete: a canvas cannot be
-        // read from the DOM at all, and a solver drawing to one that reaches this
-        // fallback has reported nothing about its board.
         if (container.querySelector("canvas")) {
             put("(canvas)", "this solver draws to a canvas, so its board was not captured");
         }
@@ -954,14 +782,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return state;
     }
 
-    /**
-     * An input value as one line of readable text.
-     *
-     * Nested arrays keep their brackets while a top-level one doesn't, because the
-     * bracket is what separates the members of a list of coordinates: a board
-     * reads as "[0, 0], [1, 3]" and stays unambiguous, while a flat list of
-     * colours reads as "red, black, white" and gains nothing from them.
-     */
+    /** Nested arrays keep brackets so coordinate lists read as "[0, 0], [1, 3]". */
     function formatValue(value: unknown): string {
         if (value === null || value === undefined) return "(none)";
         if (typeof value === "boolean") return value ? "yes" : "no";
@@ -974,18 +795,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 .join(", ");
         }
         try {
-            // A nested object has no natural prose form; JSON is the honest one.
             return JSON.stringify(value);
         } catch {
             return String(value);
         }
     }
 
-    /**
-     * Stable string form of a JSON value: object keys sorted at every level, so
-     * two reports of the same inputs hash alike even if a solver reorders the keys
-     * it publishes between builds.
-     */
+    /** Keys sorted at every level, so reordered keys between builds still hash alike. */
     function canonicalJson(value: unknown): string {
         if (value === null || typeof value !== "object") {
             return JSON.stringify(value) ?? "null";
@@ -1004,16 +820,11 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-    /**
-     * Identity of a solver report: the solver plus the exact inputs behind it. No
-     * output goes in, because none is stored — and none is needed, since inputs
-     * determine it.
-     */
     function snapshotHash(snap: SolverSnapshot): string {
         return fnv1a(`${snap.solver}|${canonicalJson(snap.state)}`);
     }
 
-    /** One-line form, used as the flag's quote so admin and Telegram read well. */
+    /** Used as the flag's quote in admin and Telegram. */
     function snapshotSummary(snap: SolverSnapshot): string {
         const fields = Object.entries(snap.state)
             .map(([k, v]) => `${k}=${formatValue(v)}`)
@@ -1022,11 +833,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return full.length > 300 ? full.slice(0, 299) + "…" : full;
     }
 
-    /**
-     * JSON for the wire, shrunk to fit the cap by dropping trailing state entries
-     * rather than by truncating the string — a truncated JSON string is not JSON,
-     * and the server would reject the whole report over a field nobody needed.
-     */
+    /** Drops trailing state entries rather than truncating: cut JSON would be rejected. */
     function serializeSnapshot(snap: SolverSnapshot): string {
         let out = JSON.stringify(snap);
         if (out.length <= SNAP_MAX_CHARS) return out;
@@ -1043,13 +850,12 @@ document.addEventListener("DOMContentLoaded", () => {
             : JSON.stringify({ v: 2, solver: snap.solver, state: {} } satisfies SolverSnapshot);
     }
 
-    /** True on the local dev server, where no /api/feedback Functions exist. */
     function isLocalHost(): boolean {
         const h = window.location.hostname;
         return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
     }
 
-    /** Mirror the server's normalization: leading slash, no trailing slash (except root). */
+    /** Mirrors the server's normalization. */
     function normalizePath(p: string): string {
         if (!p.startsWith("/")) p = "/" + p;
         if (p.length > 1) p = p.replace(/\/+$/, "");

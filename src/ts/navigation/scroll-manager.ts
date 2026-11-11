@@ -4,7 +4,7 @@
  * position on Back, Forward and reload.
  */
 
-/** Scrolls to the top as a new history entry, so Back returns the reader to their spot. */
+/** A new history entry, so Back returns the reader to their spot. */
 function scrollToTop(): void {
     window.history.pushState(null, "", "#");
     window.scrollTo({ top: 0 });
@@ -19,14 +19,12 @@ document.addEventListener("click", (event) => {
     const href = target.getAttribute("href");
     if (!href || !href.startsWith("#") || !document.getElementById(href.substring(1))) return;
 
-    // The pill decides whether the link qualifies (content cross-refs carry the
-    // .link-to-page class).
+    // The pill decides whether the link qualifies.
     document.dispatchEvent(
         new CustomEvent("scrollmanager:navigate", { detail: { anchor: target } }),
     );
 });
 
-/** Wires up Back to Top, which shows only once the reader has scrolled away from the top. */
 function initBackToTop(): void {
     const buttons = document.querySelectorAll(".btn--fixed.bottom-right");
     buttons.forEach((button) => button.addEventListener("click", scrollToTop));
@@ -43,16 +41,14 @@ function initBackToTop(): void {
             lastTop = top;
         }
 
-        // A phone has no margin to park the button in, so it would sit on the text
-        // being read. It only shows there once the reader starts heading back up.
+        // A phone has no margin, so the button would cover the text; show it only when scrolling up.
         buttons.forEach((button) => {
             const wanted = scrollingUp || !phone.matches;
             button.classList.toggle("is-visible", top > 200 && wanted);
         });
     };
 
-    // Also covers the restored position on a reload or Back, since restoring it
-    // fires a scroll event of its own.
+    // Restoring position on reload or Back fires a scroll event too.
     window.addEventListener("scroll", update, { passive: true });
     update();
 }

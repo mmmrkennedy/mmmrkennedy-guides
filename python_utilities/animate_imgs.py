@@ -13,7 +13,7 @@ def create_animation(image_folder, output_gif, frame_duration=2):
     if not images:
         raise ValueError("No images found in the specified folder.")
 
-    # 30fps reference: 1 frame ≈ 33.33ms
+    # frame_duration is in 30fps frames
     duration_in_ms = frame_duration * (1000 / 30)
 
     os.makedirs(os.path.dirname(output_gif), exist_ok=True)

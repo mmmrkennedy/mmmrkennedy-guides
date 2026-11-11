@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {#- Runs before first paint so the default accent never flashes. See accent-picker.ts. #}
+    <script>try{var d=document.documentElement,a=localStorage.getItem("accent");if(a)d.dataset.accent=a;if(localStorage.getItem("accent-picker-open"))d.dataset.accentPicker="open";if(a==="custom"){var c=JSON.parse(localStorage.getItem("accent-custom"));for(var k in c.vars)d.style.setProperty(k,c.vars[k])}}catch(e){}</script>
 
-    <!-- SEO Meta Tags -->
-    {#- Two strings, one source. `pageHeading` is what the page is called
-        ("Mob of the Dead Easter Egg Guide"); `pageTitle` is that plus the game,
-        which exists to disambiguate one search result from another. The suffix
-        belongs in <title> and nowhere else: in the <h1> it dilutes the heading
-        Google reads as a content signal, and it eats room in the sticky top bar
-        between the Home and legend buttons on a phone. Deriving one from the
-        other keeps them from drifting apart the way two literals would. #}
+    {#- The game suffix goes only in <title>: in the <h1> it dilutes the heading
+        for Google and crowds the phone top bar. #}
     {%- if mapName and solverTitle %}
         {%- set pageHeading = mapName + ' ' + solverTitle %}
     {%- elif mapName %}
@@ -22,10 +18,8 @@
     {%- set pageTitle = (pageHeading + ' | ' + titleSuffix) if mapName else pageHeading %}
     <title>{{ pageTitle }}</title>
 
-    {#- Fallbacks for pages with no `description`. Keep them short enough that the
-        longest map and game names stay inside the ~155 chars Google shows. A
-        disabled guide's own `description` is still the template's "CHANGE ME", so
-        it is ignored until the guide launches. -#}
+    {#- Keep fallbacks within the ~155 chars Google shows. An unfinished guide's
+        `description` is still the template's "CHANGE ME", so it is ignored. -#}
     {%- set description = null if (page.url | cleanUrl in unfinishedPages) else description %}
     {%- if mapName and solverTitle %}
         {%- set metaDescription = description or 'Interactive ' + solverTitle + ' for ' + mapName + ' in ' + titleSuffix + '. Solve this main quest step in seconds.' %}
@@ -34,8 +28,8 @@
     {%- else %}
         {%- set metaDescription = description or 'Complete Call of Duty Zombies Easter Egg guide. Step-by-step main quest walkthrough with pictures, videos, and detailed instructions.' %}
     {%- endif %}
-    {#- Aliases go early in the hand-written `description` and in the About This Map
-        copy below, not on the end of this string, where Google truncates. -#}
+    {#- Aliases go early in the hand-written `description`, not on the end of this
+        string, where Google truncates. -#}
     <meta name="description" content="{{ metaDescription }}">
     {%- if mapName %}
         {%- set metaKeywords = mapName + ' Easter Egg, ' + mapName + ' Easter Egg guide, ' + mapName + ' main quest, ' + mapName + ' main Easter Egg, ' + mapName + ' walkthrough, ' + mapName + ' guide, ' + mapName + ' steps, ' + mapName + ' tutorial, ' + mapName + ' solo Easter Egg, ' + titleSuffix + ', Call of Duty Zombies, COD Zombies, Zombies Easter Egg guide, main quest walkthrough' %}
@@ -44,22 +38,20 @@
         <meta name="keywords" content="{{ keywords }}">
     {%- endif %}
     <meta name="author" content="mmmrkennedy">
-    {#- Which deploy produced this page. Read by ts/ui/line-flagger.ts and stored
-        on solver flags, so a report can be told apart from one filed against
-        code that has since been fixed. -#}
+    {#- Stored on solver flags by ts/ui/line-flagger.ts. -#}
     <meta name="build" content="{{ site.buildVersion }}">
-    {#- One switch decides whether a map is live: `class="disabled"` on its link in
-        src/index.html, read by _data/unfinishedPages.js. It controls the sitemap,
-        related maps, the "X Full Map Guide" link, this noindex and the placeholder
-        body. Launching a guide is removing that one class. -#}
-    {%- if page.url | cleanUrl in unfinishedPages %}
+    {#- A map is unfinished while its link in src/index.html has `class="disabled"`
+        (read by _data/unfinishedPages.js). -#}
+    {%- if notFoundPage or (page.url | cleanUrl in unfinishedPages) %}
         <meta name="robots" content="noindex, nofollow">
     {%- else %}
         <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     {%- endif %}
+    {#- The 404 is served at whatever URL missed, so it has no canonical. #}
+    {%- if not notFoundPage %}
     <link rel="canonical" href="https://mmmrkennedy.com{{ page.url | cleanUrl }}">
+    {%- endif %}
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{{ 'website' if homePage else 'article' }}">
     <meta property="og:url" content="https://mmmrkennedy.com{{ page.url | cleanUrl }}">
     <meta property="og:title" content="{{ pageTitle }}">
@@ -71,37 +63,30 @@
     <meta property="og:image:height" content="630">
     {%- endif %}
 
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://mmmrkennedy.com{{ page.url | cleanUrl }}">
     <meta name="twitter:title" content="{{ pageTitle }}">
     <meta name="twitter:description" content="{{ metaDescription }}">
     <meta name="twitter:image" content="{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}">
 
-    <!-- Stylesheets -->
     {%- if site.bundled %}
         <link rel="stylesheet" type="text/css" href="/css/bundle.min.css?v={{ site.buildVersion }}">
     {%- else %}
         <link rel="stylesheet" type="text/css" href="/css/styles.css?v={{ site.buildVersion }}">
     {%- endif %}
-    {#- Only the stats page uses these rules, so they are not in the bundle —
-        see the note in css/styles.css. #}
+    {#- Not in the bundle; see css/styles.css. #}
     {%- if statsPage %}
         <link rel="stylesheet" type="text/css" href="/css/stats.css?v={{ site.buildVersion }}">
     {%- endif %}
-    {#- The homepage's filter and game chips, reused on /solvers. #}
     {%- if useIndexNav %}
         <link rel="stylesheet" type="text/css" href="/css/index-nav.css?v={{ site.buildVersion }}">
     {%- endif %}
-    {#- Home only: the 🔥 on the most-viewed link. Above the fold there, so it blocks
-        paint as the bundle does. #}
+    {#- Above the fold on home, so render-blocking like the bundle. #}
     {%- if homePage %}
         <link rel="stylesheet" type="text/css" href="/css/trending.css?v={{ site.buildVersion }}">
     {%- endif %}
-    {#- On a solver-only page the solver is the content, so its stylesheet blocks
-        paint. In a guide the solver is far below the fold, so it loads async:
-        media="print" fetches at low priority and onload flips it to all. No
-        <noscript> fallback, since with JS off there's no solver to style. #}
+    {#- In a guide the solver is far below the fold, so it loads async. No
+        <noscript> fallback: with JS off there's no solver to style. #}
     {%- if useSolverCSS %}
         {%- if solverIsPrimary %}
         <link rel="stylesheet" type="text/css" href="/css/Solvers.css?v={{ site.buildVersion }}">
@@ -110,12 +95,9 @@
         {%- endif %}
     {%- endif %}
 
-    <!-- AdSense: site-verification meta only. The adsbygoogle.js loader is
-         injected by src/ts/ui/ads.ts the moment a real slot is pushed, so a page
-         that renders no ads never contacts Google. -->
+    <!-- AdSense verification only; ads.ts injects adsbygoogle.js when a slot is pushed. -->
     <meta name="google-adsense-account" content="ca-pub-2164582284838563">
 
-    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
     <link rel="dns-prefetch" href="//www.youtube.com">
     <link rel="dns-prefetch" href="//discord.com">
@@ -124,19 +106,16 @@
         <link rel="preload" as="image" href="{{ imgSrc }}">
         {%- endfor %}
     {%- endif %}
-    {#- Preload only where the solver is the reason for the visit. On a guide it
-        would compete with the CSS that blocks first paint; the <script> near the
-        end of <body> still loads it there. #}
+    {#- On a guide a preload would compete with the render-blocking CSS. #}
     {%- if useReactSolvers and solverIsPrimary %}
     <!-- REACT_BUNDLE_MODULEPRELOAD -->
     {%- endif %}
 
-    <!-- JSON-LD Structured Data -->
-    {#- Article, not HowTo: Google retired HowTo rich results. The dates come from
-        the same filters the footer prints, so search and the page always agree. #}
+    {#- Article, not HowTo: Google retired HowTo rich results. #}
     {%- set articlePublished = page.inputPath | releasedISO %}
     {%- set articleModified = page.inputPath | lastmodISO %}
-    {%- if homePage %}
+    {%- if notFoundPage %}
+    {%- elif homePage %}
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -166,16 +145,11 @@
         {
             "@context": "https://schema.org",
             "@type": "Article",
-            {#- Heading, not title: the game name is already in `publisher` and
-                `about`, so the suffix would just repeat it a third time. #}
+            {#- Heading, not title: the game is already in `publisher` and `about`. #}
             "name": "{{ pageHeading }}",
             "headline": "{{ pageHeading }}",
             {%- if mapName %}
-            {#- On a solver page the alias belongs to the solver, not the guide:
-                "COTD Easter Egg Guide" names a different page from the one this
-                schema describes. `solverTitle` is exactly the words that follow
-                the map name in the heading, so it yields the alternate name a
-                reader would actually type. -#}
+            {#- On a solver page the alias names the solver, not the guide. -#}
             {%- set altSuffix = solverTitle if solverTitle else 'Easter Egg Guide' %}
             "alternateName": [{% for alias in aliases %}"{{ alias }} {{ altSuffix }}", {% endfor %}"{{ mapName }} {{ altSuffix }}"],
             "keywords": "{{ metaKeywords }}",
@@ -259,7 +233,7 @@
     {%- endif %}
 </head>
 
-<body{% if skipTOC %} data-skip-toc="true"{% endif %}{% if noFlags %} data-no-flags{% endif %}{% if statsPage %} data-stats-live{% endif %}{% if homePage %} data-trending{% endif %}>
+<body{% if skipTOC %} data-skip-toc="true"{% endif %}{% if noFlags %} data-no-flags{% endif %}{% if statsPage %} data-stats-live{% endif %}{% if homePage %} data-trending{% endif %}{% if notFoundPage %} data-not-found{% endif %}>
 {#- Icon on phones, words from --bp-md up (responsive.css). -#}
 {%- set backToTop %}
 <button type="button" class="btn btn--fixed bottom-right">
@@ -279,10 +253,8 @@
         </div>
     </div>
 {%- endset %}
-{#- The home page has no top bar: its title opens the page and nothing sits above it. -#}
 {%- if not homePage %}
 <div class="top-buttons-background-box">
-    <!-- Title at the top of the page -->
     <h1 class="title-text">{{ pageHeading }}</h1>
     {%- if not noLegend %}
     <button type="button" id="legendLauncher" class="btn legend-launcher"
@@ -297,11 +269,7 @@
     </button>
     {%- endif %}
 
-    {#- An anchor, not a button. `navigateToIndex()` only ever set
-        location.href = "/", so the behaviour is identical, but a <button
-        onclick> is invisible to a crawler: it left every guide page with no
-        followable link back to the index, and the site with a link graph
-        that ran one way and stopped. #}
+    {#- An anchor, not a button: crawlers can't follow <button onclick>. #}
     <a class="btn btn--link btn--fixed top-left" href="/">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon lucide lucide-circle-arrow-left-icon lucide-circle-arrow-left" aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
@@ -321,12 +289,8 @@
     {{ backToTop | safe }}
     {{ adToggle | safe }}
     {%- endif %}
-    {#- The guide body, and nothing that repeats from page to page. The footer
-        stays outside: a <footer> inside <main> loses its contentinfo landmark
-        role, so nesting it would trade one landmark for another. #}
+    {#- The footer stays outside: inside <main> it loses its contentinfo role. #}
     <main{% if homePage %} class="content-container"{% endif %}>
-    {#- Under `eleventy --serve` the real body renders anyway, so a stub guide can
-        be read while it's written. -#}
     {%- set isPlaceholder = page.url | cleanUrl in unfinishedPages and not site.serve %}
     {%- if isPlaceholder %}
         <div class="content-container">
@@ -338,27 +302,15 @@
         {%- if about %}
         <section class="about-map">
             <h2 class="about-map__title">About This Map</h2>
-            {#- The community shorthand for a map is often the only name people
-                search by, and until now `aliases` reached the meta description
-                and JSON-LD alternateName and nothing else. Neither is a ranking
-                input, so "MOTD" appeared nowhere Google could weigh it: not once
-                on the whole Mob of the Dead page. Rendering the same front
-                matter here puts it in indexable body copy, and keeps the visible
-                names and the meta names from drifting apart. -#}
+            {#- Aliases in body copy: the meta description and alternateName aren't
+                ranking inputs. -#}
             <p class="about-map__text">{{ about }}{% if aliases %} Also known as {{ aliases | join(', ') }}.{% endif %}</p>
         </section>
         {%- endif %}
     {%- endif %}
     </main>
-    {#- After </main>, not inside it: .content-window is a flex column whose main
-        grows to fill a short page, and this block goes down with the footer so
-        neither floats mid-screen. Still a <nav> landmark out here. -#}
-        {#- Sibling maps from the same game, from src/_data/relatedMaps.js. The
-            one link every guide had to another page was /stats in the footer,
-            which meant no guide passed any authority to another and nothing
-            grouped a map with the rest of its game. Unfinished maps are absent
-            by construction: they are noindex stubs, so linking them would only
-            spend crawl budget on a placeholder. #}
+    {#- After </main>: main grows to fill a short page, so this stays with the
+        footer. Unfinished maps are already excluded by src/_data/relatedMaps.js. #}
         {%- set related = relatedMaps[page.url | cleanUrl] %}
         {%- if related and not isPlaceholder %}
         <nav class="related-maps" aria-labelledby="related-maps-title">
@@ -381,19 +333,15 @@
 
 
     <footer class="site-footer">
-        {%- set updated = page.inputPath | lastmod %}
+        {#- On the 404 the date would be the template's. #}
+        {%- set updated = null if notFoundPage else (page.inputPath | lastmod) %}
         {%- set updatedISO = page.inputPath | lastmodISO %}
         {%- set updatedRel = page.inputPath | lastmodRelative %}
         {%- set released = page.inputPath | released %}
         {%- set releasedISO = page.inputPath | releasedISO %}
         {%- set releasedRel = page.inputPath | releasedRelative %}
         {%- set editorList = editors | formatEditors %}
-        {#- A page the index still marks disabled shows the placeholder above
-            instead of `content`, so it must not advertise the word count of a
-            body nobody can read. #}
         {%- set words = null if (noWordCount or (page.url | cleanUrl in unfinishedPages and not site.serve)) else (content | wordcount) %}
-        {#- The home page has no guide body of its own worth counting, so it reports
-            the whole library instead. #}
         {%- if homePage %}{% set words = siteWords.words %}{% endif %}
         <div class="site-footer__meta">
             <p class="site-footer__facts">
@@ -401,7 +349,8 @@
                 {%- if updated %}<time class="site-footer__updated" datetime="{{ updatedISO }}" title="Last updated {{ updated }}">Updated {{ updatedRel }}</time>{% endif %}
                 {%- if released and not homePage %}<time class="site-footer__released" datetime="{{ releasedISO }}" title="Released {{ releasedRel }}">Released {{ released }}</time>{% endif %}
                 {%- if words %}<span class="site-footer__words">{{ words | thousands }} words{% if homePage %} across {{ siteWords.guides }} guides{% endif %}</span>{% endif %}
-                <span class="site-footer__views"></span>
+                {#- footer.ts would POST a view for every mistyped URL. #}
+                {%- if not notFoundPage %}<span class="site-footer__views"></span>{% endif %}
             </p>
             <p class="site-footer__base">
                 <span class="site-footer__copyright">&copy; {% year %} mmmrkennedy</span>
@@ -409,10 +358,7 @@
                 {%- if homePage %}<a class="site-footer__link" href="/solvers">All puzzle solvers</a>{% endif %}
             </p>
         </div>
-        {#- CC BY-SA 3.0 asks for credit "in any reasonable manner based on the
-            medium", which for a web page means somewhere a reader can actually
-            find it. Shown only where the artwork is: pages that mount the Eight
-            Queens solver set usesChessIcon. See the licence note at
+        {#- CC BY-SA 3.0 attribution, required where the artwork appears. See
             .queens-cell.is-queen. #}
         {%- if usesChessIcon %}
         <p class="site-footer__credits">
@@ -430,14 +376,12 @@
 {%- if homePage %}
 <script src="/js/ui/birthday.js?v={{ site.buildVersion }}" defer></script>
 {%- endif %}
-<!-- Ads load as an independent async island (ads.ts self-bootstraps) -->
 <script src="/js/ads.js?v={{ site.buildVersion }}" async></script>
 
 {%- if useReactSolvers %}
     <!-- REACT_BUNDLE_PLACEHOLDER -->
 {%- endif %}
 
-<!-- Legend / "How to read this guide" overlay (launcher lives in the title bar) -->
 {%- if not noLegend %}
 <div class="legend-overlay" id="legendOverlay" role="dialog" aria-modal="true" aria-labelledby="legendTitle">
     <div class="legend-panel">
@@ -503,5 +447,22 @@
     </div>
 </div>
 {%- endif %}
+{#- Behaviour: src/ts/ui/accent-picker.ts. #}
+<div class="accent-picker" role="group" aria-label="Site colour">
+    <button type="button" class="accent-picker__toggle" aria-expanded="false" aria-controls="accent-picker-options" aria-label="Change site colour" title="Change site colour">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+    </button>
+    <div class="accent-picker__panel" id="accent-picker-options">
+        <ul class="accent-picker__options">
+            {%- for c in accents %}
+            <li><button type="button" class="accent-picker__option" data-accent="{{ c.id }}" aria-pressed="false" aria-label="{{ c.name }}" title="{{ c.name }}" style="--swatch: {{ c.swatch }}"></button></li>
+            {%- endfor %}
+        </ul>
+        <div class="accent-picker__custom">
+            <input type="color" class="accent-picker__color" value="#ee7474" aria-label="Pick a custom colour" title="Custom colour">
+            <input type="text" class="accent-picker__hex" placeholder="#hex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Custom colour hex code">
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -52,8 +52,7 @@ export default function LetterboardSolver({ title }: { title?: string }) {
     const [word, setWord] = useState<Word | null>(null);
     const [boardId, setBoardId] = useState<BoardId | null>(null);
 
-    // The board is picked by its bottom-left letters, so that — not the array
-    // index behind it — is what the reader believes they chose.
+    // Report the bottom-left letters the reader picked, not the array index.
     useSolverReport("LetterboardSolver", () => ({
         Word: word,
         "Board (bottom-left letters)": boardId === null ? null : BOARDS[boardId].bottomLeft,

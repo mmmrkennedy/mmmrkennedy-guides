@@ -5,8 +5,6 @@ IMAGE_EXTS = ('.png', '.webp', '.jpg', '.jpeg', '.gif', '.avif', '.svg')
 TEXT_EXTS = ('.html', '.htm', '.js', '.jsx', '.ts', '.tsx', '.css', '.json', '.md', '.txt')
 SKIP_DIRS = {'node_modules', '.git', 'dist', 'build', '.idea', '.venv', '__pycache__'}
 
-# Matches any path-ish token ending in an image extension, e.g.
-#   pictures/pap/pap_bastion.png   /games/IW/.../pictures/blue_diamond.webp
 REF_RE = re.compile(
     r'[\w./\\-]*\.(?:' + '|'.join(e.lstrip('.') for e in IMAGE_EXTS) + r')',
     re.IGNORECASE,
@@ -18,7 +16,6 @@ def norm(path):
 
 
 def find_repo_root(start):
-    """Walk up from start until a folder containing .git or package.json."""
     current = os.path.abspath(start)
     while True:
         if any(os.path.exists(os.path.join(current, m)) for m in ('.git', 'package.json')):
@@ -37,7 +34,6 @@ def walk(root):
 
 
 def find_images(map_dir):
-    """All image files under map_dir, as paths relative to map_dir."""
     return [
         os.path.relpath(p, map_dir)
         for p in walk(map_dir)
@@ -46,7 +42,6 @@ def find_images(map_dir):
 
 
 def collect_references(*roots):
-    """Every image path referenced by any text file under the given roots."""
     refs = set()
     seen = set()
     for root in roots:
@@ -68,13 +63,11 @@ def collect_references(*roots):
 
 
 def collect_unused(map_dir, refs):
-    """Images under map_dir whose relative path is not referenced anywhere."""
     unused = []
     for rel in find_images(map_dir):
         rel_norm = norm(rel)
         base = os.path.basename(rel_norm)
-        # A reference counts if it ends with the map-relative path (exact), or
-        # falls back to the bare file name (paths built at runtime).
+        # Bare file name also counts, for paths built at runtime.
         if any(ref.endswith(rel_norm) or ref.endswith('/' + base) or ref == base for ref in refs):
             continue
         unused.append(os.path.join(map_dir, rel))

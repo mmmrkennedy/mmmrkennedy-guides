@@ -1,21 +1,12 @@
 import { log } from "../core/logger";
 
 /**
- * Trending indicator
- * ------------------
- * On the home page (gated by <body data-trending>), marks the single most-viewed
- * guide and the single most-viewed solver over the last 7 days with a subtle 🔥.
- *
- * The ranking comes from GET /api/trending (D1 `view_days`, edge-cached). The
- * guide-vs-solver split and link matching are done here from the index's own
- * links: solver links carry `.solver-link`, and `.disabled` (unfinished) links
- * are skipped — so it works even where a path doesn't follow naming conventions
- * (e.g. /citadelle_void_table).
+ * Guide vs solver comes from the index's links (.solver-link), not the path, since
+ * some paths don't follow naming conventions (e.g. /citadelle_void_table).
  */
 document.addEventListener("DOMContentLoaded", () => {
     if (!document.body.hasAttribute("data-trending")) return;
 
-    // Map normalized path -> { anchor, isSolver } from the index's internal links.
     const byPath = new Map<string, { anchor: HTMLAnchorElement; isSolver: boolean }>();
     document.querySelectorAll<HTMLAnchorElement>('a[href^="/games/"]').forEach((a) => {
         if (a.classList.contains("disabled")) return;
@@ -50,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         })
         .catch((err) => {
-            // Endpoint unreachable (e.g. eleventy dev server) — no indicator, no noise.
+            // Expected on the eleventy dev server, which has no /api.
             log("warn", "[trending] unavailable:", err);
         });
 
@@ -66,7 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
         anchor.appendChild(flame);
     }
 
-    /** Same-origin pathname, query/hash dropped, trailing slash and .html stripped. */
     function normPath(href: string): string {
         let p: string;
         try {

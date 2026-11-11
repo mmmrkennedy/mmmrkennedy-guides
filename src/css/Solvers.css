@@ -1,49 +1,22 @@
-/* ============================================================
-   SOLVERS — shared foundation + per-solver overrides
-   Token-driven, mobile-first.
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   Solver-scoped tokens
-   Defaults that any solver can override locally on its container.
-   The solver gold accent is distinct from the site's tier-1
-   gold — it's a softer amber tuned for interactive elements.
-   ------------------------------------------------------------ */
 .solver-container {
-    /* Solver accent — gold/amber, distinct from tier-1 */
-    --solver-accent: #c9a961;
-    --solver-accent-bright: #d4b56f;
-    --solver-accent-dim: #b89a5a;
-    --solver-accent-glow: rgb(201 169 97 / 40%);
+    --solver-accent: var(--color-tier-1);
+    --solver-accent-bright: var(--color-accent-bright);
+    --solver-accent-dim: var(--color-tier-2);
+    --solver-accent-glow: color-mix(in srgb, var(--color-tier-1) 40%, transparent);
 
-    /* Secondary highlight. A cool counterpoint to the gold accent, for marking
-       a subset of results without claiming they are the answer. Deliberately
-       not the gold: gold means "this is your result", this means "these are
-       worth looking at first". */
+    /* "Look here first", deliberately not the accent, which means "this is your result". */
     --solver-hint: #78a8e8;
     --solver-hint-bg: rgb(120 168 232 / 10%);
-
-    /* Grid layout — solvers override these */
     --solver-cols: 4;
     --solver-rows: 4;
-
-    /* Cell size: fluid on small screens, capped on larger.
-       Roughly 36px at 320px viewport up to 70px on wider screens.
-       Solvers can override the cap for big boards. */
     --solver-cell-size: clamp(2.25rem, 12vw, 4.375rem);
     --solver-cell-gap: var(--space-xs);
-
-    /* Cell visuals */
     --solver-cell-radius: 4px;
     --solver-cell-bg: #1e1e1e;
     --solver-cell-border: var(--color-border-subtle);
     --solver-cell-border-width: 1px;
-
-    /* Monospace, for anything a reader reads character by character:
-       tapped morse streams, result codes. */
     --solver-font-mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
 
-    /* The lifted panel */
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
@@ -65,8 +38,8 @@
     box-sizing: border-box;
 }
 
-/* Flex children default to min-width: auto, which lets content force the
-   container wider than the viewport. Force them to be allowed to shrink. */
+/* Flex children default to min-width: auto, which lets content push the
+   container past the viewport. */
 .solver-container > * {
     min-width: 0;
     max-width: 100%;
@@ -80,20 +53,13 @@
     }
 }
 
-/* Centered variant for solver-only pages */
 .solver-container.is-centered {
     align-items: center;
     text-align: center;
 }
 
-/* ------------------------------------------------------------
-   Solver-only page — center the solver inside its content-container.
-   Don't touch the content-container's width/margins: sidebar ads
-   (ads.js positionSidebarAd) measure its right edge to find room
-   on screen, and forcing it full-width hides the sidebars.
-   In a guide (no .solver-only-page wrapper) the solver stays
-   left-aligned with surrounding content.
-   ------------------------------------------------------------ */
+/* Don't change .content-container width/margins here: ads.js positionSidebarAd
+   measures its right edge, and full width hides the sidebar ads. */
 .solver-only-page .content-container {
     border-bottom: none;
 }
@@ -102,20 +68,8 @@
     margin-top: var(--space-xl);
 }
 
-/* ------------------------------------------------------------
-   Solver-only page layout (Nov 2026 redesign, after NYT Games).
-   The solver is the whole page, so it gets no panel. Structure comes from
-   two things instead of a box:
-   - One column. Guide link, intro and solver share --solver-page-width and
-     are centred on it, so every edge lines up.
-   - Context above a rule, tool below it. The guide link and intro are a quiet
-     page header that the intro's rule closes off. Everything under the rule
-     belongs to the solver, and its instructions are brighter and larger than
-     the intro, so the page's voice and the tool's voice read differently.
-   Inside the solver, form rows and the result lose their outlines and are
-   separated by fill alone. Solvers embedded in guides keep the panel: there
-   it sets the tool apart from the prose around it.
-   ------------------------------------------------------------ */
+/* Solver-only pages drop the panel. Solvers embedded in guides keep it to set
+   them apart from the prose. */
 .solver-only-page {
     --solver-page-width: 34rem;
 }
@@ -130,12 +84,12 @@
     border: none;
     border-radius: 0;
     box-shadow: none;
+
+    --solver-cell-size: clamp(2.75rem, 13vw, 5rem);
 }
 
-/* Tool first, context after. On single-solver pages the intro paragraph sits
-   after the solver in the source, so it reads as an "about this puzzle" note
-   under a rule, followed by the guide link. On multi-solver pages (Reckoning)
-   it still comes before its solver as a subtitle, and keeps the base rule. */
+/* Single-solver pages put the intro after the solver. On multi-solver pages
+   (Reckoning) it precedes its solver and keeps the base styles. */
 .solver-only-page [data-solver] + .solver-intro {
     max-width: var(--solver-page-width);
     margin: var(--space-xl) auto 0;
@@ -147,9 +101,6 @@
     padding: var(--space-xs) var(--space-sm) var(--space-sm);
 }
 
-/* The tool's lead line, the solver's equivalent of NYT's "Create four groups
-   of four!". Balanced wrapping so a centred two- or three-line paragraph has
-   even lines instead of a long line over a stub. */
 .solver-only-page .solver-instructions {
     color: var(--color-text-secondary);
     font-size: var(--font-size-base);
@@ -157,39 +108,28 @@
     text-wrap: balance;
 }
 
-/* Bigger pieces. The tool is the page, so it should fill the column rather
-   than sit small in the middle of it. */
-.solver-only-page .solver-container {
-    --solver-cell-size: clamp(2.75rem, 13vw, 5rem);
-}
-
 .solver-only-page .solver-container--beamsmasher .solver-symbol-select.is-grid {
     --symbol-size: clamp(2.75rem, 13vw, 4.75rem);
 }
 
-.solver-only-page .solver-slot {
-    --slot-half-size: clamp(2.25rem, 9vw, 3rem);
-}
-
-/* The answer is the payoff, so it reads as one: centred, a size up, and any
-   bolded value in gold. An output with nothing in it yet (Simon Says before the
-   first tap) is hidden instead of showing an empty bar that looks like a text
-   field. */
 .solver-only-page .solver-output {
     padding: var(--space-md) var(--space-lg);
     font-size: var(--font-size-md);
     text-align: center;
+    background: var(--color-bg-secondary);
+    border-color: transparent;
+    box-shadow: none;
 }
 
 .solver-only-page .solver-output strong {
     color: var(--solver-accent);
 }
 
+/* An empty output (Simon Says before the first tap) looks like a text field. */
 .solver-only-page .solver-output:empty {
     display: none;
 }
 
-/* The container's own title on a multi-solver page heads its section. */
 .solver-only-page .content-container > .solver-title {
     margin-top: var(--space-lg);
     color: var(--color-tier-1);
@@ -199,18 +139,10 @@
     border-color: transparent;
 }
 
-.solver-only-page .solver-output {
-    background: var(--color-bg-secondary);
-    border-color: transparent;
-    box-shadow: none;
-}
-
 .solver-only-page .btn--solver {
     border-radius: 999px;
 }
 
-/* Everything on these pages is centred, so pieces that sat at the left edge of
-   the old panel (pickers, step labels, the report button) come to the middle. */
 .solver-only-page .solver-symbol-select,
 .solver-only-page .solver-symbol-select.is-grid,
 .solver-only-page .morse-skip,
@@ -227,10 +159,9 @@
     align-items: center;
 }
 
-/* Slots: an empty slot is a faint recess with no outline, a filled one is a
-   solid tile with a gold label. Replaces the dashed boxes, which read as
-   unfinished. */
 .solver-only-page .solver-slot {
+    --slot-half-size: clamp(2.25rem, 9vw, 3rem);
+
     background: rgb(255 255 255 / 4%);
     border: 2px solid transparent;
     border-radius: 6px;
@@ -250,8 +181,7 @@
     color: var(--solver-accent);
 }
 
-/* Text slots (Maxis) stack into a numbered list down the column instead of a
-   row of four that ran wider than the page. */
+/* Maxis text slots stack: a row of four is wider than the page. */
 .solver-only-page .solver-slot-list:has(.is-text) {
     flex-direction: column;
     align-self: stretch;
@@ -266,7 +196,6 @@
     border: none;
 }
 
-/* Text picker: the same flat tiles as the symbol pickers. */
 .solver-only-page .solver-text-picker {
     gap: var(--space-sm);
 }
@@ -291,7 +220,6 @@
     color: var(--color-bg-primary);
 }
 
-/* Morse pads: flat, the press still flashes gold. */
 .solver-only-page .morse-pad {
     border-color: transparent;
 }
@@ -305,38 +233,25 @@
     background: var(--solver-accent);
 }
 
-/* Everything above it is centered here, so the block sits under the card rather
-   than out at the guide column's left edge. */
 .content-window:has(.solver-only-page) > .related-maps {
-    /* --solver-page-width plus this block's own inline padding, so its text
-       lines up with the solver column. The token itself is scoped below here. */
+    /* --solver-page-width plus this block's inline padding. The token isn't in
+       scope here. */
     max-width: calc(34rem + 2 * var(--space-md));
 }
 
-/* ------------------------------------------------------------
-   Link back to the map's full guide.
-   Sits above the solver on solver-only pages, where most readers
-   arrive from search and would otherwise have no route to the
-   guide the puzzle belongs to. A plain line of text at the head of
-   the page, so it must not compete with the solver for the eye.
-   .internal-link supplies the copper colour, the underline and the
-   leave-this-page glyph.
-   ------------------------------------------------------------ */
+/* Most solver-only readers arrive from search, so this is their route to the
+   guide. Colour, underline and glyph come from .internal-link. */
 .solver-guide-link {
     padding: var(--space-md) var(--space-md) 0;
     font-size: var(--font-size-sm);
     text-align: center;
 }
 
-/* The padding keeps this a comfortable tap target on phones. */
 .solver-guide-link__anchor {
     display: inline-block;
     padding-block: 0.25rem;
 }
 
-/* ------------------------------------------------------------
-   Typography
-   ------------------------------------------------------------ */
 .solver-title {
     margin: 0;
     color: var(--color-text-secondary);
@@ -345,16 +260,10 @@
     text-align: center;
 }
 
-/* Solver hub: one row per solver page, the whole row a link.
-   Left-aligned on purpose, against the centred rhythm of the rest of these
-   pages: every name starting at the same x is what makes a list of five
-   scannable, and this page is a list, not a tool.
-
-   The name is a real <h2> inside the anchor, so the puzzle names stay in the
-   document outline. The line beside it is a <span> and not a <p> on purpose:
-   line-flagger decorates `.content-container p`, and a flag button inside an
-   anchor would navigate the moment it was clicked. The same sentence is
-   flaggable on the solver's own page, where it is a paragraph. */
+/* Left-aligned on purpose so the names scan as a list.
+   The name is an <h2> inside the anchor to stay in the outline. The line is a
+   <span>, not a <p>: line-flagger decorates `.content-container p`, and a flag
+   button inside an anchor would navigate on click. */
 .solver-hub {
     display: flex;
     flex-direction: column;
@@ -364,10 +273,7 @@
     margin-inline: auto;
 }
 
-/* Game and map headings on the site-wide /solvers hub. The tier margins are
-   sized for prose, and in a flex column they stack on the gap instead of
-   collapsing, so the rows read as scattered. Trimmed to let each heading sit
-   on the cards it names. */
+/* Tier margins don't collapse in a flex column, they add to the gap. */
 .solver-hub > .title-tier-1 {
     margin: var(--space-md) 0 0;
 }
@@ -376,8 +282,8 @@
     margin: var(--space-xs) 0 0;
 }
 
-/* The list is only there because index-filter.ts pairs each game's <h2 id> with
-   a <ul> and filters its <li>s. It should look like the same column of rows. */
+/* The <ul> exists only because index-filter.ts pairs each game's <h2 id> with a
+   <ul> and filters its <li>s. */
 .solver-hub > ul,
 .solver-hub > ul > li {
     display: flex;
@@ -405,16 +311,10 @@
     transition: background-image 0.15s ease;
 }
 
-/* Quiet on purpose. The violet edge and violet name already say "link", so
-   hover only has to confirm which row the pointer is on. The first version
-   swapped the background to --color-bg-tertiary, a jump from #252525 to #333
-   that read as a button being pressed. A 3% white wash over the same token
-   lands near #2c2c2c, roughly a third of that step. Focus is not toned down:
-   a keyboard user has no pointer to tell them where they are. */
+/* Hover is deliberately quiet: the violet edge already says "link". A swap to
+   --color-bg-tertiary read as a pressed button. Focus is not toned down. */
 .solver-hub__card:hover {
-    /* components.css `a:hover` adds an underline and drops opacity to 0.8. On a
-       row-sized link that underlines the description too and dims the whole
-       card, which is louder than the wash it sits on top of. */
+    /* Undo components.css `a:hover` underline and 0.8 opacity. */
     opacity: 1;
     background-image: linear-gradient(rgb(255 255 255 / 3%), rgb(255 255 255 / 3%));
     text-decoration: none;
@@ -439,16 +339,7 @@
     line-height: var(--line-height-relaxed);
 }
 
-/* One authored line of context above a solver, saying what the puzzle is and
-   where it is on the map.
-
-   The puzzle's name is the page's H1 in the top bar, so a single-solver page
-   doesn't repeat it here. This paragraph ships in the HTML source, and
-   line-flagger can decorate it because it sits outside the solver root, so a
-   wrong location is reportable like any other line.
-
-   .solver-title carries `margin: 0` for its normal home inside the container's
-   flex gap, so on a multi-solver page the spacing is supplied here. */
+/* Sits outside the solver root so line-flagger can decorate it. */
 .solver-intro {
     max-width: 62ch;
     margin: var(--space-xs) auto var(--space-md);
@@ -459,33 +350,19 @@
 }
 
 .solver-instructions {
-    /* width:0 + min-width:100% removes this paragraph from the
-       container's intrinsic width calculation. The container
-       sizes itself based on its other children (the puzzle board,
-       buttons, etc.), then the instructions expand to fill
-       whatever width that produced. Without this trick, a long
-       single-line of instructions would push the container
-       wider than the puzzle needs. */
+    /* width: 0 + min-width: 100% keeps this out of the container's intrinsic
+       width, so long instructions can't widen it past the board. */
     width: 0;
     min-width: 100%;
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
-
-    /* Was --line-height-loose, which is not a token: the declaration was
-       invalid, so this inherited body's --line-height-relaxed instead. Naming
-       that value keeps the rendering identical and makes the intent explicit. */
     line-height: var(--line-height-relaxed);
     overflow-wrap: anywhere;
 }
 
-/* Site-wide callout boxes (.note, .tip, …) dropped into a solver panel.
-   Three things need undoing: their own vertical margins, which double up
-   against the container's flex gap; their intrinsic width, which would
-   drag the desktop `width: fit-content` panel wider than the board it
-   wraps (same width:0 + min-width:100% trick as .solver-instructions);
-   and their body-copy size, which would otherwise make an aside the
-   largest text in a panel whose prose is all --font-size-sm. */
+/* Callouts in a panel: margins double the flex gap, and their width would widen
+   the fit-content panel (same trick as .solver-instructions). */
 .solver-container > .note,
 .solver-container > .no-return,
 .solver-container > .danger,
@@ -512,11 +389,6 @@
     font-weight: 600;
 }
 
-/* ------------------------------------------------------------
-   Buttons — solver gold variant
-   Layered on top of the site-wide .btn from main bundle.
-   Use as: <button class="btn btn--solver">…</button>
-   ------------------------------------------------------------ */
 .btn--solver {
     padding: var(--space-sm) var(--space-lg);
     border-color: var(--solver-accent);
@@ -552,9 +424,6 @@
     cursor: not-allowed;
 }
 
-/* ------------------------------------------------------------
-   Controls — button rows, checkboxes, toggles
-   ------------------------------------------------------------ */
 .solver-controls {
     display: flex;
     flex-wrap: wrap;
@@ -566,10 +435,6 @@
     justify-content: center;
 }
 
-/* ------------------------------------------------------------
-   Form rows — labeled input/select pairs
-   Stack vertically on mobile, horizontal on desktop.
-   ------------------------------------------------------------ */
 .solver-form-row {
     display: flex;
     flex-direction: column;
@@ -586,8 +451,6 @@
     font-weight: 500;
 }
 
-/* Small inline color dot for use inside labels.
-   Color is set via inline style or a CSS custom property. */
 .solver-color-dot {
     display: inline-block;
     width: 0.75em;
@@ -598,9 +461,6 @@
     background: var(--dot-color, currentcolor);
 }
 
-/* Inline text color utilities — for labels and inline spans
-   that need to convey a specific color (e.g. "the green valve",
-   "the red wire"). Background-safe for the dark panel. */
 .solver-text--green { color: var(--color-tip-text); }
 .solver-text--pink { color: #e08bbf; }
 
@@ -649,15 +509,7 @@
     }
 }
 
-/* ------------------------------------------------------------
-   Generic grid + cell system
-   Driven by --solver-cols / --solver-rows / --solver-cell-size
-   set on the container.
-   ------------------------------------------------------------ */
-
-/* Grid wrapper allows horizontal scroll by default — needed for
-   solvers with boards larger than mobile width (e.g. 8-queens).
-   Solvers whose grids shrink to fit can opt out with .is-fit. */
+/* Scrolls by default for boards wider than a phone (8-queens). */
 .solver-grid-wrapper {
     display: flex;
     justify-content: center;
@@ -676,10 +528,6 @@
     gap: var(--solver-cell-gap);
 }
 
-/* Inset-frame variant: dark frame look (used by reactor).
-   Frame appearance is tokenized — solvers can override
-   --solver-frame-bg / --solver-frame-border for variants
-   like the gold venom board. */
 .solver-grid.is-framed {
     --solver-frame-bg: #111;
     --solver-frame-border: var(--color-border-medium);
@@ -719,13 +567,6 @@
     cursor: default;
 }
 
-/* ------------------------------------------------------------
-   Symbol select — image-button grids
-   Used by beamsmasher, floppy, mahjong, letterboard.
-   Default layout: flex-wrap row.
-   .is-grid variant: auto-fit grid that expands columns based
-   on viewport width, with each cell sized via --symbol-size.
-   ------------------------------------------------------------ */
 .solver-symbol-select {
     display: flex;
     flex-wrap: wrap;
@@ -744,9 +585,7 @@
     margin: 0 auto;
 }
 
-/* Flat tiles: the fill alone separates a tile from the page, no outline.
-   Selection inverts the tile to a gold fill rather than adding a border or glow.
-   The border is kept, transparent, so sizes don't shift. */
+/* The transparent border keeps sizes from shifting. */
 .solver-symbol-select button {
     padding: var(--space-xs);
     background-color: var(--color-bg-tertiary);
@@ -782,19 +621,11 @@
     object-fit: contain;
 }
 
-/* When NOT inside a grid, use the cell-size token for a fixed image size */
 .solver-symbol-select:not(.is-grid) img {
     width: var(--solver-cell-size);
     height: var(--solver-cell-size)
 }
 
-/* ------------------------------------------------------------
-   Letter cells — side-by-side letter + symbol image cell.
-   Used by alphabet-based pickers (Wyler symbols, etc).
-   Each half is a fixed square. The cell is taller and more
-   pronounced than a generic symbol picker — the letter is
-   the primary identifier, the symbol is secondary visual.
-   ------------------------------------------------------------ */
 .solver-letter-grid {
     --letter-half-size: clamp(2.75rem, 12vw, 3.125rem);
     --letter-cell-size: calc(var(--letter-half-size) * 2);
@@ -858,11 +689,6 @@
     object-fit: contain;
 }
 
-/* ------------------------------------------------------------
-   Image row — non-interactive row of images for displaying
-   results, sequences, etc. Cousin to .solver-symbol-select but
-   without buttons or interactive states.
-   ------------------------------------------------------------ */
 .solver-image-row {
     display: flex;
     flex-wrap: wrap;
@@ -878,23 +704,12 @@
     border-radius: 4px;
 }
 
-/* ------------------------------------------------------------
-   Stack — a tight vertical list of items.
-   Used when a solver has multiple sub-rows (slot rows, form
-   rows, etc.) that should sit closer together than the
-   container's default gap.
-   ------------------------------------------------------------ */
 .solver-stack {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
 }
 
-/* ------------------------------------------------------------
-   Color swatches — buttons that show a color.
-   Used for solvers where the user selects from a fixed palette.
-   Color comes from --swatch-color (set via inline style or class).
-   ------------------------------------------------------------ */
 .solver-swatch-row {
     display: flex;
     flex-wrap: wrap;
@@ -935,11 +750,6 @@
     outline-offset: 2px;
 }
 
-/* ------------------------------------------------------------
-   Slot row — a labeled row holding swatches/inputs/etc.
-   Lighter than .solver-form-row (no card background); just a
-   label paired with content. Stacks on mobile, inlines on desktop.
-   ------------------------------------------------------------ */
 .solver-slot-row {
     display: flex;
     flex-direction: column;
@@ -965,10 +775,6 @@
     }
 }
 
-/* ------------------------------------------------------------
-   Step labels — compact section dividers for multi-step solvers.
-   Used by chemical-step solver and any other progressive form.
-   ------------------------------------------------------------ */
 .solver-step-label {
     margin: var(--space-sm) 0 0;
     color: var(--solver-accent);
@@ -978,12 +784,6 @@
     letter-spacing: 0.05em;
 }
 
-/* ------------------------------------------------------------
-   Text picker — a wrapping row of text buttons used as a
-   picker (one for each option). Like .solver-symbol-select but
-   for text items instead of images. Selected state shows the
-   gold ring; disabled items dim out.
-   ------------------------------------------------------------ */
 .solver-text-picker {
     display: flex;
     flex-wrap: wrap;
@@ -1017,12 +817,7 @@
     box-shadow: 0 0 0 1px var(--solver-accent), 0 0 6px var(--solver-accent-glow);
 }
 
-/* ------------------------------------------------------------
-   Output display — for solvers that show a separate result panel
-   (vs. inline in .solver-instructions).
-   width:0 + min-width:100% stops result-string changes from
-   driving the container's width as the user changes inputs.
-   ------------------------------------------------------------ */
+/* width: 0 + min-width: 100% stops result changes from resizing the container. */
 .solver-output {
     width: 0;
     min-width: 100%;
@@ -1034,8 +829,6 @@
     overflow-wrap: anywhere;
 }
 
-/* Stack of paragraphs/sections inside the output panel.
-   Tighter than the container's default gap. */
 .solver-output > * + * {
     margin-top: var(--space-sm);
 }
@@ -1044,8 +837,6 @@
     margin: 0;
 }
 
-/* Formula list — used by chemical-step solver to display each
-   formula's ingredients and resulting number. */
 .solver-formula-list {
     display: flex;
     flex-direction: column;
@@ -1076,20 +867,11 @@
     font-weight: 600;
 }
 
-/* Word list — multi-column grid of word/term items.
-   Used by word filters and similar list-display solvers.
-   Scrollable when long; scrollbar hidden for cleanliness. */
 .solver-word-list {
     display: grid;
 
-    /* Every cell is one word wide, so nothing wraps and every row is the same
-       height. The longest entry measures 15.3ch in the body stack, so a 16ch
-       floor plus the cells' own padding holds any of them on one line. ch
-       resolves against this element's font, which is why the size clamp lives
-       here and the cells inherit it. min(100%, ...) lets a panel too narrow
-       for even one cell fall back to a single column instead of overflowing.
-       auto-fill rather than a fixed count: the column count is whatever the
-       panel can hold, so it steps down on its own as the panel narrows. */
+    /* 16ch fits the longest entry (15.3ch) on one line. ch resolves against this
+       element's font, so the size clamp lives here and the cells inherit it. */
     grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--word-ch, 16) * 1ch + 2 * var(--space-sm))), 1fr));
     gap: var(--space-xs);
     font-size: clamp(0.6875rem, 3.4vw, var(--font-size-sm));
@@ -1111,9 +893,6 @@
     border-radius: 4px;
     color: var(--color-text-primary);
     text-align: center;
-
-    /* The track floor above is sized to the longest word, so nothing needs a
-       second line. */
     white-space: nowrap;
 }
 
@@ -1123,24 +902,15 @@
     text-align: center;
 }
 
-/* Group hint. The Shaolin word filter tints the words belonging to the group
-   the puzzle is currently drawing from, and sorts them to the front. Purely a
-   reading aid: every prefix match is still listed, the tinted ones are just
-   the likely ones. */
 .solver-word-list li.is-group-match {
     background: var(--solver-hint-bg);
 }
 
-/* Sits with the results, not with the inputs: it is something the solver
-   worked out, not something you told it. */
 .solver-group-label {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
     gap: var(--space-xs);
-
-    /* Half the browser default for a paragraph. The container's flex gap
-       already separates it from the panel below. */
     margin: 0.5em 0;
     color: var(--solver-hint);
     font-size: var(--font-size-sm);
@@ -1160,24 +930,9 @@
     color: var(--color-text-primary);
 }
 
-/* ------------------------------------------------------------
-   Shaolin word filter — the panel is sized to four words across.
-
-   Every other solver leaves the panel on its 22.5rem floor: .solver-output is
-   width:0/min-width:100% so results never drive the panel's width, and the
-   container's fit-content therefore lands on min-width. That floor is not wide
-   enough for even two of these words, so this panel takes its width from the
-   grid instead. min() hands the rest back to the viewport, so when four cells
-   will not fit, the panel is simply as wide as it can be and the auto-fill
-   above steps down to three, two, one. Nothing ever wraps at any width.
-
-   Everything is in ch so it tracks whatever font the platform serves. The one
-   number to watch is the 0.875: the list renders at --font-size-sm while the
-   panel inherits --font-size-base, and ch scales with font-size, so a word
-   that is --word-ch wide in the list is --word-ch * 0.875 wide in the panel's
-   own ch. That factor is --font-size-sm / --font-size-base; if either token
-   moves, move it too.
-   ------------------------------------------------------------ */
+/* Sized to four words across: the shared 22.5rem floor fits fewer than two.
+   0.875 is --font-size-sm / --font-size-base (list ch vs panel ch). If either
+   token changes, update it. */
 .solver-container--word-filter {
     /* Cell width in list-ch. SAVAGEMADETHIS, the longest entry, is 15.34ch. */
     --word-ch: 16;
@@ -1201,12 +956,6 @@
     }
 }
 
-/* ------------------------------------------------------------
-   Result list — stacked list of lookup results.
-   Each item has a bold "key" (symbol, abbreviation, etc.) and
-   a "descriptor" (full name, additional info). Optional "meta"
-   for tertiary info like a code or number.
-   ------------------------------------------------------------ */
 .solver-result-list {
     display: flex;
     flex-direction: column;
@@ -1245,7 +994,6 @@
     font-size: var(--font-size-base);
 }
 
-/* Section heading inside an output panel */
 .solver-result-section + .solver-result-section {
     margin-top: var(--space-md);
 }
@@ -1281,17 +1029,6 @@
     animation: solver-recalc 0.15s ease-out;
 }
 
-/* ============================================================
-   PER-SOLVER BLOCKS
-   Each block keeps overrides minimal — set local tokens, then
-   only add what the foundation can't express generically.
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   BO7 Totenreich Reactor Solver
-   4×4 grid with framed dark backdrop.
-   States: empty / rod (placed) / uranium (answer) / activated.
-   ------------------------------------------------------------ */
 .solver-container--totenreich-reactor {
     --solver-cols: 4;
     --solver-rows: 4;
@@ -1299,7 +1036,6 @@
     --solver-cell-gap: 3px;
 }
 
-/* State: rod placed by user */
 .reactor-cell.cell-rod {
     background: #4a4a52;
     border-color: #666;
@@ -1311,7 +1047,6 @@
     border-color: #666;
 }
 
-/* State: uranium placement (solver answer) */
 .reactor-cell.cell-uranium {
     background: #00c853;
     border-color: #69f0ae;
@@ -1319,7 +1054,6 @@
     cursor: default;
 }
 
-/* State: rod activated by adjacent uranium chain */
 .reactor-cell.cell-activated {
     background: var(--solver-accent);
     border-color: var(--solver-accent-bright);
@@ -1327,11 +1061,6 @@
     cursor: default;
 }
 
-/* ------------------------------------------------------------
-   IW Beast from Beyond — Venom-X Maze Solver
-   6×6 board with gold frame, green cells, canvas overlay
-   for drawing the solution path.
-   ------------------------------------------------------------ */
 .solver-container--venom-maze {
     --solver-cols: 6;
     --solver-rows: 6;
@@ -1345,11 +1074,9 @@
     --solver-frame-padding: var(--space-sm);
     --solver-frame-border-width: 3px;
 
-    /* Position context for the canvas overlay */
     position: relative;
 }
 
-/* Green maze cells */
 .venom-cell {
     position: relative;
     background: #4a9d4a;
@@ -1361,7 +1088,6 @@
     background: #5aba5a;
 }
 
-/* Path-drawing canvas sits on top of the cells */
 .venom-canvas {
     position: absolute;
     top: 0;
@@ -1370,7 +1096,6 @@
     z-index: 10;
 }
 
-/* Image placed inside a cell (start/end marker) */
 .venom-piece {
     position: absolute;
     inset: 0;
@@ -1383,25 +1108,17 @@
     opacity: 0.6;
 }
 
-/* ------------------------------------------------------------
-   IW Beast from Beyond — Floppy Disk Symbol Solver
-   12-symbol picker locked to a 4×3 grid at all widths.
-   Symbol images sized to match reactor-cell dimensions.
-   ------------------------------------------------------------ */
+/* Floppy tiles match the reactor cell size. */
 .solver-container--floppy .solver-symbol-select.is-grid {
     --symbol-cols: 4;
     --symbol-size: clamp(2.25rem, 16vw, 4.375rem);
 }
 
-/* Tighten the button wrapper so the rendered tile matches reactor-cell size */
 .solver-container--floppy .solver-symbol-select.is-grid button {
     padding: 0;
     border-width: 3px;
 }
 
-/* Floppy result row: locked 4-column grid that shrinks images
-   to fit instead of wrapping. The grid driven by minmax(0, 1fr)
-   so columns can shrink below image intrinsic width. */
 .solver-container--floppy .solver-image-row {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1413,20 +1130,11 @@
     width: 100%;
     height: auto;
     aspect-ratio: 1;
-
-    /* Cap so they don't grow huge on wide screens */
     max-width: var(--solver-cell-size);
     justify-self: center;
 }
 
-/* ------------------------------------------------------------
-   IW Shaolin Shuffle — Mahjong Solver
-   5 dot-tile types (1-5). The player enters every tile they find
-   (14-tile hand plus up to 5 decoys); the result shows 4 sets and
-   a pair as labelled groups, two sets per row, pair on its own row.
-   Tile art is portrait (136x180), so every tile box keeps that
-   aspect ratio instead of letterboxing into a square.
-   ------------------------------------------------------------ */
+/* Mahjong tile art is 136x180, hence the aspect ratios. */
 .solver-container--mahjong {
     --mahjong-tile-w: clamp(1.875rem, 9vw, 2.375rem);
     --mahjong-picker-w: clamp(2.5rem, 11vw, 3rem);
@@ -1441,12 +1149,9 @@
     aspect-ratio: 136 / 180;
     object-fit: cover;
     border-radius: 3px;
-
-    /* Bottom edge reads as the tile's thickness */
     box-shadow: 0 2px 0 var(--mahjong-tile-edge), 0 3px 5px rgb(0 0 0 / 45%);
 }
 
-/* Tile picker — 5 buttons, each with a running count badge */
 .solver-container--mahjong .solver-symbol-select {
     justify-content: center;
     gap: var(--space-sm);
@@ -1480,8 +1185,6 @@
     text-align: center;
 }
 
-/* Entered tiles — a 7-wide grid, so the 14-tile hand is exactly two rows
-   and any decoys start a third */
 .mahjong-entered {
     display: flex;
     align-self: center;
@@ -1501,6 +1204,7 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* 7 wide: the 14-tile hand is two rows, up to 5 decoys start a third. */
 .mahjong-slots {
     display: grid;
     grid-template-columns: repeat(7, var(--mahjong-tile-w));
@@ -1534,8 +1238,6 @@
     border-radius: 3px;
 }
 
-/* Result — labelled groups. Sets wrap two to a row; the pair takes a
-   full row so it never shares a line with a set. */
 .mahjong-hand {
     display: flex;
     flex-wrap: wrap;
@@ -1579,16 +1281,10 @@
     font-size: var(--font-size-sm);
 }
 
-/* ------------------------------------------------------------
-   WW2 Shadowed Throne — Statue Solver
-   Wall picker + row of statue direction-buttons with labels.
-   3 statues for wall 1, 4 for walls 2-4.
-   ------------------------------------------------------------ */
 .solver-container--statue {
     --statue-button-size: clamp(2.75rem, 12vw, 3.5rem);
 }
 
-/* Statue direction buttons + labels row */
 .statue-row {
     display: flex;
     flex-direction: column;
@@ -1619,7 +1315,6 @@
     font-size: var(--font-size-sm);
 }
 
-/* Subtle hint paragraph — sits between the wall picker and statues */
 .statue-hint {
     margin: 0;
     color: var(--color-text-muted);
@@ -1628,11 +1323,6 @@
     text-align: center;
 }
 
-/* ------------------------------------------------------------
-   WW2 Groesten Haus — Hammer Puzzle Solver
-   4 blocks (A-D) stacked vertically, each cycles through 4
-   directions. Reuses the .statue-hint and statue button sizing.
-   ------------------------------------------------------------ */
 .solver-container--hammer {
     --statue-button-size: clamp(2.75rem, 12vw, 3.5rem);
 }
@@ -1666,11 +1356,6 @@
     line-height: 1;
 }
 
-/* ------------------------------------------------------------
-   BO6 Terminus — Beamsmasher Math Solver
-   6-symbol picker (one row), 3 slots (X / Y / Z), result panel.
-   X, Y, Z must be distinct symbols.
-   ------------------------------------------------------------ */
 .solver-container--beamsmasher .solver-symbol-select.is-grid {
     --symbol-cols: 6;
     --symbol-size: clamp(2.25rem, 13vw, 3.5rem);
@@ -1682,21 +1367,11 @@
     overflow: hidden;
 }
 
-/* The symbols are white squares edge to edge, so the rounding goes on the image
-   itself. */
+/* The symbols are white edge to edge, so round the image itself. */
 .solver-container--beamsmasher .solver-symbol-select.is-grid img {
     border-radius: 6px;
 }
 
-/* ------------------------------------------------------------
-   Slots — small ordered placement display.
-   Same side-by-side layout as .solver-letter-cell (bold letter
-   + symbol image), at a smaller scale. Empty slots show a
-   placeholder character on the right side instead of an image.
-   Click a filled slot to clear it.
-
-   Used by: skull4 (numbered slots), beamsmasher (X/Y/Z slots).
-   ------------------------------------------------------------ */
 .solver-slot-list {
     display: flex;
     flex-wrap: wrap;
@@ -1729,7 +1404,6 @@
     border-color: var(--solver-accent-bright);
 }
 
-/* Left half — the label (X / Y / Z, slot number, etc.) */
 .solver-slot__label {
     width: var(--slot-half-size);
     height: var(--slot-half-size);
@@ -1741,7 +1415,6 @@
     color: var(--color-text-primary);
 }
 
-/* Right half — image when filled, placeholder character when empty */
 .solver-slot__image {
     display: block;
     width: var(--slot-half-size);
@@ -1760,9 +1433,6 @@
     color: var(--color-text-muted);
 }
 
-/* Text-content slot variant: holds an ordinal label + a text
-   value (instead of an image). Used by maxis-items and similar
-   solvers where the slot content is a name, not a symbol. */
 .solver-slot.is-text {
     align-items: center;
     min-width: 12rem;
@@ -1794,13 +1464,7 @@
     font-style: italic;
 }
 
-/* ------------------------------------------------------------
-   IW Beast from Beyond — Eight Queens Solver
-   8×8 chessboard with iconic green/cream squares.
-   Queen rendered as a background image inside marked cells.
-   Cells are intentionally not themed by site tokens — chess
-   colors are iconic and shouldn't shift.
-   ------------------------------------------------------------ */
+/* Chess colours deliberately don't follow the site tokens. */
 .solver-container--queens {
     --queens-cell-size: clamp(2rem, 10.5vw, 3rem);
     --queens-light: #eeeed2;
@@ -1832,20 +1496,12 @@
     background: var(--queens-dark);
 }
 
-/* Queen glyph, inlined rather than fetched from a third party.
-
-   "Chess qdt45" by Cburnett (https://commons.wikimedia.org/wiki/User:Cburnett),
-   used here under CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/).
+/* "Chess qdt45" by Cburnett (https://commons.wikimedia.org/wiki/User:Cburnett),
+   used under CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/).
    Source: https://commons.wikimedia.org/wiki/File:Chess_qdt45.svg
-   The author offers it under CC BY-SA 3.0 / GPL v2+ / BSD-3 / GFDL 1.2+; the CC
-   licence is the one taken.
-
-   Reproduced UNMODIFIED. The payload is that file percent-encoded, and decodes
-   byte-for-byte back to it — an encoding, not an edit. Recolouring or redrawing
-   would make this an adaptation, which CC BY-SA requires be released under the
-   same licence and marked as changed. If you need a different colour, filter it
-   in CSS or draw your own glyph rather than editing the data below. The
-   reader-facing credit is in the site footer (base.njk). */
+   Unmodified, only percent-encoded. Don't edit the data: that makes it an
+   adaptation under CC BY-SA. Recolour with a CSS filter instead. The reader
+   credit is in the footer (base.njk). */
 .queens-cell.is-queen {
     background-image: url("data:image/svg+xml,%3C?xml version=%221.0%22 encoding=%22utf-8%22 standalone=%22no%22?%3E%0A%3C!DOCTYPE svg PUBLIC %22-//W3C//DTD SVG 1.1//EN%22%0A%22http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd%22%3E%0A%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 version=%221.1%22 width=%2245%22%0Aheight=%2245%22%3E%0A  %3Cg style=%22fill:%23000000;stroke:%23000000;stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round%22%3E%0A%0A    %3Cpath d=%22M 9,26 C 17.5,24.5 30,24.5 36,26 L 38.5,13.5 L 31,25 L 30.7,10.9 L 25.5,24.5 L 22.5,10 L 19.5,24.5 L 14.3,10.9 L 14,25 L 6.5,13.5 L 9,26 z%22%0A    style=%22stroke-linecap:butt;fill:%23000000%22 /%3E%0A    %3Cpath d=%22m 9,26 c 0,2 1.5,2 2.5,4 1,1.5 1,1 0.5,3.5 -1.5,1 -1,2.5 -1,2.5 -1.5,1.5 0,2.5 0,2.5 6.5,1 16.5,1 23,0 0,0 1.5,-1 0,-2.5 0,0 0.5,-1.5 -1,-2.5 -0.5,-2.5 -0.5,-2 0.5,-3.5 1,-2 2.5,-2 2.5,-4 -8.5,-1.5 -18.5,-1.5 -27,0 z%22 /%3E%0A    %3Cpath d=%22M 11.5,30 C 15,29 30,29 33.5,30%22 /%3E%0A    %3Cpath d=%22m 12,33.5 c 6,-1 15,-1 21,0%22 /%3E%0A    %3Ccircle cx=%226%22 cy=%2212%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2214%22 cy=%229%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2222.5%22 cy=%228%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2231%22 cy=%229%22 r=%222%22 /%3E%0A    %3Ccircle cx=%2239%22 cy=%2212%22 r=%222%22 /%3E%0A    %3Cpath d=%22M 11,38.5 A 35,35 1 0 0 34,38.5%22%0A    style=%22fill:none; stroke:%23000000;stroke-linecap:butt;%22 /%3E%0A    %3Cg style=%22fill:none; stroke:%23ffffff;%22%3E%0A      %3Cpath d=%22M 11,29 A 35,35 1 0 1 34,29%22 /%3E%0A      %3Cpath d=%22M 12.5,31.5 L 32.5,31.5%22 /%3E%0A      %3Cpath d=%22M 11.5,34.5 A 35,35 1 0 0 33.5,34.5%22 /%3E%0A      %3Cpath d=%22M 10.5,37.5 A 35,35 1 0 0 34.5,37.5%22 /%3E%0A    %3C/g%3E%0A  %3C/g%3E%0A%3C/svg%3E%0A");
     background-size: contain;
@@ -1853,7 +1509,6 @@
     background-position: center;
 }
 
-/* Subtle hover during placement phase only */
 .solver-container--queens[data-phase="setup"] .queens-cell:hover {
     filter: brightness(1.15);
 }
@@ -1862,19 +1517,11 @@
     cursor: default;
 }
 
-/* ------------------------------------------------------------
-   IW Beast From Beyond, Venom-Y/Z Morse Solver
-   Three phases (key / listen / input) sharing one visual kit:
-   a strip of beep glyphs, two tap pads, and a banner for the
-   answer. The strip is the main affordance: it shows where you
-   are in a transmission you can't pause.
-   ------------------------------------------------------------ */
 .solver-container--morse {
     max-width: 34rem;
 }
 
-/* Phase header. Deliberately not .solver-step-label: that class uppercases,
-   which suits its two-word labels but not a full line of context. */
+/* Not .solver-step-label, which uppercases: these are full lines. */
 .morse-step {
     margin: 0;
     color: var(--solver-accent);
@@ -1889,8 +1536,6 @@
     font-weight: 500;
 }
 
-/* Beep strip: one column per letter, so a missed beep stays
-   recoverable by eye even though letters are never typed. */
 .morse-strip {
     display: flex;
     flex-wrap: wrap;
@@ -1946,9 +1591,7 @@
     to { opacity: 0.35; }
 }
 
-/* Tap pads: thumb-sized, side by side, mirroring the in-game panel layout of
-   left = short and right = long. The row itself is a plain .solver-controls;
-   flex: 1 on the pads is what makes them fill it. */
+/* Left = short, right = long, matching the in-game panel. */
 .morse-pad {
     display: flex;
     flex: 1 1 0;
@@ -2015,8 +1658,6 @@
     border-color: currentcolor;
 }
 
-/* Raw tapped stream, for the stretch past the known opening.
-   Framed as a .solver-output; only the type treatment is local. */
 .morse-taps {
     padding: var(--space-sm) var(--space-md);
     color: var(--solver-accent);
@@ -2056,9 +1697,6 @@
     font-size: var(--font-size-md);
 }
 
-/* Candidate chips: the numbers the taps so far still allow. Eliminated ones
-   are dropped from the row rather than struck through — past the opening,
-   most of the five die at once and a row of corpses reads as noise. */
 .morse-candidates {
     display: flex;
     flex-direction: column;
@@ -2066,8 +1704,6 @@
     font-size: var(--font-size-sm);
 }
 
-/* Prose with inline buttons sitting on the same baseline — the candidate
-   list and the skip-ahead row are the same shape. */
 .morse-candidate-row,
 .morse-skip {
     display: flex;
@@ -2076,8 +1712,7 @@
     gap: var(--space-xs);
 }
 
-/* A <button>, so it can be tapped for a preview on a touchscreen as well as
-   hovered on a mouse. Hence the font/background reset. */
+/* A <button> so touch can tap it for a preview, hence the reset. */
 .morse-chip {
     padding: 1px var(--space-sm);
     background: none;
@@ -2096,12 +1731,8 @@
     color: var(--color-bg-primary);
 }
 
-/* Beep preview for the hovered/tapped candidate. A .solver-output, which is
-   what keeps it in the flow rather than floating: these sequences run to 31
-   beeps, which no tooltip can hold over a panel this narrow without escaping
-   it, and that class's width:0 + min-width:100% keeps the preview out of the
-   container's intrinsic width so hovering can't resize the panel. Child
-   spacing comes from .solver-output > * + *, so no gap here. */
+/* In the flow, not a tooltip: sequences run to 31 beeps. As a .solver-output it
+   can't resize the panel on hover, and gets its child spacing from there. */
 .morse-peek {
     display: flex;
     flex-direction: column;
@@ -2122,9 +1753,6 @@
     font-size: var(--font-size-sm);
 }
 
-/* The strip brings its own frame; inside the peek that would double up.
-   Left-aligned rather than centred so a sequence that wraps still reads
-   straight down the left edge. */
 .morse-peek .morse-strip {
     align-self: stretch;
     justify-content: flex-start;
@@ -2134,15 +1762,12 @@
     box-shadow: none;
 }
 
-/* Most of a preview is unheard beeps, so the default pending grey (tuned for
-   strips that are mostly lit) is too dark to read here. Scoped to .is-pending:
-   a bare .morse-sym here would tie on specificity with .morse-sym.is-done and,
-   coming later in the file, would win and flatten the lit beeps too. */
+/* Scoped to .is-pending: a bare .morse-sym here ties .morse-sym.is-done on
+   specificity and, coming later, would flatten the lit beeps too. */
 .morse-peek .morse-sym.is-pending {
     color: var(--color-text-muted);
 }
 
-/* Input phase: one beep at a time, as large as the panel allows */
 .morse-current {
     display: flex;
     flex-direction: column;
@@ -2189,8 +1814,6 @@
     font-size: var(--font-size-sm);
 }
 
-/* Skip-ahead row: entry points for readers who already know
-   their key or number and only want the input walkthrough. */
 .morse-skip {
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
@@ -2216,13 +1839,8 @@
     outline-offset: 2px;
 }
 
-/* ------------------------------------------------------------
-   Simon says — colour pads and the order they were tapped.
-   Generic: the palette and the number of pads come from the
-   page's solver props, so nothing here may assume either. Both
-   rows wrap, and --pad-color / --pad-ink are set per element
-   by the component.
-   ------------------------------------------------------------ */
+/* Simon says: palette and pad count come from the page's solver props, so
+   don't assume either. */
 .simon-pads {
     display: flex;
     flex-wrap: wrap;
@@ -2230,16 +1848,12 @@
     gap: var(--space-sm);
 }
 
-/* Arrange mode: the pads are being put into the order they sit
-   in game, and are not recording taps. The dashed ring is the
-   only thing saying so, since the pads keep their colours. */
 .simon-pads.is-arranging {
     outline: 1px dashed var(--solver-accent);
     outline-offset: var(--space-xs);
     border-radius: 8px;
 }
 
-/* One pad plus, in arrange mode, its move arrows. */
 .simon-pad-slot {
     display: flex;
     flex-direction: column;
@@ -2272,7 +1886,6 @@
     border-color: var(--solver-accent);
 }
 
-/* At either end of the row, so there is nowhere to move to. */
 .simon-move:disabled {
     opacity: 0.35;
     cursor: not-allowed;
@@ -2283,9 +1896,6 @@
     outline-offset: 2px;
 }
 
-/* Sized to be hit reliably with a thumb while the sequence is
-   still flashing on screen — this is tapped under time pressure,
-   which is the whole reason the solver exists. */
 .simon-pad {
     position: relative;
     width: clamp(4rem, 19vw, 6rem);
@@ -2315,16 +1925,12 @@
     outline-offset: 3px;
 }
 
-/* Only in arrange mode. Left at full colour rather than dimmed:
-   the reader is matching these squares against the screen, which
-   is the one moment the colours have to be exact. */
+/* Arrange mode. Not dimmed: the reader matches these colours to the screen. */
 .simon-pad:disabled {
     cursor: default;
 }
 
-/* How many times this pad has been tapped. A tally rather than the
-   positions it holds, because the sequence has no known length and
-   the list of positions would outgrow the square. */
+/* A tap tally, not positions: the sequence length is unknown. */
 .simon-pad__badge {
     position: absolute;
     inset: 0;

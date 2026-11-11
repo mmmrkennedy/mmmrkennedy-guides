@@ -1,8 +1,4 @@
-/**
- * Gives every <table> its scroll wrapper and, where it can, labels each body cell
- * with its column heading so CSS can restack rows as cards on phones (see "Mobile:
- * one card per row" in components.css).
- */
+/** Cell labels feed "Mobile: one card per row" in components.css. */
 function prepareTables(document) {
     const tables = document.querySelectorAll("table");
     if (!tables.length) return false;
@@ -24,10 +20,7 @@ function prepareTables(document) {
     return modified;
 }
 
-/**
- * Every cell with the row and column it actually occupies. With a rowspan above
- * it, a row's second <td> can be the third column, so cellIndex would be wrong.
- */
+/** With a rowspan above, a row's second <td> can be the third column, so cellIndex is wrong. */
 function mapTableGrid(table) {
     const taken = [];
     const cells = [];
@@ -54,12 +47,10 @@ function mapTableGrid(table) {
 }
 
 /**
- * Marks up a table for card mode and returns whether it took it. Two shapes don't:
- * colspan (a spanning cell has no single heading) and [data-sortable] (ui/stats.ts
- * puts its controls in the header row, which card mode hides).
- *
- * A rowspan cell would appear on only one card, so each covered row gets a copy
- * marked `data-card-copy`, which CSS shows in card mode and hides otherwise.
+ * Skips colspan (no single heading) and [data-sortable] (ui/stats.ts puts its
+ * controls in the header row, which card mode hides).
+ * Rowspan cells are copied into each covered row as `data-card-copy`, which CSS
+ * shows only in card mode.
  */
 function labelTableCells(table) {
     if (table.hasAttribute("data-cards")) return true;
@@ -105,11 +96,7 @@ function labelTableCells(table) {
     return true;
 }
 
-/**
- * Whether a table's values are short enough to read as columns on a phone, in
- * which case cards would only make it much taller. Sums each column's longest
- * value, in characters.
- */
+/** Short tables stay as columns on phones, where cards would only make them taller. */
 function fitsOnPhoneAsTable(table) {
     if (table.querySelector("td :is(ul, ol, table, img, button, div)")) return false;
 

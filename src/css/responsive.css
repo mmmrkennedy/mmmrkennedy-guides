@@ -1,9 +1,4 @@
-/*
-===============================================================================
-7. RESPONSIVE (DESKTOP)
-===============================================================================
-Desktop-specific upgrades. Base styles are mobile-first.
-*/
+/* Base styles are mobile-first. */
 
 /* Home and Back to Top: the icon on phones, the words from here up. */
 @media (width >= 48.0625em) { /* --bp-md */
@@ -23,26 +18,27 @@ Desktop-specific upgrades. Base styles are mobile-first.
     }
 }
 
-/* Sidebar TOC - shown only when there's enough space beside centered content */
 .sidebar-toc {
     display: none;
 }
 
-/* Phones: icon-only Home and legend buttons sit at opposite ends of the header,
-   which gives the title the room between them. */
 @media (width < 48.0625em) { /* --bp-md */
     .btn--fixed.top-left {
         left: var(--space-smd);
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 2.25rem;
+        height: 2.25rem;
         padding: 0;
+        border-radius: 50%;
     }
 
-    /* Only the top-level entries show until opened, so the guide starts sooner.
-       The button sits where the list marker would be. */
+    .accent-picker {
+        right: var(--space-smd);
+    }
+
+    /* Sub-lists collapsed so the guide starts sooner. */
     .quick-links-container li:has(> .quick-links-sub-toggle) {
         position: relative;
         list-style: none;
@@ -52,14 +48,13 @@ Desktop-specific upgrades. Base styles are mobile-first.
         display: none;
     }
 
-    /* A long list stops partway down the screen, so the guide starts sooner. */
+    /* Same reason: a long list stops partway down the screen. */
     .quick-links-container--long {
         max-height: 60svh;
         overflow: hidden;
     }
 
-    /* The fade is its own layer, so the button can look like a button rather
-       than one more blue link in the list. */
+    /* The fade is its own layer so the button doesn't read as one more link. */
     .quick-links-container--long::after {
         content: "";
         position: absolute;
@@ -111,8 +106,22 @@ Desktop-specific upgrades. Base styles are mobile-first.
     .legend-launcher {
         position: absolute;
         inset-block: 0;
-        right: var(--space-smd);
+        right: calc(var(--space-smd) + 2.25rem + var(--space-sm)); /* left of .accent-picker */
+        width: 2.25rem;
+        height: 2.25rem;
         margin: auto 0;
+    }
+
+    .top-buttons-background-box {
+        justify-content: flex-start;
+    }
+
+    .title-text {
+        flex: 1;
+        max-width: none;
+        margin-left: calc(var(--space-smd) + 2.25rem + var(--space-smd));
+        margin-right: calc(var(--space-smd) + 2.25rem + var(--space-sm) + 2.25rem + var(--space-smd));
+        text-align: left;
     }
 }
 
@@ -157,9 +166,8 @@ Desktop-specific upgrades. Base styles are mobile-first.
         width: 100%;
     }
 
-    /* A run of tables with the same columns, stacked down a page. Sized by their
-       content, each one lands on different column widths and the stack looks
-       uneven. This split added the least height (at 1440px). */
+    /* Stacked same-column tables: fixed widths keep them aligned. This split
+       added the least height (at 1440px). */
     .table-challenge-hints {
         table-layout: fixed;
     }
@@ -176,8 +184,6 @@ Desktop-specific upgrades. Base styles are mobile-first.
         width: fit-content;
     }
 
-    /* Enough width for a real tab strip: tabs sit on the panel's top edge
-       instead of stacking as standalone buttons. */
     .path-tabs__bar {
         flex-flow: row wrap;
         align-items: flex-end;
@@ -247,7 +253,7 @@ Desktop-specific upgrades. Base styles are mobile-first.
 }
 
 @media (width >= 90em) { /* --bp-xl */
-    /* When non-mobile is detected, hide quick links for ToC */
+    /* The sidebar TOC replaces quick links. */
     .quick-links-container { display: none; }
 
     .ad-right-sidebar,
@@ -256,9 +262,8 @@ Desktop-specific upgrades. Base styles are mobile-first.
     }
 
     .sidebar-toc {
-        /* A float in the left margin of <main>, ending flush against the content
-           column. It takes no room from the column, and <main> is what stops it
-           short of the footer. Percentages here are of <main>'s width. */
+        /* Floats in <main>'s left margin, so <main> stops it short of the footer.
+           Percentages are of <main>'s width. */
         --toc-margin: calc((100% - var(--content-max-width)) / 2);
         --toc-width: min(340px, calc(var(--toc-margin) - 18px));
 

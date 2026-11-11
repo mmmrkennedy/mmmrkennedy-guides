@@ -2,41 +2,22 @@ import { useMemo, useState } from "preact/hooks";
 import { useSolverReport } from "../solver-report";
 
 /*
- * Every table below is generated from the shipped game tables instead of being
- * transcribed from gameplay:
+ * Tables generated from the game files (checked against cp_town_chemistry.gsc):
  *   cp/zombies/elements.csv    - heat/pressure per value set (cols 8-19)
  *   cp/zombies/compounds.csv   - what each compound is made from
  *   cp/zombies/diapi_table.csv - which M Numbers can appear with which O Number
  *
- * Three differences from the original that change answers, each checked against
- * scripts/cp/maps/cp_town/cp_town_chemistry.gsc:
- *
- * 1. The old table carried twelve columns per ingredient; only six can ever be
- *    the answer. reaction_activation() reads elements.csv cols 8-19 and nothing
- *    else. Cols 20-31 are bheatA-bpressureF: the decoy numbers the boards show
- *    while the map is in the WRONG colour (colorsquares.lua,
- *    UpdateBadHeatNumbers). A formula built from those is rejected by the
- *    reaction, which costs 95% of your health.
- *
- * 2. The diamond is entered as two numbers rather than their sum. The six real
- *    Insect Repellent pairs and the six decoy pairs share no member, so a
- *    wrong-colour read is always caught; their sums do overlap (7 and 15 appear
- *    in both), so summing first silently accepts two reads out of six.
- *
- * 3. O Number candidates are filtered by the M Numbers that can actually occur
- *    with them. That leaves one genuinely ambiguous case (M 2 against a TV top
- *    of 19: 9 or 11) instead of eight.
- *
- * Orientation of the diamond - top = heat, left = pressure - is from
- * pictures/main_ee/chem_diamond_solver.webp: that shot is in full colour, so
- * both diamonds in it are decoys, and Racing Fuel 3/2 with Insect Repellent 7/4
- * is bheatE/bpressureE for both. Only that reading puts them in the same column.
+ * - Only elements.csv cols 8-19 are real; cols 20-31 are the wrong-colour
+ *   decoys and are excluded.
+ * - The diamond takes two numbers, not their sum: real and decoy sums overlap,
+ *   the pairs don't.
+ * - O Number candidates are filtered by valid M Numbers (one ambiguous case
+ *   left: M 2 with TV top 19 gives 9 or 11).
+ * - Diamond orientation: top = heat, left = pressure.
  */
 
-/* [heat, pressure] per value set A-F, in elements.csv order (cols 8-19).
-   Every ingredient reachable through a recipe is here; the five that appear in
-   no recipe (Food Coloring, Pool Cleaner, Bleach, Powdered Milk, Table Salt -
-   type "sub" in elements.csv) are map dressing and are deliberately absent. */
+/* [heat, pressure] per value set A-F (elements.csv cols 8-19). The five type
+   "sub" ingredients in no recipe are map dressing and deliberately absent. */
 const VALUE_SETS: Record<string, [number, number][]> = {
     Acetaldehyde: [[1, 7], [3, 9], [8, 1], [6, 6], [8, 4], [4, 5]],
     "Baking Soda": [[2, 9], [4, 2], [4, 4], [6, 4], [7, 6], [9, 5]],
@@ -68,9 +49,8 @@ const VALUE_SETS: Record<string, [number, number][]> = {
     "Wheel Cleaner": [[4, 9], [9, 4], [3, 7], [5, 5], [5, 1], [8, 5]],
 };
 
-/* Insect Repellent's bheat/bpressure pairs (elements.csv cols 20-31): what the
-   board shows when the map is in a colour that is not the answer. Held only so
-   a wrong-colour read can be named as one. */
+/* Insect Repellent's bheat/bpressure (elements.csv cols 20-31): what the board
+   shows in a wrong colour. Only used to name a wrong-colour read. */
 const INSECT_DECOY_PAIRS: [number, number][] = [[5, 5], [6, 9], [9, 5], [1, 6], [7, 4], [7, 2]];
 
 /* compounds.csv, in craft order. A part that is itself a key here has to be
@@ -151,14 +131,9 @@ interface OCandidate {
 }
 
 /**
- * O Numbers that fit an M Number and the TV.
- *
- * The TV shows three bands built around one number: "< X", "X - X+2", "> X+2".
- * X is the number the guide asks for, and the real value sits one under, one
- * over, or three over it depending on which band it landed in.
- *
- * Candidates are also filtered by O_M_PAIRS, because select_pi_value() draws
- * the M Number from the row belonging to the chosen O.
+ * The TV shows three bands around X: "< X", "X - X+2", "> X+2", so the real
+ * value is X-1, X+1 or X+3. Filtered by O_M_PAIRS because select_pi_value()
+ * draws the M Number from the chosen O's row.
  */
 function solveO(mNum: number, tvTop: number): OCandidate[] {
     const bands = [tvTop - 1, tvTop + 1, tvTop + 3];
@@ -180,7 +155,6 @@ type SetLookup =
     | { kind: "decoy" }
     | { kind: "unknown" };
 
-/** Identify the value set from Insect Repellent's top and left numbers. */
 function findValueSet(top: number, left: number): SetLookup {
     const matches = ([h, p]: [number, number]) => h === top && p === left;
 
@@ -195,7 +169,6 @@ interface CraftStep {
     ingredients: string[];
 }
 
-/** Expand a final chemical into the compounds you have to make, in order. */
 function craftChain(chemical: FinalChemical): CraftStep[] {
     const steps: CraftStep[] = [];
     const made = new Set<string>();
@@ -214,13 +187,7 @@ function craftChain(chemical: FinalChemical): CraftStep[] {
     return steps;
 }
 
-/**
- * What to punch into the machine for one formula.
- *
- * reaction_activation() sums heat and pressure across every filled beaker for
- * the chosen value set, then subtracts the O Number - so this is the same sum,
- * with the diamond's two numbers standing in for heat and pressure.
- */
+/** Mirrors reaction_activation(): heat + pressure over filled beakers, minus the O Number. */
 function formulaNumber(ingredients: string[], setIndex: number, oNum: number): number {
     let total = 0;
     for (const name of ingredients) {
@@ -230,7 +197,6 @@ function formulaNumber(ingredients: string[], setIndex: number, oNum: number): n
     return total - oNum;
 }
 
-/** Digits only; blank and junk both read as "not answered yet". */
 function parseNum(raw: string): number | null {
     const trimmed = raw.trim();
     if (!/^\d+$/.test(trimmed)) return null;
@@ -245,9 +211,7 @@ export default function ChemicalStepSolver({ title }: { title?: string }) {
     const [insectLeftRaw, setInsectLeftRaw] = useState("");
     const [chemId, setChemId] = useState("default");
 
-    // The raw strings, not the parsed numbers: "07" and "7" are the same number
-    // but not the same thing typed, and a parsing bug would be invisible in the
-    // parsed form.
+    // Raw strings, so a parsing bug stays visible in the report.
     useSolverReport("ChemicalStepSolver", () => ({
         "M number": mRaw,
         "Top number on TV": tvRaw,
@@ -257,9 +221,6 @@ export default function ChemicalStepSolver({ title }: { title?: string }) {
         "Final chemical": chemId,
     }));
 
-    /* Everything below is derived. There is no Calculate button and no
-       per-field "is this visible yet" flag: a step appears once the step above
-       it has an answer, so the two can never disagree. */
     const oCandidates = useMemo(() => {
         const mNum = parseNum(mRaw);
         const tvTop = parseNum(tvRaw);
@@ -276,11 +237,8 @@ export default function ChemicalStepSolver({ title }: { title?: string }) {
         return oCandidates.find((c) => c.o === picked) ?? null;
     }, [oCandidates, oRaw]);
 
-    /* Gated on the O Number as well as on its own two fields: the diamond only
-       means anything once you know which colour to read it in, and the
-       wrong-colour message below names that colour. Without this, editing the M
-       Number back to something unsolvable after filling the diamond in would
-       leave the colour unknown while the message still tried to name it. */
+    /* Gated on chosenO too: the wrong-colour message names the colour, which
+       is unknown if the M Number is edited back to something unsolvable. */
     const valueSet = useMemo(() => {
         if (chosenO === null) return null;
         const top = parseNum(insectTopRaw);
@@ -303,12 +261,8 @@ export default function ChemicalStepSolver({ title }: { title?: string }) {
     const showColourStep = chosenO !== null;
     const showChemicalStep = setIndex !== null;
 
-    /* The output panel shows one thing in full - whatever you have to act on
-       next - with everything already settled collapsed into a single muted line
-       under it. Reading top-down, that puts the newest answer first and stops
-       step 3 from sitting under two paragraphs of step 1 and 2 leftovers.
-       It is also what retires each step's "now go and do this" hint: the hint
-       lives in the focus block, so answering the step drops it. */
+    /* The output shows only the next thing to act on; settled answers collapse
+       into one muted line under it. */
     const diamondProblem = valueSet !== null && valueSet.kind !== "ok" ? valueSet.kind : null;
     const oRejected = oIsAmbiguous && chosenO === null && parseNum(oRaw) !== null;
 
@@ -321,7 +275,6 @@ export default function ChemicalStepSolver({ title }: { title?: string }) {
         : setIndex !== null ? "value-set"
         : "o";
 
-    /* Settled facts, newest first. Empty while step 1 is still the focus. */
     const settled: string[] = [];
     if (focus === "formulas" && setIndex !== null) {
         settled.push(`Value Set ${SET_LABELS[setIndex]}`);

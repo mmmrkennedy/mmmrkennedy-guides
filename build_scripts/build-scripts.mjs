@@ -1,16 +1,8 @@
 /**
- * Builds the site scripts from src/ts into dist/js.
- *
- * Each entry becomes one self-contained classic script, so pages load it with a
- * plain <script defer> and there are no chunks at runtime to fetch or go missing.
- * Filenames are fixed here. For production, minify-assets.js minifies them and adds
- * the content hash, so dev never has a filename that goes stale under a running server.
- *
- * Vite only strips the types. `tsc -p tsconfig.scripts.json` is what type-checks,
- * and build:scripts runs it first.
- *
- *   node build_scripts/build-scripts.mjs            build once
- *   node build_scripts/build-scripts.mjs --watch    rebuild on change
+ * One self-contained classic script per entry, so there are no runtime chunks.
+ * Filenames are fixed; minify-assets.js adds the content hash for production.
+ * Vite only strips types: `tsc -p tsconfig.scripts.json` type-checks, run first
+ * by build:scripts.
  */
 import fs from "fs";
 import path from "path";
@@ -20,8 +12,7 @@ import { build } from "vite";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "dist", "js");
 
-// Output path under /js/ -> source. Everything but core is loaded on its own:
-// ads is `async` so it can't delay the page, the rest are specific to a few pages.
+// Separate entries: ads loads `async`, the rest are page-specific.
 const ENTRIES = {
     "core.js": "src/ts/core.ts",
     "ads.js": "src/ts/ui/ads.ts",
@@ -32,7 +23,7 @@ const ENTRIES = {
 
 const watch = process.argv.includes("--watch");
 
-// Clears earlier builds, including the hashed copies minify-assets.js renames to.
+// Also clears the hashed copies minify-assets.js renames to.
 fs.rmSync(outDir, { recursive: true, force: true });
 
 await Promise.all(

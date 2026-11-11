@@ -1,32 +1,8 @@
 #!/usr/bin/env node
 /**
- * verify-deploy.mjs
- *
- * Post-deploy check: fetch the live site and confirm every CSS/JS/font asset
- * the pages reference actually comes back as that asset.
- *
- * Why this exists. Cloudflare Pages answers a request for a file it can't find
- * by serving index.html at status *200*, not 404. `_headers` gives /*.js and
- * /*.css `max-age=2592000`, so if such a request lands during deploy
- * propagation the edge caches a copy of the homepage under the asset's URL for
- * 30 days. The browser then pulls HTML where it asked for a script; with
- * `X-Content-Type-Options: nosniff` set, Firefox refuses it and reports
- * NS_ERROR_CORRUPTED_CONTENT, and every bit of JS on the site stops running.
- * Content-addressed filenames don't help — the poisoned response is a 200.
- *
- * That happened on 2026-07-31 to /js/bundle.core.c945556e.min.js and would
- * have persisted for a month. Running this after each deploy turns a silent
- * 30-day outage into an immediate, loud failure.
- *
- * The page list comes from the deployed sitemap.xml, and asset URLs from the
- * live HTML — deliberately not from ./dist, which drifts the moment a dev
- * watcher rebuilds it unbundled.
- *
- * Self-healing. When CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID are set, a
- * failure triggers a purge of the offending URLs followed by a re-check, so the
- * usual outcome is fixed-and-reported rather than a dashboard errand. Purging
- * is also the only *reliable* way to tell a poisoned cache from a broken
- * deploy — see checkAsset below for why the cache-busting probe cannot.
+ * Post-deploy check that every CSS/JS/font asset on the live pages is served as itself.
+ * Cloudflare Pages answers missing files with index.html (200), the edge caches it
+ * for 30 days (see _headers), and with nosniff Firefox then refuses all site JS.
  *
  * Usage:
  *   node build_scripts/verify-deploy.mjs [origin] [--pages N] [--quiet] [--no-purge]
@@ -35,9 +11,8 @@
  *   CLOUDFLARE_API_TOKEN   scoped token with Zone -> Cache Purge
  *   CLOUDFLARE_ZONE_ID     zone containing the origin below
  *
- * Exits 1 if any asset is still served wrong after that, so it can gate a
- * deploy script. A failure that the purge repaired exits 0 — the deploy is
- * correct — but says loudly that it happened.
+ * Exits 1 if any asset is still wrong after purging; a repaired failure exits 0
+ * with a warning.
  */
 
 const DEFAULT_ORIGIN = "https://mmmrkennedy.com";
@@ -45,21 +20,14 @@ const DEFAULT_ORIGIN = "https://mmmrkennedy.com";
 // Cloudflare caps a single purge_cache call at 30 files.
 const PURGE_BATCH_SIZE = 30;
 
-// A purge is normally live in a second or two, but it is not instantaneous and
-// it is not simultaneous across nodes. Re-check a few times before believing it.
+// Purges take a second or two and don't land on all nodes at once.
 const RECHECK_ATTEMPTS = 5;
 const RECHECK_DELAY_MS = 2500;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/**
- * Bad command line, as opposed to a bad deploy — worth a different exit code so
- * a CI step can tell "you called this wrong" from "the site is broken".
- */
 class UsageError extends Error {}
 
-// Content types we'll accept per extension. Cloudflare appends "; charset=..."
-// to some of these, so these are matched as prefixes.
 const EXPECTED = {
     ".js": ["application/javascript", "text/javascript"],
     ".mjs": ["application/javascript", "text/javascript"],
@@ -92,7 +60,6 @@ async function getText(url, init) {
     return res.text();
 }
 
-/** Page URLs from the deployed sitemap, always including the homepage. */
 async function collectPages(origin, limit) {
     const urls = new Set([`${origin}/`]);
 
@@ -108,7 +75,6 @@ async function collectPages(origin, limit) {
     return [...urls].slice(0, limit);
 }
 
-/** Every same-origin css/js/font URL referenced by the given pages. */
 async function collectAssets(pages, origin) {
     const assets = new Map(); // url -> Set of pages referencing it
     const pageProblems = [];
@@ -123,11 +89,10 @@ async function collectAssets(pages, origin) {
         }
 
         for (const [, ref] of html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|mjs|css|woff2))(?:\?[^"']*)?["']/g)) {
-            if (/^https?:\/\//i.test(ref) && !ref.startsWith(origin)) continue; // third-party
+            if (/^https?:\/\//i.test(ref) && !ref.startsWith(origin)) continue;
             const url = new URL(ref, page).toString();
             if (!url.startsWith(origin)) continue;
-            // Cloudflare injects its own challenge/insights scripts under this
-            // prefix. They aren't ours to deploy or purge.
+            // Cloudflare-injected scripts, not ours to deploy or purge.
             if (new URL(url).pathname.startsWith("/cdn-cgi/")) continue;
             if (!assets.has(url)) assets.set(url, new Set());
             assets.get(url).add(page);
@@ -144,24 +109,15 @@ function extensionOf(url) {
 
 function contentTypeOk(ext, contentType) {
     const allowed = EXPECTED[ext];
-    if (!allowed) return true; // unknown extension — nothing to assert
+    if (!allowed) return true;
     const actual = contentType.split(";")[0].trim().toLowerCase();
     return allowed.includes(actual);
 }
 
 /**
- * Checks one asset. When the plain request looks wrong, retries with a
- * cache-busting query in the hope of reaching past the edge entry.
- *
- * Treat that verdict as a hint, not a finding. On 2026-08-04 this probe
- * reported /js/bundle.core.c60b0549.min.js as `missing-at-origin` — and a
- * cache purge fixed it with no redeploy, which means the origin had the file
- * all along and the probe never left the edge. Cloudflare does not necessarily
- * key a static asset's cache entry on the query string, so `?__verify=` can be
- * served the very entry it is trying to bypass.
- *
- * The authoritative test is purge-then-recheck (see purgeAndRecheck), which is
- * why a failure is worth purging whichever way this lands.
+ * The cache-busting retry's verdict is only a hint: Cloudflare may ignore the
+ * query string for static assets, so `?__verify=` can hit the same poisoned entry.
+ * Purge-then-recheck is the real test, so purge either way.
  */
 async function checkAsset(url) {
     const ext = extensionOf(url);
@@ -206,7 +162,6 @@ async function checkAsset(url) {
     };
 }
 
-/** Credentials for the purge, or null with the reason it is unavailable. */
 function purgeCredentials() {
     const token = process.env.CLOUDFLARE_API_TOKEN;
     const zoneId = process.env.CLOUDFLARE_ZONE_ID;
@@ -216,11 +171,7 @@ function purgeCredentials() {
     return { creds: { token, zoneId }, why: "" };
 }
 
-/**
- * Purges specific URLs from the edge. Never purges the whole zone: the fix is
- * to evict a handful of poisoned entries, and dumping the entire cache to do it
- * would send every asset on the site back to the origin for no reason.
- */
+// Never purge the whole zone; that sends every asset back to origin.
 async function purgeUrls(urls, { token, zoneId }) {
     const batches = [];
     for (let i = 0; i < urls.length; i += PURGE_BATCH_SIZE) {
@@ -237,7 +188,7 @@ async function purgeUrls(urls, { token, zoneId }) {
                 body: JSON.stringify({ files }),
             });
         } catch (error) {
-            // Never echo the request itself — it carries the token.
+            // Never echo the request: it carries the token.
             throw new Error(`purge request failed${label}: ${error.message}`);
         }
 
@@ -245,7 +196,7 @@ async function purgeUrls(urls, { token, zoneId }) {
         try {
             body = await res.json();
         } catch {
-            /* non-JSON error page; status below carries the signal */
+            /* non-JSON error page */
         }
 
         if (!res.ok || body.success === false) {
@@ -261,11 +212,7 @@ async function purgeUrls(urls, { token, zoneId }) {
     }
 }
 
-/**
- * Purges the failed URLs and re-checks them until they come good or the
- * attempts run out. Returns the ones still broken — those are a genuinely
- * incomplete deploy, since no cache entry survives a purge.
- */
+// Anything still broken after a purge is a genuinely incomplete deploy.
 async function purgeAndRecheck(failures, creds) {
     const urls = failures.map((r) => r.url);
 
@@ -293,11 +240,8 @@ async function purgeAndRecheck(failures, creds) {
 }
 
 /**
- * Returns the exit code rather than calling process.exit(). process.exit() tears
- * the process down without waiting for a pipe to drain, so under CI — where
- * stdout is a pipe, not a terminal — the report gets truncated, and on Windows
- * the runtime aborts with 0xC0000409 instead of the code we asked for. A gate
- * that reports 3221226505 for a routine failure is worse than useless.
+ * Returns the exit code instead of calling process.exit(), which doesn't drain
+ * piped stdout (truncated CI logs) and aborts with 0xC0000409 on Windows.
  */
 async function main() {
     const { origin, pages: pageLimit, quiet, purge: purgeWanted } = parseArgs(process.argv.slice(2));
@@ -345,8 +289,6 @@ async function main() {
     const purgeable = failures.filter((r) => r.kind !== "unreachable");
     const { creds, why } = purgeCredentials();
 
-    // A DNS/TLS failure is not something a purge can answer, and page-load
-    // problems mean the check itself never got off the ground.
     const canPurge = purgeWanted && creds && purgeable.length > 0;
 
     if (!canPurge) {

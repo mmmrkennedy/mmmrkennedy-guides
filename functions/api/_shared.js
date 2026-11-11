@@ -1,47 +1,28 @@
-// Shared helpers for the Pages Functions API.
-//
-// Files prefixed with "_" are NOT turned into routes by Cloudflare Pages
-// Functions, so this module is import-only. Used by the view counter and the
-// feedback (flag) handlers.
+// The "_" prefix keeps Cloudflare Pages Functions from routing this file.
 
 const MAX_PATH_LENGTH = 512;
 
-// Accept only same-site absolute paths; reject schemes, hosts, and traversal.
-// Mirrors the client-side normalizePath in footer.ts / line-flagger.ts so
-// a path stored by one endpoint matches a lookup from another.
+// Mirrors normalizePath in footer.ts / line-flagger.ts; keep them in step.
 export function normalizePath(raw) {
     if (!raw) return null;
     let p = raw.trim();
     if (!p.startsWith("/") || p.includes("://") || p.includes("..")) return null;
-    p = p.split(/[?#]/)[0]; // drop any query/hash
-    if (p.length > 1) p = p.replace(/\/+$/, ""); // collapse trailing slash, keep root "/"
+    p = p.split(/[?#]/)[0];
+    if (p.length > 1) p = p.replace(/\/+$/, "");
     if (p.length > MAX_PATH_LENGTH) return null;
     return p;
 }
 
-// Hostnames whose traffic is the real thing. Preview deployments share every
-// binding with production — top-level bindings in wrangler.toml apply to both
-// environments — so without this split every page opened on
-// preview.<project>.pages.dev, or on any per-commit preview URL, would inflate
-// the real view counter and the "trending this week" ranking built from it.
-//
-// An allowlist rather than a *.pages.dev blocklist: a hostname nobody
-// anticipated should fail closed, not quietly start writing.
+// Preview deploys share every binding with production (top-level wrangler.toml
+// bindings), so writes are gated by host. An allowlist so unknown hosts fail closed.
 const PRODUCTION_HOSTS = new Set(["mmmrkennedy.com", "www.mmmrkennedy.com"]);
 
 export function isProductionHost(url) {
     return PRODUCTION_HOSTS.has(url.hostname);
 }
 
-// Preview deploys, plus `wrangler pages dev`. The two writers treat these
-// differently on purpose: the view counter refuses them outright (there is one
-// public number and a test must not move it), while reading analytics stores
-// them tagged `prev = 1`, so the whole pipeline can be exercised on a preview
-// URL or locally, and the dashboard still hides the test traffic by default.
-//
-// localhost is safe to include: a deployed Function only ever sees the zone's
-// hostname, so the only way to hit this branch in production is to spoof the
-// Host header, and the reward for that is a row nobody looks at.
+// The view counter refuses these; reading analytics stores them tagged `prev = 1`.
+// localhost is safe: a deployed Function only sees the zone's hostname.
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
 
 export function isPreviewHost(url) {
@@ -59,29 +40,21 @@ export function json(body, status = 200, extraHeaders = {}) {
     });
 }
 
-// Send a Telegram message when a new flag lands. Best-effort: disabled unless
-// BOTH TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set, and any failure is logged
-// but swallowed so a notification problem never affects the flag write. Call via
-// waitUntil so it never blocks the response. Unlike ntfy, Telegram authenticates
-// by bot token, so there's no shared-egress-IP rate limit to trip over.
+// Best-effort; call via waitUntil. Telegram, not ntfy: ntfy rate-limits the
+// Workers' shared egress IPs.
 export async function notifyFlag(env, request, flag) {
     const token = env && env.TELEGRAM_BOT_TOKEN;
     const chatId = env && env.TELEGRAM_CHAT_ID;
-    if (!token || !chatId) return; // notifications disabled (e.g. local/dev)
+    if (!token || !chatId) return;
 
     let adminUrl = "";
     try {
         adminUrl = new URL(request.url).origin + "/admin/flags";
     } catch {
-        // request.url unavailable — message just won't carry the admin link
+        // send without the admin link
     }
 
-    // Plain text (no parse_mode) so guide content can't break Markdown/HTML
-    // parsing. Telegram auto-links the bare URL.
-    //
-    // For a solver flag the quote is a one-line dump of the inputs and the answer
-    // it gave, so the message alone is usually enough to tell a real bug from a
-    // mis-entered round without opening the admin page.
+    // No parse_mode, so guide content can't break Markdown/HTML parsing.
     const lines = [
         flag.solver ? `🧩 New solver flag: ${flag.reason} (${flag.solver})` : `🚩 New flag: ${flag.reason}`,
         flag.path,
@@ -102,20 +75,17 @@ export async function notifyFlag(env, request, flag) {
             }),
         });
         if (!res.ok) {
-            // Body carries Telegram's reason (e.g. "chat not found", "Unauthorized").
-            // Never log the URL — it contains the bot token.
+            // Never log the URL: it contains the bot token.
             const body = await res.text().catch(() => "");
             console.error(`notifyFlag: telegram rejected — ${res.status} ${body}`);
         }
     } catch (err) {
         console.error("notifyFlag: telegram fetch threw —", (err && err.message) || err);
-        // best-effort; never throw out of a notification
     }
 }
 
-// One-way hash of the client IP. Salted with FEEDBACK_IP_SALT (set as a secret)
-// so the stored value can't be reversed back to an IP, while staying stable for
-// dedupe / rate-limit triage. Returns null if no IP is available.
+// Salted with the FEEDBACK_IP_SALT secret so it can't be reversed, but stays
+// stable for dedupe.
 export async function hashIp(request, env) {
     const ip = request.headers.get("CF-Connecting-IP");
     if (!ip) return null;

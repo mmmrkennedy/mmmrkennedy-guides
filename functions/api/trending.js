@@ -1,10 +1,4 @@
-// GET /api/trending
-// Pages ranked by views over the last 7 days (from the D1 `view_days` table), so
-// the home page can flag the most-viewed guide and most-viewed solver. Returns
-// just the ranking; the client classifies guide vs solver from the index links
-// (which is reliable even where paths don't follow naming conventions).
-//
-// Response: { window_days, ranked: [ { path, count } ] }, edge-cached ~1h.
+// Ranking only: src/ts/ui/trending.ts classifies guide vs solver from the index links.
 
 import { json } from "./_shared.js";
 
@@ -13,7 +7,7 @@ const CACHE_TTL = 3600; // seconds
 const LIMIT = 150;
 
 export async function onRequestGet({ request, env, waitUntil }) {
-    // Public read that must never break the page: with no DB, return empty.
+    // Must never break the page: no DB or no table returns an empty ranking.
     if (!env.DB) return json({ window_days: WINDOW_DAYS, ranked: [] }, 200);
 
     const cache = caches.default;
@@ -33,7 +27,6 @@ export async function onRequestGet({ request, env, waitUntil }) {
             .all();
         ranked = (results || []).map((r) => ({ path: r.path, count: r.c }));
     } catch {
-        // view_days not created yet, or query error — no trending, no noise.
         return json({ window_days: WINDOW_DAYS, ranked: [] }, 200);
     }
 

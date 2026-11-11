@@ -1,10 +1,3 @@
-/*
-===============================================================================
-6. UTILITIES
-===============================================================================
-Helper classes and special cases.
-*/
-
 .solver-with-button {
     width: 100%;
     margin: var(--space-md) 0;
@@ -15,32 +8,21 @@ Helper classes and special cases.
     margin: var(--space-md) var(--space-sm);
     background-color: var(--color-bg-secondary);
     border: 1px solid var(--color-border-medium);
-
-    /* border-left: 3px solid var(--color-note-border); */
     border-radius: 4px;
     padding: var(--space-md);
 }
 
-/*
-Path switcher — two or more mutually exclusive routes through one step, only
-one of which is ever on screen.
-No inline margin, so the panel lines up with the step text it sits under.
-*/
+/* No inline margin, so the panel lines up with the step text it sits under. */
 .path-tabs {
     max-width: 100%;
     margin: var(--space-md) 0;
 }
 
-/* Mobile: the switcher fills the block it's written in instead of hanging off
-   the list markers it's nested behind. It's the fork in the guide, not an aside
-   to the list item, and its tabs are stacked full-width buttons down here — two
-   list levels in, there's little room left to name a path. Same treatment the
-   table cards get, level by level, so the two line up: see "Mobile: one card per
-   row" in components.css. */
+/* Mobile: un-indent out of the list it's nested in, level by level, matching
+   "Mobile: one card per row" in components.css so the two line up. */
 @media (width < 48.0625em) { /* --bp-md */
     .path-tabs {
-        /* Room to grow into: the 100% would clamp the negative margins below
-           back to the width the list left it. */
+        /* 100% would clamp the negative margins below. */
         max-width: none;
     }
 
@@ -61,8 +43,7 @@ No inline margin, so the panel lines up with the step text it sits under.
     }
 }
 
-/* Mobile-first: full-width stacked buttons. Widened into a real tab strip at
-   --bp-md in responsive.css. */
+/* Becomes a tab strip at --bp-md in responsive.css. */
 .path-tabs__bar {
     display: flex;
     flex-direction: column;
@@ -116,9 +97,8 @@ No inline margin, so the panel lines up with the step text it sits under.
     margin-top: var(--space-sm);
 }
 
-/* A deep link to a panel lands on the tab bar, not on the panel's first line, or
-   the tabs sit off-screen and the reader can't tell there's another route.
-   guide-controls.ts measures the bar, which stacks and wraps by screen size. */
+/* Deep links land on the tab bar so the other routes stay visible.
+   guide-controls.ts sets --path-tabs-bar-height. */
 .path-tabs__panel {
     scroll-margin-top: var(--path-tabs-bar-height, 0);
     background-color: var(--color-bg-secondary);
@@ -128,8 +108,7 @@ No inline margin, so the panel lines up with the step text it sits under.
     padding: var(--space-md);
 }
 
-/* The panel's padding is its spacing, as in a table cell: a leading or trailing
-   list would otherwise stack its margins on top of it. */
+/* The panel's padding is its spacing; list margins would stack on top of it. */
 .path-tabs__panel > :first-child,
 .path-tabs__panel > :is(ul, ol):first-child > li:first-child {
     margin-top: 0;
@@ -148,14 +127,7 @@ No inline margin, so the panel lines up with the step text it sits under.
     display: none;
 }
 
-/*
-Text that is in the accessibility tree and in the crawlable DOM, but not on
-screen. Used for icon-only controls: an aria-label names a control for a screen
-reader but is not anchor text, so an icon-only <a> reaches Google carrying no
-words about where it points. A clipped span gives the link real text without
-changing what a sighted user sees. Absolutely positioned, so it adds nothing to
-the flex line it sits in.
-*/
+/* For icon-only links: aria-label is not anchor text to Google, a hidden span is. */
 .visually-hidden {
     position: absolute;
     width: 1px;

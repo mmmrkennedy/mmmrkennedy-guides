@@ -29,10 +29,8 @@ function toFlat(word: string): Sym[] {
     return [...word].flatMap((letter) => [...MORSE[letter]] as Sym[]);
 }
 
-/* The code terminal transmits "KILLOVER" + the number word, enciphered with a
-   Vigenere cipher keyed on the word from the first terminal. Because the key
-   and preamble are both fixed, every message the terminal can produce is known
-   ahead of time, so the solver only has to work out which of the five it is. */
+/* The terminal sends "KILLOVER" + the number word, Vigenere-keyed on the first
+   terminal's word, so only ten messages are possible. */
 function vigenere(plain: string, key: KeyName): string {
     return [...plain]
         .map((ch, i) => ALPHABET[(ALPHABET.indexOf(ch) + ALPHABET.indexOf(key[i % key.length])) % 26])
@@ -54,8 +52,6 @@ const NUMBER_LABEL: Record<NumberWord, string> = {
 interface KeyPlan {
     openingGroups: Group[];
     openingFlat: Sym[];
-    /* Kept in letter groups so a tail can be drawn as a strip, and flattened so
-       a run of taps can be prefix-matched against it. */
     tailGroups: Record<NumberWord, Group[]>;
     tails: Record<NumberWord, Sym[]>;
 }
@@ -74,9 +70,7 @@ function buildPlan(key: KeyName): KeyPlan {
 
 const PLANS: Record<KeyName, KeyPlan> = { ARCHER: buildPlan("ARCHER"), CROSS: buildPlan("CROSS") };
 
-/* What to key into the panel above Bombstoppers, one continuous word per
-   number. Fifteen is the odd one out: it carries an "AR" prosign the other
-   four don't. */
+/* Panel above Bombstoppers. Fifteen carries an "AR" prosign the others don't. */
 const PANEL_WORDS: Record<NumberWord, string> = {
     FIFTEEN: "FIFTEENAR",
     EIGHTEEN: "EIGHTEEN",
@@ -85,14 +79,11 @@ const PANEL_WORDS: Record<NumberWord, string> = {
     THIRTY: "THIRTY",
 };
 
-/* Only for the twenty/twenty-five split, where the number was never actually
-   read: enter twenty, listen for the completion sound, add five if it didn't
-   play. Same beeps as TWENTYFIVE, just broken at the point you have to stop
-   and listen. A known twenty-five is entered straight through instead. */
+/* For the unresolved twenty/twenty-five split: enter twenty, then add five
+   only if no completion sound played. */
 const SPLIT_WORDS = ["TWENTY", "FIVE"];
 
-/* Stable empty reference, so hooks reading the plan before a key is picked
-   don't see a new array identity on every render. */
+/* Stable identity for hook deps before a key is picked. */
 const NO_SYMS: Sym[] = [];
 
 const GLYPH: Record<Sym, string> = { ".": "●", "-": "▬" };
@@ -105,9 +96,8 @@ function isPrefix(candidate: Sym[], taps: Sym[]): boolean {
 
 interface StripProps {
     groups: Group[];
-    /* How many symbols have been tapped, counting from the start of the strip. */
     progress: number;
-    /* Index of the first bad tap, or -1. */
+    /* -1 when there is none. */
     badIndex: number;
     showLetters: boolean;
 }
@@ -169,18 +159,14 @@ function TapPads({ onTap, disabled }: TapPadsProps) {
 
 interface Props {
     title?: string;
-    /* Optional id of an existing <select> on the page holding the ARCHER/CROSS
-       choice. When present the solver adopts it and skips its own key step. */
+    /* Id of a <select> on the page holding ARCHER/CROSS; adopting it skips the key step. */
     keySelectId?: string;
 }
 
 export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
     const [phase, setPhase] = useState<Phase>("key");
-    /* Step 1 is a single beep, so this is one symbol rather than a run. */
     const [keyTap, setKeyTap] = useState<Sym | null>(null);
     const [activeKey, setActiveKey] = useState<KeyName | null>(null);
-    /* True when the key came from the page's dropdown rather than from step 1,
-       so step 2 can say where it got the key from. */
     const [keyFromSelect, setKeyFromSelect] = useState(false);
     const [taps, setTaps] = useState<Sym[]>([]);
     const [chosenNumber, setChosenNumber] = useState<NumberWord | null>(null);
@@ -189,11 +175,8 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
     const [stage, setStage] = useState(0);
     const [inputIndex, setInputIndex] = useState(0);
 
-    /* This solver is a walkthrough, so "where the reader had got to" is part of
-       the input: the same beeps entered at a different step mean something else.
-       The beeps are joined into the strip the reader sees rather than reported as
-       an array of one-character strings. `peekNumber` is excluded — it's a
-       look-ahead the reader can open and close without changing anything. */
+    /* Step and position are reported because the same beeps mean different
+       things at each step. `peekNumber` is excluded: it changes nothing. */
     useSolverReport("BeastVenomYMorseSolver", () => ({
         Step: phase,
         Key: activeKey,
@@ -206,8 +189,6 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
         "Position within stage": inputIndex,
     }));
 
-    /* Adopt the guide's own key dropdown when the solver is embedded next to it,
-       so the reader doesn't pick the same key twice. */
     useEffect(() => {
         if (!keySelectId) return;
         const select = document.getElementById(keySelectId) as HTMLSelectElement | null;
@@ -231,12 +212,10 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
         return () => select.removeEventListener("change", adopt);
     }, [keySelectId]);
 
-    /* ---- key phase ---- */
-    /* One beep settles it: ARCHER's cipher opens short, CROSS's opens long. */
+    /* ARCHER's cipher opens short, CROSS's opens long. */
     const tappedKey: KeyName | null =
         keyTap === null ? null : keyTap === "." ? "ARCHER" : "CROSS";
 
-    /* ---- listen phase ---- */
     const plan = activeKey ? PLANS[activeKey] : null;
     const openingFlat = plan ? plan.openingFlat : NO_SYMS;
     const openingTaps = taps.slice(0, openingFlat.length);
@@ -249,10 +228,8 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
         return NUMBERS.filter((n) => isPrefix(plan.tails[n], numberTaps));
     }, [plan, openingBad, numberTaps]);
 
-    /* Twenty's transmission is a strict prefix of twenty-five's, so a prefix
-       alone can never separate them. It can still be settled if the message
-       loops: past twenty's tail, twenty-five carries on while a repeat starts
-       the opening over. */
+    /* Twenty is a strict prefix of twenty-five, so only a loop back into the
+       opening right after twenty's tail can settle it. */
     const loopedTwenty = useMemo(() => {
         if (!plan || aliveNumbers.length > 0 || openingBad >= 0) return false;
         const twenty = plan.tails.TWENTY;
@@ -272,7 +249,6 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
         aliveNumbers.includes("TWENTYFIVE");
     const noMatch = !inOpening && openingBad < 0 && aliveNumbers.length === 0 && !loopedTwenty;
 
-    /* ---- input phase ---- */
     const words = !chosenNumber
         ? []
         : numberUncertain
@@ -284,11 +260,8 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
     const stageDone = stageWord !== "" && inputIndex >= stageFlat.length;
     const hasSecondStage = words.length > 1;
 
-    /* ---- actions ---- */
-    /* `uncertain` marks the twenty/twenty-five split, where TWENTYFIVE is a
-       best guess rather than a reading. Step 3 needs the distinction: a known
-       twenty-five is keyed straight through as one word, an unknown one has to
-       stop after twenty and check for the completion sound. */
+    /* `uncertain`: TWENTYFIVE is a guess from the split, so step 3 stops after
+       twenty to check for the completion sound. */
     const goToInput = (n: NumberWord, uncertain = false) => {
         setChosenNumber(n);
         setNumberUncertain(uncertain);
@@ -304,15 +277,13 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
         setPhase("listen");
     };
 
-    /* Step 3 only counts taps: the strip already says which button to press in
-       game, so which pad the reader hits to advance doesn't matter. */
+    /* Step 3 only counts taps; which pad is hit doesn't matter. */
     const advance = () => {
         if (!stageDone) setInputIndex((prev) => prev + 1);
     };
 
     const tap = (sym: Sym) => {
-        /* Step 1 takes exactly one beep. Guarded here as well as on the pads so
-           the keyboard can't get past one either. */
+        /* Guarded here as well as on the pads so the keyboard can't add a second beep. */
         if (phase === "key") setKeyTap((prev) => prev ?? sym);
         else if (phase === "listen") setTaps((prev) => [...prev, sym]);
         else if (phase === "input") advance();
@@ -351,7 +322,6 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
         }
     };
 
-    /* ---- render helpers ---- */
     const renderKeyPhase = () => (
         <>
             <p className="morse-step">Step 1 of 3 - Your key</p>
@@ -363,8 +333,6 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
                 {keyTap === null ? "Waiting for the first beep…" : GLYPH[keyTap]}
             </div>
 
-            {/* No error case to handle: either beep names a key, so the only way
-                to be wrong here is to hear the wrong one and undo. */}
             {tappedKey && (
                 <div className="morse-banner morse-banner--answer">Your key is {tappedKey}</div>
             )}
@@ -434,10 +402,8 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
                                 type="button"
                                 className={`morse-chip${peekNumber === n ? " is-peeking" : ""}`}
                                 key={n}
-                                /* Hover on a mouse, tap on a touchscreen. Without
-                                   the pointerType guard a tap would run the hover
-                                   path too and the click would toggle the preview
-                                   straight back off. */
+                                /* Without the pointerType guard, a tap runs the hover
+                                   path too and the click toggles the preview back off. */
                                 onPointerEnter={(e) => {
                                     if (e.pointerType === "mouse") setPeekNumber(n);
                                 }}
@@ -452,11 +418,8 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
                         ))}
                     </div>
 
-                    {/* Preview sits in the flow rather than floating: these
-                        sequences run to 31 beeps, which no tooltip can hold
-                        over a panel this narrow without escaping it. Progress
-                        lights the beeps already matched, so the unlit tail is
-                        what you'd hear next if it is this number. */}
+                    {/* In the flow, not a tooltip: up to 31 beeps won't fit over
+                        a panel this narrow. */}
                     <div className="solver-output morse-peek">
                         {peekNumber && aliveNumbers.includes(peekNumber) ? (
                             <>
@@ -573,8 +536,6 @@ export default function BeastVenomYMorseSolver({ title, keySelectId }: Props) {
 
                 <SymbolStrip groups={stageGroups} progress={inputIndex} badIndex={-1} showLetters={true} />
 
-                {/* Only reachable from the split, since that's the one case
-                    with a second word. Entering five is what settles it. */}
                 {stageDone && stage === 0 && hasSecondStage && (
                     <div className="solver-controls">
                         <button

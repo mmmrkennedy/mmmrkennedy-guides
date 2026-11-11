@@ -1,22 +1,9 @@
-// Admin page for the reading analytics collected by functions/api/reading.js.
+// Admin page for the analytics collected by functions/api/reading.js.
 //
-//   GET /admin/analytics[?days=7|28|90|365][&traffic=live|preview]  → site overview
-//   GET /admin/analytics?path=/games/...[&days=...]                 → one page, by section
+// No rollup tables: at ~1k rows/day a 90-day window is ~90k rows against D1's
+// 5M/day read budget. Section titles are scraped from the built page via
+// env.ASSETS; a renamed section falls back to its id.
 //
-// The overview answers "what is being read". The drill-down answers the question
-// the whole feature exists for: which SECTIONS of a guide get read, where readers
-// come in, and where they stop.
-//
-// Everything is aggregated at read time with json_each over the `sections`,
-// `events` and `solvers` columns — there are no rollup tables. At ~1k rows/day a
-// 90-day window is ~90k rows against D1's 5M/day read budget, and skipping the
-// rollup means a new question is a new SELECT rather than a migration.
-//
-// Section ids are not self-describing ("main_ee_step_4"), so titles are read back
-// out of the built page itself through env.ASSETS. No manifest, no build step,
-// and a section renamed since it was recorded simply falls back to its id.
-//
-// Same auth as /admin/flags: signed session cookie, ADMIN_USER + ADMIN_PASS.
 // Requires the D1 binding `DB` and migrations/0006_analytics.sql.
 
 import { esc, htmlResponse, requireSession } from "./_auth.js";
@@ -26,7 +13,7 @@ const WINDOWS = [7, 28, 90, 365];
 const DEFAULT_DAYS = 28;
 const TOP_PAGES = 25;
 
-/** Rows the section-title scraper will look at. Guides run to ~30 sections. */
+/** Characters of page HTML the section-title scraper reads. */
 const MAX_TITLE_SCAN = 400000;
 
 function since(days) {
@@ -42,7 +29,6 @@ function thousands(n) {
     return num(n).toLocaleString("en-US");
 }
 
-/** 94 -> "1m 34s". Durations here are dwell times, so seconds matter. */
 function duration(seconds) {
     const s = Math.round(num(seconds));
     if (s < 60) return s + "s";
@@ -57,7 +43,6 @@ function pct(part, whole) {
     return Math.round((num(part) / w) * 100);
 }
 
-/** A proportional bar, sized against the largest value in its own table. */
 function bar(value, max) {
     const width = max > 0 ? Math.max(1.5, (num(value) / num(max)) * 100) : 0;
     return `<span class="plot"><span class="bar" style="width:${width.toFixed(2)}%"></span></span>`;
@@ -68,25 +53,16 @@ async function query(env, sql, binds = []) {
         const { results } = await env.DB.prepare(sql).bind(...binds).all();
         return results || [];
     } catch (err) {
-        // A missing table (migration not applied yet) must not take the whole
-        // page down — every section renders independently.
+        // A missing table (migration not applied) must not take the whole page down.
         console.error("analytics query failed —", (err && err.message) || err);
         return [];
     }
 }
 
 /**
- * Section id -> heading text, read out of the built page.
- *
- * Three shapes, because the site writes headings three ways. A section is
- * `<div class="content-container" id="pap"><h2>Pack-a-Punch</h2>`. A sub-section
- * — a single bow, a single quest step, which is the granularity worth having —
- * carries its id on the heading itself and that heading is a styled `<p>`:
- * `<p class="title-tier-2" id="storm_bow">Storm Bow …</p>`. The home page uses
- * `<h2 id="BO3">Black Ops 3</h2>`.
- *
- * Heading-borne ids are matched first so they win over a container that merely
- * has one nearby.
+ * Ids live on a container with an <h2> inside (`<div id="pap"><h2>`), or on the
+ * heading itself (`<p class="title-tier-2" id="storm_bow">`, `<h2 id="BO3">`).
+ * Heading-borne ids are matched first so they win.
  */
 async function sectionTitles(env, request, path) {
     if (!env.ASSETS || typeof env.ASSETS.fetch !== "function") return new Map();
@@ -105,8 +81,6 @@ async function sectionTitles(env, request, path) {
     const containerRe =
         /id="([A-Za-z0-9_-]{1,64})"[^>]*>[\s\S]{0,300}?<h2[^>]*>([\s\S]{0,300}?)<\/h2>/g;
 
-    // The tag backreference in headingRe costs it a capture group, so each
-    // pattern says where its id and its text landed.
     const passes = [
         { re: headingRe, id: 2, text: 3 },
         { re: containerRe, id: 1, text: 2 },
@@ -201,8 +175,7 @@ export async function onRequestGet({ request, env }) {
     let days = parseInt(url.searchParams.get("days"), 10);
     if (!WINDOWS.includes(days)) days = DEFAULT_DAYS;
 
-    // Preview deploys write too, tagged, so the pipeline can be tested before it
-    // ships. Live traffic is what the dashboard means unless asked otherwise.
+    // Preview deploys write tagged rows too.
     const traffic = url.searchParams.get("traffic") === "preview" ? "preview" : "live";
     const prev = traffic === "preview" ? 1 : 0;
 
@@ -247,12 +220,9 @@ export async function onRequestGet({ request, env }) {
     return htmlResponse(shell({ title: "Reading analytics", header, body }));
 }
 
-// ---- overview ---------------------------------------------------------------
-
 async function overview(env, { from, days, prev, qs }) {
     const where = "day >= ?1 AND prev = ?2";
-    // Spelled out per alias rather than prefixed at the call site: a bare `prev`
-    // is ambiguous the moment a query joins pageviews to itself.
+    // Aliased: a bare `prev` is ambiguous once pageviews joins itself.
     const wherePv = "pv.day >= ?1 AND pv.prev = ?2";
     const binds = [from, prev];
 
@@ -443,8 +413,6 @@ migrations/0006_analytics.sql has been applied and that a beacon has had a chanc
   <table><tbody>${dayRows}</tbody></table>
 </section>`;
 }
-
-// ---- one page ---------------------------------------------------------------
 
 async function pageReport(env, request, { path, from, days, prev, qs }) {
     const where = "path = ?1 AND day >= ?2 AND prev = ?3";

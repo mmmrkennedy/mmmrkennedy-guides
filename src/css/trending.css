@@ -1,14 +1,5 @@
-/* Trending indicator
- * ------------------
- * Subtle 🔥 placed on the most-viewed guide and solver of the week, injected on
- * the home page by src/ts/ui/trending.ts. Kept understated: small, gentle pulse,
- * and no motion for users who prefer reduced motion. */
-
-/* Super-subtle warm highlight behind the trending link.
- *
- * Nothing here may change the size of the line box: it arrives when /api/trending
- * answers, after first paint, so any added width would re-wrap the list. Hence
- * box-shadow and an absolutely positioned flame. */
+/* Injected by src/ts/ui/trending.ts after first paint, so nothing here may change
+ * the line box size or the list re-wraps. Hence box-shadow and an absolute flame. */
 .trending-link {
     position: relative;
     background: rgb(232 150 62 / 4%);
@@ -16,9 +7,8 @@
     box-shadow: 0 0 0 0.25em rgb(232 150 62 / 4%);
 }
 
-/* Sits as a badge off the link's top-right corner rather than beside it. Out of
- * flow it would otherwise land on the "&nbsp;|&nbsp;" that separates a map from
- * its solver, and hide the separator behind the emoji. */
+/* Raised off the top-right corner so it doesn't cover the "&nbsp;|&nbsp;"
+ * separator between a map and its solver. */
 .trending-flame {
     position: absolute;
     left: 100%;

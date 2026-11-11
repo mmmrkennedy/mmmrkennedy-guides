@@ -3,15 +3,9 @@ const fs = require("fs");
 const path = require("path");
 const { lastmodCache, editcountCache, releaseCache } = require("./dates.cjs");
 
-// Below this a page is a solver shell or a stub, not something with a readable
-// length worth quoting, so it gets no footer count and no share of the total.
+// Below this a page is a solver shell or stub: no footer count, no share of totals.
 const WORDCOUNT_FLOOR = 100;
 
-/**
- * Words of visible prose in page HTML. Comments, script/style/template bodies,
- * reveal and path tab labels, and all tags are dropped first. Inner apostrophes
- * and hyphens keep "Pack-a-Punch" and "Hell's" as one word each.
- */
 function countWords(html) {
     if (!html) return 0;
     const text = String(html)
@@ -27,11 +21,7 @@ function countWords(html) {
 
 const PICTURE_REF = /(?:href|src)\s*=\s*["']([^"']+?\.(?:webp|png|jpe?g|gif))["']/gi;
 
-/**
- * Distinct screenshots a guide shows, counted from the links and <img>s in its
- * HTML. Not from files on disk: images are git-ignored and live in R2, so a
- * Cloudflare checkout has none. Off-site images don't count.
- */
+// Counted from HTML, not disk: images are gitignored (R2), so a Cloudflare checkout has none.
 function countPictures(html) {
     const seen = new Set();
     for (const [, url] of String(html).matchAll(PICTURE_REF)) {
@@ -42,12 +32,9 @@ function countPictures(html) {
 }
 
 /**
- * Everything the stats page and the index footer report, measured once per build.
- *
- * src/index.html is the registry: each `h2[id]` opens a game section, and the
- * links under it are that game's maps. `.disabled` means the guide isn't written
- * yet; `.solver-link` is a tool, not a guide. Per-guide counts come from the
- * authored source, because transforms add chrome to the rendered page.
+ * src/index.html is the registry: each `h2[id]` opens a game, the links under it
+ * are its maps, `.disabled` = not written yet. Counts use authored source because
+ * transforms add chrome to the rendered page.
  */
 let statsCache = null;
 function siteStats() {
@@ -58,8 +45,6 @@ function siteStats() {
     const guides = [];
     let solverCount = 0;
 
-    // Without the index, fall through with no games: every aggregate below works
-    // on empty arrays.
     let doc = null;
     try {
         doc = new JSDOM(fs.readFileSync(path.join(srcDir, "index.html"), "utf8")).window.document;
@@ -67,16 +52,13 @@ function siteStats() {
         console.warn("Couldn't read src/index.html, stats will be empty:", e.message);
     }
 
-    // A remastered map is listed under both its original game and the remaster.
-    // It counts toward coverage for each, but its guide is measured once, so game
-    // word totals add up to the site total. The index runs newest game first, so
-    // walking bottom-to-top credits a map to its original game.
+    // Remasters are listed under two games: coverage for both, words measured once.
+    // The index is newest-first, so walking it reversed credits the original game.
     const measured = new Map();
     const allMaps = new Set();
 
     for (const heading of doc ? [...doc.querySelectorAll("h2[id]")].reverse() : []) {
         const game = { key: heading.id, label: heading.textContent.trim(), planned: 0, written: 0, words: 0, pictures: 0 };
-        // The maps of a game are the links between this <h2> and the next one.
         for (let el = heading.nextElementSibling; el && el.tagName !== "H2"; el = el.nextElementSibling) {
             for (const link of el.querySelectorAll("a[href]")) {
                 if (link.classList.contains("solver-link")) { solverCount += 1; continue; }
@@ -85,10 +67,9 @@ function siteStats() {
 
                 allMaps.add(href);
                 game.planned += 1;
-                if (link.classList.contains("disabled")) continue; // not written yet
+                if (link.classList.contains("disabled")) continue;
 
                 if (measured.has(href)) {
-                    // Already measured under an earlier game: coverage only.
                     if (measured.get(href)) game.written += 1;
                     continue;
                 }
@@ -96,10 +77,9 @@ function siteStats() {
                 const file = path.join(srcDir, href + ".html");
                 if (!fs.existsSync(file)) { measured.set(href, false); continue; }
                 const raw = fs.readFileSync(file, "utf8");
-                // Strip the YAML frontmatter so its keys don't count as prose.
                 const body = raw.replace(/^---\r?\n[\s\S]*?\r?\n---/, "");
                 const words = countWords(body);
-                if (words < WORDCOUNT_FLOOR) { measured.set(href, false); continue; } // a stub
+                if (words < WORDCOUNT_FLOOR) { measured.set(href, false); continue; }
 
                 const pictures = countPictures(body);
                 const cacheKey = "src/" + href + ".html";
@@ -119,7 +99,6 @@ function siteStats() {
                     edits: editcountCache[cacheKey] || 0,
                     updated: (lastmodCache[cacheKey] || "").slice(0, 10),
                     released: (releaseCache[cacheKey] || "").slice(0, 10),
-                    // How much prose each step carries: the "verbosity" of a guide.
                     density: steps ? words / steps : 0,
                 });
 
@@ -141,7 +120,6 @@ function siteStats() {
         totals: {
             words: sum("words"),
             guides: guides.length,
-            // Distinct maps, so a remaster listed under two games counts once.
             planned: allMaps.size,
             solvers: solverCount,
             steps: sum("steps"),
@@ -160,12 +138,10 @@ function siteStats() {
         guides,
         byWords: guides.slice(0, 10),
         byPictures: [...guides].sort((a, b) => b.pictures - a.pictures).slice(0, 10),
-        // Filtered on words, not on `written`: a game whose only published maps
-        // are remasters measured under their original game has nothing to plot.
+        // Filtered on words, not `written`: a remaster-only game has nothing to plot.
         byGame: [...games].filter((g) => g.words > 0).sort((a, b) => b.words - a.words),
         byYear: byYear,
-        // Nunjucks `set` inside a loop doesn't escape the loop, so the chart's
-        // scale has to arrive precomputed.
+        // Precomputed: Nunjucks `set` inside a loop doesn't escape the loop.
         byYearMax: byYear.reduce((n, y) => Math.max(n, y.count), 0),
         coverage: [...games].sort((a, b) => b.written / b.planned - a.written / a.planned),
         extremes: {
@@ -180,10 +156,6 @@ function siteStats() {
     return statsCache;
 }
 
-/**
- * Guides grouped by release year, oldest first. Empty years stay so the chart
- * reads as a timeline; guides with no recorded date are left out.
- */
 function releasesByYear(guides) {
     const counts = new Map();
     for (const g of guides) {

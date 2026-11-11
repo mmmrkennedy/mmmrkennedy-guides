@@ -20,17 +20,14 @@ function updateDirectionsAfterShots(
     const newDirections: DirectionsArray = [...currDirections];
 
     if (targetId === 1) {
-        // B: affects A, B (double), C
         newDirections[0] = ((currDirections[0] + shotCount) % 4) as Direction;
         newDirections[1] = ((currDirections[1] + shotCount * 2) % 4) as Direction;
         newDirections[2] = ((currDirections[2] + shotCount) % 4) as Direction;
     } else if (targetId === 2) {
-        // C: affects B, C (double), D
         newDirections[1] = ((currDirections[1] + shotCount) % 4) as Direction;
         newDirections[2] = ((currDirections[2] + shotCount * 2) % 4) as Direction;
         newDirections[3] = ((currDirections[3] + shotCount) % 4) as Direction;
     } else if (targetId === 3) {
-        // D: affects C, D (double)
         newDirections[2] = ((currDirections[2] + shotCount) % 4) as Direction;
         newDirections[3] = ((currDirections[3] + shotCount * 2) % 4) as Direction;
     }
@@ -42,7 +39,8 @@ function solveLogic(directions: DirectionsArray): number[] {
     const shootCounts: number[] = [0, 0, 0, 0];
     let currDirections: DirectionsArray = [...directions];
 
-    // Step 1: cascade A → B → C → D into "facing forward" sequence
+    // Shoot B, C, D in turn to face A, B, C forward; D's leftover state then
+    // needs a fixed A/B/C combo below.
     const shotsForB = shotsToFaceForward(currDirections, 0);
     shootCounts[1] = shotsForB;
     currDirections = updateDirectionsAfterShots(currDirections, 1, shotsForB);
@@ -55,7 +53,6 @@ function solveLogic(directions: DirectionsArray): number[] {
     shootCounts[3] = shotsForD;
     currDirections = updateDirectionsAfterShots(currDirections, 3, shotsForD);
 
-    // Step 2: handle the three possible D states
     const blockDDir = currDirections[3];
     if (blockDDir === 1) {
         shootCounts[0] += 1;
@@ -86,15 +83,12 @@ function buildSolutionLines(directions: DirectionsArray): string[] {
 export default function HammerSolver({ title }: { title?: string }) {
     const [directions, setDirections] = useState<DirectionsArray>([0, 0, 0, 0]);
 
-    // Arrows are what the reader sees on each block; the raw 0-3 goes alongside
-    // so a report can be replayed without decoding glyphs.
     useSolverReport("HammerSolver", () => ({
         "Block directions (A-D)": directions.map((d, i) => `${LABELS[i]}: ${DIRECTION_SYMBOLS[d]}`),
         "Block directions (raw 0-3)": [...directions],
     }));
     const [result, setResult] = useState<string[] | null>(null);
 
-    // Solves on every click, so the shot list tracks the blocks live.
     const cycleDirection = (blockId: BlockId) => {
         const next: DirectionsArray = [...directions];
         next[blockId] = ((next[blockId] + 1) % 4) as Direction;
@@ -102,7 +96,6 @@ export default function HammerSolver({ title }: { title?: string }) {
         setResult(buildSolutionLines(next));
     };
 
-    // Back to the untouched state, nudge and all — not "Already solved!".
     const handleReset = () => {
         setDirections([0, 0, 0, 0]);
         setResult(null);

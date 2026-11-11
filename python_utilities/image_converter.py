@@ -1,21 +1,9 @@
 """
-Convert images to/from WebP using cwebp/dwebp.
+Originals are backed up to '_img_backup' next to 'src', mirroring the path under 'src'.
 
-Originals are backed up to a sibling '_img_backup' folder next to 'src'
-before conversion, mirroring the path structure under 'src'.
-e.g. src/games/BO4/foo.png -> _img_backup/games/BO4/foo.png
-
-The default is lossy q95, not lossless. Measured over the 1,678 lossless
-guide images that were on the site in Sept 2026: re-encoding them at q95 cut
-4.97GB to 1.07GB, a 78% saving, and the worst PSNR against the lossless
-original across the whole set was 45.4dB (median 47.6). Above roughly 45dB the
-difference is not visible on a game screenshot, so lossless was paying about 5x
-the bytes for nothing anyone could see. Lossless is still one prompt away for
-the cases that need it, such as flat UI art with hard edges.
-
-Never re-encode an already-lossy WebP with this. Lossy to lossy adds a second
-generation of artifacts and usually grows the file. 'Include existing webp
-files' is there for converting a LOSSLESS webp down to q95, and defaults to no.
+Default is lossy q95: on the site's lossless screenshots it saved 78% with worst
+PSNR 45.4dB, not visible. Never re-encode an already-lossy WebP (second-generation
+artifacts, usually larger); 'Include existing webp files' is for lossless WebP only.
 """
 
 import os
@@ -26,9 +14,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 DEFAULT_DIR = Path(r"D:\programming_projects\mmmrkennedy-guides\src\games")
-# Visual quality for lossy mode. See the module docstring for why 95.
 DEFAULT_QUALITY = 95
-# Compression effort for lossless mode, where -q is not a quality knob.
+# Lossless mode, where -q is compression effort, not quality.
 DEFAULT_EFFORT = 90
 SOURCE_EXTS = {".png", ".jpg", ".jpeg", ".bmp"}
 BACKUP_FOLDER_NAME = "_img_backup"
@@ -37,7 +24,6 @@ PICTURES_FOLDER = "pictures"
 
 
 def find_images(root: Path, extensions: set[str]) -> list[Path]:
-    """One walk, returns the full list. Beats walking twice for a count."""
     exts = {e.lower() for e in extensions}
     return [
         Path(dirpath) / name
@@ -53,12 +39,7 @@ def _check_tool(name: str) -> None:
 
 
 def resolve_backup_path(input_path: Path) -> Path | None:
-    """
-    Map src/games/foo/bar.png -> <parent of src>/_img_backup/games/foo/bar.png
-
-    Returns None if 'src' isn't in the path. Uses the *last* 'src' segment so
-    paths like C:/src/projects/src/games/... map under the inner one.
-    """
+    """Uses the last 'src' segment, so C:/src/projects/src/games/... maps under the inner one."""
     parts = input_path.resolve().parts
     src_indices = [i for i, p in enumerate(parts) if p == SRC_SEGMENT]
     if not src_indices:
@@ -70,11 +51,6 @@ def resolve_backup_path(input_path: Path) -> Path | None:
 
 
 def backup_original(input_path: Path) -> tuple[bool, str, Path | None]:
-    """
-    Copy original to backup location before conversion.
-    Returns (ok, message, backup_path). If backup exists, returns (False, ...)
-    so the caller can skip conversion.
-    """
     backup_path = resolve_backup_path(input_path)
     if backup_path is None:
         return False, f"no '{SRC_SEGMENT}' segment in path, can't determine backup location", None
@@ -93,14 +69,12 @@ def backup_original(input_path: Path) -> tuple[bool, str, Path | None]:
 
 def convert_to_webp(input_path: Path, quality: int,
                     lossless: bool = False) -> tuple[Path, bool, str]:
-    """Returns (path, success, message). Original is deleted only on success."""
     backup_ok, backup_msg, _ = backup_original(input_path)
     if not backup_ok:
         return input_path, False, f"skipped: {backup_msg}"
 
     output_path = input_path.with_suffix(".webp")
-    # In lossless mode -q is the compression *effort* (still 0-100), not visual
-    # quality — output is pixel-perfect. -pass is lossy-only, so drop it there.
+    # In lossless mode -q is compression effort. -pass is lossy-only.
     if lossless:
         encode_args = ["-lossless", "-q", str(quality), "-m", "6", "-mt"]
     else:
@@ -119,8 +93,7 @@ def convert_to_webp(input_path: Path, quality: int,
     if not output_path.exists():
         return input_path, False, "output not created"
 
-    # Only delete the source if input and output are different files.
-    # (They differ because suffix changed — but webp->webp re-encode would match.)
+    # Same path on a webp->webp re-encode.
     if input_path != output_path:
         try:
             input_path.unlink()
@@ -159,7 +132,6 @@ def convert_to_png(input_path: Path) -> tuple[Path, bool, str]:
 
 
 def run_batch(images: list[Path], worker, label: str) -> list[Path]:
-    """Generic parallel runner. Returns list of successfully-converted paths."""
     if not images:
         print("No images found.")
         return []
@@ -197,12 +169,6 @@ def run_batch(images: list[Path], worker, label: str) -> list[Path]:
 
 
 def find_guide_folder(image_path: Path) -> Path | None:
-    """
-    Given an image path, walk up to find the guide folder (the dir containing
-    'pictures'). Returns None if no 'pictures' segment is found.
-
-    src/games/WW2/groesten_haus/pictures/foo/bar.png -> src/games/WW2/groesten_haus
-    """
     parts = image_path.parts
     try:
         idx = parts.index(PICTURES_FOLDER)
@@ -212,18 +178,10 @@ def find_guide_folder(image_path: Path) -> Path | None:
 
 
 def update_html_references(converted: list[Path]) -> list[Path]:
-    """
-    For every successfully-converted image, rewrite its references in the
-    HTML files of its guide folder. Each HTML is read/written exactly once
-    even if many of its images were converted.
-
-    Returns the list of HTML files that were actually modified, so callers
-    (e.g. the git hook) can re-stage exactly those.
-    """
+    """Returns the modified HTML files so the git hook can re-stage them."""
     if not converted:
         return []
 
-    # Group converted images by guide folder so each HTML is only touched once.
     by_guide: dict[Path, list[Path]] = {}
     orphans: list[Path] = []
     for img in converted:
@@ -249,15 +207,14 @@ def update_html_references(converted: list[Path]) -> list[Path]:
             print(f"  {guide.name}: no .html files found")
             continue
 
-        # Build a list of (old_relative_path, new_relative_path) for this guide.
-        # Paths in HTML are relative to the guide folder, e.g. "pictures/foo/bar.png".
+        # Paths in HTML are relative to the guide folder.
         replacements = []
         for img in images:
             try:
                 rel = img.relative_to(guide)
             except ValueError:
                 continue
-            old_rel = rel.as_posix()  # forward slashes for HTML
+            old_rel = rel.as_posix()
             new_rel = rel.with_suffix(".webp").as_posix()
             replacements.append((old_rel, new_rel))
 
@@ -294,7 +251,6 @@ def update_html_references(converted: list[Path]) -> list[Path]:
 
 
 def warn_if_no_src(root: Path) -> bool:
-    """Pre-flight: warn if the input dir doesn't sit under a 'src' folder."""
     if SRC_SEGMENT not in root.resolve().parts:
         print(f"WARNING: '{root}' does not contain a '{SRC_SEGMENT}' folder.")
         print("Backups can't be created without a 'src' anchor.")
@@ -313,7 +269,6 @@ def convert_dir_to_webp(root: Path, quality: int, include_webp: bool,
     mode = "lossless" if lossless else f"q={quality}"
     converted = run_batch(images, lambda p: convert_to_webp(p, quality, lossless),
                           f"Conversion to WebP @ {mode}")
-    # Don't rewrite HTML for webp->webp re-encodes (suffix didn't change).
     suffix_changed = [p for p in converted if p.suffix.lower() != ".webp"]
     update_html_references(suffix_changed)
 
@@ -326,8 +281,6 @@ def convert_dir_to_png(root: Path) -> None:
     print(f"Found {len(images)} webp files in {root}")
     run_batch(images, convert_to_png, "Conversion to PNG")
 
-
-# ---------- prompts ----------
 
 def prompt_dir(previous: Path | None) -> Path:
     if previous and input(f"Use previous directory ({previous})? (y/n): ").lower() != "n":
@@ -369,8 +322,6 @@ def main() -> None:
                     print(f"Not a directory: {image_dir}")
                     continue
                 lossless = input("Lossless? (y/n) [n]: ").lower() == "y"
-                # -q means compression effort in lossless mode and visual
-                # quality in lossy mode, so the sensible default differs.
                 default = DEFAULT_EFFORT if lossless else DEFAULT_QUALITY
                 label = (f"Effort 1-100 [{default}]: " if lossless
                          else f"Quality 1-100 [{default}]: ")

@@ -9,7 +9,7 @@ type RotationList = [RotationValue, RotationValue, RotationValue, RotationValue]
 
 const DIRECTION_SYMBOLS: string[] = ["↑", "→", "↓", "←"];
 const STATUE_LABELS: string[] = ["A", "B", "C", "D"];
-// All statues facing down — the in-game solved position, and the starting point.
+// All facing down: the in-game solved position.
 const DEFAULT_DIRECTIONS: RotationList = [2, 2, 2, 2];
 const PUZZLE_OFFSETS: number[][] = [
     [1, 1, 1],
@@ -65,7 +65,6 @@ function solvePuzzle(directions: RotationList, puzzleID: PuzzleID): string[] {
     let workingDirections: RotationList = [...directions];
     const lines: string[] = [];
 
-    // Validate input directions
     for (let i = 0; i < workingDirections.length; i++) {
         if (offsets[i] === 2 && (workingDirections[i] === 1 || workingDirections[i] === 3)) {
             return [`Invalid input - check Statue ${STATUE_LABELS[i]}.`];
@@ -156,8 +155,7 @@ export default function StatueSolver({ title }: { title?: string }) {
     const [activeWall, setActiveWall] = useState<WallID>("wall1");
     const [directions, setDirections] = useState<RotationList>(DEFAULT_DIRECTIONS);
 
-    // Wall 1 has three statues, the rest have four, so the list is trimmed to the
-    // wall actually being solved — the fourth slot on wall 1 is stale, not input.
+    // On wall 1 the fourth slot is stale state, not input.
     useSolverReport("StatueSolver", () => {
         const count = activeWall === "wall1" ? 3 : 4;
         return {
@@ -168,8 +166,6 @@ export default function StatueSolver({ title }: { title?: string }) {
             "Statue directions (raw 0-3)": directions.slice(0, count),
         };
     });
-    // Re-solved by every handler below, so the output tracks the statues live.
-    // Null only until the first interaction, which is when the nudge shows.
     const [result, setResult] = useState<string[] | null>(null);
 
     const statueCount = activeWall === "wall1" ? 3 : 4;
@@ -190,7 +186,6 @@ export default function StatueSolver({ title }: { title?: string }) {
         setResult(solvePuzzle([...newDirections], puzzleIdFor(activeWall)));
     }
 
-    // Back to the untouched state, nudge and all — not "Already solved!".
     function handleReset() {
         setDirections(DEFAULT_DIRECTIONS);
         setResult(null);

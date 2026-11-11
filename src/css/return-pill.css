@@ -1,8 +1,4 @@
-/* Return pill
- * ----------
- * A dismissible "← Back to «section»" affordance shown after following an
- * in-page cross-reference, so the reader can jump straight back to where they
- * were. Built/controlled by src/ts/ui/return-pill.ts. */
+/* Controlled by src/ts/ui/return-pill.ts. */
 
 .return-pill {
     position: fixed;
@@ -22,8 +18,6 @@
     border-radius: 999px;
     box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
     cursor: pointer;
-
-    /* Hidden until armed: nudged down + faded, and click-through disabled. */
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, 1rem);
@@ -38,11 +32,8 @@
     transform: translate(-50%, 0);
 }
 
-/* Touch devices leave :hover stuck on the last-tapped element, and this rule
- * outranks the base `opacity: 0` — so a tapped-then-hidden pill stayed on screen
- * until the reader tapped somewhere else, reading as "it took two presses".
- * Gate on real hover, and require .is-visible so hover can never resurrect a
- * hidden pill on hybrid touch-and-mouse devices. */
+/* Touch leaves :hover stuck on the last tap, which kept a hidden pill on screen.
+ * (hover: hover) plus .is-visible stops hover resurrecting it. */
 @media (hover: hover) {
     .return-pill.is-visible:hover {
         opacity: 1;
@@ -82,8 +73,7 @@
         background-color 0.15s ease;
 }
 
-/* The × glyph sits low in its line box by default (aligned to the math axis,
- * not the box center), so nudge the ink up to optical center. */
+/* The × glyph sits on the math axis, low in its line box, so nudge it up. */
 .return-pill__dismiss::before {
     content: "\00d7";
     transform: translateY(-0.1em);

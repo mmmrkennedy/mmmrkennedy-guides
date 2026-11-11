@@ -1,14 +1,3 @@
-/**
- * Legend panel
- * Always-available reference for link colour coding and viewer controls.
- * Can be reopened anytime via the floating "?" launcher in the bottom-left
- * corner.
- */
-
-/**
- * Wires up the legend launcher and overlay (open/close, ESC, click-outside,
- * focus return, and a minimal focus trap).
- */
 function initLegend(): void {
     const launcher = document.getElementById("legendLauncher");
     const overlay = document.getElementById("legendOverlay");

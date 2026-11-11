@@ -35,11 +35,10 @@ function calculateCode(picked: number[]): CalcResult {
 }
 
 export default function MaxisItemsSolver({ title }: { title?: string }) {
-    // picked[i] = file_number assigned to slot i (the i-th in-game appearance).
-    // Length grows from 0 to 4 as user clicks; clicking a slot removes that entry.
+    // picked[i] = file_number of the i-th in-game appearance.
     const [picked, setPicked] = useState<number[]>([]);
 
-    // Order is the input here, not just the set, so the array is reported as-is.
+    // Order is part of the input, so the array is reported as-is.
     useSolverReport("MaxisItemsSolver", () => ({
         "Files picked, in order": picked.map(
             (n) => `#${n} ${fileByNumber.get(n)?.name ?? "unknown"}`,
@@ -52,7 +51,6 @@ export default function MaxisItemsSolver({ title }: { title?: string }) {
     const togglePick = (fileNumber: number) => {
         const existingIndex = picked.indexOf(fileNumber);
         if (existingIndex >= 0) {
-            // Already picked → remove from list
             const next = [...picked];
             next.splice(existingIndex, 1);
             setPicked(next);

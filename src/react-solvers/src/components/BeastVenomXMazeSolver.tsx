@@ -1,11 +1,9 @@
 import { useRef, useEffect, useState } from "preact/hooks";
 import { useSolverReport } from "../solver-report";
 
-// Image paths
 const IMG_YELLOW_SQUARE = "/games/IW/the_beast_from_beyond/venom/venom_maze/pictures/yellow_square.webp";
 const IMG_BLUE_DIAMOND = "/games/IW/the_beast_from_beyond/venom/venom_maze/pictures/blue_diamond.webp";
 
-// Type definitions
 interface MazeSolution {
     start: [number, number];
     end: [number, number];
@@ -19,7 +17,6 @@ interface DraggableState {
     position: [number, number] | null;
 }
 
-// Maze solution data
 const mazeSolutionCoordinates: MazeSolution[] = [
     {
         start: [0, 5],
@@ -146,9 +143,8 @@ export default function BeastVenomXMazeSolver({ title }: { title?: string }) {
     const [selectedPiece, setSelectedPiece] = useState<DraggableType | null>(null);
     const [validPositions, setValidPositions] = useState<[number, number][]>([]);
 
-    // The board is drawn to a <canvas>, so these two coordinates exist nowhere in
-    // the DOM — without this the maze solver could only ever be reported blind.
-    // `selectedPiece` is which piece is held mid-drag, not an input.
+    // The board is a <canvas>, so the DOM scrape can't see these.
+    // `selectedPiece` is the piece held mid-drag, not an input.
     useSolverReport("BeastVenomXMazeSolver", () => ({
         "Start piece at [row, col]": draggables.find((d) => d.type === "start")?.position ?? null,
         "End piece at [row, col]": draggables.find((d) => d.type === "end")?.position ?? null,

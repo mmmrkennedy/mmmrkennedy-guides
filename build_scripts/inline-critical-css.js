@@ -1,40 +1,8 @@
 /**
- * Per-page CSS: keep what the page can actually use, inline it, drop the link.
- *
- * A page uses under half of the bundle's rules on average, and stylesheets block
- * first paint. This computes the used subset per page, emits it as a <style> where
- * the first <link> was, and removes the links, so a cold load needs no CSS requests.
- *
- * The cost is that CSS is no longer cached separately. Search traffic mostly lands
- * on one guide and leaves, so cold load is the case worth optimising.
- *
- * WHAT IS NOT TOUCHED
- *   - Solvers.css. On guide pages it is already non-blocking (media=print), and
- *     on solver pages the markup is React's, so a static purge cannot see the
- *     classes that appear once the user interacts. Left exactly as it is.
- *   - react-solvers/index.html, the Vite dev harness, which is not a real page.
- *   - The templates. They keep emitting <link> tags, which dev mode needs and
- *     minify-assets.js's orphan check counts. This step edits dist only.
- *
- * SAFETY
- * A purge is only as good as its idea of what "used" means, and half this site's
- * classes are added at runtime: ad slots, the feedback flags (gfb-*), the
- * sidebar TOC, the return pill, every is-* state class. None of them appear in
- * the built HTML. So the token set is the page's own classes and ids PLUS every
- * class-shaped string literal and markup fragment found in the shipped JS.
- *
- * A rule survives when every class and id its selector names is in that set —
- * the PurgeCSS rule, chosen over live DOM matching because it cannot be fooled
- * by structure that only exists after a click. Rules naming no class or id at
- * all (element and attribute selectors, :root, @font-face, @keyframes) are
- * always kept: they are a small share of the bytes and the cheapest thing to be
- * wrong about.
- *
- * Set CSS_FALLBACK=true to additionally keep the full bundle as a deferred
- * (media=print, non-blocking) link. It re-supplies anything wrongly dropped,
- * landing after the inline <style> so the cascade order is unchanged. Off by
- * default, deliberately: with the net in place a purge bug is invisible, and
- * the point of a preview deploy is to see the real thing.
+ * Inlines only the CSS rules each page can use and drops the <link>s. Edits dist only.
+ * Solvers.css is not owned: it is already non-blocking on guides, and solver
+ * markup is rendered by React.
+ * CSS_FALLBACK=true also keeps the full bundle as a deferred link.
  */
 
 import fs from "fs";
@@ -50,9 +18,7 @@ const distDir = path.join(__dirname, "..", "dist");
 
 const KEEP_FALLBACK = process.env.CSS_FALLBACK === "true";
 
-// Sheets this step owns. Anything else a page links is left alone.
-// Hashed by minify-assets.js before we run, hence the pattern rather than a
-// literal name.
+// Patterns because minify-assets.js has already hashed the names.
 const OWNED = [
     /^\/css\/bundle\.[0-9a-f]+\.min\.css$/,
     /^\/css\/index-nav\.[0-9a-f]+\.css$/,
@@ -63,15 +29,10 @@ const OWNED = [
 const SKIP_PAGES = [/^react-solvers[/\\]/];
 
 /**
- * Scripts a page has switched off, so nothing they add can be styled there.
- *
- * The safelist is global, so without this the index would carry every gfb-* rule
- * for a feature its <body data-no-flags> disables.
- *
- * Gates name a script, not a class prefix, and a class survives if any enabled
- * script can add it: index-filter.ts borrows .gfb-toast from the flag UI.
- *
- * Each gate must match an early return in the script it names.
+ * Scripts a page switches off, so their classes are purged there. Gates name a
+ * script, not a class prefix: a class survives if any enabled script can add it
+ * (index-filter.ts borrows .gfb-toast). Each gate must match an early return in
+ * the script it names.
  */
 const FEATURE_GATES = [
     { disabled: (body) => body.hasAttribute("data-no-flags"), scripts: [/ui[/\\]line-flagger\.js$/] },
@@ -90,25 +51,15 @@ function findFiles(dir, ext) {
     return out;
 }
 
-// Classes the patterns below cannot see, because the JS builds them at runtime.
-// ads.ts does `classList.add(\`ads-${mode}\`)`. Add to this list rather than
-// widening the patterns, so each exception stays traceable to a line of source.
+// Runtime-built classes the patterns can't see (ads.ts: `ads-${mode}`). Add here
+// rather than widening the patterns.
 const SAFELIST = ["ads-full", "ads-hidden", "ads-minimal"];
 
 /**
- * Every class-shaped token the shipped JS could put on an element, or look for.
- *
- * Scanning every string literal was the first attempt and kept 71% of the CSS:
- * minified code is full of words like "active" and "danger" that are also class
- * names, so the safelist swallowed most of the savings. This reads only the
- * places a class can actually come from — classList calls, className and class
- * assignments, class attributes inside markup blobs, and selector strings the JS
- * queries with — which is tight enough to be worth purging against and still
- * covers everything added after page load.
- *
- * The React solver bundle is included: it lives outside src/ts and its
- * components use core classes (btn, table-scroll) that no static markup carries
- * until the solver has rendered.
+ * Only class-bearing sites are scanned: scanning every string literal kept 71% of
+ * the CSS, since minified code is full of words like "active" that are also classes.
+ * The React solver bundle is included because it uses core classes that no static
+ * markup carries.
  */
 async function harvestJsTokens() {
     const byFile = new Map([["(safelist)", new Set(SAFELIST)]]);
@@ -122,11 +73,9 @@ async function harvestJsTokens() {
         }
     };
 
-    // Reads src/ts rather than the bundles in dist/js. FEATURE_GATES switches off
-    // one script's classes per page, so tokens have to be attributed per script,
-    // and a bundle can't say which script a class came from.
+    // src/ts, not the dist/js bundles: FEATURE_GATES needs tokens per script.
     const tsRoot = path.join(distDir, "..", "src", "ts");
-    // Minified because the patterns below were tuned against minified code.
+    // Minified because the patterns were tuned against minified code.
     const scripts = await Promise.all(
         findFiles(tsRoot, ".ts")
             .filter((f) => !f.endsWith(".d.ts"))
@@ -148,15 +97,13 @@ async function harvestJsTokens() {
             : []),
     ];
 
-    // Quoted strings passed to classList.add/remove/toggle/contains/replace.
     const classListCall = /classList\s*\.\s*(?:add|remove|toggle|contains|replace)\s*\(([^)]*)\)/g;
-    // className = "...", class: "..." and className: "..." (the compiled JSX form).
+    // The `:` forms are compiled JSX.
     const assignment = /(?:className|\bclass)\s*[=:]\s*(["'`])([^"'`\n]*)\1/g;
-    // setAttribute("class", "..."), whichever quote style survived minification.
     const setAttr = /setAttribute\s*\(\s*["'`]class["'`]\s*,\s*["'`]([^"'`\n]*)["'`]/g;
-    // class attributes inside innerHTML/template blobs, including escaped quotes.
+    // class attributes inside innerHTML/template blobs.
     const markupClass = /class=(?:\\?["'])([^"'\\\n]*)(?:\\?["'])/g;
-    // Any string that reads as a CSS selector, i.e. what the JS queries for.
+    // Selector strings the JS queries with.
     const selectorish = /["'`]([^"'`\n]*[.#][a-zA-Z_-][^"'`\n]*)["'`]/g;
 
     for (const { key, code } of sources) {
@@ -179,7 +126,6 @@ async function harvestJsTokens() {
     return byFile;
 }
 
-/** Classes and ids present in the built markup. */
 function harvestPageTokens(doc) {
     const tokens = new Set();
     for (const el of doc.querySelectorAll("*")) {
@@ -190,9 +136,8 @@ function harvestPageTokens(doc) {
 }
 
 /**
- * The classes and ids a selector requires. Pseudo-element/class arguments are
- * included on purpose: `:not(.dummy-li)` only matters on pages that have the
- * class, but keeping the rule there is harmless and dropping it is not.
+ * Pseudo-class arguments count on purpose: keeping a `:not(.dummy-li)` rule on a
+ * page with the class is harmless, dropping it is not.
  */
 function selectorTokens(selector) {
     const found = [];
@@ -206,8 +151,7 @@ function purge(css, tokens) {
     const ast = postcss.parse(css);
 
     ast.walkRules((rule) => {
-        // Keyframe steps (`from`, `50%`) are not selectors — their parent
-        // @keyframes block lives or dies as a unit, and we always keep it.
+        // Keyframe steps aren't selectors; @keyframes blocks are always kept.
         if (rule.parent?.type === "atrule" && /keyframes/i.test(rule.parent.name)) return;
 
         const kept = rule.selectors.filter((sel) =>
@@ -218,7 +162,6 @@ function purge(css, tokens) {
         else if (kept.length !== rule.selectors.length) rule.selectors = kept;
     });
 
-    // A @media block whose every rule went away is dead weight.
     ast.walkAtRules((at) => {
         if (/font-face|keyframes|charset|import|property/i.test(at.name)) return;
         if (at.nodes && at.nodes.length === 0) at.remove();
@@ -241,15 +184,12 @@ for (const file of findFiles(distDir, ".html")) {
     const dom = new JSDOM(html);
     const doc = dom.window.document;
 
-    // Only sheets we own, and only while they are still render-blocking: a
-    // media="print" link is already off the critical path.
+    // A media="print" link is already off the critical path.
     const links = [...doc.querySelectorAll('link[rel="stylesheet"]')].filter(
         (l) => !l.media && OWNED.some((p) => p.test(new URL(l.href, "https://x/").pathname))
     );
     if (links.length === 0) continue;
 
-    // Page markup always counts; a script's classes count unless this page has
-    // switched that script off.
     const tokens = harvestPageTokens(doc);
     const off = FEATURE_GATES.filter((g) => g.disabled(doc.body)).flatMap((g) => g.scripts);
 
@@ -258,9 +198,8 @@ for (const file of findFiles(distDir, ".html")) {
         for (const token of fileTokens) tokens.add(token);
     }
 
-    // Concatenated in document order so the cascade the templates set up
-    // survives: index-nav.css and trending.css are written to sit after the
-    // bundle (see the note in css/styles.css) and must stay there.
+    // Document order keeps the cascade: index-nav.css and trending.css must follow
+    // the bundle (see css/styles.css).
     const sources = links.map((l) => {
         const p = new URL(l.href, "https://x/").pathname;
         return fs.readFileSync(path.join(distDir, p), "utf8");

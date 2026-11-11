@@ -1,7 +1,6 @@
 import re
 import os
 
-# <a ...>text</a> with any attribute order/count, text may span lines
 LINK_RE = re.compile(r'<a\b([^>]*)>(.*?)</a>', re.IGNORECASE | re.DOTALL)
 HREF_RE = re.compile(r'\bhref\s*=\s*"([^"]*)"', re.IGNORECASE)
 HEADER_RE = re.compile(
@@ -13,7 +12,6 @@ EXTERNAL_RE = re.compile(r'^(?:[a-z][a-z0-9+.-]*:|//)', re.IGNORECASE)
 
 
 def clean_text(html):
-    """Strip nested tags and collapse whitespace."""
     return re.sub(r'\s+', ' ', TAG_RE.sub('', html)).strip()
 
 
@@ -21,13 +19,12 @@ def is_incomplete(href):
     """A picture link left pointing at a directory instead of a file."""
     if not href or href.startswith('#'):
         return False
-    if EXTERNAL_RE.match(href):  # http:, https:, mailto:, //cdn... - never a pic dir
+    if EXTERNAL_RE.match(href):
         return False
     return href.rstrip().endswith('/')
 
 
 def find_incomplete_links(text):
-    """Yield (position, link_text) for every incomplete link in the document."""
     for match in LINK_RE.finditer(text):
         href_match = HREF_RE.search(match.group(1))
         if not href_match or not is_incomplete(href_match.group(1)):
@@ -38,7 +35,6 @@ def find_incomplete_links(text):
 
 
 def find_headers(text):
-    """Yield (position, header_text) for every section header."""
     for match in HEADER_RE.finditer(text):
         header = clean_text(match.group(1) or match.group(2) or '')
         if header:
@@ -46,8 +42,6 @@ def find_headers(text):
 
 
 def build_report(text):
-    # Walk headers and links together in document order so each link is
-    # attributed to the header that precedes it.
     events = [(pos, 0, value) for pos, value in find_headers(text)]
     events += [(pos, 1, value) for pos, value in find_incomplete_links(text)]
     events.sort(key=lambda e: (e[0], e[1]))

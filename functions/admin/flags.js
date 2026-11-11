@@ -1,18 +1,8 @@
-// Admin page for reviewing & managing guide-feedback flags.
-//
 //   GET  /admin/flags?status=open|resolved|dismissed|all[&src=all|solver|line]
-//                                                          → HTML table
 //   POST /admin/flags  (form: action,id,path,line_hash,status,src) → mutate + redirect
 //
-// Solver flags (solver IS NOT NULL) carry a JSON snapshot of the solver's inputs
-// and the answer it gave; the table renders it as a field list so a report can be
-// reproduced by retyping it into the solver. `src` filters to just those, which is
-// the view worth having when triaging "the solver was wrong".
-//
-// Sign-in happens on /admin/login (an HTML form, so password managers work) and
-// is carried by a signed session cookie; credentials come from the env vars
-// ADMIN_USER + ADMIN_PASS set in the Cloudflare dashboard. Put Cloudflare Access
-// in front of /admin/* too if you want a second layer. Requires the D1 binding `DB`.
+// Sign-in via /admin/login; credentials are ADMIN_USER + ADMIN_PASS env vars in the
+// Cloudflare dashboard. Requires the D1 binding `DB`.
 
 import { esc, htmlResponse, originAllowed, redirect, requireSession } from "./_auth.js";
 
@@ -21,12 +11,7 @@ const BUGGY_THRESHOLD = 5;
 const STATUSES = ["open", "resolved", "dismissed"];
 const SOURCES = ["all", "solver", "line"];
 
-/**
- * One input value as a line of text. Mirrors formatValue in ts/ui/line-flagger.ts
- * so the admin table reads the same way as the confirmation the reporter saw:
- * nested arrays keep their brackets (a board reads "[0, 0], [1, 3]"), top-level
- * ones don't (a list of colours reads "red, black, white").
- */
+// Mirrors formatValue in ts/ui/line-flagger.ts so admin matches what the reporter saw.
 function formatValue(value) {
     if (value === null || value === undefined) return "(none)";
     if (typeof value === "boolean") return value ? "yes" : "no";
@@ -45,15 +30,7 @@ function formatValue(value) {
     }
 }
 
-/**
- * Render a stored snapshot as an escaped definition list. Anything unexpected —
- * unparseable JSON, a shape from a future schema version — falls back to showing
- * the raw text rather than swallowing a report we can't pretty-print.
- *
- * There is no "solver said" row and never will be: snapshots hold inputs only,
- * because the answer follows from them. To see what the solver told this reader,
- * type these values back into it.
- */
+// Snapshots hold inputs only; retype them into the solver to see its answer.
 function renderSnapshot(raw) {
     let snap;
     try {
@@ -73,8 +50,6 @@ function renderSnapshot(raw) {
     if (snap.build) meta.push(`build ${esc(snap.build)}`);
     if (snap.vp) meta.push(`viewport ${esc(snap.vp)}`);
     if (snap.v && snap.v !== 2) meta.push(`snapshot v${esc(String(snap.v))}`);
-    // Worth flagging: these came from scraping the page, not from the solver, so
-    // an input the solver never rendered simply isn't here.
     if (snap.scraped) meta.push("scraped from the DOM, inputs may be incomplete");
 
     return (
@@ -94,12 +69,9 @@ export async function onRequestGet({ request, env }) {
     let src = url.searchParams.get("src") || "all";
     if (!SOURCES.includes(src)) src = "all";
 
-    // Source filter as a SQL fragment, reused by the counts and the list so the
-    // nav badges always describe the rows actually being shown.
     const srcWhere =
         src === "solver" ? " AND solver IS NOT NULL" : src === "line" ? " AND solver IS NULL" : "";
 
-    // Status counts for the nav.
     const counts = {};
     try {
         const { results } = await env.DB.prepare(
@@ -111,7 +83,6 @@ export async function onRequestGet({ request, env }) {
     }
     const totalAll = Object.values(counts).reduce((a, b) => a + b, 0);
 
-    // Distinct-IP buggy report counts per line, among OPEN flags (drives the note).
     const buggyByLine = new Map();
     try {
         const { results } = await env.DB.prepare(
@@ -125,7 +96,6 @@ export async function onRequestGet({ request, env }) {
     let overThreshold = 0;
     for (const n of buggyByLine.values()) if (n >= BUGGY_THRESHOLD) overThreshold++;
 
-    // The flags themselves.
     let rows = [];
     try {
         const cols =
@@ -163,7 +133,7 @@ export async function onRequestGet({ request, env }) {
         wrong: "Incorrect",
         buggy: "Doesn’t work / buggy",
     };
-    // Same four reasons, worded as the solver popover worded them to the reporter.
+    // Worded as the solver popover showed them to the reporter.
     const solverReasonLabel = {
         unclear: "Confusing to use",
         outdated: "Out of date",
@@ -190,8 +160,7 @@ export async function onRequestGet({ request, env }) {
             const isSolver = Boolean(r.solver);
             const labels = isSolver ? solverReasonLabel : reasonLabel;
             const solverBadge = isSolver ? `<div class="solvertag">🧩 ${esc(r.solver)}</div>` : "";
-            // For a solver row the quote is a one-line dump of the same state the
-            // snapshot holds, so show the structured version and skip the prose.
+            // A solver row's quote is a one-line dump of the snapshot.
             const stateCell = isSolver
                 ? r.snapshot
                     ? renderSnapshot(r.snapshot)
@@ -338,7 +307,7 @@ export async function onRequestPost({ request, env }) {
                 .run();
         }
     } catch {
-        /* fall through to redirect; the list will reflect reality */
+        /* the redirected list shows the real state */
     }
 
     return redirect(

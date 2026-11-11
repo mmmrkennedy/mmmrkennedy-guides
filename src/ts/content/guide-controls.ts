@@ -1,17 +1,11 @@
-/**
- * Path tabs: a segmented switcher for mutually exclusive routes through one guide step
- * (e.g. the solver route vs. the in-game intended route). The markup is written in the
- * guide; this only wires the interaction.
- */
+/** Path tabs: switcher for mutually exclusive routes through one guide step. Markup is in the guide. */
 
-/** Tabs belonging to `group` itself, not to any switcher nested inside it. */
 function getTabs(group: HTMLElement): HTMLElement[] {
     return Array.from(
         group.querySelectorAll<HTMLElement>(":scope > .path-tabs__bar > .path-tabs__tab"),
     );
 }
 
-/** Panels belonging to `group` itself, not to any switcher nested inside it. */
 function getPanels(group: HTMLElement): HTMLElement[] {
     return Array.from(
         group.querySelectorAll<HTMLElement>(":scope > .path-tabs__panels > .path-tabs__panel"),
@@ -35,11 +29,7 @@ function activatePath(group: HTMLElement, index: number): void {
     });
 }
 
-/**
- * Opens whichever path contains `id`, so a cross-reference into a collapsed
- * route lands on the steps instead of on a closed panel. Walks outward so
- * nested switchers all open along the way.
- */
+/** Opens every (nested) path containing `id`. Returns whether it was hidden. */
 function revealPathTo(id: string): boolean {
     if (!id) return false;
 
@@ -107,8 +97,7 @@ function initPathTabs(): void {
         });
     }
 
-    // Open the right path before the browser jumps to it. Capture phase so this
-    // runs ahead of the link's default action.
+    // Capture phase, to open the path before the link's default jump.
     document.addEventListener(
         "click",
         (event) => {
@@ -117,7 +106,6 @@ function initPathTabs(): void {
             const href = link.getAttribute("href") ?? "";
             const hashIndex = href.indexOf("#");
             if (hashIndex < 0) return;
-            // Ignore links pointing at a different page.
             if (hashIndex > 0 && link.pathname !== window.location.pathname) return;
             revealPathToHash(href.slice(hashIndex));
         },

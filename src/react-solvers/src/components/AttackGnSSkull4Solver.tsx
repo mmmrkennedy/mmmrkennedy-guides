@@ -107,7 +107,6 @@ function solveCipher(targetWord: string, swingsetLettersArr: string[]): SolveRes
             }
         }
 
-        // Any letter with no reachable sequence means the word can't be spelled.
         if (shortestSequences.some((seq) => seq === Infinity)) {
             return { kind: "error", reason: "Unable to complete puzzle with these symbols." };
         }
@@ -123,15 +122,11 @@ export default function AttackGnSSkull4Solver({ title }: { title?: string }) {
     const [word, setWord] = useState<string>("");
     const [selectedSymbols, setSelectedSymbols] = useState<string[]>(["", "", "", ""]);
 
-    // "" is an unfilled slot; kept in place so slot 3 stays slot 3.
     useSolverReport("AttackGnSSkull4Solver", () => ({
         "Target word": word,
         "Symbols in slots 1-4": selectedSymbols,
     }));
 
-    // Auto-derived from inputs — no useEffect / extra state.
-    // The freshness animation is keyed by these inputs so the result
-    // re-renders cleanly whenever the user changes something.
     const result = useMemo(() => solveCipher(word, selectedSymbols), [word, selectedSymbols]);
     const recalcKey = `${word}|${selectedSymbols.join(",")}`;
 

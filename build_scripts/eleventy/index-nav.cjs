@@ -1,14 +1,10 @@
-// Chip labels for the home page's game jump-bar, keyed by the <h2 id> they scroll to.
 const INDEX_NAV_LABELS = {
     BO7: "BO7", BO6: "BO6", VG: "Vanguard", BO_CW: "Cold War",
     BO4: "BO4", WW2: "WW2", IW: "IW", BO3: "BO3",
     AW: "AW", BO2: "BO2", BO1: "BO1", WAW: "WAW",
 };
 
-/**
- * The home page's jump chips and completion tally. Built here because they sit
- * above every map list, so adding them from a script would push the page down.
- */
+/** Prerendered: it sits above every map list, so adding it from a script would shift the page. */
 function preRenderIndexNav(document) {
     const nav = document.querySelector("[data-index-nav]");
     if (!nav) return false;
@@ -19,7 +15,7 @@ function preRenderIndexNav(document) {
 
     chipsBox.replaceChildren();
     for (const heading of container.querySelectorAll("h2[id]")) {
-        // A game is an <h2 id> with a <ul> after it, as in index-filter.ts.
+        // Must match index-filter.ts: a game is an <h2 id> with a <ul> after it.
         let list = heading.nextElementSibling;
         while (list && list.tagName !== "UL") list = list.nextElementSibling;
         if (!list) continue;
@@ -37,11 +33,7 @@ function preRenderIndexNav(document) {
     return true;
 }
 
-/**
- * The completion tally, counted the same way as renderProgress() in index-filter.ts,
- * which recomputes it at runtime: every /games/ link that isn't a `.solver-link` is
- * one map, keyed by path, and complete unless every listing of it is `.disabled`.
- */
+/** Must count the same way as renderProgress() in index-filter.ts, which recomputes it at runtime. */
 function renderIndexProgress(document, container) {
     const box = document.querySelector("[data-index-progress]");
     if (!box) return;

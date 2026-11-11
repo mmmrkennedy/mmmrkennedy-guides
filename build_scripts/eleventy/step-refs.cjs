@@ -43,10 +43,7 @@ function collectStepNumbers(document, outputPath) {
  *          data-step-ref-to="deposit-canister"></span> for the other two.</i></li>
  *
  * renders as "Repeat Steps 11-13 for the other two." Drop `data-step-ref-to` for a
- * single step. Ranges join with "-", or set `data-step-ref-sep`.
- *
- * Names are per page. An unresolved name warns and renders as the name itself, so
- * it's obvious in the dev preview.
+ * single step. Ranges join with "-", or set `data-step-ref-sep`. Names are per page.
  */
 function resolveStepRefs(document, outputPath) {
     const refs = document.querySelectorAll("[data-step-ref]");

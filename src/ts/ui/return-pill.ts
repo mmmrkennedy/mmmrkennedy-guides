@@ -1,37 +1,19 @@
 /**
- * Return pill
- * -----------
- * After the reader follows a cross-reference (a teal `.link-to-page` link inside
- * the guide body — e.g. "DRI-11 Beamsmasher" in a Main Quest step), a small
- * dismissible pill slides up: "← Back to «section»". Clicking it returns them to
- * the exact spot they jumped from.
- *
- * Two flavours, same pill:
- *   same-page  — the link also carries no `.internal-link` class. scroll-manager
- *                handles the jump and dispatches "scrollmanager:navigate".
- *   cross-page — `.link-to-page.internal-link`, pointing at another guide. The
- *                browser does a real navigation, so the origin is handed over in
- *                sessionStorage and picked up on the destination page.
- *
- * It does no scrolling of its own — it piggybacks on the history-based scroll
- * restoration in navigation/scroll-manager.ts (which stamps the leaving scroll
- * position into history, including on pagehide for real navigations). "Go back"
- * is just history.back(); the popstate/pageshow handlers there restore position.
- *
- * The pill self-dismisses when it's no longer useful: the reader returns, clicks
- * ×, presses Escape, navigates with the browser buttons, or scrolls the origin
- * section back into view.
+ * "Back to <section>" pill after following a `.link-to-page` cross-reference.
+ * Same-page jumps arrive via scroll-manager's "scrollmanager:navigate" event;
+ * cross-page links (`.internal-link`) hand the origin over in sessionStorage.
+ * Does no scrolling itself: history.back() relies on scroll-manager.ts having
+ * stamped the scroll position into history.
  */
 document.addEventListener("DOMContentLoaded", () => {
     let pill: HTMLButtonElement | null = null;
     let labelEl: HTMLElement | null = null;
-    let armed = false; // a jump is active and the pill is offering a return
+    let armed = false;
     let originSection: HTMLElement | null = null;
-    let leftOrigin = false; // origin has scrolled out of view at least once
+    // A short jump can leave the origin on screen, so it must leave view once first.
+    let leftOrigin = false;
 
-    // Hide the pill once the reader scrolls the section they left back into view
-    // (but only after it first left — a short jump can leave the origin on screen).
-    // The margin stops a section sitting behind the sticky top bar counting as seen.
+    // The margin stops a section behind the sticky top bar counting as seen.
     const topBarHeight = document.querySelector(".top-buttons-background-box")?.getBoundingClientRect().height ?? 0;
     const io =
         "IntersectionObserver" in window
@@ -85,14 +67,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         el.setAttribute("aria-label", labelEl?.textContent ?? "Back");
 
-        // Re-target the origin watcher.
         if (io && originSection) io.unobserve(originSection);
         originSection = section;
         leftOrigin = false;
         if (io && originSection) io.observe(originSection);
 
         armed = true;
-        // Defer the class flip so the transition runs even on a freshly created node.
+        // Deferred so the transition runs on a freshly created node.
         requestAnimationFrame(() => el.classList.add("is-visible"));
     }
 
@@ -105,13 +86,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function goBack(): void {
-        // Disarm before stepping back so our own popstate listener doesn't fight
-        // the browser's restoration.
+        // Disarm first so our popstate listener doesn't fight the restoration.
         hide();
         window.history.back();
     }
 
-    /** Nearest section the clicked link sits in — the place being left. */
     function sectionFor(anchor: HTMLElement): HTMLElement | null {
         return anchor.closest<HTMLElement>(".content-container");
     }
@@ -123,27 +102,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("scrollmanager:navigate", (e) => {
         const anchor = (e as CustomEvent<{ anchor?: HTMLElement }>).detail?.anchor;
-        // Only inline content cross-references qualify — not the TOC / quick-links,
-        // which never carry the .link-to-page class.
+        // TOC and quick-links never carry .link-to-page.
         if (!anchor || !anchor.classList.contains("link-to-page")) return;
         const section = sectionFor(anchor);
         show(labelFor(section), section);
     });
 
-    /*
-    ---------------------------------------------------------------------------
-    Cross-page cross-references
-    ---------------------------------------------------------------------------
-    A link to another guide is a real navigation, so we can't just show the pill
-    — the origin has to survive the page load. Stash it on the way out, pick it
-    up on arrival.
-    */
     const HANDOFF_KEY = "guides:return-to";
 
     interface Handoff {
-        /** Absolute URL of the page being left, hash included. */
+        /** Absolute URL, hash included. */
         from: string;
-        /** Section heading the link sat under, for the pill's label. */
         label: string;
     }
 
@@ -154,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Only ever valid for the one navigation that wrote it.
             window.sessionStorage.removeItem(HANDOFF_KEY);
         } catch {
-            return null; // storage disabled (private mode, blocked cookies)
+            return null;
         }
         if (!raw) return null;
         try {
@@ -171,12 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         if (!anchor) return;
 
-        // Let modified clicks (new tab/window) go without arming anything —
-        // this tab isn't going anywhere, so there'd be nothing to come back from.
+        // Modified clicks open a new tab; this tab isn't leaving.
         if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         if (anchor.target && anchor.target !== "_self") return;
 
-        // Same document — scroll-manager's in-page path already covers it.
+        // Same document: the scrollmanager:navigate path covers it.
         if (anchor.pathname === window.location.pathname) return;
 
         try {
@@ -186,21 +154,16 @@ document.addEventListener("DOMContentLoaded", () => {
             };
             window.sessionStorage.setItem(HANDOFF_KEY, JSON.stringify(payload));
         } catch {
-            /* storage unavailable — the reader just doesn't get the pill */
+            /* storage unavailable: no pill */
         }
     });
 
     const handoff = readHandoff();
-    // Trust it only if the browser agrees we actually came from there: a new tab
-    // can inherit a copy of sessionStorage, and we don't want a phantom pill
-    // offering to "go back" to a page this tab was never on.
+    // Check the referrer: a new tab can inherit a copy of sessionStorage.
     if (handoff && document.referrer && document.referrer.split("#")[0] === handoff.from.split("#")[0]) {
-        // No origin element to watch on this page — the section we left lives on
-        // the previous document, so the pill stays until used or dismissed.
         show(handoff.label, null);
     }
 
-    // The reader navigated with the browser buttons — the offer is consumed.
     window.addEventListener("popstate", () => {
         if (armed) hide();
     });

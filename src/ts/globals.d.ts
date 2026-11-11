@@ -1,10 +1,4 @@
-/**
- * Ambient declarations shared across the site scripts.
- *
- * These scripts are plain (non-module) browser scripts loaded via <script defer>
- * and communicate through globals hung off `window`. This file types those
- * globals.
- */
+/** The site scripts are non-module <script defer> files that share state through `window`. */
 
 interface AdsApi {
     initAds(): void;
@@ -12,19 +6,12 @@ interface AdsApi {
 }
 
 interface Navigator {
-    /**
-     * Global Privacy Control, set by the browser or a privacy extension. Not in
-     * lib.dom yet. Read by ui/reading.ts, which collects nothing when it is on.
-     */
+    /** Global Privacy Control. Not in lib.dom yet. */
     globalPrivacyControl?: boolean;
 }
 
 interface Window {
-    /**
-     * Set by the solver bundle (react-solvers/src/main.tsx) so ui/line-flagger.ts
-     * can read a mounted solver's inputs when someone reports it. Optional: it
-     * only exists on pages that mount a solver, which most guide pages don't.
-     */
+    /** Set by react-solvers/src/main.tsx for ui/line-flagger.ts, only on pages that mount a solver. */
     SolverReport?: {
         read: (root: HTMLElement) => { name: string; inputs: Record<string, unknown> } | null;
     };
