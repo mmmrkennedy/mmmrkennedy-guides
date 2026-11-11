@@ -76,8 +76,9 @@ function withTier(src: string, tier: number | null): string {
 /**
  * Smallest tier covering the painted box, or null for the master. The image is
  * capped at 90vh and 100vw. Runs before the image's shape is known, so it assumes
- * a 16:9 landscape shot. A tier within 10% of the need is close enough (a rotated
- * 3x phone wants ~2080px, and 1920 looks the same).
+ * a 16:9 landscape shot. On 2x+ screens a tier within 10% of the need is close
+ * enough (a rotated 3x phone wants ~2080px, and 1920 looks the same); at 1x the
+ * upscale is visible, so a 1440p monitor (~2080px painted) gets the master.
  */
 function tierForViewport(): number | null {
     const dpr = window.devicePixelRatio || 1;
@@ -86,7 +87,7 @@ function tierForViewport(): number | null {
     const h = rotated ? window.innerWidth : window.innerHeight;
     const byWidth = w * dpr;
     const byHeight = h * 0.9 * (16 / 9) * dpr;
-    const needed = Math.min(byWidth, byHeight) * 0.9;
+    const needed = Math.min(byWidth, byHeight) * (dpr >= 2 ? 0.9 : 1);
     return TIERS.find((t) => t >= needed) ?? null;
 }
 

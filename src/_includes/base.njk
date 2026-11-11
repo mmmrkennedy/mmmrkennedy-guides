@@ -69,6 +69,7 @@
     <meta name="twitter:description" content="{{ metaDescription }}">
     <meta name="twitter:image" content="{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}">
 
+    <link rel="preload" href="/font/lexend-latin-wght-5.3.woff2" as="font" type="font/woff2" crossorigin>
     {%- if site.bundled %}
         <link rel="stylesheet" type="text/css" href="/css/bundle.min.css?v={{ site.buildVersion }}">
     {%- else %}
