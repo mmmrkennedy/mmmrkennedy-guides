@@ -2,6 +2,13 @@
 # <link rel="icon"> tag. The real file lives under /favicon/.
 /favicon.ico   /favicon/favicon.ico   301
 
+# iOS probes these size/precomposed variants before /apple-touch-icon.png.
+/apple-touch-icon-precomposed.png           /apple-touch-icon.png   301
+/apple-touch-icon-120x120.png               /apple-touch-icon.png   301
+/apple-touch-icon-120x120-precomposed.png   /apple-touch-icon.png   301
+/apple-touch-icon-240x240.png               /apple-touch-icon.png   301
+/apple-touch-icon-240x240-precomposed.png   /apple-touch-icon.png   301
+
 # Catch malformed nested URLs (e.g. /games/WW2/the_frozen_dawn/games/BO3/...)
 # These resolved to index.html with the wrong URL; redirect to root.
 /games/:a/:b/games/*   /   301

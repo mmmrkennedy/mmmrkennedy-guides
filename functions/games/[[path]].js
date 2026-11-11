@@ -6,6 +6,13 @@
 
 const IMAGE = /\.(webp|png|jpe?g|gif)$/i;
 
+// Game folders are uppercase and paths are case-sensitive, but some crawlers
+// (Bingbot, MJ12bot) request /games/iw/..., which 404s. Keep in step with src/games/.
+const GAME_FOLDERS = new Map(
+    ["AW", "BO1", "BO2", "BO3", "BO4", "BO6", "BO7", "BO_CW", "IW", "VG", "WAW", "WW2"]
+        .map((f) => [f.toLowerCase(), f]),
+);
+
 // Must match TIERS in build_scripts/r2.mjs, which writes variants/<tier>/.
 const TIERS = new Set(["1280", "1920"]);
 
@@ -23,6 +30,15 @@ const CACHE_CONTROL = "public, no-cache";
 export async function onRequestGet(context) {
     const { request, env, next, waitUntil } = context;
     const url = new URL(request.url);
+
+    // pathname is "/games/<folder>/...", so the folder is segment 2.
+    const segments = url.pathname.split("/");
+    const folder = GAME_FOLDERS.get(segments[2]?.toLowerCase());
+    if (folder && folder !== segments[2]) {
+        segments[2] = folder;
+        url.pathname = segments.join("/");
+        return Response.redirect(url.toString(), 301);
+    }
 
     if (!IMAGE.test(url.pathname)) return next();
 

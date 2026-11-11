@@ -17,10 +17,11 @@ dist/
 !.github
 !.githooks
 
-# Images (except the two site-level ones)
+# Images (except the site-level ones)
 *.png
 !/src/og_image.png
 !/src/tips_symbol.png
+!/src/apple-touch-icon.png
 
 # Project-specific
 __pycache__/
