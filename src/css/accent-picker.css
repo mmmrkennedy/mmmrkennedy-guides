@@ -161,7 +161,40 @@
     border-color: var(--color-no-return-border);
 }
 
+.accent-picker__fonts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding-top: var(--space-smd);
+    border-top: 1px solid var(--color-border-medium);
+}
+
+.accent-picker .accent-picker__font {
+    flex: 1;
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.accent-picker .accent-picker__font:hover {
+    color: var(--color-text-primary);
+}
+
+.accent-picker .accent-picker__font[aria-pressed="true"] {
+    color: var(--color-bg-primary);
+    background: var(--color-tier-1);
+    border-color: var(--color-tier-1);
+}
+
 .accent-picker__toggle:focus-visible,
+.accent-picker .accent-picker__font:focus-visible,
 .accent-picker .accent-picker__option:focus-visible,
 .accent-picker .accent-picker__color:focus-visible,
 .accent-picker .accent-picker__hex:focus-visible {

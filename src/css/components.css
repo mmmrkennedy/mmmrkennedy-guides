@@ -155,7 +155,7 @@ a[data-media-type="audio"]::after {
     padding: var(--space-sm) var(--space-lg);
     border: 2px outset var(--color-tier-1);
     color: var(--color-tier-1);
-    font-family: Arial, sans-serif;
+    font-family: inherit;
     font-size: var(--font-size-base);
     font-weight: 500;
     line-height: normal;

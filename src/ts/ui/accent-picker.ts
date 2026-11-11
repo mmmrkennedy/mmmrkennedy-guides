@@ -4,8 +4,10 @@
  * derived tokens inline on <html>, derived the same way the presets were built.
  * The inline head script in base.njk re-applies the saved vars before first paint,
  * so it needs no maths.
+ * Fonts work the same way through <html data-font> (reset.css); the default has none.
  */
 const ACCENT_KEY = "accent";
+const FONT_KEY = "font";
 const CUSTOM_KEY = "accent-custom";
 const OPEN_KEY = "accent-picker-open";
 const CUSTOM_ID = "custom";
@@ -113,12 +115,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorInput = picker.querySelector<HTMLInputElement>(".accent-picker__color");
     const hexInput = picker.querySelector<HTMLInputElement>(".accent-picker__hex");
     const defaultId = options[0]?.dataset.accent ?? "";
+    const fontOptions = Array.from(picker.querySelectorAll<HTMLButtonElement>(".accent-picker__font"));
+    const defaultFont = fontOptions[0]?.dataset.font ?? "";
 
     const current = () => root.dataset.accent || defaultId;
 
     const sync = () => {
         const cur = current();
         for (const opt of options) opt.setAttribute("aria-pressed", String(opt.dataset.accent === cur));
+        const font = root.dataset.font || defaultFont;
+        for (const opt of fontOptions) opt.setAttribute("aria-pressed", String(opt.dataset.font === font));
         toggle?.setAttribute("aria-expanded", String(root.dataset.accentPicker === "open"));
     };
 
@@ -162,6 +168,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (id === defaultId) delete root.dataset.accent;
             else root.dataset.accent = id;
             save(ACCENT_KEY, id === defaultId ? null : id);
+            sync();
+        });
+    }
+
+    for (const opt of fontOptions) {
+        opt.addEventListener("click", () => {
+            const id = opt.dataset.font ?? defaultFont;
+            if (id === defaultFont) delete root.dataset.font;
+            else root.dataset.font = id;
+            save(FONT_KEY, id === defaultFont ? null : id);
             sync();
         });
     }

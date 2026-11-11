@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {#- Runs before first paint so the default accent never flashes. See accent-picker.ts. #}
-    <script>try{var d=document.documentElement,a=localStorage.getItem("accent");if(a)d.dataset.accent=a;if(localStorage.getItem("accent-picker-open"))d.dataset.accentPicker="open";if(a==="custom"){var c=JSON.parse(localStorage.getItem("accent-custom"));for(var k in c.vars)d.style.setProperty(k,c.vars[k])}}catch(e){}</script>
+    {#- Runs before first paint so the default accent and font never flash. See accent-picker.ts. #}
+    <script>try{var d=document.documentElement,a=localStorage.getItem("accent"),f=localStorage.getItem("font");if(a)d.dataset.accent=a;if(f)d.dataset.font=f;if(localStorage.getItem("accent-picker-open"))d.dataset.accentPicker="open";if(a==="custom"){var c=JSON.parse(localStorage.getItem("accent-custom"));for(var k in c.vars)d.style.setProperty(k,c.vars[k])}}catch(e){}</script>
 
     {#- The game suffix goes only in <title>: in the <h1> it dilutes the heading
         for Google and crowds the phone top bar. #}
@@ -69,7 +69,6 @@
     <meta name="twitter:description" content="{{ metaDescription }}">
     <meta name="twitter:image" content="{{ ogImage or 'https://mmmrkennedy.com/og_image.png' }}">
 
-    <link rel="preload" href="/font/lexend-latin-wght-5.3.woff2" as="font" type="font/woff2" crossorigin>
     {%- if site.bundled %}
         <link rel="stylesheet" type="text/css" href="/css/bundle.min.css?v={{ site.buildVersion }}">
     {%- else %}
@@ -449,8 +448,8 @@
 </div>
 {%- endif %}
 {#- Behaviour: src/ts/ui/accent-picker.ts. #}
-<div class="accent-picker" role="group" aria-label="Site colour">
-    <button type="button" class="accent-picker__toggle" aria-expanded="false" aria-controls="accent-picker-options" aria-label="Change site colour" title="Change site colour">
+<div class="accent-picker" role="group" aria-label="Site colour and font">
+    <button type="button" class="accent-picker__toggle" aria-expanded="false" aria-controls="accent-picker-options" aria-label="Change site colour and font" title="Change site colour and font">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
     <div class="accent-picker__panel" id="accent-picker-options">
@@ -462,6 +461,11 @@
         <div class="accent-picker__custom">
             <input type="color" class="accent-picker__color" value="#ee7474" aria-label="Pick a custom colour" title="Custom colour">
             <input type="text" class="accent-picker__hex" placeholder="#hex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Custom colour hex code">
+        </div>
+        <div class="accent-picker__fonts" role="group" aria-label="Font">
+            {%- for f in fonts %}
+            <button type="button" class="accent-picker__font" data-font="{{ f.id }}" aria-pressed="false">{{ f.name }}</button>
+            {%- endfor %}
         </div>
     </div>
 </div>
