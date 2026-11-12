@@ -318,7 +318,7 @@
     align-items: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.1s ease;
 }
 
 .lightbox.is-open {
@@ -413,7 +413,7 @@
     width: var(--space-2xl);
     height: var(--space-2xl);
     border-radius: 4px;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.1s ease;
 }
 
 .close-lightbox::before {
@@ -519,7 +519,7 @@
     cursor: pointer;
     opacity: 0.9;
     z-index: 2001;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.1s ease;
 }
 
 .lightbox-nav:hover {
@@ -642,7 +642,7 @@
         gap: var(--space-sm);
         padding: calc(var(--space-sm) + env(safe-area-inset-top)) calc(var(--space-sm) + env(safe-area-inset-right)) var(--space-lg) calc(var(--space-smd) + env(safe-area-inset-left));
         background: linear-gradient(to bottom, rgb(0 0 0 / 75%), transparent);
-        transition: opacity 0.2s ease;
+        transition: opacity 0.1s ease;
     }
 
     /* Rotated, the bar runs down the screen's right edge, which is the top for

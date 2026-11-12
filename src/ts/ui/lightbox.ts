@@ -104,7 +104,7 @@ function nextTierUp(current: number | null): number | null | undefined {
 }
 
 // Must match the .lightbox transition in layout.css
-const FADE_MS = 200;
+const FADE_MS = 100;
 
 // Most opens resolve in a few ms (preloaded or cached), so an instant spinner would flash.
 const SPINNER_DELAY_MS = 150;
