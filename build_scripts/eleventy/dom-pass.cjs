@@ -3,6 +3,7 @@ const { prepareTables } = require("./tables.cjs");
 const { resolveStepRefs } = require("./step-refs.cjs");
 const { preRenderIndexNav } = require("./index-nav.cjs");
 const { generateQuickLinks } = require("./quick-links.cjs");
+const { formatGuideStats } = require("./guide-stats.cjs");
 
 /**
  * Steps share one JSDOM parse (the slow part) and return whether they changed
@@ -14,12 +15,14 @@ const DOM_STEPS = [
     ["prepareTables", prepareTables],
     ["resolveStepRefs", resolveStepRefs],
     ["preRenderIndexNav", preRenderIndexNav],
+    ["formatGuideStats", formatGuideStats],
     ["generateQuickLinks", generateQuickLinks],
 ];
 
 // Keep in sync with what the steps look for, or pages skip the parse.
 const DOM_PASS_TRIGGERS = [
     "<table",
+    'class="stats"',
     "data-step-ref",
     "data-index-nav",
     "content-container",

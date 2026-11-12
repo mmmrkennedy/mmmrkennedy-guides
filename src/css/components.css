@@ -472,6 +472,89 @@ a[data-media-type="audio"]::after {
     font-weight: 600;
 }
 
+/* Split into labelled columns by build_scripts/eleventy/guide-stats.cjs. The
+ * original " | " and " - " stay in the text as hidden .stats__sep spans. */
+.stats.is-split {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: var(--space-sm);
+    font-weight: 400;
+}
+
+.stats__sep {
+    display: none;
+}
+
+.stats__title {
+    flex-basis: 100%;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.stats__item {
+    display: flex;
+    flex: 0 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    padding-inline: var(--space-md);
+    border-left: 1px solid var(--color-border-medium);
+}
+
+.stats__title + .stats__sep + .stats__item {
+    padding-left: 0;
+    border-left: none;
+}
+
+.stats__label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.stats__value {
+    font-weight: 600;
+}
+
+.stats__note {
+    max-width: 24ch;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+}
+
+/* Phones: one row per stat, label left and value right. */
+@media (width < 30em) { /* --bp-xs */
+    .stats.is-split {
+        row-gap: var(--space-xs);
+    }
+
+    .stats__item {
+        display: grid;
+        flex-basis: 100%;
+        grid-template-columns: auto 1fr;
+        column-gap: var(--space-md);
+        align-items: baseline;
+        padding: var(--space-xs) 0 0;
+        border-left: none;
+        border-top: 1px solid var(--color-border-subtle);
+    }
+
+    .stats__title + .stats__sep + .stats__item {
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .stats__value {
+        text-align: right;
+    }
+
+    .stats__note {
+        grid-column: 1 / -1;
+        max-width: none;
+        text-align: right;
+    }
+}
+
 /* Paragraph-length (200-550 chars), so it keeps the relaxed leading and is
  * deliberately not bold. */
 .weapon-desc {
