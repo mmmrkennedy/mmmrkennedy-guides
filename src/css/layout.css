@@ -320,12 +320,12 @@
     pointer-events: none;
 }
 
-/* A near-black overlay popping in reads as a flash, so opening gets a fade too
- * short to register as motion. Closing is instant. */
+/* Opening fades in at about the shortest length that still reads as a fade
+ * (~100ms; below that it looks instant). Closing is instant. */
 .lightbox.is-open {
     opacity: 1;
     pointer-events: auto;
-    transition: opacity 0.06s ease-out;
+    transition: opacity 0.1s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
