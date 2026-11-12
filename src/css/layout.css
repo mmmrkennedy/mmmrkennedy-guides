@@ -318,16 +318,18 @@
     align-items: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.1s ease;
 }
 
+/* A near-black overlay popping in reads as a flash, so opening gets a fade too
+ * short to register as motion. Closing is instant. */
 .lightbox.is-open {
     opacity: 1;
     pointer-events: auto;
+    transition: opacity 0.06s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lightbox {
+    .lightbox.is-open {
         transition: none;
     }
 }

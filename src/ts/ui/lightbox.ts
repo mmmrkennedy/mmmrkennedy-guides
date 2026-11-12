@@ -103,9 +103,6 @@ function nextTierUp(current: number | null): number | null | undefined {
     return i + 1 < TIERS.length ? TIERS[i + 1] : null;
 }
 
-// Must match the .lightbox transition in layout.css
-const FADE_MS = 100;
-
 // Most opens resolve in a few ms (preloaded or cached), so an instant spinner would flash.
 const SPINNER_DELAY_MS = 150;
 let spinnerTimer: number | null = null;
@@ -467,12 +464,9 @@ function closeLightbox(): void {
     const lightboxAudio = document.getElementById("lightbox-audio") as HTMLAudioElement | null;
 
     if (lightbox) {
-        // The guard lets a re-open during the fade cancel the pending hide.
-        lightbox.classList.remove("is-open");
-        lightbox.classList.remove("zoomed", "chrome-hidden");
-        window.setTimeout(() => {
-            if (!lightbox.classList.contains("is-open")) lightbox.style.display = "none";
-        }, FADE_MS);
+        // Closing is instant (no fade out in layout.css).
+        lightbox.classList.remove("is-open", "zoomed", "chrome-hidden");
+        lightbox.style.display = "none";
     }
 
     if (tapTimer !== null) {
