@@ -494,7 +494,7 @@ a[data-media-type="audio"]::after {
 
 .stats__item {
     display: flex;
-    flex: 0 1 auto;
+    flex: 1 1 0;
     flex-direction: column;
     min-width: 0;
     padding-inline: var(--space-md);
@@ -516,14 +516,13 @@ a[data-media-type="audio"]::after {
 }
 
 .stats__note {
-    max-width: 24ch;
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
     line-height: 1.4;
 }
 
-/* Phones: one row per stat, label left and value right. */
-@media (width < 30em) { /* --bp-xs */
+/* Below tablet width the columns get too narrow: one row per stat instead. */
+@media (width < 48.0625em) { /* --bp-md */
     .stats.is-split {
         row-gap: var(--space-xs);
     }
@@ -550,7 +549,6 @@ a[data-media-type="audio"]::after {
 
     .stats__note {
         grid-column: 1 / -1;
-        max-width: none;
         text-align: right;
     }
 }
