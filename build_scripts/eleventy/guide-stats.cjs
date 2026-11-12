@@ -14,6 +14,8 @@ const HEAD_RE = /^(Stats(?:\s*\([^)]*\))?)(:\s*)([\s\S]+)$/;
 const ITEM_RE = /^(.+?)(\s+-\s+)(.+)$/;
 // A trailing "(...)" is a qualifier on the value, shown on its own line.
 const NOTE_RE = /^(.*?)(\s*)\((.+)\)$/;
+// Current notes are either <=23 chars ("Hellion Salvo From Box") or 44+ (a sentence).
+const LONG_NOTE_CHARS = 30;
 
 function span(document, className, text) {
     const el = document.createElement("span");
@@ -73,6 +75,17 @@ function formatGuideStats(document) {
             frag.append(item);
         }
         if (!ok) continue;
+
+        // A long note under the last column stretches every column to its height,
+        // so it becomes a full-width line under all of them. Only the last
+        // item's: the note is already last in the text, so the order is kept.
+        const lastItem = frag.lastChild;
+        const lastNote = lastItem.querySelector(":scope > .stats__note");
+        if (lastNote && lastNote.textContent.replace(/[()]/g, "").trim().length > LONG_NOTE_CHARS) {
+            lastNote.className = "stats__footnote";
+            lastNote.dataset.label = lastItem.querySelector(".stats__label").textContent;
+            frag.append(lastNote);
+        }
 
         const probe = document.createElement("p");
         probe.append(frag.cloneNode(true));

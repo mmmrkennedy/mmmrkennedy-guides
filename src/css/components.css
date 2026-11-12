@@ -521,6 +521,22 @@ a[data-media-type="audio"]::after {
     line-height: 1.4;
 }
 
+/* A long note on the last stat, moved under all the columns by the build. The
+ * label is a pseudo-element so the line's text (and its flag id) is unchanged. */
+.stats__footnote {
+    flex-basis: 100%;
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--color-border-subtle);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+}
+
+.stats__footnote::before {
+    content: attr(data-label) ": ";
+    color: var(--color-text-muted);
+}
+
 /* Below tablet width the columns get too narrow: one row per stat instead. */
 @media (width < 48.0625em) { /* --bp-md */
     .stats.is-split {
@@ -550,6 +566,16 @@ a[data-media-type="audio"]::after {
     .stats__note {
         grid-column: 1 / -1;
         text-align: right;
+    }
+
+    /* Rows stack here, so the footnote already sits under its own stat. */
+    .stats__footnote {
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .stats__footnote::before {
+        content: none;
     }
 }
 
