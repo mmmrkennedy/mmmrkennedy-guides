@@ -105,6 +105,9 @@ function nextTierUp(current: number | null): number | null | undefined {
 
 // Most opens resolve in a few ms (preloaded or cached), so an instant spinner would flash.
 const SPINNER_DELAY_MS = 150;
+
+// Longest a first open waits for its image before showing the lightbox anyway.
+const REVEAL_WAIT_MS = 120;
 let spinnerTimer: number | null = null;
 
 // Bumped on every open so a slow load from a previous item is dropped.
@@ -337,12 +340,22 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
     resetImageTransform();
     updateNavButtons();
 
-    lightbox.style.display = "flex";
-    requestAnimationFrame(() => lightbox.classList.add("is-open"));
-    if (!wasOpen) {
-        const closeBtn = lightbox.querySelector<HTMLElement>(".close-lightbox");
-        if (closeBtn) requestAnimationFrame(() => closeBtn.focus());
-    }
+    // A first open waits for the image so the fade-in shows it, not an empty box
+    // that the image pops into. Capped, so a slow load still opens to the spinner.
+    let revealed = false;
+    const reveal = (): void => {
+        if (revealed || token !== loadToken) return;
+        revealed = true;
+        lightbox.style.display = "flex";
+        requestAnimationFrame(() => lightbox.classList.add("is-open"));
+        if (!wasOpen) {
+            const closeBtn = lightbox.querySelector<HTMLElement>(".close-lightbox");
+            if (closeBtn) requestAnimationFrame(() => closeBtn.focus());
+        }
+    };
+    if (wasOpen || mediaType !== "image") reveal();
+    else window.setTimeout(reveal, REVEAL_WAIT_MS);
+
     lightboxImg.style.display = "none";
     lightboxVideo.style.display = "none";
     lightboxAudio.style.display = "none";
@@ -365,9 +378,13 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
 
         const img = new Image();
         img.src = tieredSrc;
-        img.onload = function () {
+        img.onload = async function () {
+            if (token !== loadToken) return;
+            // Decoding a big image can take a frame or two after load.
+            await img.decode().catch(() => {});
             if (token !== loadToken) return;
             hideSpinner();
+            reveal();
             lightboxImg.setAttribute("src", tieredSrc);
 
             currentNatural = { w: img.naturalWidth, h: img.naturalHeight };
@@ -381,6 +398,7 @@ function openLightbox(mediaSrc: string, captionText: string, index: number, medi
 
         img.onerror = function () {
             if (token !== loadToken) return;
+            reveal();
             hideSpinner();
             setCaption("Error loading image");
             lightboxImg.style.display = "none";
