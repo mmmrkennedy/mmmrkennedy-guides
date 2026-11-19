@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.body.hasAttribute("data-no-flags")) return;
 
     const lines = document.querySelectorAll<HTMLElement>(
-        ".content-container p, .content-container :is(.title-tier-2, .title-tier-3, .title-tier-4), .content-container li:not(.dummy-li)"
+        ".content-container p, .content-container .stats, .content-container :is(.title-tier-2, .title-tier-3, .title-tier-4), .content-container li:not(.dummy-li)"
     );
 
     // Without an SSR build a solver page can have no lines yet. Stay if a solver is
@@ -468,12 +468,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             run = [];
         };
+        // A stats box is all block children (title, <dl>, footnote), so its text
+        // is marked inside them instead.
+        const descend = line.matches(".stats, .stats *");
         for (const node of Array.from(line.childNodes)) {
             const isBlock =
                 node instanceof Element &&
                 (node.matches(NOT_OWN_TEXT) || !getComputedStyle(node).display.startsWith("inline"));
-            if (isBlock) flush();
-            else run.push(node);
+            if (!isBlock) {
+                run.push(node);
+                continue;
+            }
+            flush();
+            if (descend && node instanceof HTMLElement && !node.matches(NOT_OWN_TEXT)) {
+                marks.push(...markOwnText(node));
+            }
         }
         flush();
         return marks;

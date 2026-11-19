@@ -468,31 +468,23 @@ a[data-media-type="audio"]::after {
 .stats {
     --accent: var(--color-note-border);
     --accent-bg: var(--color-bg-secondary);
-
-    font-weight: 600;
 }
 
-/* Split into labelled columns by build_scripts/eleventy/guide-stats.cjs. The
- * original " | " and " - " stay in the text as hidden .stats__sep spans. */
-.stats.is-split {
-    display: flex;
-    flex-wrap: wrap;
-    row-gap: var(--space-sm);
-    font-weight: 400;
-}
-
-.stats__sep {
-    display: none;
-}
-
+/* Guide stats box (markup in GUIDE_STANDARDS.md): a title, a <dl> whose
+ * <div>s are the columns, and an optional full-width footnote. */
 .stats__title {
-    flex-basis: 100%;
+    margin-bottom: var(--space-sm);
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
     font-weight: 600;
 }
 
-.stats__item {
+.stats dl {
+    display: flex;
+    margin: 0;
+}
+
+.stats dl > div {
     display: flex;
     flex: 1 1 0;
     flex-direction: column;
@@ -501,30 +493,33 @@ a[data-media-type="audio"]::after {
     border-left: 1px solid var(--color-border-medium);
 }
 
-.stats__title + .stats__sep + .stats__item {
+.stats dl > div:first-child {
     padding-left: 0;
     border-left: none;
 }
 
-.stats__label {
+.stats dt {
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
 }
 
-.stats__value {
+.stats dd {
+    margin: 0;
     font-weight: 600;
 }
 
-.stats__note {
+/* A short qualifier under the value, e.g. "Hellion Salvo From Box". */
+.stats dd small {
+    display: block;
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
+    font-weight: 400;
     line-height: 1.4;
 }
 
-/* A long note on the last stat, moved under all the columns by the build. The
- * label is a pseudo-element so the line's text (and its flag id) is unchanged. */
+/* A sentence-length note: under the columns so it doesn't stretch them. */
 .stats__footnote {
-    flex-basis: 100%;
+    margin-top: var(--space-sm);
     padding-top: var(--space-xs);
     border-top: 1px solid var(--color-border-subtle);
     color: var(--color-text-secondary);
@@ -532,50 +527,36 @@ a[data-media-type="audio"]::after {
     line-height: 1.4;
 }
 
-.stats__footnote::before {
-    content: attr(data-label) ": ";
-    color: var(--color-text-muted);
-}
-
 /* Below tablet width the columns get too narrow: one row per stat instead. */
 @media (width < 48.0625em) { /* --bp-md */
-    .stats.is-split {
-        row-gap: var(--space-xs);
+    .stats dl {
+        flex-direction: column;
     }
 
-    .stats__item {
+    .stats dl > div {
         display: grid;
-        flex-basis: 100%;
         grid-template-columns: auto 1fr;
         column-gap: var(--space-md);
         align-items: baseline;
         padding: var(--space-xs) 0 0;
         border-left: none;
+    }
+
+    .stats dl > div + div {
+        margin-top: var(--space-xs);
         border-top: 1px solid var(--color-border-subtle);
     }
 
-    .stats__title + .stats__sep + .stats__item {
+    .stats dl > div:first-child {
         padding-top: 0;
-        border-top: none;
     }
 
-    .stats__value {
+    .stats dd {
         text-align: right;
     }
 
-    .stats__note {
-        grid-column: 1 / -1;
-        text-align: right;
-    }
-
-    /* Rows stack here, so the footnote already sits under its own stat. */
     .stats__footnote {
-        padding-top: 0;
-        border-top: none;
-    }
-
-    .stats__footnote::before {
-        content: none;
+        margin-top: var(--space-xs);
     }
 }
 
@@ -633,6 +614,31 @@ table caption {
     padding: var(--space-md);
     background-color: var(--color-bg-primary);
     border-bottom: 2px solid var(--color-border-medium);
+}
+
+/* A qualifier on the title, on its own line at body size. */
+table caption small {
+    display: block;
+    margin-top: var(--space-xs);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+}
+
+/* Recommended loadout: short lists in even columns, except Perks, which always
+ * holds the longest names. */
+.table-loadout {
+    table-layout: fixed;
+}
+
+.table-loadout th:first-child {
+    width: 40%;
+}
+
+/* Tighter leading than the gap between items, so a wrapped name reads as one. */
+.table-loadout td li {
+    margin-block: 0 var(--space-sm);
+    line-height: 1.35;
 }
 
 th {
