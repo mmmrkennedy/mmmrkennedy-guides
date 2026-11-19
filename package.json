@@ -5,11 +5,13 @@
     "type": "module",
     "scripts": {
         "// build": "Production builds — bundled, minified, versioned",
-        "build": "bun run build:scripts && bun run build:react && bun run build:ssr && cross-env BUNDLE=true IMAGES_FROM_R2=true bun run build:eleventy && cross-env BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/inline-critical-css.js && node build_scripts/minify-html.js && bun run build:sitemap",
+        "build": "bun run build:prep && cross-env BUNDLE=true IMAGES_FROM_R2=true bun run build:eleventy && cross-env BUNDLE=true node build_scripts/minify-assets.js && node build_scripts/inline-critical-css.js && node build_scripts/minify-html.js && bun run build:sitemap",
+        "// build:prep": "Independent pre-Eleventy steps, run in parallel; any failure fails the build",
+        "build:prep": "concurrently --kill-others-on-fail --names \"tsc,js,vite,ssr\" --prefix-colors \"blue,yellow,cyan,magenta\" \"tsc -p tsconfig.scripts.json\" \"node build_scripts/build-scripts.mjs\" \"vite build\" \"vite build --config vite.ssr.config.js\"",
         "build:full": "bun run clean && bun run build",
         "// dev": "Development servers — unbundled, hot reload",
-        "dev": "node build_scripts/build-scripts.mjs && eleventy --serve",
-        "dev:watch": "concurrently --names \"js,vite,ssr,11ty\" --prefix-colors \"yellow,cyan,magenta,green\" \"node build_scripts/build-scripts.mjs --watch\" \"vite build --watch\" \"vite build --config vite.ssr.config.js --watch\" \"eleventy --serve\"",
+        "dev": "node build_scripts/build-scripts.mjs && eleventy --serve --incremental",
+        "dev:watch": "concurrently --names \"js,vite,ssr,11ty\" --prefix-colors \"yellow,cyan,magenta,green\" \"node build_scripts/build-scripts.mjs --watch\" \"vite build --watch\" \"vite build --config vite.ssr.config.js --watch\" \"eleventy --serve --incremental\"",
         "dev:react": "vite",
         "// steps": "Individual build steps",
         "build:scripts": "tsc -p tsconfig.scripts.json && node build_scripts/build-scripts.mjs",
@@ -46,6 +48,7 @@
     "license": "MIT",
     "dependencies": {
         "jsdom": "^22.1.0",
+        "node-html-parser": "^6.1.13",
         "preact": "^10.29.1",
         "sitemap": "^8.0.0"
     },

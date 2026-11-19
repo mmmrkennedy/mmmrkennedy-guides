@@ -1,9 +1,4 @@
-import { JSDOM } from "jsdom";
-import { readFileSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { homepageDoc } from "../../build_scripts/eleventy/homepage.cjs";
 
 /**
  * Normalised like cleanUrl so it compares directly with a page URL. Deduped
@@ -11,10 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * dev's stub-body rendering is gated on `site.serve` in base.njk instead.
  */
 export default function () {
-    const indexPath = join(__dirname, "../index.html");
-    const html = readFileSync(indexPath, "utf8");
-    const dom = new JSDOM(html);
-    const links = dom.window.document.querySelectorAll("a.disabled");
+    const links = homepageDoc().querySelectorAll("a.disabled");
 
     const paths = new Set();
     links.forEach((link) => {

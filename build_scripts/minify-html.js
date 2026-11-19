@@ -1,7 +1,8 @@
-import { minify } from "html-minifier-terser";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isMainThread } from "worker_threads";
+import { runPool, serveJobs } from "./worker-pool.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, "..", "dist");
@@ -39,16 +40,27 @@ function findHtmlFiles(dir) {
     return files;
 }
 
-const files = findHtmlFiles(distDir);
-let totalBefore = 0, totalAfter = 0;
-
-await Promise.all(files.map(async (file) => {
+async function minifyPage(minify, file) {
     const input = fs.readFileSync(file, "utf8");
     const output = minifyJsonLd(await minify(input, OPTIONS));
     fs.writeFileSync(file, output, "utf8");
-    totalBefore += input.length;
-    totalAfter += output.length;
-}));
+    return { before: input.length, after: output.length };
+}
 
-const saved = ((1 - totalAfter / totalBefore) * 100).toFixed(1);
-console.log(`Minified ${files.length} files — ${(totalBefore / 1024).toFixed(0)}KB → ${(totalAfter / 1024).toFixed(0)}KB (${saved}% saved)`);
+// minify() is async but CPU-bound, so Promise.all alone ran one page at a time.
+if (isMainThread) {
+    const files = findHtmlFiles(distDir);
+    const sizes = await runPool(new URL(import.meta.url), files);
+    const totalBefore = sizes.reduce((n, s) => n + s.before, 0);
+    const totalAfter = sizes.reduce((n, s) => n + s.after, 0);
+
+    const saved = ((1 - totalAfter / totalBefore) * 100).toFixed(1);
+    console.log(`Minified ${files.length} files — ${(totalBefore / 1024).toFixed(0)}KB → ${(totalAfter / 1024).toFixed(0)}KB (${saved}% saved)`);
+} else {
+    // Loaded only here: the main thread never minifies.
+    const loaded = import("html-minifier-terser");
+    serveJobs(async () => {
+        const { minify } = await loaded;
+        return (file) => minifyPage(minify, file);
+    });
+}

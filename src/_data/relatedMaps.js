@@ -1,9 +1,4 @@
-import { JSDOM } from "jsdom";
-import { readFileSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { homepageDoc } from "../../build_scripts/eleventy/homepage.cjs";
 
 /**
  * Sibling-map links, derived from src/index.html so the two can never disagree.
@@ -13,8 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * original game's guide.
  */
 export default function () {
-    const html = readFileSync(join(__dirname, "../index.html"), "utf8");
-    const doc = new JSDOM(html).window.document;
+    const doc = homepageDoc();
 
     const clean = (href) => href.split("?")[0].replace(/\.html$/, "");
 

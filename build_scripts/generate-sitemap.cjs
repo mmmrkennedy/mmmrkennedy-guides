@@ -6,7 +6,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const { JSDOM } = require("jsdom");
+// Read-only queries, so a light parser is enough; JSDOM took ~2s here.
+const { parse } = require("node-html-parser");
 const { SitemapStream, streamToPromise } = require("sitemap");
 
 const SITE_URL = "https://mmmrkennedy.com";
@@ -33,19 +34,36 @@ const SITEMAP_IMAGE_EXT = /\.(webp|png|jpg|jpeg|gif)$/i;
 // back to the master, so the URL always resolves.
 const SITEMAP_IMAGE_TIER = "?w=1280";
 
+// The hub crawl and imagesFor visit the same pages.
+const docs = new Map();
+function docFor(link) {
+    if (!docs.has(link)) {
+        const built = path.resolve("./dist", `${link}.html`);
+        docs.set(link, fs.existsSync(built) ? parse(fs.readFileSync(built, "utf8")) : null);
+    }
+    return docs.get(link);
+}
+
+const noindex = new Map();
+function isNoindex(target) {
+    if (!noindex.has(target)) {
+        noindex.set(target, /<meta name="robots" content="[^"]*noindex/.test(fs.readFileSync(target, "utf8")));
+    }
+    return noindex.get(target);
+}
+
 /**
  * Screenshots are lightbox <a href> links, never <img>, so Google Images can't
  * find them in the markup. Reads dist, not src. The image files are usually absent
  * from dist (IMAGES_FROM_R2, served from the bucket), so nothing is checked on disk.
  */
 function imagesFor(link) {
-    const built = path.resolve("./dist", `${link}.html`);
-    if (!fs.existsSync(built)) return [];
+    const doc = docFor(link);
+    if (!doc) return [];
 
     // Pages are served extensionless, so relative hrefs resolve against the
     // page's directory.
     const pageUrl = `${SITE_URL}/${link}`;
-    const doc = new JSDOM(fs.readFileSync(built, "utf8")).window.document;
     const found = new Map();
 
     const add = (href, caption) => {
@@ -81,11 +99,11 @@ async function buildSitemap() {
     }
 
     const html = fs.readFileSync(INDEX_FILE, "utf8");
-    const dom = new JSDOM(html);
+    const doc = parse(html);
 
     const IMAGE_EXTENSIONS = /\.(webp|png|jpg|jpeg|gif|svg|avif|ico)$/i;
 
-    const links = Array.from(dom.window.document.querySelectorAll("a"))
+    const links = Array.from(doc.querySelectorAll("a"))
         .filter((a) => !a.classList.contains("disabled"))
         .map((a) => a.getAttribute("href"))
         .filter((href) => href && !href.startsWith("http") && !href.startsWith("#"))
@@ -99,11 +117,9 @@ async function buildSitemap() {
      */
     const deeper = [];
     for (const link of new Set(links)) {
-        const child = path.resolve("./dist", `${link}.html`);
-        if (!fs.existsSync(child)) continue;
-        const childHtml = fs.readFileSync(child, "utf8");
-        const childDom = new JSDOM(childHtml);
-        for (const a of childDom.window.document.querySelectorAll("a")) {
+        const childDoc = docFor(link);
+        if (!childDoc) continue;
+        for (const a of childDoc.querySelectorAll("a")) {
             const href = a.getAttribute("href");
             if (!href || href.startsWith("http") || href.startsWith("#")) continue;
             if (!href.startsWith("/")) continue;
@@ -111,7 +127,7 @@ async function buildSitemap() {
             const clean = href.replace(/\?.*$/, "").replace(/\.html$/, "").replace(/^\//, "");
             const target = path.resolve("./dist", `${clean}.html`);
             if (!fs.existsSync(target)) continue;
-            if (/<meta name="robots" content="[^"]*noindex/.test(fs.readFileSync(target, "utf8"))) continue;
+            if (isNoindex(target)) continue;
             deeper.push(clean);
         }
     }

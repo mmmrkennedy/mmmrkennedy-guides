@@ -8,10 +8,11 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import postcss from "postcss";
-import { JSDOM } from "jsdom";
-import { minify } from "terser";
-import ts from "typescript";
+import { isMainThread } from "worker_threads";
+import { runPool, serveJobs } from "./worker-pool.js";
+
+// Loaded only in the page workers (see the bottom of the file); the main thread never parses a page.
+let JSDOM, postcss;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, "..", "dist");
@@ -62,6 +63,10 @@ const SAFELIST = ["ads-full", "ads-hidden", "ads-minimal"];
  * markup carries.
  */
 async function harvestJsTokens() {
+    // Imported here so the page workers don't pay to load them.
+    const { default: ts } = await import("typescript");
+    const { minify } = await import("terser");
+
     const byFile = new Map([["(safelist)", new Set(SAFELIST)]]);
     const classish = /^-?[a-zA-Z_][a-zA-Z0-9_-]*$/;
 
@@ -170,15 +175,16 @@ function purge(css, tokens) {
     return ast.toString();
 }
 
-const jsTokens = await harvestJsTokens();
+// Every page links the same few stylesheets.
+const cssCache = new Map();
+function readCss(pathname) {
+    if (!cssCache.has(pathname)) cssCache.set(pathname, fs.readFileSync(path.join(distDir, pathname), "utf8"));
+    return cssCache.get(pathname);
+}
 
-const rows = [];
-let inlinedTotal = 0;
-let sourceTotal = 0;
-
-for (const file of findFiles(distDir, ".html")) {
+/** Rewrites one page in place. Returns its summary row, or null when it links no owned stylesheet. */
+function inlinePage(file, jsTokens) {
     const rel = path.relative(distDir, file).replace(/\\/g, "/");
-    if (SKIP_PAGES.some((p) => p.test(rel))) continue;
 
     const html = fs.readFileSync(file, "utf8");
     const dom = new JSDOM(html);
@@ -188,7 +194,7 @@ for (const file of findFiles(distDir, ".html")) {
     const links = [...doc.querySelectorAll('link[rel="stylesheet"]')].filter(
         (l) => !l.media && OWNED.some((p) => p.test(new URL(l.href, "https://x/").pathname))
     );
-    if (links.length === 0) continue;
+    if (links.length === 0) return null;
 
     const tokens = harvestPageTokens(doc);
     const off = FEATURE_GATES.filter((g) => g.disabled(doc.body)).flatMap((g) => g.scripts);
@@ -200,10 +206,7 @@ for (const file of findFiles(distDir, ".html")) {
 
     // Document order keeps the cascade: index-nav.css and trending.css must follow
     // the bundle (see css/styles.css).
-    const sources = links.map((l) => {
-        const p = new URL(l.href, "https://x/").pathname;
-        return fs.readFileSync(path.join(distDir, p), "utf8");
-    });
+    const sources = links.map((l) => readCss(new URL(l.href, "https://x/").pathname));
 
     const source = sources.join("\n");
     const purged = purge(source, tokens);
@@ -225,25 +228,49 @@ for (const file of findFiles(distDir, ".html")) {
 
     fs.writeFileSync(file, dom.serialize(), "utf8");
 
-    sourceTotal += source.length;
-    inlinedTotal += purged.length;
-    rows.push({
+    return {
         page: rel,
         pct: Math.round((purged.length / source.length) * 100),
         kb: (purged.length / 1024).toFixed(1),
-    });
+        sourceLength: source.length,
+        purgedLength: purged.length,
+    };
 }
 
-if (rows.length === 0) {
-    console.log("inline-critical-css: no page linked an owned stylesheet — nothing to do");
+if (isMainThread) {
+    const files = findFiles(distDir, ".html").filter((file) => {
+        const rel = path.relative(distDir, file).replace(/\\/g, "/");
+        return !SKIP_PAGES.some((p) => p.test(rel));
+    });
+
+    // Workers load JSDOM while this runs. Arrays, not Sets, to cross postMessage.
+    const setup = harvestJsTokens().then((jsTokens) =>
+        [...jsTokens].map(([file, tokens]) => [file, [...tokens]]));
+    const rows = (await runPool(new URL(import.meta.url), files, { setup })).filter(Boolean);
+
+    if (rows.length === 0) {
+        console.log("inline-critical-css: no page linked an owned stylesheet — nothing to do");
+    } else {
+        const sourceTotal = rows.reduce((n, r) => n + r.sourceLength, 0);
+        const inlinedTotal = rows.reduce((n, r) => n + r.purgedLength, 0);
+        rows.sort((a, b) => b.pct - a.pct);
+        const mean = Math.round((inlinedTotal / sourceTotal) * 100);
+        const worst = rows[0];
+        const best = rows[rows.length - 1];
+        console.log(
+            `Inlined CSS on ${rows.length} pages — kept ${mean}% of source ` +
+            `(most ${worst.pct}% ${worst.page}, least ${best.pct}% ${best.page})` +
+            (KEEP_FALLBACK ? " + deferred fallback link" : "")
+        );
+    }
 } else {
-    rows.sort((a, b) => b.pct - a.pct);
-    const mean = Math.round((inlinedTotal / sourceTotal) * 100);
-    const worst = rows[0];
-    const best = rows[rows.length - 1];
-    console.log(
-        `Inlined CSS on ${rows.length} pages — kept ${mean}% of source ` +
-        `(most ${worst.pct}% ${worst.page}, least ${best.pct}% ${best.page})` +
-        (KEEP_FALLBACK ? " + deferred fallback link" : "")
-    );
+    const loaded = Promise.all([import("jsdom"), import("postcss")]).then(([jsdom, pc]) => {
+        JSDOM = jsdom.JSDOM;
+        postcss = pc.default;
+    });
+    serveJobs(async (tokenLists) => {
+        await loaded;
+        const jsTokens = new Map(tokenLists.map(([file, tokens]) => [file, new Set(tokens)]));
+        return (file) => inlinePage(file, jsTokens);
+    });
 }

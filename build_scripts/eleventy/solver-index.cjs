@@ -10,11 +10,7 @@
  * Games and maps follow homepage order (src/index.html), like relatedMaps.js.
  */
 
-const fs = require("fs");
-const path = require("path");
-const { JSDOM } = require("jsdom");
-
-const INDEX = path.join(__dirname, "..", "..", "src", "index.html");
+const { homepageDoc } = require("./homepage.cjs");
 
 const clean = (url) => url.split("?")[0].replace(/\.html$/, "");
 
@@ -25,7 +21,7 @@ const gameOf = (url) => clean(url).split("/")[2];
 const isHub = (item) => item.data.solverTitle === "Solvers";
 
 function homepageOrder() {
-    const doc = new JSDOM(fs.readFileSync(INDEX, "utf8")).window.document;
+    const doc = homepageDoc();
     const games = [];
     const gameNames = {};
     for (const h of doc.querySelectorAll("h2[id]")) {

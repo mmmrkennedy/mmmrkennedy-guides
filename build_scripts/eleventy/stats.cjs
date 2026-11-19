@@ -1,7 +1,7 @@
-const { JSDOM } = require("jsdom");
 const fs = require("fs");
 const path = require("path");
 const { lastmodCache, editcountCache, releaseCache } = require("./dates.cjs");
+const { homepageDoc } = require("./homepage.cjs");
 
 // Below this a page is a solver shell or stub: no footer count, no share of totals.
 const WORDCOUNT_FLOOR = 100;
@@ -47,7 +47,7 @@ function siteStats() {
 
     let doc = null;
     try {
-        doc = new JSDOM(fs.readFileSync(path.join(srcDir, "index.html"), "utf8")).window.document;
+        doc = homepageDoc();
     } catch (e) {
         console.warn("Couldn't read src/index.html, stats will be empty:", e.message);
     }
