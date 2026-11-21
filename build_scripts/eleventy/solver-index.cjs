@@ -1,7 +1,8 @@
 /**
  * Solver listings for /solvers and each map's hub, from solver page front matter:
  *
- *   solverTitle   required; card name. "Solvers" marks a map's hub page.
+ *   solverTitle   required; card name.
+ *   solverHub     true on a map's hub page; its card is listed first as "<mapName> <solverTitle>".
  *   mapName       the map heading on /solvers.
  *   description   the line under the card on /solvers.
  *   hubLine       optional: shorter line on the map's hub, falls back to `description`.
@@ -18,7 +19,7 @@ const folderOf = (url) => clean(url).split("/").slice(0, -1).join("/");
 
 const gameOf = (url) => clean(url).split("/")[2];
 
-const isHub = (item) => item.data.solverTitle === "Solvers";
+const isHub = (item) => item.data.solverHub === true;
 
 function homepageOrder() {
     const doc = homepageDoc();
@@ -73,7 +74,7 @@ function solverIndex(collectionApi) {
 
     const card = (item) => ({
         url: clean(item.url),
-        name: isHub(item) ? `${item.data.mapName} Solvers` : item.data.solverTitle,
+        name: isHub(item) ? `${item.data.mapName} ${item.data.solverTitle}` : item.data.solverTitle,
         line: item.data.description,
     });
 
