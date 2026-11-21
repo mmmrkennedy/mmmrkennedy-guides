@@ -39,6 +39,8 @@ export async function runPool(moduleUrl, jobs, { setup, maxWorkers = 4 } = {}) {
     try {
         setupData = await setup;
     } catch (error) {
+        // Terminated workers exit non-zero; swallow that so the setup error is the one reported.
+        for (const d of done) d.catch(() => {});
         await Promise.all(workers.map((w) => w.terminate()));
         throw error;
     }

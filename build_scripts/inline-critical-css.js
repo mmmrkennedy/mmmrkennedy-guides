@@ -243,9 +243,8 @@ if (isMainThread) {
         return !SKIP_PAGES.some((p) => p.test(rel));
     });
 
-    // Workers load JSDOM while this runs. Arrays, not Sets, to cross postMessage.
-    const setup = harvestJsTokens().then((jsTokens) =>
-        [...jsTokens].map(([file, tokens]) => [file, [...tokens]]));
+    // Workers load JSDOM while this runs. Structured clone carries the Map of Sets as-is.
+    const setup = harvestJsTokens();
     const rows = (await runPool(new URL(import.meta.url), files, { setup })).filter(Boolean);
 
     if (rows.length === 0) {
@@ -268,9 +267,8 @@ if (isMainThread) {
         JSDOM = jsdom.JSDOM;
         postcss = pc.default;
     });
-    serveJobs(async (tokenLists) => {
+    serveJobs(async (jsTokens) => {
         await loaded;
-        const jsTokens = new Map(tokenLists.map(([file, tokens]) => [file, new Set(tokens)]));
         return (file) => inlinePage(file, jsTokens);
     });
 }
