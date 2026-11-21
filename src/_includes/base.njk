@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {#- Runs before first paint so the default accent and font never flash. See accent-picker.ts. #}
-    <script>try{var d=document.documentElement,a=localStorage.getItem("accent"),f=localStorage.getItem("font");if(a)d.dataset.accent=a;if(f)d.dataset.font=f;if(localStorage.getItem("accent-picker-open"))d.dataset.accentPicker="open";if(a==="custom"){var c=JSON.parse(localStorage.getItem("accent-custom"));for(var k in c.vars)d.style.setProperty(k,c.vars[k])}}catch(e){}</script>
+    {#- Runs before first paint so the default accent and font never flash. See accent-picker.ts.
+        data-cfasync="false" keeps Rocket Loader (live only) from deferring it past first paint. #}
+    <script data-cfasync="false">try{var d=document.documentElement,a=localStorage.getItem("accent"),f=localStorage.getItem("font");if(a)d.dataset.accent=a;if(f)d.dataset.font=f;if(localStorage.getItem("accent-picker-open"))d.dataset.accentPicker="open";if(a==="custom"){var c=JSON.parse(localStorage.getItem("accent-custom"));for(var k in c.vars)d.style.setProperty(k,c.vars[k])}}catch(e){}</script>
 
     {#- The game suffix goes only in <title>: in the <h1> it dilutes the heading
         for Google and crowds the phone top bar. #}
